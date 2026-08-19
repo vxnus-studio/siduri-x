@@ -1,0 +1,19 @@
+{
+  "name": "@siduri-y/cli",
+  "version": "1.0.0",
+  "bin": {
+    "siduri": "./dist/index.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w"
+  },
+  "dependencies": {
+    "inquirer": "^9.2.12"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/inquirer": "^9.0.7"
+  }
+}

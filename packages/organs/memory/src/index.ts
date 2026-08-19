@@ -1,0 +1,266 @@
+import { MemoryOrgan, Claim, MemoryScope, BehaviorDirective } from '@siduri-y/core';
+import { Pool } from 'pg';
+import { UP_MIGRATION } from './schema';
+
+export interface PostgresMemoryConfig {
+  connectionString: string;
+}
+
+export class PostgresMemoryOrgan implements MemoryOrgan {
+  private pool: Pool;
+  private companionId: string | null = null;
+
+  constructor(config: PostgresMemoryConfig) {
+    this.pool = new Pool({ connectionString: config.connectionString });
+  }
+
+  async runMigrations(): Promise<void> {
+    await this.pool.query(UP_MIGRATION);
+  }
+
+  async initialize(companionId: string): Promise<void> {
+    this.companionId = companionId;
+  }
+
+  private ensureInitialized() {
+    if (!this.companionId) {
+      throw new Error("MemoryOrgan must be initialized with a companionId before use.");
+    }
+  }
+
+  async proposeClaim(claimData: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim> {
+    this.ensureInitialized();
+    const result = await this.pool.query(
+      `INSERT INTO memory_claims (companion_id, subject, predicate, value, status, scope, evidence)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        this.companionId,
+        claimData.subject,
+        claimData.predicate,
+        claimData.value,
+        'PENDING',
+        claimData.scope,
+        JSON.stringify(claimData.evidence || [])
+      ]
+    );
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      companionId: row.companion_id,
+      subject: row.subject,
+      predicate: row.predicate,
+      value: row.value,
+      status: row.status as any,
+      scope: row.scope as any,
+      evidence: row.evidence
+    };
+  }
+
+  async searchClaims(query: string, scope: MemoryScope, limit: number = 10): Promise<Claim[]> {
+    this.ensureInitialized();
+    
+    // We strictly enforce companionId scoping here
+    let sql = `SELECT * FROM memory_claims WHERE companion_id = $1 AND status = 'APPROVED'`;
+    const params: any[] = [this.companionId];
+    
+    if (query) {
+      const rawTerms = Array.from(new Set(query.toLowerCase().split(/\s+/)));
+      const safeTerms = rawTerms.filter(term => /^[a-z0-9]+$/.test(term)).sort();
+      
+      if (safeTerms.length === 0) {
+        return [];
+      }
+      
+      const tsQueryStr = safeTerms.map(term => `${term}:*`).join(' | ');
+      sql += ` AND search_document @@ to_tsquery('simple', $2)`;
+      params.push(tsQueryStr);
+      sql += ` ORDER BY ts_rank(search_document, to_tsquery('simple', $2)) DESC LIMIT $3`;
+      params.push(limit);
+    } else {
+      sql += ` ORDER BY id LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+
+    const result = await this.pool.query(sql, params);
+    return result.rows.map(row => ({
+      id: row.id,
+      companionId: row.companion_id,
+      subject: row.subject,
+      predicate: row.predicate,
+      value: row.value,
+      status: row.status as any,
+      scope: row.scope as any,
+      evidence: row.evidence
+    }));
+  }
+
+  async getDirectives(): Promise<BehaviorDirective[]> {
+    this.ensureInitialized();
+    const result = await this.pool.query(
+      `SELECT * FROM memory_directives WHERE companion_id = $1 ORDER BY priority DESC`,
+      [this.companionId]
+    );
+
+    return result.rows.map(row => ({
+      id: row.id,
+      companionId: row.companion_id,
+      directive: row.directive,
+      scopeMatcher: row.scope_matcher,
+      priority: row.priority,
+      status: row.status as any,
+      supersedesId: row.supersedes_id
+    }));
+  }
+  
+  // For tests/admin to quickly approve claims
+  async approveClaim(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_claims SET status = 'APPROVED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+  }
+
+  async rejectClaim(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_claims SET status = 'REJECTED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+  }
+
+  async getClaims(): Promise<Claim[]> {
+    this.ensureInitialized();
+    const result = await this.pool.query(
+      `SELECT * FROM memory_claims WHERE companion_id = $1 ORDER BY id DESC`,
+      [this.companionId]
+    );
+    return result.rows.map(row => ({
+      id: row.id,
+      companionId: row.companion_id,
+      subject: row.subject,
+      predicate: row.predicate,
+      value: row.value,
+      status: row.status as any,
+      scope: row.scope as any,
+      evidence: row.evidence
+    }));
+  }
+
+  async getPendingClaims(): Promise<Claim[]> {
+    this.ensureInitialized();
+    const result = await this.pool.query(
+      `SELECT * FROM memory_claims WHERE companion_id = $1 AND status = 'PENDING' ORDER BY id DESC`,
+      [this.companionId]
+    );
+    return result.rows.map(row => ({
+      id: row.id,
+      companionId: row.companion_id,
+      subject: row.subject,
+      predicate: row.predicate,
+      value: row.value,
+      status: row.status as any,
+      scope: row.scope as any,
+      evidence: row.evidence
+    }));
+  }
+
+  async proposeDirective(directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'>): Promise<BehaviorDirective> {
+    this.ensureInitialized();
+    const result = await this.pool.query(
+      `INSERT INTO memory_directives (companion_id, directive, scope_matcher, priority, status, supersedes_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [
+        this.companionId,
+        directiveData.directive,
+        JSON.stringify(directiveData.scopeMatcher || []),
+        directiveData.priority,
+        'PENDING',
+        directiveData.supersedesId || null
+      ]
+    );
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      companionId: row.companion_id,
+      directive: row.directive,
+      scopeMatcher: row.scope_matcher,
+      priority: row.priority,
+      status: row.status as any,
+      supersedesId: row.supersedes_id
+    };
+  }
+
+  async approveDirective(id: string): Promise<void> {
+    this.ensureInitialized();
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const res = await client.query(
+        `SELECT * FROM memory_directives WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+
+      if (res.rowCount === 0) {
+        throw new Error(`Directive not found`);
+      }
+
+      const pending = res.rows[0];
+      if (pending.status !== 'PENDING') {
+        throw new Error(`Directive is already ${pending.status}`);
+      }
+
+      await client.query(
+        `UPDATE memory_directives SET status = 'ACTIVE' WHERE id = $1`,
+        [id]
+      );
+
+      if (pending.supersedes_id) {
+        await client.query(
+          `UPDATE memory_directives SET status = 'SUPERSEDED' WHERE id = $1 AND companion_id = $2`,
+          [pending.supersedes_id, this.companionId]
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async rejectDirective(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_directives SET status = 'REJECTED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+  }
+
+  async revokeDirective(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_directives SET status = 'SUPERSEDED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+  }
+
+  async disableDirective(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_directives SET status = 'DISABLED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+  }
+
+  async close(): Promise<void> {
+    await this.pool.end();
+  }
+}
