@@ -44,9 +44,14 @@ export class SiduriRuntime {
   async handleUserMessage(message: string, role: 'OWNER' | 'VIEWER' | 'OPERATOR'): Promise<any> {
     this.conversationHistory.push({ role: 'user', content: message });
 
-    const knowledgeData = await this.knowledge.search(message);
-    const memoryData = await this.memory.searchClaims(message, role, 5);
-    const activeDirectives = await this.memory.getDirectives();
+    const [knowledgeData, memoryData, activeDirectives] = await Promise.all([
+      this.knowledge.search(message).catch(e => {
+        console.error("[SiduriRuntime] Knowledge search failed:", e.message);
+        return [];
+      }),
+      this.memory.searchClaims(message, role, 5),
+      this.memory.getDirectives()
+    ]);
     
     let contextPrompt = "";
     if (knowledgeData.length > 0) {

@@ -5,24 +5,24 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsc -w & node dist/index.js"
+    "dev": "tsc -w & DEV_LOCAL_AUTH_ROLE=OWNER node dist/index.js"
   },
   "dependencies": {
-    "@siduri-y/core": "workspace:*",
-    "@siduri-y/brain": "workspace:*",
-    "@siduri-y/voice": "workspace:*",
-    "@siduri-y/memory": "workspace:*",
-    "@siduri-y/knowledge": "workspace:*",
     "@siduri-y/behavior": "workspace:*",
-    "@siduri-y/vision": "workspace:*",
     "@siduri-y/body": "workspace:*",
-    "express": "^4.18.2",
+    "@siduri-y/brain": "workspace:*",
+    "@siduri-y/core": "workspace:*",
+    "@siduri-y/knowledge": "workspace:*",
+    "@siduri-y/memory": "workspace:*",
+    "@siduri-y/vision": "workspace:*",
+    "@siduri-y/voice": "workspace:*",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17"
+    "typescript": "^5.3.3"
   }
 }

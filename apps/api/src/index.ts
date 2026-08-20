@@ -8,6 +8,7 @@ import { ETeyvatAdapter } from '@siduri-y/knowledge';
 import { OpenRouterVisionAdapter } from '@siduri-y/vision';
 import { ActiveSelfCompiler } from '@siduri-y/behavior';
 import { Live2DAdapter } from '@siduri-y/body';
+import { attachIdentity, requireRole, Identity } from './auth';
 
 const app = express();
 app.use(cors());
@@ -15,7 +16,7 @@ app.use(express.json());
 
 const runtimes = new Map<string, SiduriRuntime>();
 
-app.post('/boot', async (req, res) => {
+app.post('/boot', requireRole(['OWNER']), async (req, res) => {
   try {
     const { id, config } = req.body;
     if (runtimes.has(id)) {
@@ -47,17 +48,21 @@ app.get('/ready', (req, res) => res.json({ status: "ready", dependencies: {} }))
 app.get('/voice/health', (req, res) => res.json({ provider: "voicevox", healthy: true }));
 app.get('/obs/health', (req, res) => res.json({ connected: true }));
 app.get('/platforms/status', (req, res) => res.json({ platforms: {} }));
-app.get('/me', (req, res) => res.json({ name: "Primary User", role: "MASTER_STREAM" }));
-app.put('/me', (req, res) => res.json({ success: true }));
+app.get('/me', attachIdentity, (req, res) => {
+  const identity = (req as any).identity as Identity;
+  res.json({ name: "Primary User", role: identity.role });
+});
+app.put('/me', requireRole(['OWNER']), (req, res) => res.json({ success: true }));
 
 // CHAT
-app.post('/chat', async (req, res) => {
-  const { id, message, role } = req.body;
+app.post('/chat', attachIdentity, async (req, res) => {
+  const { id, message } = req.body;
+  const identity = (req as any).identity as Identity;
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
 
   try {
-    const response = await runtime.handleUserMessage(message, role || 'VIEWER');
+    const response = await runtime.handleUserMessage(message, identity.role);
     res.json(response);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -65,7 +70,7 @@ app.post('/chat', async (req, res) => {
 });
 
 // MEMORY GETTERS
-app.get('/memory/proposals', async (req, res) => {
+app.get('/memory/proposals', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
   const id = req.query.id as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -77,7 +82,7 @@ app.get('/memory/proposals', async (req, res) => {
   }
 });
 
-app.get('/memory', async (req, res) => {
+app.get('/memory', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
   const id = req.query.id as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -89,7 +94,7 @@ app.get('/memory', async (req, res) => {
   }
 });
 
-app.get('/memory/claims', async (req, res) => {
+app.get('/memory/claims', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
   const id = req.query.id as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -101,7 +106,7 @@ app.get('/memory/claims', async (req, res) => {
   }
 });
 
-app.get('/memory/behavioral', async (req, res) => {
+app.get('/memory/behavioral', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
   const id = req.query.id as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -114,9 +119,9 @@ app.get('/memory/behavioral', async (req, res) => {
 });
 
 // MEMORY MUTATIONS - PROPOSALS
-app.post('/memory/proposals/update', async (req, res) => res.json({ success: true }));
+app.post('/memory/proposals/update', requireRole(['OWNER', 'OPERATOR']), async (req, res) => res.json({ success: true }));
 
-app.post('/memory/proposals/approve', async (req, res) => {
+app.post('/memory/proposals/approve', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
   const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -128,7 +133,7 @@ app.post('/memory/proposals/approve', async (req, res) => {
   }
 });
 
-app.post('/memory/proposals/reject', async (req, res) => {
+app.post('/memory/proposals/reject', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
   const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -141,7 +146,7 @@ app.post('/memory/proposals/reject', async (req, res) => {
 });
 
 // MEMORY MUTATIONS - BEHAVIORAL
-app.post('/memory/behavioral/approve', async (req, res) => {
+app.post('/memory/behavioral/approve', requireRole(['OWNER']), async (req, res) => {
   const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -153,7 +158,7 @@ app.post('/memory/behavioral/approve', async (req, res) => {
   }
 });
 
-app.post('/memory/behavioral/reject', async (req, res) => {
+app.post('/memory/behavioral/reject', requireRole(['OWNER']), async (req, res) => {
   const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -165,7 +170,7 @@ app.post('/memory/behavioral/reject', async (req, res) => {
   }
 });
 
-app.post('/memory/behavioral/revoke', async (req, res) => {
+app.post('/memory/behavioral/revoke', requireRole(['OWNER']), async (req, res) => {
   const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -177,7 +182,7 @@ app.post('/memory/behavioral/revoke', async (req, res) => {
   }
 });
 
-app.post('/memory/behavioral/disable', async (req, res) => {
+app.post('/memory/behavioral/disable', requireRole(['OWNER']), async (req, res) => {
   const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -189,7 +194,7 @@ app.post('/memory/behavioral/disable', async (req, res) => {
   }
 });
 
-app.post('/dev/memory/reset', async (req, res) => res.json({ reset: true }));
+app.post('/dev/memory/reset', requireRole(['OWNER']), async (req, res) => res.json({ reset: true }));
 
 // MOCKS / DEV / EVIDENCE / PLATFORMS
 app.get('/platforms/events', (req, res) => res.json({ events: [] }));
@@ -209,6 +214,46 @@ app.post('/platforms/actions/send', (req, res) => res.json({ sent: true }));
 
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Siduri-Y API running on port ${PORT}`);
+
+const defaultCompanionConfig = {
+  id: 'default',
+  name: 'Siduri',
+  brain: { provider: 'openrouter', model: 'gpt-4o-mini' },
+  voice: { provider: 'voicevox', speakerId: 1 },
+  memory: { provider: 'postgres' },
+  knowledge: { provider: 'e-teyvat' },
+  behavior: { provider: 'active_self' },
+  body: { provider: 'live2d' },
+  vision: { provider: 'openrouter', model: 'gpt-4-vision' }
+};
+
+async function bootDefaultCompanion() {
+  if (runtimes.has('default')) return;
+  console.log("Booting default companion...");
+  const config: any = defaultCompanionConfig;
+  
+  const brain = new OpenRouterBrain({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.brain.model || 'gpt-4o-mini' });
+  const memory = new PostgresMemoryOrgan({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri' });
+  const voice = new VoicevoxAdapter({ baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.voice?.speakerId || 1 });
+  const knowledge = new ETeyvatAdapter({ baseUrl: 'https://eteyvat.krzgn.xyz' });
+  const vision = new OpenRouterVisionAdapter({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.vision?.model || 'gpt-4-vision' });
+  const behavior = new ActiveSelfCompiler();
+  const body = new Live2DAdapter({ port: 8089 });
+
+  await memory.runMigrations().catch(e => console.warn("Migrations warning:", e.message));
+
+  const runtime = new SiduriRuntime('default', config as any, { brain, memory, voice, knowledge, vision, behavior, body });
+  await runtime.initialize();
+
+  runtimes.set('default', runtime);
+  console.log("Default companion booted successfully.");
+}
+
+bootDefaultCompanion().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Siduri-Y API running on port ${PORT}`);
+  });
+}).catch(e => {
+  console.error("Failed to boot default companion:", e);
+  process.exit(1);
 });
