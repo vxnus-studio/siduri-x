@@ -14,7 +14,7 @@ Siduri-Y is a next-generation TypeScript monorepo implementation of the Siduri A
 - **Voice & Vision**: Advanced queueing for speech synthesis and visual processing (via ffmpeg).
 - **Body**: A real-time `Live2DAdapter` that broadcasts expressions, speech, and lifecycle transitions via WebSockets for seamless integration with overlays and frontends.
 
-The project encompasses a backend API layer, a CLI tool, and Next.js web frontends which include a Chat UI, an Operator Console, and a WebGL-powered OBS Overlay.
+The project encompasses a backend API layer, a CLI tool, and Next.js web frontends which include a Chat UI, an Operator Console, and a DOM-based OBS Overlay.
 
 ## License
 All rights are restricted until the project is officially released publicly to VXNUS Creative Technology Studio. See the [LICENSE](./LICENSE) file for more details.
