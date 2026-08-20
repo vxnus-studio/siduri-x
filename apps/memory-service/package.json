@@ -1,0 +1,31 @@
+{
+  "name": "@siduri-y/memory-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node-dev src/index.ts",
+    "start": "node dist/index.js",
+    "test": "jest --config jest.config.json"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "@siduri-y/memory": "workspace:*",
+    "@siduri-y/core": "workspace:*",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/cors": "^2.8.13",
+    "@types/node": "^20.0.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.0.0",
+    "jest": "^29.5.0",
+    "@types/jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "supertest": "^6.3.3",
+    "@types/supertest": "^2.0.12"
+  }
+}

@@ -46,20 +46,20 @@ Conduct a deep source-to-source implementation audit comparing the original Pyth
 | Vision | PASS | `ffmpeg` cropping byte buffers and `top_party_is_active` active character mappings successfully implemented. |
 | Body | PASS | `Live2DAdapter` broadcasts expression/speech lifecycle hooks via dedicated `Set<WebSocket>` connections. |
 | Runtime/API | PASS | Global singletons safely decoupled into `SiduriRuntime` isolated class dependency injection. Concurrent execution tested successfully via smoke tests. |
-| Web | FAIL | Route proxy endpoints exist in Next.js, but no visual code (Chat, Operator Console, OBS Overlay WebGL) was actually implemented. |
+| Web | FAIL | Route proxy endpoints exist in Next.js, but no visual code (Chat, Operator Console, OBS Overlay DOM-based) was actually implemented. |
 | CLI | PASS | Configurations accurately map to `siduri.config.json`. |
 
 ## Important Findings
 - **Memory FTS Logic**: The original `siduri` code uses `setweight(..., 'A')` and logical `|` prefix matching to generate highly relevant conversational memory retrieval sorted by `ts_rank`. The `siduri-y` implementation currently executes exact-word unweighted boolean `AND` matching ordered by `ID`, completely disrupting context relevance. This was an accidental semantic difference.
 - **Directive State Machine**: The original code executed two separate queries to update supersede targets. `siduri-y` was incorrectly skipping state mutations entirely. We fixed this by introducing a unified `BEGIN/COMMIT` Postgres block explicitly setting `status = 'SUPERSEDED'`.
-- **Web UI Empty Shells**: The Next.js frontend migration correctly established routing, but fully neglected porting any actual React UI logic or WebGL canvasing.
+- **Web UI Empty Shells**: The Next.js frontend migration correctly established routing, but fully neglected porting any actual React UI logic or DOM-based canvasing.
 
 ## Known Gaps
 
 1. **Web UI Frontends Unimplemented**
    - Severity: HIGH
    - Affected Package: `apps/web/src/app`
-   - Original Behavior: Deep Chat interface, rich Operator control panel, and transparent WebGL overlay canvas.
+   - Original Behavior: Deep Chat interface, rich Operator control panel, and transparent DOM-based overlay canvas.
    - Current Behavior: Next.js boilerplate empty page templates.
    - Recommended Action: Extract the original React view components and port them sequentially inside the Next.js routes.
 
