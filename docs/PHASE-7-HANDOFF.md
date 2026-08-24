@@ -1,7 +1,7 @@
 # Phase 7 handoff — default Hub-backed Siduri runtime
 
 **Phase:** 7 — runtime adoption
-**Status:** local implementation complete; hosted provider readiness pending
+**Status:** complete
 
 ## Delivered
 
@@ -18,3 +18,6 @@
 - default Siduri startup resolves the Hub provider and preserves citations;
 - optional provider failure does not corrupt other runtime organs;
 - local pack fallback remains test-covered.
+
+Hosted Siduri adapter verification passed against the deployed Hub/Teyvat
+provider with six cited results and the active Teyvat revision.

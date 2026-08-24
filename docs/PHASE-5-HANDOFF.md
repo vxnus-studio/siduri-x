@@ -1,7 +1,7 @@
 # Phase 5 handoff — connect Siduri to the hosted Hub
 
 **Phase:** 5 — production deployment and cross-boundary verification
-**Status:** blocked on external E Hub/Teyvat deployment
+**Status:** complete
 **Prerequisite:** the Hub lookup and Teyvat provider smoke checks pass.
 
 ## Siduri-owned gate
@@ -17,3 +17,6 @@
 
 Siduri must receive only public HTTPS URLs; it must never receive the Neon
 connection string or embedding API credentials.
+
+Production verification passed through Hub resolution with Teyvat revision and
+`gi-data` citations preserved.
