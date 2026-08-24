@@ -15,6 +15,15 @@ The CLI writes an E pack path into `siduri.config.json`:
 }
 ```
 
+The repository's first end-to-end fixture is:
+
+```text
+/home/zagin/Projects/vxnuslabs/architecture/e/packages/knowledge/fixtures/siduri-basics
+```
+
+Use that path while developing Siduri. It contains one cited fact:
+“Siduri is a persistent companion runtime.”
+
 At boot, `EKnowledgeAdapter` loads and validates the pack before exposing it as a
 `KnowledgeOrgan`. Invalid references, missing revisions, or hash mismatches
 fail before the runtime starts using the pack.
