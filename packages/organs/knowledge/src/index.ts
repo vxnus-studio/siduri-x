@@ -1,73 +1,32 @@
-import { KnowledgeOrgan, KnowledgeItem } from '@siduri-y/core';
+import { KnowledgeItem, KnowledgeOrgan } from '@siduri-y/core';
+import type { LoadedPack } from '@vxnus/e-pack';
+import type { RetrievalResult } from '@vxnus/e';
 
-export interface ETeyvatConfig {
-  baseUrl?: string;
-  timeoutMs?: number;
-}
+type EPackModule = typeof import('@vxnus/e-pack');
+const loadEPackModule = (): Promise<EPackModule> =>
+  new Function('specifier', 'return import(specifier)')('@vxnus/e-pack') as Promise<EPackModule>;
 
-export class ETeyvatAdapter implements KnowledgeOrgan {
-  private baseUrl: string;
-  private timeoutMs: number;
-  private revision: string | undefined;
+export interface EPackConfig { packPath: string; }
 
-  constructor(config?: ETeyvatConfig) {
-    this.baseUrl = (config?.baseUrl || 'https://eteyvat.krzgn.xyz').replace(/\/$/, '');
-    this.timeoutMs = config?.timeoutMs || 5000;
+export class EPackAdapter implements KnowledgeOrgan {
+  private loaded: Promise<LoadedPack>;
+
+  constructor(config: EPackConfig) {
+    if (!config.packPath) throw new Error('EPackAdapter requires packPath');
+    this.loaded = loadEPackModule().then(({ loadPack }) => loadPack(config.packPath));
   }
 
-  get currentRevision() {
-    return this.revision;
-  }
+  get currentRevision() { return this.loaded.then(pack => pack.revision.id); }
 
   async search(query: string): Promise<KnowledgeItem[]> {
-    if (!query || !query.trim()) return [];
-
-    const url = new URL('/api/knowledge/search', this.baseUrl);
-    url.searchParams.set('q', query.substring(0, 200));
-    url.searchParams.set('limit', '8');
-
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), this.timeoutMs);
-
-    try {
-      const response = await fetch(url.toString(), {
-        headers: { 'Accept': 'application/json' },
-        signal: controller.signal
-      });
-
-      clearTimeout(id);
-
-      if (!response.ok) {
-        throw new Error(`E-Teyvat search failed: ${response.statusText}`);
-      }
-
-      const value = await response.json();
-      if (!value || typeof value !== 'object') {
-        throw new Error("E-Teyvat response was not an object");
-      }
-
-      if (value.revision) {
-        this.revision = String(value.revision);
-      }
-
-      const results: KnowledgeItem[] = [];
-      const items = Array.isArray(value.items) ? value.items : [];
-
-      for (const item of items) {
-        if (!item || typeof item !== 'object' || typeof item.content !== 'string') continue;
-
-        const slug = item.slug || 'unknown';
-        
-        results.push({
-          content: item.content,
-          provenance: `${this.baseUrl}/api/entities/${item.kind || 'entities'}/${slug}`
-        });
-      }
-
-      return results;
-    } catch (e) {
-      clearTimeout(id);
-      throw e;
-    }
+    const pack = await this.loaded;
+    if (!query.trim()) return [];
+    const response = await pack.provider.retrieve({ query, mode: 'lexical', limit: 8 });
+    return response.results.map((result: RetrievalResult) => ({
+      content: result.content,
+      revision: result.revision,
+      citations: result.citations,
+      provenance: result.citations[0]?.sourceId || pack.manifest.publisher
+    }));
   }
 }

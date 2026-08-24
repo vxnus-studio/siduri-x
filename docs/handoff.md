@@ -1,5 +1,10 @@
 # Siduri-Y Handoff
 
+> **Current knowledge integration note (2026-08-24):** The knowledge organ
+> now consumes E-compatible local packs through `EPackAdapter`. This note
+> supersedes the older E-Teyvat-specific references below. The Hub provides
+> discovery and distribution; Siduri performs installation and lifecycle.
+
 ## Current Status
 **COMPLETE**
 Phase 3 (Web UI Parity) is complete. The Chat, Operator Console, and Overlay UI components have been ported and adapted to consume the `siduri-y` backend API correctly. The build pipeline is fully green. Parity is achieved.

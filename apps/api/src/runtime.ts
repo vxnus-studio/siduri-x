@@ -55,7 +55,7 @@ export class SiduriRuntime {
     
     let contextPrompt = "";
     if (knowledgeData.length > 0) {
-      contextPrompt += "KNOWLEDGE:\n" + knowledgeData.map(k => `- ${k.content}`).join("\n") + "\n";
+      contextPrompt += "KNOWLEDGE:\n" + knowledgeData.map(k => `- [revision:${k.revision} source:${k.provenance}] ${k.content}`).join("\n") + "\n";
     }
     if (memoryData.length > 0) {
       contextPrompt += "MEMORY:\n" + memoryData.map(m => `- ${m.subject} ${m.predicate} ${m.value}`).join("\n") + "\n";
@@ -130,11 +130,12 @@ export class SiduriRuntime {
       response: {
         spoken_ja: plan.language === 'ja' ? plan.speech : undefined,
         subtitle_en: plan.speech,
-        evidence_ids: []
+        evidence_ids: [...new Set(knowledgeData.flatMap(item => item.citations.map(citation => citation.chunkId || citation.documentId || citation.sourceId)))]
       },
       metadata: {
         memory_proposals: createdMemoryProposals,
-        behavioral_proposals: createdBehavioralProposals
+        behavioral_proposals: createdBehavioralProposals,
+        knowledge_revisions: [...new Set(knowledgeData.map(item => item.revision))]
       }
     };
   }

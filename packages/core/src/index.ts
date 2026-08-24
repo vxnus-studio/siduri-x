@@ -125,6 +125,15 @@ export interface BehaviorOrgan {
 export interface KnowledgeItem {
   content: string;
   provenance: string;
+  revision: string;
+  citations: KnowledgeCitation[];
+}
+
+export interface KnowledgeCitation {
+  sourceId: string;
+  documentId?: string;
+  chunkId?: string;
+  locator?: string;
 }
 
 export interface KnowledgeOrgan {

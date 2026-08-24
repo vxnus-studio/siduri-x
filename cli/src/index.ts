@@ -12,7 +12,7 @@ async function main() {
       { type: 'list', name: 'brain', message: 'Her brain?', choices: ['OpenRouter -> [model]'] },
       { type: 'list', name: 'voice', message: 'Her voice?', choices: ['VOICEVOX -> [voice/model]'] },
       { type: 'list', name: 'memory', message: 'Her memory?', choices: ['Local -> PostgreSQL'] },
-      { type: 'list', name: 'knowledge', message: 'Her external knowledge?', choices: ['e-Teyvat', 'custom -> AstraHospital'] },
+      { type: 'input', name: 'knowledgePack', message: 'Path to an E knowledge pack?', default: './knowledge-pack' },
       { type: 'list', name: 'behavior', message: 'Her starter behavior?', choices: ['Calm', 'Cheerful, Encouraging'] },
       { type: 'list', name: 'body', message: 'Her body?', choices: ['Live2D Cubism'] },
       { type: 'list', name: 'vision', message: 'Her vision?', choices: ['OpenRouter -> vision model'] }
@@ -33,9 +33,7 @@ async function main() {
       memory: {
         provider: answers.memory.includes('PostgreSQL') ? 'postgres' : 'unknown'
       },
-      knowledge: {
-        provider: answers.knowledge.includes('e-Teyvat') ? 'e-teyvat' : 'custom'
-      },
+      knowledge: { provider: 'e-pack', packPath: path.resolve(answers.knowledgePack) },
       behavior: {
         preset: answers.behavior,
         defaultDirectives: [

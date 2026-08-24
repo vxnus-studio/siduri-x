@@ -9,7 +9,8 @@ The API loads `siduri.config.json` and creates a `CompanionRuntime`. The runtime
 - **Memory**: Stores long-term claims and behaviors, strictly scoped by `companionId`.
 - **Behavior**: Compiles dynamic persona rules into system prompts.
 - **Voice**: Enqueues and synthesizes TTS audio.
-- **Knowledge**: Connects to external data sources.
+- **Knowledge**: Loads an E-compatible pack/provider and preserves citations
+  and revision metadata for the Brain.
 - **Vision**: Analyzes images.
 - **Body**: Controls avatar expressions (currently stubbed).
 

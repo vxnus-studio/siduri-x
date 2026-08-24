@@ -9,7 +9,9 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-y/core": "workspace:*"
+    "@siduri-y/core": "workspace:*",
+    "@vxnus/e": "link:../../../../architecture/e/packages/protocol",
+    "@vxnus/e-pack": "link:../../../../architecture/e/packages/pack"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
