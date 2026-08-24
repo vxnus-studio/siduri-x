@@ -26,7 +26,7 @@ app.post('/boot', requireRole(['OWNER']), async (req, res) => {
     const brain = new OpenRouterBrain({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.brain.model || 'gpt-4' });
     const memory = new PostgresMemoryOrgan({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri' });
     const voice = new VoicevoxAdapter({ baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.voice?.speakerId || 1 });
-    const knowledge = new EKnowledgeAdapter({ packPath: config.knowledge.packPath });
+    const knowledge = new EKnowledgeAdapter(config.knowledge);
     const vision = new OpenRouterVisionAdapter({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.vision?.model || 'gpt-4-vision' });
     const behavior = new ActiveSelfCompiler();
     const body = new Live2DAdapter({ port: 8089 });
@@ -221,7 +221,13 @@ const defaultCompanionConfig = {
   brain: { provider: 'openrouter', model: 'gpt-4o-mini' },
   voice: { provider: 'voicevox', speakerId: 1 },
   memory: { provider: 'postgres' },
-  knowledge: { provider: 'e-knowledge', packPath: process.env.SIDURI_KNOWLEDGE_PACK || '' },
+  knowledge: {
+    provider: (process.env.SIDURI_KNOWLEDGE_PROVIDER as 'e-knowledge' | 'e-hub') || 'e-knowledge',
+    packPath: process.env.SIDURI_KNOWLEDGE_PACK || '',
+    registryUrl: process.env.SIDURI_KNOWLEDGE_REGISTRY_URL || 'https://e.vxnus.xyz/api/packs',
+    packId: process.env.SIDURI_KNOWLEDGE_PACK_ID || '@vxnus/teyvat',
+    timeoutMs: Number(process.env.SIDURI_KNOWLEDGE_TIMEOUT_MS || 5000),
+  },
   behavior: { provider: 'active_self' },
   body: { provider: 'live2d' },
   vision: { provider: 'openrouter', model: 'gpt-4-vision' }
@@ -235,7 +241,7 @@ async function bootDefaultCompanion() {
   const brain = new OpenRouterBrain({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.brain.model || 'gpt-4o-mini' });
   const memory = new PostgresMemoryOrgan({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri' });
   const voice = new VoicevoxAdapter({ baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.voice?.speakerId || 1 });
-  const knowledge = new EKnowledgeAdapter({ packPath: config.knowledge.packPath });
+  const knowledge = new EKnowledgeAdapter(config.knowledge);
   const vision = new OpenRouterVisionAdapter({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.vision?.model || 'gpt-4-vision' });
   const behavior = new ActiveSelfCompiler();
   const body = new Live2DAdapter({ port: 8089 });

@@ -1,7 +1,7 @@
 # Phase 1 handoff — Siduri remote knowledge
 
 **Phase:** 1 — E-compatible remote provider
-**Status:** planned
+**Status:** implementation complete; hosted end-to-end verification pending
 **Scope:** discover and consume an E provider through the E Hub registry.
 Local packs remain supported.
 
