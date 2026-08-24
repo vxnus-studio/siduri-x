@@ -17,6 +17,18 @@ describe('EKnowledgeAdapter', () => {
     expect(await adapter.search('   ')).toEqual([]);
   });
 
+  test('falls back to lexical when semantic capability is unavailable', async () => {
+    const fetchMock = jest.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.endsWith('/manifest')) return { ok: true, status: 200, json: async () => ({ id: '@vxnus/teyvat', name: 'Teyvat', publisher: 'vxnuslabs', version: '1.0.0', schemaVersion: '1.0', sources: [{ id: 'gi-data', title: 'gi-data', license: 'MIT' }], capabilities: { lexicalSearch: true, semanticSearch: false, structuredEntities: true, relations: true, revisions: true } }) } as Response;
+      expect(JSON.parse(String(init?.body)).mode).toBe('lexical');
+      return { ok: true, status: 200, json: async () => ({ revision: 'r1', results: [{ id: 'c1', content: 'lexical fallback', revision: 'r1', citations: [{ sourceId: 'gi-data', chunkId: 'c1' }] }] }) } as Response;
+    });
+    const adapter = new EKnowledgeAdapter({ provider: 'e-remote', baseUrl: 'https://eteyvat.example/api/knowledge', preferredMode: 'semantic' });
+    await expect(adapter.search('fallback')).resolves.toMatchObject([{ content: 'lexical fallback' }]);
+    fetchMock.mockRestore();
+  });
+
   test('loads an E remote provider and preserves its citation contract', async () => {
     const fetchMock = jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = String(input);

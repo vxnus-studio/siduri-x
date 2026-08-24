@@ -13,6 +13,7 @@ export interface EKnowledgeConfig {
   registryUrl?: string;
   packId?: string;
   timeoutMs?: number;
+  preferredMode?: 'lexical' | 'semantic' | 'hybrid';
 }
 
 async function resolveHubProvider(config: EKnowledgeConfig, module: EKnowledgeModule): Promise<KnowledgeProvider> {
@@ -29,8 +30,10 @@ async function resolveHubProvider(config: EKnowledgeConfig, module: EKnowledgeMo
 
 export class EKnowledgeAdapter implements KnowledgeOrgan {
   private loaded: Promise<LoadedPack | { provider: KnowledgeProvider; manifest: Awaited<ReturnType<KnowledgeProvider['manifest']>> }>;
+  private readonly preferredMode: EKnowledgeConfig['preferredMode'];
 
   constructor(config: EKnowledgeConfig) {
+    this.preferredMode = config.preferredMode ?? 'lexical';
     this.loaded = loadEKnowledgeModule().then(async (module) => {
       if (config.provider === 'e-hub') {
         const provider = await resolveHubProvider(config, module);
@@ -50,7 +53,18 @@ export class EKnowledgeAdapter implements KnowledgeOrgan {
   async search(query: string): Promise<KnowledgeItem[]> {
     const pack = await this.loaded;
     if (!query.trim()) return [];
-    const response = await pack.provider.retrieve({ query, mode: 'lexical', limit: 8 });
+    const requestedMode = this.preferredMode;
+    const manifest = pack.manifest;
+    const modeSupported = requestedMode === 'lexical' || manifest.capabilities.semanticSearch;
+    let response;
+    try {
+      response = await pack.provider.retrieve({ query, mode: modeSupported ? requestedMode : 'lexical', limit: 8 });
+    } catch (error) {
+      if (requestedMode === 'lexical') throw error;
+      // Semantic infrastructure is optional: an outage must not remove the
+      // provider's cited lexical path.
+      response = await pack.provider.retrieve({ query, mode: 'lexical', limit: 8 });
+    }
     return response.results.map((result: RetrievalResult) => ({
       content: result.content,
       revision: result.revision,
