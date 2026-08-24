@@ -1,7 +1,7 @@
 # Siduri-Y Handoff
 
 > **Current knowledge integration note (2026-08-24):** The knowledge organ
-> now consumes E-compatible local packs through `EPackAdapter`. This note
+> now consumes E-compatible local packs through `EKnowledgeAdapter`. This note
 > supersedes the older E-Teyvat-specific references below. The Hub provides
 > discovery and distribution; Siduri performs installation and lifecycle.
 

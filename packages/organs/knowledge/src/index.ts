@@ -1,19 +1,19 @@
 import { KnowledgeItem, KnowledgeOrgan } from '@siduri-y/core';
-import type { LoadedPack } from '@vxnus/e-pack';
+import type { LoadedPack } from '@vxnus/e-knowledge';
 import type { RetrievalResult } from '@vxnus/e';
 
-type EPackModule = typeof import('@vxnus/e-pack');
-const loadEPackModule = (): Promise<EPackModule> =>
-  new Function('specifier', 'return import(specifier)')('@vxnus/e-pack') as Promise<EPackModule>;
+type EKnowledgeModule = typeof import('@vxnus/e-knowledge');
+const loadEKnowledgeModule = (): Promise<EKnowledgeModule> =>
+  new Function('specifier', 'return import(specifier)')('@vxnus/e-knowledge') as Promise<EKnowledgeModule>;
 
-export interface EPackConfig { packPath: string; }
+export interface EKnowledgeConfig { packPath: string; }
 
-export class EPackAdapter implements KnowledgeOrgan {
+export class EKnowledgeAdapter implements KnowledgeOrgan {
   private loaded: Promise<LoadedPack>;
 
-  constructor(config: EPackConfig) {
-    if (!config.packPath) throw new Error('EPackAdapter requires packPath');
-    this.loaded = loadEPackModule().then(({ loadPack }) => loadPack(config.packPath));
+  constructor(config: EKnowledgeConfig) {
+    if (!config.packPath) throw new Error('EKnowledgeAdapter requires packPath');
+    this.loaded = loadEKnowledgeModule().then(({ loadPack }) => loadPack(config.packPath));
   }
 
   get currentRevision() { return this.loaded.then(pack => pack.revision.id); }

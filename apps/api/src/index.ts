@@ -4,7 +4,7 @@ import { SiduriRuntime } from './runtime';
 import { OpenRouterBrain } from '@siduri-y/brain';
 import { PostgresMemoryOrgan } from '@siduri-y/memory';
 import { VoicevoxAdapter } from '@siduri-y/voice';
-import { EPackAdapter } from '@siduri-y/knowledge';
+import { EKnowledgeAdapter } from '@siduri-y/knowledge';
 import { OpenRouterVisionAdapter } from '@siduri-y/vision';
 import { ActiveSelfCompiler } from '@siduri-y/behavior';
 import { Live2DAdapter } from '@siduri-y/body';
@@ -26,7 +26,7 @@ app.post('/boot', requireRole(['OWNER']), async (req, res) => {
     const brain = new OpenRouterBrain({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.brain.model || 'gpt-4' });
     const memory = new PostgresMemoryOrgan({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri' });
     const voice = new VoicevoxAdapter({ baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.voice?.speakerId || 1 });
-    const knowledge = new EPackAdapter({ packPath: config.knowledge.packPath });
+    const knowledge = new EKnowledgeAdapter({ packPath: config.knowledge.packPath });
     const vision = new OpenRouterVisionAdapter({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.vision?.model || 'gpt-4-vision' });
     const behavior = new ActiveSelfCompiler();
     const body = new Live2DAdapter({ port: 8089 });
@@ -221,7 +221,7 @@ const defaultCompanionConfig = {
   brain: { provider: 'openrouter', model: 'gpt-4o-mini' },
   voice: { provider: 'voicevox', speakerId: 1 },
   memory: { provider: 'postgres' },
-  knowledge: { provider: 'e-pack', packPath: process.env.SIDURI_KNOWLEDGE_PACK || '' },
+  knowledge: { provider: 'e-knowledge', packPath: process.env.SIDURI_KNOWLEDGE_PACK || '' },
   behavior: { provider: 'active_self' },
   body: { provider: 'live2d' },
   vision: { provider: 'openrouter', model: 'gpt-4-vision' }
@@ -235,7 +235,7 @@ async function bootDefaultCompanion() {
   const brain = new OpenRouterBrain({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.brain.model || 'gpt-4o-mini' });
   const memory = new PostgresMemoryOrgan({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri' });
   const voice = new VoicevoxAdapter({ baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.voice?.speakerId || 1 });
-  const knowledge = new EPackAdapter({ packPath: config.knowledge.packPath });
+  const knowledge = new EKnowledgeAdapter({ packPath: config.knowledge.packPath });
   const vision = new OpenRouterVisionAdapter({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.vision?.model || 'gpt-4-vision' });
   const behavior = new ActiveSelfCompiler();
   const body = new Live2DAdapter({ port: 8089 });

@@ -33,7 +33,7 @@ async function main() {
       memory: {
         provider: answers.memory.includes('PostgreSQL') ? 'postgres' : 'unknown'
       },
-      knowledge: { provider: 'e-pack', packPath: path.resolve(answers.knowledgePack) },
+      knowledge: { provider: 'e-knowledge', packPath: path.resolve(answers.knowledgePack) },
       behavior: {
         preset: answers.behavior,
         defaultDirectives: [

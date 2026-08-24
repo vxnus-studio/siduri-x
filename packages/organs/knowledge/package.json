@@ -11,7 +11,7 @@
   "dependencies": {
     "@siduri-y/core": "workspace:*",
     "@vxnus/e": "link:../../../../architecture/e/packages/protocol",
-    "@vxnus/e-pack": "link:../../../../architecture/e/packages/pack"
+    "@vxnus/e-knowledge": "link:../../../../architecture/e/packages/knowledge"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

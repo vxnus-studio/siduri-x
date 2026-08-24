@@ -9,20 +9,20 @@ The CLI writes an E pack path into `siduri.config.json`:
 ```json
 {
   "knowledge": {
-    "provider": "e-pack",
+    "provider": "e-knowledge",
     "packPath": "/path/to/knowledge-pack"
   }
 }
 ```
 
-At boot, `EPackAdapter` loads and validates the pack before exposing it as a
+At boot, `EKnowledgeAdapter` loads and validates the pack before exposing it as a
 `KnowledgeOrgan`. Invalid references, missing revisions, or hash mismatches
 fail before the runtime starts using the pack.
 
 ## Runtime boundary
 
 ```text
-E pack → EPackAdapter → KnowledgeOrgan → SiduriRuntime → Brain
+E knowledge → EKnowledgeAdapter → KnowledgeOrgan → SiduriRuntime → Brain
 ```
 
 Retrieved context includes its E revision and citations. The Hub will later
