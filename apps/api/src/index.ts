@@ -222,7 +222,9 @@ const defaultCompanionConfig = {
   voice: { provider: 'voicevox', speakerId: 1 },
   memory: { provider: 'postgres' },
   knowledge: {
-    provider: (process.env.SIDURI_KNOWLEDGE_PROVIDER as 'e-knowledge' | 'e-remote' | 'e-hub') || 'e-knowledge',
+    // The production default is the public E Hub; local packs remain an
+    // explicit opt-in through SIDURI_KNOWLEDGE_PROVIDER=e-knowledge.
+    provider: (process.env.SIDURI_KNOWLEDGE_PROVIDER as 'e-knowledge' | 'e-remote' | 'e-hub') || 'e-hub',
     packPath: process.env.SIDURI_KNOWLEDGE_PACK || '',
     registryUrl: process.env.SIDURI_KNOWLEDGE_REGISTRY_URL || 'https://e.vxnus.xyz/api/packs',
     packId: process.env.SIDURI_KNOWLEDGE_PACK_ID || '@vxnus/teyvat',

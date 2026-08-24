@@ -11,6 +11,8 @@
 - Set `SIDURI_KNOWLEDGE_PACK_ID=@vxnus/teyvat`.
 - Set `SIDURI_KNOWLEDGE_MODE=lexical` until the provider advertises semantic
   readiness.
+- The default API runtime now selects `e-hub`; local packs remain explicit via
+  `SIDURI_KNOWLEDGE_PROVIDER=e-knowledge`.
 - Verify startup, retrieval, revision, and citations in runtime evidence.
 
 Siduri must receive only public HTTPS URLs; it must never receive the Neon
