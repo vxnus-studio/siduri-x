@@ -1,0 +1,28 @@
+# Phase 3 handoff — Siduri semantic knowledge
+
+**Phase:** 3 — optional vector/hybrid retrieval
+**Status:** planned
+**Prerequisite:** Phase 2 hosted provider is live and Hub-backed discovery is
+verified.
+
+## Outcome
+
+Siduri uses semantic or hybrid retrieval when the provider advertises it and
+falls back to lexical retrieval when it does not or when vector infrastructure
+is unavailable.
+
+## Siduri-owned work
+
+- Read provider capabilities during manifest validation.
+- Select `hybrid` or `semantic` only when supported.
+- Preserve cited results and revision IDs in runtime context/evidence.
+- Keep lexical fallback bounded and observable.
+- Add tests for capability mismatch, embedding outage, and lexical fallback.
+
+## Completion gate
+
+- lexical-only Teyvat providers remain fully supported;
+- unsupported modes are never sent to providers;
+- semantic/hybrid failures do not prevent optional knowledge startup;
+- prompt context and evidence identifiers remain stable across modes;
+- no vector database or embedding SDK is coupled directly to Siduri.

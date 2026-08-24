@@ -1,7 +1,7 @@
 # Phase 2 handoff — Hub-backed Siduri knowledge
 
 **Phase:** 2 — hosted E provider and Hub promotion
-**Status:** planned
+**Status:** local integration verification complete; hosted deployment pending
 **Prerequisite:** Phase 1 remote provider selection is pushed.
 
 ## Outcome
