@@ -39,6 +39,8 @@ Scan classifications and the next regression command are maintained in
 [`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).
 Review vocabulary is standardized in
 [`NEUTRAL-TERMINOLOGY-GLOSSARY.md`](./NEUTRAL-TERMINOLOGY-GLOSSARY.md).
+HTTP boundary examples are maintained in
+[`T1-API-CONTRACT-EXAMPLES.md`](./T1-API-CONTRACT-EXAMPLES.md).
 
 ## Next implementation slice
 

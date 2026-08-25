@@ -4,6 +4,8 @@ Status: authorized next code slice; no T1 runtime implementation has started
 
 Field and error names must follow
 [`NEUTRAL-TERMINOLOGY-GLOSSARY.md`](./NEUTRAL-TERMINOLOGY-GLOSSARY.md).
+Request/response envelopes are illustrated in
+[`T1-API-CONTRACT-EXAMPLES.md`](./T1-API-CONTRACT-EXAMPLES.md).
 
 This plan translates the T1 contracts into a bounded file-level change. It is
 deliberately narrower than full Siduri behavior extraction. The implementation

@@ -82,6 +82,8 @@ When documents disagree, use this order:
 37. [Neutral terminology glossary](./NEUTRAL-TERMINOLOGY-GLOSSARY.md) —
     canonical meanings for actor, role, channel, audience, subject, memory,
     evidence, and approval.
+38. [T1 neutral API contract examples](./T1-API-CONTRACT-EXAMPLES.md) — public,
+    direct, private, operator, compatibility, and rejection envelopes.
 
 ## Current status
 

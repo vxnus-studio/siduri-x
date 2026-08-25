@@ -7,6 +7,9 @@ shapes for T1 P1/P2. It is a target for `@siduri-y/core` and the API
 compatibility mapper. It does not authorize changing later memory, prompt, or
 UI behavior before the boundary is implemented.
 
+Concrete HTTP examples are in
+[`T1-API-CONTRACT-EXAMPLES.md`](./T1-API-CONTRACT-EXAMPLES.md).
+
 ## Context model
 
 ```ts
