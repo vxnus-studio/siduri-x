@@ -162,7 +162,7 @@ memory effects, citations, and visible chat behavior.
 
 ## Phase 5 — Learned behavior and Active Self parity
 
-Status: next
+Status: in progress
 
 Port the original behavioral-memory model and compiler.
 
@@ -197,6 +197,14 @@ Required behavior:
 - E-Teyvat/provider citations with revisions;
 - grounded response approval before public output;
 - no raw frame persistence or leakage into chat/public events.
+
+Current progress: Siduri-Y now has a decoupled fixture observation organ with
+bounded retention, duplicate suppression, expiry, confidence, evidence IDs,
+and malformed-provider handling. The API exposes `GET /observations` and
+`POST /dev/mock-observation`.
+
+Remaining work for this phase: connect trusted knowledge grounding, response
+plans, operator approval, and live redacted capture.
 
 Exit criteria: the fixture observation flow in the original repo has an
 equivalent Siduri-Y flow and metadata contract.

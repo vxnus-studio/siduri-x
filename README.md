@@ -52,6 +52,8 @@ For the behavioral parity plan between this decoupled implementation and the
 original Siduri repository, see [Siduri-Y parity roadmap](./docs/SIDURI_PARITY_ROADMAP.md).
 The current implementation handoff is documented in
 [Phase 1 parity handoff](./docs/PHASE-1-PARITY-HANDOFF.md).
+The grounded observation work is tracked in
+[Phase 2 grounded observation](./docs/PHASE-2-GROUNDED-OBSERVATION.md).
 
 See [CLI usage](./docs/cli.md), [configuration](./docs/configuration.md), and
 [development and release](./docs/development.md) for details.

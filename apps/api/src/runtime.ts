@@ -125,7 +125,8 @@ export class SiduriRuntime {
       role: item.role,
       content: item.content.slice(0, 2000).replace(/\0/g, ''),
     })) as Message[];
-    this.conversationHistory = [...boundedHistory, { role: 'user', content: message }].slice(-20);
+    const currentMessage: Message = { role: 'user', content: message };
+    this.conversationHistory = [...boundedHistory, currentMessage].slice(-20);
 
     const normalizedMessage = message.replace(/\s+/g, ' ').trim().toLowerCase();
     const explicitTeaching = extractExplicitTeaching(message);

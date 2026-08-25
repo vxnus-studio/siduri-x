@@ -10,6 +10,7 @@ import { EKnowledgeAdapter } from '@siduri-y/knowledge';
 import { OpenRouterVisionAdapter } from '@siduri-y/vision';
 import { ActiveSelfCompiler } from '@siduri-y/behavior';
 import { Live2DAdapter } from '@siduri-y/body';
+import { FixtureObservationOrgan } from '@siduri-y/observation';
 import { attachIdentity, requireRole, Identity } from './auth';
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 const runtimes = new Map<string, SiduriRuntime>();
+let observationOrgan: FixtureObservationOrgan | undefined;
 
 function createBrain(config: any) {
   const provider = config.provider || 'openrouter';
@@ -248,12 +250,21 @@ app.post('/dev/memory/reset', requireRole(['OWNER']), async (req, res) => res.js
 app.get('/platforms/events', (req, res) => res.json({ events: [] }));
 app.get('/platforms/actions', (req, res) => res.json({ actions: [] }));
 app.get('/evidence', (req, res) => res.json({ results: [] }));
-app.get('/observations', (req, res) => res.json({ observations: [] }));
+app.get('/observations', (req, res) => res.json({ observations: observationOrgan?.current() ?? [] }));
 
 app.post('/dev/mock-response', (req, res) => res.json({ accepted: true }));
 app.post('/dev/observe-and-respond', (req, res) => res.json({ accepted: true }));
 app.post('/dev/approve-response', (req, res) => res.json({ approved: true }));
-app.post('/dev/mock-observation', (req, res) => res.json({ accepted: true }));
+app.post('/dev/mock-observation', async (req, res) => {
+  if (!observationOrgan) return res.status(503).json({ accepted: false, reason: 'observation_unavailable' });
+  const result = await observationOrgan.ingest(
+    new Uint8Array([115, 121, 110, 116, 104, 101, 116, 105, 99]),
+    'fixture-genshin',
+    'configured-vision',
+  );
+  if (!result.observation) return res.status(result.duplicate ? 200 : 409).json({ accepted: false, ...result });
+  res.status(202).json({ accepted: true, observation: result.observation });
+});
 
 app.post('/platforms/actions/suggest', (req, res) => res.json({ suggested: true }));
 app.post('/platforms/actions/approve', (req, res) => res.json({ approved: true }));
@@ -332,6 +343,9 @@ async function bootDefaultCompanion() {
   const voice = createVoice(config.voice);
   const knowledge = createKnowledge(config.knowledge);
   const vision = createVision(config.vision);
+  observationOrgan = new FixtureObservationOrgan(
+    vision ?? { analyze: async () => JSON.stringify({ readings: [] }) },
+  );
   const behavior = createBehavior(config.behavior);
   const body = createBody(config.body);
 

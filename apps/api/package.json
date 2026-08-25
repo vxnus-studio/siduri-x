@@ -14,6 +14,7 @@
     "@siduri-y/core": "workspace:*",
     "@siduri-y/knowledge": "workspace:*",
     "@siduri-y/memory": "workspace:*",
+    "@siduri-y/observation": "workspace:*",
     "@siduri-y/vision": "workspace:*",
     "@siduri-y/voice": "workspace:*",
     "cors": "^2.8.5",
