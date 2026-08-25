@@ -41,6 +41,8 @@ Review vocabulary is standardized in
 [`NEUTRAL-TERMINOLOGY-GLOSSARY.md`](./NEUTRAL-TERMINOLOGY-GLOSSARY.md).
 HTTP boundary examples are maintained in
 [`T1-API-CONTRACT-EXAMPLES.md`](./T1-API-CONTRACT-EXAMPLES.md).
+The expected manual experience sequence is maintained in
+[`PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md`](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md).
 
 ## Next implementation slice
 

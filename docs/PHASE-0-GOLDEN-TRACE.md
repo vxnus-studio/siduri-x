@@ -6,6 +6,9 @@ This trace is the expected observable sequence for a fresh public companion.
 It is a specification for ported tests, not a claim about the current
 Siduri-Y runtime. Values are deliberately generic.
 
+The reviewer-facing manual walkthrough is in
+[`PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md`](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md).
+
 ## Trace context
 
 ```text

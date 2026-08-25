@@ -20,6 +20,8 @@ Fixture construction and personal-value exclusion rules are defined in
 
 The state-transition form of the baseline is specified in
 [`PHASE-0-GOLDEN-TRACE.md`](./PHASE-0-GOLDEN-TRACE.md).
+The manual vertical-slice procedure is specified in
+[`PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md`](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md).
 
 ## Baseline scenarios
 

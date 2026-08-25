@@ -78,6 +78,9 @@ boundary, not only direct organ calls:
 Each scenario needs positive and negative assertions, a correlation ID, and a
 record in the verification manifest.
 
+The reviewer procedure is in
+[`PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md`](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md).
+
 ## Forbidden release claims
 
 Do not claim “public ready,” “blank slate,” “behavioral parity,” or “memory

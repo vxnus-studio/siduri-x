@@ -84,6 +84,8 @@ When documents disagree, use this order:
     evidence, and approval.
 38. [T1 neutral API contract examples](./T1-API-CONTRACT-EXAMPLES.md) — public,
     direct, private, operator, compatibility, and rejection envelopes.
+39. [Phase 0 neutral manual walkthrough](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md)
+    — expected blank-slate experience sequence and reviewer evidence record.
 
 ## Current status
 
