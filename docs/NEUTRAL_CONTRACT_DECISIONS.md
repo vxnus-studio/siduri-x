@@ -7,6 +7,9 @@ extraction from the original Siduri behavior. It is intentionally separate
 from the current TypeScript types: those types contain compatibility names and
 must not be treated as the final public contract.
 
+Use [`NEUTRAL-TERMINOLOGY-GLOSSARY.md`](./NEUTRAL-TERMINOLOGY-GLOSSARY.md) when
+reviewing field names or deciding whether a legacy term is being overloaded.
+
 ## Decision 1 — actor authorization is not audience
 
 An authenticated actor answers: “what operations may this caller perform?”

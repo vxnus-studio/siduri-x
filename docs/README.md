@@ -79,6 +79,9 @@ When documents disagree, use this order:
     boundary, mapper decisions, proof, and stop conditions.
 36. [Forbidden-default scan baseline](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md) —
     reproducible scan, classified current hits, and release disposition.
+37. [Neutral terminology glossary](./NEUTRAL-TERMINOLOGY-GLOSSARY.md) —
+    canonical meanings for actor, role, channel, audience, subject, memory,
+    evidence, and approval.
 
 ## Current status
 

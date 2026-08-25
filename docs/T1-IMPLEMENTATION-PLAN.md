@@ -2,6 +2,9 @@
 
 Status: authorized next code slice; no T1 runtime implementation has started
 
+Field and error names must follow
+[`NEUTRAL-TERMINOLOGY-GLOSSARY.md`](./NEUTRAL-TERMINOLOGY-GLOSSARY.md).
+
 This plan translates the T1 contracts into a bounded file-level change. It is
 deliberately narrower than full Siduri behavior extraction. The implementation
 must establish context and compatibility mapping first, then stop for evidence

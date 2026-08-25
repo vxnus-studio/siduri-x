@@ -37,6 +37,8 @@ Exact source locations and severity are maintained in
 blocker resolved because a contract document exists.
 Scan classifications and the next regression command are maintained in
 [`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).
+Review vocabulary is standardized in
+[`NEUTRAL-TERMINOLOGY-GLOSSARY.md`](./NEUTRAL-TERMINOLOGY-GLOSSARY.md).
 
 ## Next implementation slice
 
