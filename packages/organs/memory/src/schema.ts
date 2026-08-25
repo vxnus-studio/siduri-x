@@ -8,6 +8,19 @@ CREATE TABLE IF NOT EXISTS memory_claims (
   status VARCHAR NOT NULL,
   scope VARCHAR NOT NULL,
   evidence JSONB,
+  provenance VARCHAR NOT NULL DEFAULT 'siduri_y_memory',
+  source_event_id VARCHAR,
+  claim_type VARCHAR NOT NULL DEFAULT 'semantic',
+  authority VARCHAR NOT NULL DEFAULT 'user_explicit',
+  user_confirmation VARCHAR NOT NULL DEFAULT 'none',
+  sensitivity VARCHAR NOT NULL DEFAULT 'private',
+  allowed_audiences JSONB NOT NULL DEFAULT '[]'::jsonb,
+  confidence REAL NOT NULL DEFAULT 1,
+  asserted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  valid_from TIMESTAMPTZ,
+  valid_until TIMESTAMPTZ,
+  supersedes UUID,
+  replaces UUID,
   search_document TSVECTOR GENERATED ALWAYS AS (
     to_tsvector('english', subject || ' ' || predicate || ' ' || value)
   ) STORED
@@ -15,6 +28,16 @@ CREATE TABLE IF NOT EXISTS memory_claims (
 
 CREATE INDEX IF NOT EXISTS memory_claims_companion_id_idx ON memory_claims(companion_id);
 CREATE INDEX IF NOT EXISTS memory_claims_search_idx ON memory_claims USING GIN (search_document);
+
+CREATE TABLE IF NOT EXISTS memory_source_events (
+  id VARCHAR PRIMARY KEY,
+  companion_id VARCHAR NOT NULL,
+  source_type VARCHAR NOT NULL,
+  occurred_at TIMESTAMPTZ NOT NULL,
+  payload JSONB NOT NULL,
+  schema_version INTEGER NOT NULL DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS memory_source_events_companion_idx ON memory_source_events(companion_id);
 
 CREATE TABLE IF NOT EXISTS memory_directives (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -55,6 +55,15 @@ type ChatResponse = {
   metadata?: {
     memory_proposals?: MemoryProposalData[];
     behavioral_proposals?: BehavioralProposalData[];
+    citations?: Array<{
+      evidence_id: string;
+      source_id?: string;
+      document_id?: string;
+      chunk_id?: string;
+      revision?: string;
+      provenance?: string;
+      preview?: string;
+    }>;
   };
 };
 
@@ -202,6 +211,10 @@ export default function ChatClient() {
         id: "default", // hardcoded default companion for now
         message: content,
         role: "VIEWER",
+        history: conversation.messages.slice(-20).map((item) => ({
+          role: item.role,
+          content: item.content,
+        })),
       });
       if ("error" in data) throw new Error(data.error);
       const plan = data.response;

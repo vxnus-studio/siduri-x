@@ -171,12 +171,14 @@ export class Live2DAdapter implements BodyOrgan {
     });
   }
 
-  speak(speechId: string): void {
+  speak(speechId: string, text?: string, language?: string): void {
     this.lastSpeechId = speechId;
     this.state = 'speaking';
     this.broadcast({
       type: 'speech',
       speechId: speechId,
+      text,
+      language,
       state: this.state,
       timestamp: Date.now()
     });

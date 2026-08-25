@@ -23,7 +23,13 @@ export default function OverlayClient() {
         if (incoming.type === "speech") {
           setState("speaking");
           setStatus("online · speaking");
-          // Optionally handle text if present, but the body organ only sends speechId
+          if (typeof incoming.text === "string") {
+            setCaptions({
+              ja: incoming.language === "ja" ? incoming.text : "",
+              en: incoming.language === "en" ? incoming.text : "",
+              id: incoming.language === "id" ? incoming.text : "",
+            });
+          }
         } else if (incoming.type === "state_transition" || incoming.type === "lifecycle") {
           setState(incoming.state === "speaking" ? "speaking" : "idle");
           setStatus(incoming.state === "speaking" ? "online · speaking" : "online · idle");

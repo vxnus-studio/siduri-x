@@ -8,6 +8,7 @@ export interface VoicevoxConfig {
 interface SpeechJob {
   id: string;
   text: string;
+  language: string;
   priority: number;
   sequence: number;
 }
@@ -26,6 +27,7 @@ export class VoicevoxAdapter implements VoiceOrgan {
     this.queue.push({
       id,
       text,
+      language,
       priority,
       sequence: this.sequenceCounter++
     });
@@ -67,13 +69,13 @@ export class VoicevoxAdapter implements VoiceOrgan {
       const job = this.queue.shift()!;
       this.currentJob = job.id;
 
-      this.emit({ type: 'STARTED', speechId: job.id });
+      this.emit({ type: 'STARTED', speechId: job.id, text: job.text, language: job.language });
 
       try {
         const audioBuffer = await this.synthesize(job.text);
-        this.emit({ type: 'COMPLETED', speechId: job.id, audioBuffer });
+        this.emit({ type: 'COMPLETED', speechId: job.id, text: job.text, language: job.language, audioBuffer });
       } catch (error) {
-        this.emit({ type: 'FAILED', speechId: job.id });
+        this.emit({ type: 'FAILED', speechId: job.id, text: job.text, language: job.language });
       }
 
       this.currentJob = undefined;

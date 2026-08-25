@@ -102,13 +102,15 @@ app.put('/me', requireRole(['OWNER']), (req, res) => res.json({ success: true })
 
 // CHAT
 app.post('/chat', attachIdentity, async (req, res) => {
-  const { id, message } = req.body;
+  const { id, message, history } = req.body;
   const identity = (req as any).identity as Identity;
   const runtime = runtimes.get(id);
   if (!runtime) return res.status(404).json({ error: "Companion not found" });
 
   try {
-    const response = await runtime.handleUserMessage(message, identity.role);
+    // `/chat` is Siduri's private chat surface. Viewer/platform traffic will
+    // use a separate event path once platform parity is migrated.
+    const response = await runtime.handleUserMessage(message, 'OWNER', history);
     res.json(response);
   } catch (e: any) {
     res.status(500).json({ error: e.message });

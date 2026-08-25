@@ -98,4 +98,47 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
     expect(result).toEqual([]);
     expect(poolQueryMock).not.toHaveBeenCalled();
   });
+
+  test('preserves provenance fields and excludes claims outside the requested scope', async () => {
+    poolQueryMock.mockResolvedValueOnce({ rows: [{
+      id: 'claim-1',
+      companion_id: 'test-id',
+      subject: 'primary_user',
+      predicate: 'preferred_address',
+      value: 'Captain',
+      status: 'PENDING',
+      scope: 'OWNER',
+      evidence: ['I said so'],
+      provenance: 'private_chat',
+      source_event_id: 'evt-1',
+      claim_type: 'relationship',
+      authority: 'user_explicit',
+      user_confirmation: 'none',
+      sensitivity: 'private',
+      allowed_audiences: ['MASTER_PRIVATE'],
+      confidence: 1,
+    }] });
+
+    const claim = await organ.proposeClaim({
+      subject: 'primary_user',
+      predicate: 'preferred_address',
+      value: 'Captain',
+      scope: 'OWNER',
+      evidence: ['I said so'],
+      provenance: 'private_chat',
+      sourceEventId: 'evt-1',
+      claimType: 'relationship',
+      sensitivity: 'private',
+      allowedAudiences: ['MASTER_PRIVATE'],
+    });
+
+    expect(claim.provenance).toBe('private_chat');
+    expect(claim.sourceEventId).toBe('evt-1');
+    expect(poolQueryMock.mock.calls[0][1]).toEqual(expect.arrayContaining(['private_chat', 'evt-1']));
+
+    poolQueryMock.mockClear();
+    poolQueryMock.mockResolvedValueOnce({ rows: [] });
+    await organ.searchClaims('Captain', 'VIEWER');
+    expect(poolQueryMock.mock.calls[0][0]).toContain("scope = 'PUBLIC' OR scope = 'VIEWER'");
+  });
 });

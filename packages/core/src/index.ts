@@ -27,12 +27,31 @@ export interface BrainContext {
   systemPrompt: string;
   contextPrompt: string;
   recentMessages: Message[];
+  recipient?: MemoryScope;
+}
+
+export type ClaimType = 'semantic' | 'preference' | 'episodic' | 'relationship';
+export type ClaimAuthority = 'user_explicit' | 'user_correction' | 'import' | 'repeated_dialogue' | 'inference' | 'observation';
+export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUPERSEDED' | 'REVOKED';
+
+export interface SourceEvent {
+  id: string;
+  sourceType: string;
+  occurredAt: string;
+  payload: Record<string, unknown>;
+  schemaVersion?: number;
 }
 
 export interface MemoryProposal {
   subject: string;
   predicate: string;
   value: string;
+  content?: string;
+  provenance?: string;
+  claimType?: ClaimType;
+  sensitivity?: string;
+  allowedAudiences?: string[];
+  sourceEventId?: string;
 }
 
 export interface BehaviorProposal {
@@ -60,10 +79,23 @@ export interface Claim {
   subject: string;
   predicate: string;
   value: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: ClaimStatus;
   evidence?: string[];
   scope: MemoryScope;
   companionId: string; // Strict isolation boundary
+  provenance?: string;
+  sourceEventId?: string;
+  claimType?: ClaimType;
+  authority?: ClaimAuthority;
+  userConfirmation?: 'explicit' | 'implied' | 'none';
+  sensitivity?: string;
+  allowedAudiences?: string[];
+  confidence?: number;
+  assertedAt?: string;
+  validFrom?: string;
+  validUntil?: string;
+  supersedes?: string;
+  replaces?: string;
 }
 
 export interface BehaviorDirective {
@@ -91,12 +123,16 @@ export interface MemoryOrgan {
   rejectDirective(id: string): Promise<void>;
   revokeDirective(id: string): Promise<void>;
   disableDirective(id: string): Promise<void>;
+  addSourceEvent?(event: SourceEvent): Promise<SourceEvent>;
+  getSourceEvent?(id: string): Promise<SourceEvent | undefined>;
 }
 
 // Voice Queue
 export interface AudioEvent {
   type: 'STARTED' | 'COMPLETED' | 'FAILED';
   speechId: string;
+  text?: string;
+  language?: string;
   audioBuffer?: Uint8Array;
 }
 
@@ -143,6 +179,7 @@ export interface KnowledgeOrgan {
 // Body
 export interface BodyOrgan {
   setExpression(expression: string): void;
-  speak(speechId: string): void;
+  speak(speechId: string, text?: string, language?: string): void;
   act(action: string): void;
+  completeAction?(): void;
 }
