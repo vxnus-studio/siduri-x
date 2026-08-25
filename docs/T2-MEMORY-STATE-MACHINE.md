@@ -8,6 +8,9 @@ personal subject or audience as a shortcut. It supplements
 [`PHASE-2-MEMORY-EXTRACTION-HANDOFF.md`](./PHASE-2-MEMORY-EXTRACTION-HANDOFF.md)
 with state transitions and retrieval predicates.
 
+The concrete request/claim retrieval outcomes are in
+[`T2-MEMORY-DISCLOSURE-MATRIX.md`](./T2-MEMORY-DISCLOSURE-MATRIX.md).
+
 ## Separate record kinds
 
 Siduri-Y must not collapse these records into one status field:

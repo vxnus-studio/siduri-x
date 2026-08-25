@@ -18,6 +18,10 @@ Memory transition evidence must follow
 [`T2-MEMORY-STATE-MACHINE.md`](./T2-MEMORY-STATE-MACHINE.md), including the
 separate response-approval lifecycle.
 
+Memory disclosure evidence must follow
+[`T2-MEMORY-DISCLOSURE-MATRIX.md`](./T2-MEMORY-DISCLOSURE-MATRIX.md), including
+positive and negative include/exclude assertions.
+
 Prompt and Active Self evidence must follow
 [`T3-ACTIVE-SELF-CONTRACT.md`](./T3-ACTIVE-SELF-CONTRACT.md), including empty
 slate, scope, injection, and recipient-validation tests.

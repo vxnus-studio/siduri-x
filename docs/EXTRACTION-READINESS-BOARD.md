@@ -43,6 +43,8 @@ HTTP boundary examples are maintained in
 [`T1-API-CONTRACT-EXAMPLES.md`](./T1-API-CONTRACT-EXAMPLES.md).
 The expected manual experience sequence is maintained in
 [`PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md`](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md).
+Memory include/exclude outcomes are maintained in
+[`T2-MEMORY-DISCLOSURE-MATRIX.md`](./T2-MEMORY-DISCLOSURE-MATRIX.md).
 
 ## Next implementation slice
 

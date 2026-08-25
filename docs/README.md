@@ -86,6 +86,8 @@ When documents disagree, use this order:
     direct, private, operator, compatibility, and rejection envelopes.
 39. [Phase 0 neutral manual walkthrough](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md)
     — expected blank-slate experience sequence and reviewer evidence record.
+40. [T2 memory disclosure matrix](./T2-MEMORY-DISCLOSURE-MATRIX.md) — public,
+    direct, private, operator, lifecycle, sensitivity, and isolation outcomes.
 
 ## Current status
 

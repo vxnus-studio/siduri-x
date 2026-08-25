@@ -15,6 +15,8 @@ revision behavior across replaceable adapters.
 
 The normative transition and retrieval contract for this phase is in
 [`T2-MEMORY-STATE-MACHINE.md`](./T2-MEMORY-STATE-MACHINE.md).
+Disclosure fixtures and expected include/exclude results are in
+[`T2-MEMORY-DISCLOSURE-MATRIX.md`](./T2-MEMORY-DISCLOSURE-MATRIX.md).
 
 ## Original sources
 
