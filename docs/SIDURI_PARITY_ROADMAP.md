@@ -38,7 +38,7 @@ change is documented.
 
 ## Phase 0 — Baseline the original experience
 
-Status: pending
+Status: completed
 
 Run the original `siduri/` private chat and record its behavior before changing
 Siduri-Y.
@@ -66,7 +66,7 @@ fixture.
 
 ## Phase 1 — Canonical contracts and compatibility layer
 
-Status: pending
+Status: completed for the current compatibility slice; full lifecycle parity remains in progress
 
 Port the original domain contracts into `@siduri-y/core` before porting organs.
 
@@ -89,7 +89,7 @@ original memory, chat, provenance, and overlay flows.
 
 ## Phase 2 — Memory parity
 
-Status: pending
+Status: in progress
 
 Upgrade the memory organ from the current basic `memory_claims` table to the
 original lifecycle:
@@ -117,7 +117,7 @@ equivalent returned records and safety decisions.
 
 ## Phase 3 — Provenance and evidence parity
 
-Status: pending
+Status: completed for private chat, teaching, and proposal receipts
 
 Make provenance first-class across memory, knowledge, observation, and chat.
 
@@ -136,7 +136,7 @@ source event, and private evidence is excluded from public output.
 
 ## Phase 4 — Private chat parity
 
-Status: pending
+Status: in progress
 
 Rebuild `SiduriRuntime.handleUserMessage()` around the original private-chat
 policy rather than a generic chat completion.
@@ -162,7 +162,7 @@ memory effects, citations, and visible chat behavior.
 
 ## Phase 5 — Learned behavior and Active Self parity
 
-Status: pending
+Status: next
 
 Port the original behavioral-memory model and compiler.
 

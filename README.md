@@ -50,6 +50,8 @@ such as PostgreSQL or VTube Studio.
 
 For the behavioral parity plan between this decoupled implementation and the
 original Siduri repository, see [Siduri-Y parity roadmap](./docs/SIDURI_PARITY_ROADMAP.md).
+The current implementation handoff is documented in
+[Phase 1 parity handoff](./docs/PHASE-1-PARITY-HANDOFF.md).
 
 See [CLI usage](./docs/cli.md), [configuration](./docs/configuration.md), and
 [development and release](./docs/development.md) for details.
