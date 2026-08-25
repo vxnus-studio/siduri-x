@@ -38,6 +38,9 @@ Release evidence must follow
 [`T7-RELEASE-EVIDENCE-CONTRACT.md`](./T7-RELEASE-EVIDENCE-CONTRACT.md); a
 candidate commit and clean-checkout result are required for every gate.
 
+Current track status and next authorized work are summarized in
+[`EXTRACTION-READINESS-BOARD.md`](./EXTRACTION-READINESS-BOARD.md).
+
 ## Current evidence
 
 | Current test | What it proves | What it does not prove |

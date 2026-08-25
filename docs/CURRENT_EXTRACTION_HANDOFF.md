@@ -96,3 +96,5 @@ The concrete target shapes for that slice are in
 [`T1-NEUTRAL-CONTEXT-SPEC.md`](./T1-NEUTRAL-CONTEXT-SPEC.md).
 The bounded execution checklist and test matrix are in
 [`T1-IMPLEMENTATION-CHECKLIST.md`](./T1-IMPLEMENTATION-CHECKLIST.md).
+The one-page status and dependency board is in
+[`EXTRACTION-READINESS-BOARD.md`](./EXTRACTION-READINESS-BOARD.md).

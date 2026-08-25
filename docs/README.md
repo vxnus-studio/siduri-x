@@ -73,6 +73,8 @@ When documents disagree, use this order:
     boundaries.
 33. [T7 release evidence contract](./T7-RELEASE-EVIDENCE-CONTRACT.md) —
     candidate-commit gates, vertical scenarios, sign-off, and no-go rules.
+34. [Extraction readiness board](./EXTRACTION-READINESS-BOARD.md) — one-page
+    status, blockers, dependencies, and next authorized implementation slice.
 
 ## Current status
 

@@ -6,6 +6,9 @@ This map is the dependency order for extracting the original Siduri
 experience. It is intentionally separate from the older numbered knowledge,
 deployment, and modularization handoffs.
 
+For a concise current-state view, see
+[`EXTRACTION-READINESS-BOARD.md`](./EXTRACTION-READINESS-BOARD.md).
+
 ## Dependency flow
 
 ```text
