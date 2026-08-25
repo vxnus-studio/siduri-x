@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { execFile as execFileCallback } from 'node:child_process';
+import { execFile as execFileCallback, spawn } from 'node:child_process';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
@@ -10,7 +10,16 @@ import { createRemoteProvider, loadPack } from '@vxnus/e-knowledge';
 
 const execFile = promisify(execFileCallback);
 const DEFAULT_REGISTRY_URL = 'https://e.vxnus.xyz/api/packs';
-const CLI_VERSION = '0.0.1';
+const CLI_VERSION = '0.0.2';
+const RUNTIME_DEPENDENCIES = {
+  '@vxnus/e': '^0.1.3',
+  '@vxnus/e-knowledge': '^0.1.2',
+  cors: '^2.8.5',
+  express: '^4.18.2',
+  pg: '^8.23.0',
+  ws: '^8.21.3',
+  zod: '^4.4.3',
+};
 
 const colors = {
   cyan: '\u001b[36m',
@@ -22,7 +31,7 @@ const colors = {
 
 function printHeader(): void {
   console.log(`\n${colors.cyan}◈ SIDURI${colors.reset} ${colors.dim}companion setup${colors.reset}`);
-  console.log(`${colors.yellow}Experimental release 0.0.1${colors.reset} · configuration may change\n`);
+  console.log(`${colors.yellow}Experimental release 0.0.2${colors.reset} · configuration may change\n`);
 }
 
 function printSection(title: string): void {
@@ -31,6 +40,36 @@ function printSection(title: string): void {
 
 function printSuccess(message: string): void {
   console.log(`${colors.green}✓${colors.reset} ${message}`);
+}
+
+function runtimePath(): string {
+  const projectRuntime = path.join(process.cwd(), 'siduri-runtime.js');
+  return path.resolve(pathExists(projectRuntime) ? projectRuntime : path.join(__dirname, 'runtime.js'));
+}
+
+function pathExists(filePath: string): boolean {
+  try {
+    require('node:fs').accessSync(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function startRuntime(): Promise<void> {
+  const filePath = runtimePath();
+  if (!pathExists(filePath)) {
+    throw new Error('Siduri runtime bundle is missing. Reinstall the CLI or rebuild the package.');
+  }
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(process.execPath, [filePath], { stdio: 'inherit', env: process.env });
+    child.once('error', reject);
+    child.once('exit', (code, signal) => {
+      if (signal) process.exitCode = 1;
+      else if (code !== null) process.exitCode = code;
+      resolve();
+    });
+  });
 }
 
 async function withTask<T>(label: string, task: () => Promise<T>): Promise<T> {
@@ -84,6 +123,15 @@ type KnowledgeConfig = {
 
 function safePart(value: string): string {
   return value.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+function projectDirectoryName(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || 'siduri';
 }
 
 async function getJson<T>(url: string): Promise<T> {
@@ -252,9 +300,14 @@ async function main(): Promise<void> {
     console.log(CLI_VERSION);
     return;
   }
+  if (command === 'start') {
+    await startRuntime();
+    return;
+  }
   if (command !== 'create') {
     printHeader();
     console.log('Usage: npx @vxnus/siduri create');
+    console.log('       npx @vxnus/siduri start');
     console.log('       npx @vxnus/siduri --version');
     return;
   }
@@ -265,7 +318,9 @@ async function main(): Promise<void> {
     { type: 'input', name: 'name', message: 'Companion name:', default: 'Siduri', validate: nonEmpty },
     { type: 'list', name: 'memory', message: 'Memory provider?', choices: [{ name: 'PostgreSQL', value: 'postgres' }] },
   ]);
-  printSuccess(`${answers.name} · PostgreSQL memory`);
+  const projectPath = path.resolve(process.cwd(), projectDirectoryName(answers.name));
+  await mkdir(projectPath, { recursive: true });
+  printSuccess(`${answers.name} · PostgreSQL memory · ${projectPath}`);
 
   printSection('Brain · required');
   const { brainProvider } = await inquirer.prompt<{ brainProvider: 'openrouter' | 'openai-compatible' }>({
@@ -321,7 +376,7 @@ async function main(): Promise<void> {
     body: { provider: remaining.body, vtsUrl: process.env.VTS_URL || 'ws://127.0.0.1:8001' },
     vision: { provider: remaining.vision, model: 'gpt-4-vision' },
   };
-  const configPath = path.join(process.cwd(), 'siduri.config.json');
+  const configPath = path.join(projectPath, 'siduri.config.json');
   try {
     await readFile(configPath, 'utf8');
     const { overwrite } = await inquirer.prompt<{ overwrite: boolean }>({
@@ -359,7 +414,25 @@ async function main(): Promise<void> {
   }
   await writeFile(configPath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
   printSuccess(`Configuration written · ${configPath}`);
-  console.log(`${colors.dim}Next: start Siduri with pnpm --filter @siduri-y/api dev${colors.reset}\n`);
+  await cp(path.join(__dirname, 'runtime.js'), path.join(projectPath, 'siduri-runtime.js'));
+  await writeFile(path.join(projectPath, 'package.json'), JSON.stringify({
+    name: projectDirectoryName(answers.name),
+    private: true,
+    version: '0.0.0',
+    scripts: { start: 'node siduri-runtime.js', dev: 'node siduri-runtime.js' },
+    dependencies: RUNTIME_DEPENDENCIES,
+  }, null, 2) + '\n', { mode: 0o600 });
+  const keyEnv = config.brain.apiKeyEnv || 'OPENROUTER_API_KEY';
+  await writeFile(path.join(projectPath, '.env.example'), [
+    `${keyEnv}=`,
+    'DATABASE_URL=postgresql://postgres:postgres@localhost:5432/siduri',
+    'VTS_URL=ws://127.0.0.1:8001',
+    'VTS_AUTH_TOKEN=',
+    '',
+  ].join('\n'), { mode: 0o600 });
+  await withTask('Installing Siduri runtime dependencies', () => execFile('npm', ['install', '--no-audit', '--no-fund'], { cwd: projectPath }).then(() => undefined));
+  printSuccess(`Siduri instance ready · ${projectPath}`);
+  console.log(`${colors.dim}Next: cd ${projectDirectoryName(answers.name)} && npm run start${colors.reset}\n`);
 }
 
 main().catch((error: unknown) => {

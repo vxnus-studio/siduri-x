@@ -30,10 +30,24 @@ Local archives are installed under `~/.siduri/knowledge/` and validated with
 The published experimental package requires Node.js 20 or newer:
 
 ```bash
-npx @vxnus/siduri@0.0.1 create
+npx @vxnus/siduri@0.0.2 create
 ```
 
-The generated configuration is intended to be used from the directory where
-the Siduri API is started. API keys stay outside the configuration file; set
-the environment variable selected during the Brain step before starting the
-API.
+The companion name becomes a safe project directory under the current
+directory. For example, `Ganyu` creates `./ganyu/siduri.config.json`.
+
+The wizard creates a project directory, copies the bundled runtime into it,
+installs runtime dependencies, and writes `siduri.config.json`. API keys stay
+outside the configuration file; set the environment variable selected during
+the Brain step before starting the API.
+
+Start the generated instance with:
+
+```bash
+cd ganyu
+npm run start
+```
+
+`siduri start` can also be used from the generated directory. The runtime
+still depends on external services selected by the configuration, including
+PostgreSQL for memory and VTube Studio for the Live2D body.

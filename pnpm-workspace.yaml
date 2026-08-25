@@ -4,6 +4,7 @@ packages:
   - 'packages/organs/*'
   - 'cli'
 allowBuilds:
+  esbuild: true
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@vxnus/e-knowledge@0.1.2'

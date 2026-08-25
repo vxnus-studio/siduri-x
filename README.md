@@ -1,7 +1,7 @@
 # Siduri-Y
 
 **NOTICE:** This project is currently under active development. The first
-experimental CLI release is `@vxnus/siduri@0.0.1`; it is strictly **untested
+experimental CLI release is `@vxnus/siduri@0.0.2`; it is strictly **untested
 for stability** and should not be relied upon for production use.
 
 > **Important Disclaimer:** **Siduri-Y** is an experimental variant of the Siduri architecture built specifically for maximal testing and boundary validation. Please note that this is **NOT** the original `Siduri` core project, nor is it `Siduri-X`.
@@ -26,13 +26,27 @@ The project encompasses a backend API layer, a CLI tool, Next.js web frontends (
 Install and run the experimental CLI with Node.js 20 or newer:
 
 ```bash
-npx @vxnus/siduri@0.0.1 create
+npx @vxnus/siduri@0.0.2 create
 ```
+
+The companion name becomes the generated project directory, such as
+`./ganyu/siduri.config.json` for a companion named `Ganyu`.
 
 The wizard requires a Brain and Memory configuration. Voice, Knowledge,
 Behavior, Body, and Vision are optional and can each be set to **Do not use**.
-It creates `siduri.config.json`, keeps API keys in environment variables, and
-supports OpenRouter or any OpenAI-compatible chat-completions endpoint.
+It creates a runnable project, installs its runtime dependencies, keeps API
+keys in environment variables, and supports OpenRouter or any
+OpenAI-compatible chat-completions endpoint.
+
+After setup:
+
+```bash
+cd ganyu
+npm run start
+```
+
+The runtime still requires external services selected by the configuration,
+such as PostgreSQL or VTube Studio.
 
 See [CLI usage](./docs/cli.md), [configuration](./docs/configuration.md), and
 [development and release](./docs/development.md) for details.

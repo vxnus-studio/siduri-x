@@ -5,8 +5,11 @@ Experimental CLI for creating and configuring Siduri companions.
 Requires Node.js 20 or newer.
 
 ```bash
-npx @vxnus/siduri@0.0.1 create
+npx @vxnus/siduri@0.0.2 create
 ```
+
+The companion name becomes the project directory. For example, answering
+`Ganyu` creates `./ganyu/siduri.config.json` from the current directory.
 
 The wizard configures the required Brain and Memory organs, then lets you
 enable or disable Voice, Knowledge, Behavior, Body, and Vision. Knowledge can
@@ -18,9 +21,18 @@ Brain providers:
 - **OpenAI-compatible API** — a custom `baseUrl`, model ID, and API-key
   environment variable.
 
-The wizard writes `siduri.config.json` in the current directory. API keys are
-never written to that file. Optional organs can be configured as
-`{ "provider": "none" }`; Brain and Memory remain required.
+The wizard creates a project directory from the companion name, writes
+`siduri.config.json`, copies the Siduri runtime, and installs the runtime
+dependencies. API keys are never written to the configuration file. Optional
+organs can be configured as `{ "provider": "none" }`; Brain and Memory remain
+required.
+
+After setup, start the generated instance with:
+
+```bash
+cd ganyu
+npm run start
+```
 
 For local development, build the CLI from the repository root with
 `pnpm --filter @vxnus/siduri build`. For the full architecture, see the
