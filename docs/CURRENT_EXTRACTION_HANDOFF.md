@@ -98,3 +98,5 @@ The bounded execution checklist and test matrix are in
 [`T1-IMPLEMENTATION-CHECKLIST.md`](./T1-IMPLEMENTATION-CHECKLIST.md).
 The one-page status and dependency board is in
 [`EXTRACTION-READINESS-BOARD.md`](./EXTRACTION-READINESS-BOARD.md).
+The file-level execution plan is in
+[`T1-IMPLEMENTATION-PLAN.md`](./T1-IMPLEMENTATION-PLAN.md).

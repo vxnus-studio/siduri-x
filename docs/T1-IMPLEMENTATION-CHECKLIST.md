@@ -11,6 +11,9 @@ web experience in the same change.
 All test data for this slice follows the
 [`BLANK-SLATE-FIXTURE-GUIDE.md`](./BLANK-SLATE-FIXTURE-GUIDE.md).
 
+The file-level implementation boundary is specified in
+[`T1-IMPLEMENTATION-PLAN.md`](./T1-IMPLEMENTATION-PLAN.md).
+
 ## P1 — core context contracts
 
 | Item | Target | Required proof |

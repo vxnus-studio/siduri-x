@@ -40,6 +40,9 @@ blocker resolved because a contract document exists.
 
 The next code change is limited to T1 P1/P2:
 
+See [`T1-IMPLEMENTATION-PLAN.md`](./T1-IMPLEMENTATION-PLAN.md) for the exact
+file and test boundary.
+
 ```text
 neutral core context types
         ↓

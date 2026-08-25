@@ -75,6 +75,8 @@ When documents disagree, use this order:
     candidate-commit gates, vertical scenarios, sign-off, and no-go rules.
 34. [Extraction readiness board](./EXTRACTION-READINESS-BOARD.md) — one-page
     status, blockers, dependencies, and next authorized implementation slice.
+35. [T1 implementation plan](./T1-IMPLEMENTATION-PLAN.md) — file-level P1/P2
+    boundary, mapper decisions, proof, and stop conditions.
 
 ## Current status
 
