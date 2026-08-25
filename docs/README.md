@@ -68,6 +68,9 @@ When documents disagree, use this order:
     grounding, disclosure filtering, and response approval.
 31. [T5 experience event contract](./T5-EXPERIENCE-EVENT-CONTRACT.md) — approved
     voice, avatar, overlay, ingress, and outbound event boundaries.
+32. [T6 security and operations contract](./T6-SECURITY-OPERATIONS-CONTRACT.md)
+    — capability, isolation, secrets, failure, ingress, egress, and runbook
+    boundaries.
 
 ## Current status
 

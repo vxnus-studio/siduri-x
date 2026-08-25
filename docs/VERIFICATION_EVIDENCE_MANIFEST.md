@@ -30,6 +30,10 @@ Output evidence must follow
 [`T5-EXPERIENCE-EVENT-CONTRACT.md`](./T5-EXPERIENCE-EVENT-CONTRACT.md),
 including adapter metadata, lifecycle, disclosure, and outbound approval.
 
+Security and operations evidence must follow
+[`T6-SECURITY-OPERATIONS-CONTRACT.md`](./T6-SECURITY-OPERATIONS-CONTRACT.md),
+including capability, isolation, secret, failure, and runbook tests.
+
 ## Current evidence
 
 | Current test | What it proves | What it does not prove |

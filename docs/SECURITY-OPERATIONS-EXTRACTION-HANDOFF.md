@@ -2,6 +2,9 @@
 
 Status: pending after experience contracts
 
+The normative security and operations target is defined in
+[`T6-SECURITY-OPERATIONS-CONTRACT.md`](./T6-SECURITY-OPERATIONS-CONTRACT.md).
+
 ## Objective
 
 Extract the original Siduri security, reliability, and operational boundaries

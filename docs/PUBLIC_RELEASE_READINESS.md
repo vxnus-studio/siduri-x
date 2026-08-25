@@ -99,6 +99,8 @@ The current test-boundary inventory is maintained in
 [`VERIFICATION_EVIDENCE_MANIFEST.md`](./VERIFICATION_EVIDENCE_MANIFEST.md).
 Security and operations gates are specified in
 [`SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md`](./SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md).
+The concrete capability, isolation, secret, and output checks are in
+[`T6-SECURITY-OPERATIONS-CONTRACT.md`](./T6-SECURITY-OPERATIONS-CONTRACT.md).
 
 ## Repeatable verification commands
 
