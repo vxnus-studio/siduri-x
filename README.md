@@ -30,7 +30,7 @@ npx @vxnus/siduri@0.0.3 create
 ```
 
 The companion name becomes the generated project directory, such as
-`./ganyu/siduri.config.json` for a companion named `Ganyu`.
+`./my-companion/siduri.config.json` for a companion named `My Companion`.
 
 The wizard requires a Brain and Memory configuration. Voice, Knowledge,
 Behavior, Body, and Vision are optional and can each be set to **Do not use**.
@@ -41,19 +41,19 @@ OpenAI-compatible chat-completions endpoint.
 After setup:
 
 ```bash
-cd ganyu
+cd my-companion
 npm run start
 ```
 
 The runtime still requires external services selected by the configuration,
 such as PostgreSQL or VTube Studio.
 
-For the behavioral parity plan between this decoupled implementation and the
-original Siduri repository, see [Siduri-Y parity roadmap](./docs/SIDURI_PARITY_ROADMAP.md).
-The current implementation handoff is documented in
-[Phase 1 parity handoff](./docs/PHASE-1-PARITY-HANDOFF.md).
-The grounded observation work is tracked in
-[Phase 2 grounded observation](./docs/PHASE-2-GROUNDED-OBSERVATION.md).
+For the behavioral extraction plan, blank-slate contract, and current RED
+health status, start with the [documentation index](./docs/README.md).
+The current next-session handoff is
+[CURRENT_EXTRACTION_HANDOFF.md](./docs/CURRENT_EXTRACTION_HANDOFF.md).
+The [Siduri-Y parity roadmap](./docs/SIDURI_PARITY_ROADMAP.md) tracks phase
+gates; it does not treat build success as behavioral parity.
 
 See [CLI usage](./docs/cli.md), [configuration](./docs/configuration.md), and
 [development and release](./docs/development.md) for details.

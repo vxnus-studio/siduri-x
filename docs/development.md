@@ -1,12 +1,17 @@
 # Development
 
-Status: Implemented
+Status: development workflow baseline; extraction parity incomplete
 
 Use Turborepo:
 - `pnpm install`
 - `pnpm build`
 - Start API: `cd apps/api && pnpm start`
 - Start Web: `cd apps/web && pnpm dev`
+
+Build, typecheck, and test success do not establish Siduri behavior parity.
+Before declaring a phase complete, also satisfy the relevant extraction
+baseline and health gates in
+[`REPOSITORY_HEALTH_AUDIT.md`](./REPOSITORY_HEALTH_AUDIT.md).
 
 ## CLI release
 

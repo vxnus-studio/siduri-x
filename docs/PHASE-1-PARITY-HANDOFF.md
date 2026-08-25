@@ -1,6 +1,10 @@
 # Siduri-Y Parity Handoff: Memory, Chat, and Voice Slice
 
-Status: implemented and pushed
+> Historical handoff. This document records an implementation slice, not
+> completion of Siduri behavior extraction or public blank-slate parity. The
+> authoritative current boundary is [`SIDURI_BEHAVIOR_EXTRACTION.md`](./SIDURI_BEHAVIOR_EXTRACTION.md).
+
+Status: historical compatibility slice; superseded by extraction audit
 
 Commits:
 
@@ -13,13 +17,14 @@ Siduri-Y now preserves the first part of the original Siduri experience while
 keeping the organs decoupled:
 
 - private chat accepts bounded user/assistant history;
-- private chat uses the primary-user scope;
+- private chat uses the legacy primary-user scope; this is a known violation
+  and must not remain in the public runtime;
 - identity questions and explicit teaching do not trigger external knowledge
   retrieval;
 - approved memory is scope-filtered before prompt assembly;
 - memory proposals remain pending until approval;
-- explicit teaching recognizes preferred address, name, creator relationship,
-  Genshin UID, server, and main character;
+- explicit teaching recognizes legacy personal fields; extraction must replace
+  these defaults with neutral, user-supplied fields;
 - chat-created proposals carry `private_chat` provenance and a source event;
 - citations preserve source, document/chunk, locator, revision, provenance, and
   bounded preview metadata;
@@ -52,10 +57,11 @@ This slice is behavioral parity work, not hardening. The following remain:
 
 ## Next phase
 
-Implement grounded observation parity:
+Extract and formalize the original behavior and memory contracts before adding
+more runtime parity:
 
 ```text
-observation -> bounded evidence -> knowledge grounding -> response metadata
+original behavior -> neutral contract -> Siduri-Y adapter -> parity test
 ```
 
 Start with a fixture-first observation organ and API contract. Preserve the

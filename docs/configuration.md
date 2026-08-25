@@ -1,14 +1,18 @@
 # Configuration
 
-Status: Implemented
+Status: configuration baseline; extraction parity incomplete
 
 The `siduri.config.json` determines the composition of the companion. The API
 loads it from the current directory, or from the path in `SIDURI_CONFIG`.
 Brain and memory are required; optional organs use `{ "provider": "none" }`.
 
+Configuration defines the companion and its organs, not a predeclared user
+relationship. Public/private channels, audiences, and learned subjects must
+follow the neutral contract rather than personal defaults.
+
 ```json
 {
-  "name": "Ganyu",
+  "name": "My Companion",
   "brain": {
     "provider": "openai-compatible",
     "baseUrl": "http://127.0.0.1:1234/v1",

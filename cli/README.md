@@ -9,7 +9,8 @@ npx @vxnus/siduri@0.0.3 create
 ```
 
 The companion name becomes the project directory. For example, answering
-`Ganyu` creates `./ganyu/siduri.config.json` from the current directory.
+`My Companion` creates `./my-companion/siduri.config.json` from the current
+directory.
 
 The wizard configures the required Brain and Memory organs, then lets you
 enable or disable Voice, Knowledge, Behavior, Body, and Vision. Knowledge can
@@ -34,7 +35,7 @@ required.
 After setup, start the generated instance with:
 
 ```bash
-cd ganyu
+cd my-companion
 npm run start
 ```
 

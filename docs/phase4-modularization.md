@@ -1,5 +1,10 @@
 # Phase 4: API-First & MCP Modularization Architecture
 
+> Historical modularization track. This document describes service-boundary
+> experiments and does not establish extracted behavior, blank-slate safety, or
+> public release readiness. Use the [documentation authority index](./README.md)
+> and [health audit](./REPOSITORY_HEALTH_AUDIT.md) for current status.
+
 ## Vision
 Siduri-Y's current architecture couples all organ logic (Memory, Behavior, Voice, Knowledge) into a single Node.js Express monolith (`apps/api`). To achieve true distributed modularity, scale independently, and allow seamless external integration, we are transitioning to a hybrid **API-First & MCP (Model Context Protocol)** architecture.
 

@@ -1,5 +1,9 @@
 # Phase 3 handoff — Siduri semantic knowledge
 
+> Knowledge-track handoff. This phase number is independent from the
+> behavior-extraction phases in [`SIDURI_PARITY_ROADMAP.md`](./SIDURI_PARITY_ROADMAP.md).
+> Its status does not indicate full Siduri behavior or blank-slate parity.
+
 **Phase:** 3 — optional vector/hybrid retrieval
 **Status:** foundation complete; semantic activation pending
 **Prerequisite:** Phase 2 hosted provider is live and Hub-backed discovery is

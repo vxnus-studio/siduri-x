@@ -1,8 +1,12 @@
 # Architecture
 
-Siduri-Y is a virtual companion orchestrator that operates on the principle of **composable organs**. Rather than hardcoding a single companion (like the original Siduri did with Ganyu), the framework provides a runtime (`apps/api`) that instantiates a companion dynamically from a JSON configuration file.
+Siduri-Y is a virtual companion orchestrator that operates on the principle of
+**composable organs**. The original Siduri repository is the behavioral and
+memory reference, while Siduri-Y provides a public, blank-slate runtime that
+instantiates companions dynamically from configuration without copying the
+original project's personal identity or relationship defaults.
 
-## Status: Implemented
+## Status: compatibility baseline; public blank-slate parity incomplete
 
 The API loads `siduri.config.json` and creates a `CompanionRuntime`. The runtime orchestrates interactions between the user and the organs:
 - **Brain**: Handles LLM intelligence and structured response generation.
@@ -17,9 +21,15 @@ The API loads `siduri.config.json` and creates a `CompanionRuntime`. The runtime
 ## Execution Flow
 1. API receives `/boot` with a config.
 2. `CompanionRuntime` is instantiated.
-3. User sends a message via `/chat`.
-4. Runtime retrieves contextual `Memory` and `Knowledge`.
-5. Runtime resolves `Behavior` injections.
-6. `Brain` generates a `ResponsePlan` (speech + memory proposals).
-7. `Memory` saves approved/pending proposals.
-8. `Voice` enqueues the speech for TTS synthesis.
+3. A caller selects a channel and audience, then sends a message via `/chat`.
+4. Runtime validates the actor, channel, audience, and bounded history.
+5. Runtime retrieves only permitted contextual `Memory` and `Knowledge`.
+6. Runtime resolves approved `Behavior` injections for that context.
+7. `Brain` generates a validated `ResponsePlan` (speech + pending proposals).
+8. Memory and response approval boundaries are applied independently.
+9. `Voice` enqueues speech only when the response policy permits output.
+
+The current implementation is not yet at this target flow: `/chat` still
+forces a legacy private/owner route and the runtime still contains personal
+subject/audience defaults. See
+[`REPOSITORY_HEALTH_AUDIT.md`](./REPOSITORY_HEALTH_AUDIT.md).

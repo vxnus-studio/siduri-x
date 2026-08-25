@@ -1,5 +1,9 @@
 # Phase 1 handoff — Siduri remote knowledge
 
+> Knowledge-track handoff. This phase number is independent from the
+> behavior-extraction phases in [`SIDURI_PARITY_ROADMAP.md`](./SIDURI_PARITY_ROADMAP.md).
+> Its status does not indicate full Siduri behavior or blank-slate parity.
+
 **Phase:** 1 — E-compatible remote provider
 **Status:** implementation complete; hosted end-to-end verification pending
 **Scope:** discover and consume an E provider through the E Hub registry.

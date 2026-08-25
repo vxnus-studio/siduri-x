@@ -6,9 +6,28 @@ Make `siduri-y` behaviorally equivalent to the original `siduri/` in the
 parts that define Siduri's experience, while keeping the organs independently
 replaceable.
 
-The original repository is the behavioral reference. A decoupled organ is not
-considered complete merely because its TypeScript API compiles; it must satisfy
-the same user-visible behavior and safety guarantees.
+The original repository is the behavioral reference. Siduri-Y extracts its
+behavior and memory guarantees without importing its personal identity. A
+decoupled organ is not considered complete merely because its TypeScript API
+compiles; it must satisfy the same user-visible behavior and safety guarantees.
+
+The authoritative boundary is documented in
+[`SIDURI_BEHAVIOR_EXTRACTION.md`](./SIDURI_BEHAVIOR_EXTRACTION.md) and
+[`BLANK_SLATE_CONTRACT.md`](./BLANK_SLATE_CONTRACT.md).
+The source-to-contract work inventory is in
+[`SIDURI_EXTRACTION_MATRIX.md`](./SIDURI_EXTRACTION_MATRIX.md).
+The executable baseline is specified in
+[`PHASE-0-EXTRACTION-BASELINE.md`](./PHASE-0-EXTRACTION-BASELINE.md).
+Contract decisions are recorded in
+[`NEUTRAL_CONTRACT_DECISIONS.md`](./NEUTRAL_CONTRACT_DECISIONS.md).
+The implementation handoff is in
+[`PHASE-1-EXTRACTION-HANDOFF.md`](./PHASE-1-EXTRACTION-HANDOFF.md).
+The current health status is recorded in
+[`REPOSITORY_HEALTH_AUDIT.md`](./REPOSITORY_HEALTH_AUDIT.md).
+Current test-boundary evidence is tracked in
+[`VERIFICATION_EVIDENCE_MANIFEST.md`](./VERIFICATION_EVIDENCE_MANIFEST.md).
+The dependency order across extraction handoffs is in
+[`EXTRACTION_TRACK_MAP.md`](./EXTRACTION_TRACK_MAP.md).
 
 Reference repository:
 
@@ -38,10 +57,11 @@ change is documented.
 
 ## Phase 0 — Baseline the original experience
 
-Status: completed
+Status: baseline specified; executable fixtures not yet ported
 
 Run the original `siduri/` private chat and record its behavior before changing
-Siduri-Y.
+Siduri-Y. Extract behavior from the original, but do not copy its personal
+recipient, identity, or configuration defaults.
 
 Capture fixtures for:
 
@@ -60,15 +80,19 @@ Deliverables:
 - golden request/response fixtures;
 - a short manual chat transcript;
 - a parity matrix linking each behavior to original tests and source files.
+- the neutral scenario set in
+  [`PHASE-0-EXTRACTION-BASELINE.md`](./PHASE-0-EXTRACTION-BASELINE.md).
 
 Exit criteria: the team can explain what “working like Siduri” means for each
-fixture.
+fixture and can identify the evidence still missing from the verification
+manifest.
 
 ## Phase 1 — Canonical contracts and compatibility layer
 
-Status: completed for the current compatibility slice; full lifecycle parity remains in progress
+Status: ready for implementation after contract review
 
-Port the original domain contracts into `@siduri-y/core` before porting organs.
+Extract the original domain contracts into `@siduri-y/core` before porting
+organs. Follow [`PHASE-1-EXTRACTION-HANDOFF.md`](./PHASE-1-EXTRACTION-HANDOFF.md).
 
 Required contracts:
 
@@ -90,6 +114,9 @@ original memory, chat, provenance, and overlay flows.
 ## Phase 2 — Memory parity
 
 Status: in progress
+
+Behavior-extraction handoff:
+[`PHASE-2-MEMORY-EXTRACTION-HANDOFF.md`](./PHASE-2-MEMORY-EXTRACTION-HANDOFF.md).
 
 Upgrade the memory organ from the current basic `memory_claims` table to the
 original lifecycle:
@@ -117,7 +144,11 @@ equivalent returned records and safety decisions.
 
 ## Phase 3 — Provenance and evidence parity
 
-Status: completed for private chat, teaching, and proposal receipts
+Status: incomplete; provenance exists in a compatibility slice but is not yet
+proven across the public blank-slate runtime
+
+Extraction handoff:
+[`EVIDENCE-EXTRACTION-HANDOFF.md`](./EVIDENCE-EXTRACTION-HANDOFF.md).
 
 Make provenance first-class across memory, knowledge, observation, and chat.
 
@@ -136,10 +167,11 @@ source event, and private evidence is excluded from public output.
 
 ## Phase 4 — Private chat parity
 
-Status: in progress
+Status: blocked on neutral channel/audience extraction
 
-Rebuild `SiduriRuntime.handleUserMessage()` around the original private-chat
-policy rather than a generic chat completion.
+Rebuild `SiduriRuntime.handleUserMessage()` around the extracted original chat
+policy, expressed as configurable public/private channels rather than a
+hardcoded personal/private route.
 
 Required behavior:
 
@@ -163,6 +195,9 @@ memory effects, citations, and visible chat behavior.
 ## Phase 5 — Learned behavior and Active Self parity
 
 Status: in progress
+
+Extraction handoff:
+[`BEHAVIOR-EXTRACTION-HANDOFF.md`](./BEHAVIOR-EXTRACTION-HANDOFF.md).
 
 Port the original behavioral-memory model and compiler.
 
@@ -213,6 +248,9 @@ equivalent Siduri-Y flow and metadata contract.
 
 Status: pending
 
+Extraction handoff:
+[`EXPERIENCE-EXTRACTION-HANDOFF.md`](./EXPERIENCE-EXTRACTION-HANDOFF.md).
+
 Connect the decoupled voice and body organs through lifecycle events.
 
 Required event sequence:
@@ -259,6 +297,9 @@ approval boundary and produce equivalent action records.
 ## Phase 9 — Persistence, security, and operations parity
 
 Status: pending
+
+Extraction handoff:
+[`SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md`](./SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md).
 
 Match the original operational guarantees:
 

@@ -1,6 +1,7 @@
 # Implementation Status
 
-* **Status**: Stabilized - Core implementation complete.
+* **Status**: implementation baseline; behavioral extraction and blank-slate
+  hardening incomplete.
 * **Brain**: Implemented using OpenRouter and structured generation.
 * **Memory**: Implemented via PostgreSQL Adapter with TSVECTOR indexing and full isolation constraints.
 * **Behavior**: Implemented `ActiveSelfCompiler` preserving security constraints.
@@ -23,7 +24,9 @@
 
 ## 4. What was dropped
 - The continuous OBS multi-pass screen capture loop. It was deemed too game-specific for the core framework.
-- Hardcoded `MASTER_PRIVATE` scopes, replaced with `OWNER`, `VIEWER`, `OPERATOR`.
+- Personal identity and relationship defaults are not part of Siduri-Y. The
+  current runtime still contains legacy personal/private assumptions and must
+  be remediated; see [`SIDURI_BEHAVIOR_EXTRACTION.md`](./SIDURI_BEHAVIOR_EXTRACTION.md).
 
 ## 5. File tree
 \`\`\`

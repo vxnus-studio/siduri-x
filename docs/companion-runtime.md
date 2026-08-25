@@ -1,10 +1,18 @@
 # Companion Runtime
 
-Status: Implemented
+Status: compatibility slice; neutral extraction pending
 
-Located in `apps/api/src/runtime.ts`. It acts as the central hub, receiving user messages and querying organs:
+Located in `apps/api/src/runtime.ts`. It is the current compatibility hub,
+receiving user messages and querying organs:
 
 1. Retrieves `Memory` and `Knowledge` context.
 2. Resolves `Behavior` injections.
 3. Requests `ResponsePlan` from `Brain`.
-4. Executes `Voice` queueing and `Memory` insertion based on plan.
+4. Records pending memory/behavior proposals with provenance.
+5. Executes `Voice` queueing only after the response policy permits output.
+
+Known contract gap: the current runtime still conflates authorization role,
+conversation audience, and learned subject identity. It also carries legacy
+private/personal defaults. The target flow is defined in
+[`NEUTRAL_CONTRACT_DECISIONS.md`](./NEUTRAL_CONTRACT_DECISIONS.md); this file
+must not be read as proof of parity.

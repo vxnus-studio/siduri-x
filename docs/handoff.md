@@ -6,8 +6,18 @@
 > discovery and distribution; Siduri performs installation and lifecycle.
 
 ## Current Status
-**COMPLETE**
-Phase 3 (Web UI Parity) is complete. The Chat, Operator Console, and Overlay UI components have been ported and adapted to consume the `siduri-y` backend API correctly. The build pipeline is fully green. Parity is achieved.
+**HISTORICAL / NOT PARITY-COMPLETE**
+
+This handoff records an earlier implementation slice. It is not evidence that
+Siduri-Y has extracted the original behavior or satisfies the public
+blank-slate contract. See [`SIDURI_BEHAVIOR_EXTRACTION.md`](./SIDURI_BEHAVIOR_EXTRACTION.md)
+and [`BLANK_SLATE_CONTRACT.md`](./BLANK_SLATE_CONTRACT.md).
+
+All PASS/FAIL tables and “next actions” below are historical notes from that
+session. The current status, blockers, and phase order are maintained in
+[`REPOSITORY_HEALTH_AUDIT.md`](./REPOSITORY_HEALTH_AUDIT.md),
+[`SIDURI_PARITY_ROADMAP.md`](./SIDURI_PARITY_ROADMAP.md), and
+[`PHASE-1-EXTRACTION-HANDOFF.md`](./PHASE-1-EXTRACTION-HANDOFF.md).
 
 ## Session Date
 August 16, 2026
@@ -15,7 +25,9 @@ August 16, 2026
 ## Session Objective
 Conduct a deep source-to-source implementation audit comparing the original Python `siduri/` reference implementation to the newly constructed `siduri-y/` TypeScript monorepo, verifying strict behavioral parity, testing boundaries, and determining release-readiness.
 
-*(Updated)* Ensure the handoff document is properly established and maintained as the single source of truth for all subsequent sessions.
+*(Historical instruction)* The handoff was intended to be maintained as a
+session record. The current source of truth is now the documentation authority
+index at [`README.md`](./README.md).
 
 ## Work Completed
 **Implementation Work:**
@@ -39,7 +51,7 @@ Conduct a deep source-to-source implementation audit comparing the original Pyth
 - Discovered major behavioral regressions within the `web` UI frontends (Next.js empty templates instead of operator dashboards).
 - Verified existing handoff documentation and established standard operating procedure for end-of-session handoffs.
 
-## Current Parity Status
+## Historical Parity Snapshot (Superseded)
 
 | Area | Status | Notes |
 |---|---|---|
@@ -59,7 +71,7 @@ Conduct a deep source-to-source implementation audit comparing the original Pyth
 - **Directive State Machine**: The original code executed two separate queries to update supersede targets. `siduri-y` was incorrectly skipping state mutations entirely. We fixed this by introducing a unified `BEGIN/COMMIT` Postgres block explicitly setting `status = 'SUPERSEDED'`.
 - **Web UI Empty Shells**: The Next.js frontend migration correctly established routing, but fully neglected porting any actual React UI logic or DOM-based canvasing.
 
-## Known Gaps
+## Historical Known Gaps
 
 1. **Web UI Frontends Unimplemented**
    - Severity: HIGH
@@ -77,7 +89,9 @@ Conduct a deep source-to-source implementation audit comparing the original Pyth
 - `npx tsx apps/api/src/smoke.test.ts` — PASS (verified FTS parity, companion data isolation, and atomic directive updates).
 
 **Integration Smoke Test (`apps/api/src/smoke.test.ts`)**
-- Validated real PostgreSQL connections enforcing companion isolation. Successfully instantiated concurrent `Ganyu` and `Astra` memory claims verifying explicit constraint filtering preventing leakages.
+- Validated real PostgreSQL connections enforcing companion isolation with two
+  historical fixture companions. This verifies tenant isolation only; it does
+  not verify blank-slate behavior or behavioral parity.
 - Validated explicit constraint checking prevents updating directives across isolated companion spaces, verifying full atomic safety.
 
 ## Architectural Decisions
@@ -88,9 +102,15 @@ Conduct a deep source-to-source implementation audit comparing the original Pyth
 ## Files / Areas To Continue From
 1. `apps/web/src/app/*`: Needs actual UI layout building mirroring legacy implementations.
 
-## Next Recommended Actions
-1. **Port UI Layouts**: Rebuild the Chat Interface React components inside `apps/web/src/app/chat`.
-2. **Port Operator Tools**: Rebuild the Operator Control panel interface inside `apps/web/src/app/operator`.
+## Current Recommended Actions
+
+The UI port is no longer the current phase gate. Follow the neutral contract
+and extraction handoff:
+
+1. Implement the actor/channel/audience/subject contracts.
+2. Add the single legacy compatibility mapper.
+3. Port B0, B2, B4, B5, and B6 through the runtime/API boundary.
+4. Remove personal defaults and update the health audit.
 
 ## Do Not Repeat
 - Do not attempt to add Voice queue ordering logic; priority queuing is fully verified as successfully integrated.
@@ -103,15 +123,19 @@ Conduct a deep source-to-source implementation audit comparing the original Pyth
 ## Session End State
 
 ### Ready for next session
-Port UI Layouts for the Chat Interface inside `apps/web/src/app/chat`.
+Begin P1/P2 from
+[`PHASE-1-EXTRACTION-HANDOFF.md`](./PHASE-1-EXTRACTION-HANDOFF.md): neutral
+context contracts and the legacy compatibility mapper.
 
 ### Blocking issues
-None.
+See the H1/H2 findings in
+[`REPOSITORY_HEALTH_AUDIT.md`](./REPOSITORY_HEALTH_AUDIT.md). The repository is
+not release-ready.
 
 ### Last verification
 `pnpm turbo run test && pnpm turbo run typecheck && pnpm turbo run lint && pnpm turbo run build` -> All exited with code 0.
 
-## Phase 3: Web UI Parity Audit
+## Historical Phase 3: Web UI Parity Audit
 
 The original UI implementation was found inside `siduri/apps/web/app/` consisting of three Next.js routes (`/chat`, `/operator`, `/overlay`). The `siduri-y` Next.js frontend currently contains only boilerplate templates.
 
@@ -139,13 +163,17 @@ The original UI implementation was found inside `siduri/apps/web/app/` consistin
 | **State parsing** | Parsed `response_plan` and `SpeechStarted` events | `Live2DAdapter` emits `ExpressionEvent` and `SpeechEvent` | PASS | Ported |
 | **Visuals** | Venus orb with amplitude CSS variable | Venus orb with amplitude CSS variable | PASS | Ported |
 
-## Outstanding User Requests
-None. Phase 3 UI migration is complete.
+## Current Outstanding Work
+
+The historical UI migration status does not close the current extraction goal.
+Outstanding work is tracked by the Phase 0 baseline, Phase 1 extraction
+handoff, open decisions, limitations, and public-release checklist.
 
 ## User Knowledge
 - "Do not treat the handoff as optional documentation."
 - "Do not replace real integration tests with mocks."
-- "Do not declare parity complete" until all components are verified.
+- "Do not declare parity complete" until extraction, blank-slate behavior, and
+  all components are verified.
 - "Do not infer behavior from existing TS code. Use the original Python as the behavioral reference."
 - Persistence state changes (specifically directive supersession) must be atomic and transactional.
 - Architectural constraint: The API layer must be an adapter/composition boundary over existing organs.

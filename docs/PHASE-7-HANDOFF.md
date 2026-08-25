@@ -1,5 +1,11 @@
 # Phase 7 handoff — default Hub-backed Siduri runtime
 
+> Knowledge/deployment-track handoff. This phase number is independent from
+> the behavior-extraction phases in
+> [`SIDURI_PARITY_ROADMAP.md`](./SIDURI_PARITY_ROADMAP.md). “Complete” here
+> means only runtime adoption for the hosted knowledge provider; it does not
+> indicate full Siduri behavior or blank-slate parity.
+
 **Phase:** 7 — runtime adoption
 **Status:** complete
 

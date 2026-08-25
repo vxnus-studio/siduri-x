@@ -1,5 +1,11 @@
 # Phase 5 handoff — connect Siduri to the hosted Hub
 
+> Knowledge/deployment-track handoff. This phase number is independent from
+> the behavior-extraction phases in
+> [`SIDURI_PARITY_ROADMAP.md`](./SIDURI_PARITY_ROADMAP.md). “Complete” here
+> means only that this hosted knowledge gate was recorded as passing; it does
+> not indicate full Siduri behavior or blank-slate parity.
+
 **Phase:** 5 — production deployment and cross-boundary verification
 **Status:** complete
 **Prerequisite:** the Hub lookup and Teyvat provider smoke checks pass.

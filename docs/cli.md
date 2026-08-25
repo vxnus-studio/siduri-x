@@ -1,6 +1,6 @@
 # CLI
 
-Status: Implemented
+Status: CLI baseline; public blank-slate parity incomplete
 
 The CLI is a Node script using `inquirer` to run an interactive wizard.
 `npx @vxnus/siduri create`
@@ -38,7 +38,12 @@ npx @vxnus/siduri@0.0.3 create
 ```
 
 The companion name becomes a safe project directory under the current
-directory. For example, `Ganyu` creates `./ganyu/siduri.config.json`.
+directory. For example, `My Companion` creates
+`./my-companion/siduri.config.json`.
+
+The CLI must generate neutral configuration only. It must not embed a user
+name, relationship, private audience, or personal memory. See
+[`BLANK_SLATE_CONTRACT.md`](./BLANK_SLATE_CONTRACT.md).
 
 The wizard creates a project directory, copies the bundled runtime into it,
 installs runtime dependencies, and writes `siduri.config.json`. API keys stay
@@ -48,7 +53,7 @@ the Brain step before starting the API.
 Start the generated instance with:
 
 ```bash
-cd ganyu
+cd my-companion
 npm run start
 ```
 

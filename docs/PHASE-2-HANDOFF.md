@@ -1,5 +1,9 @@
 # Phase 2 handoff — Hub-backed Siduri knowledge
 
+> Knowledge-track handoff. This phase number is independent from the
+> behavior-extraction phases in [`SIDURI_PARITY_ROADMAP.md`](./SIDURI_PARITY_ROADMAP.md).
+> Its status does not indicate full Siduri behavior or blank-slate parity.
+
 **Phase:** 2 — hosted E provider and Hub promotion
 **Status:** local integration verification complete; hosted deployment pending
 **Prerequisite:** Phase 1 remote provider selection is pushed.
