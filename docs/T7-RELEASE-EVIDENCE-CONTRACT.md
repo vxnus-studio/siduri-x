@@ -123,3 +123,5 @@ The decision is `NO-GO` if any required gate is `FAIL`, `Missing`,
 checklist remains [`PUBLIC_RELEASE_READINESS.md`](./PUBLIC_RELEASE_READINESS.md);
 gate evidence belongs in
 [`VERIFICATION_EVIDENCE_MANIFEST.md`](./VERIFICATION_EVIDENCE_MANIFEST.md).
+The forbidden-default scan procedure and current classifications are in
+[`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).

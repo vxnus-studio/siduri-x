@@ -152,3 +152,5 @@ not included in this audit turn.
 The release checklist contains the repeatable branch, forbidden-default, and
 build/test commands:
 [`PUBLIC_RELEASE_READINESS.md`](./PUBLIC_RELEASE_READINESS.md#repeatable-verification-commands).
+The current classified scan baseline is maintained in
+[`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).

@@ -62,6 +62,9 @@ default
 The scan must be contextual. A documentation warning about a forbidden value
 is not itself a violation; executable defaults and ordinary fixtures are.
 
+The dated scan inventory, classifications, and recording template are in
+[`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).
+
 ## Completion gate
 
 This migration is complete only when every row has a neutral implementation,

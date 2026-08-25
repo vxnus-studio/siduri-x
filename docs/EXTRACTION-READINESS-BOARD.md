@@ -35,6 +35,8 @@ These are implementation findings, not documentation tasks:
 Exact source locations and severity are maintained in
 [`REPOSITORY_HEALTH_AUDIT.md`](./REPOSITORY_HEALTH_AUDIT.md). Do not mark a
 blocker resolved because a contract document exists.
+Scan classifications and the next regression command are maintained in
+[`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).
 
 ## Next implementation slice
 
