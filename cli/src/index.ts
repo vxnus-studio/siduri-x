@@ -316,11 +316,30 @@ async function main(): Promise<void> {
   printSection('Companion');
   const answers = await inquirer.prompt([
     { type: 'input', name: 'name', message: 'Companion name:', default: 'Siduri', validate: nonEmpty },
-    { type: 'list', name: 'memory', message: 'Memory provider?', choices: [{ name: 'PostgreSQL', value: 'postgres' }] },
+    {
+      type: 'list',
+      name: 'memoryEngine',
+      message: 'Memory database?',
+      choices: [
+        { name: 'PostgreSQL', value: 'postgres' },
+        { name: 'SQLite (future)', value: 'sqlite', disabled: 'Coming soon' },
+      ],
+    },
   ]);
+  const { memoryDeployment } = await inquirer.prompt<{ memoryDeployment: 'local' | 'neon' | 'supabase' | 'other' }>({
+    type: 'list',
+    name: 'memoryDeployment',
+    message: 'PostgreSQL deployment?',
+    choices: [
+      { name: 'Local PostgreSQL', value: 'local' },
+      { name: 'Neon', value: 'neon' },
+      { name: 'Supabase', value: 'supabase' },
+      { name: 'Other PostgreSQL provider', value: 'other' },
+    ],
+  });
   const projectPath = path.resolve(process.cwd(), projectDirectoryName(answers.name));
   await mkdir(projectPath, { recursive: true });
-  printSuccess(`${answers.name} · PostgreSQL memory · ${projectPath}`);
+  printSuccess(`${answers.name} · PostgreSQL / ${memoryDeployment} · ${projectPath}`);
 
   printSection('Brain · required');
   const { brainProvider } = await inquirer.prompt<{ brainProvider: 'openrouter' | 'openai-compatible' }>({
@@ -370,7 +389,7 @@ async function main(): Promise<void> {
     name: answers.name,
     brain,
     voice: { provider: voice, speakerId: 1 },
-    memory: { provider: answers.memory },
+    memory: { provider: answers.memoryEngine, deployment: memoryDeployment },
     knowledge,
     behavior: { provider: remaining.behavior === 'none' ? 'none' : 'active_self', preset: remaining.behavior },
     body: { provider: remaining.body, vtsUrl: process.env.VTS_URL || 'ws://127.0.0.1:8001' },

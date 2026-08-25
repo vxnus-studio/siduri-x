@@ -21,6 +21,10 @@ Brain providers:
 - **OpenAI-compatible API** — a custom `baseUrl`, model ID, and API-key
   environment variable.
 
+Memory currently uses PostgreSQL. The wizard lets you choose Local PostgreSQL,
+Neon, Supabase, or another PostgreSQL provider; all use `DATABASE_URL`. SQLite
+is shown as a future option but is not selectable in this release.
+
 The wizard creates a project directory from the companion name, writes
 `siduri.config.json`, copies the Siduri runtime, and installs the runtime
 dependencies. API keys are never written to the configuration file. Optional

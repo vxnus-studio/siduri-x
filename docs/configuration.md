@@ -16,7 +16,7 @@ Brain and memory are required; optional organs use `{ "provider": "none" }`.
     "apiKeyEnv": "OPENAI_COMPATIBLE_API_KEY"
   },
   "voice": { "provider": "voicevox", "speakerId": 1 },
-  "memory": { "provider": "postgres" },
+  "memory": { "provider": "postgres", "deployment": "local" },
   "knowledge": {
     "provider": "e-knowledge",
     "packPath": "/path/to/installed/knowledge-pack"

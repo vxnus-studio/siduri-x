@@ -8,6 +8,10 @@ The CLI is a Node script using `inquirer` to run an interactive wizard.
 Brain and memory are required. Voice, knowledge, behavior, body, and vision
 each remain visible in the wizard and offer an explicit `Do not use` option.
 
+Memory currently uses PostgreSQL. The wizard separates the database engine
+from its deployment and offers Local PostgreSQL, Neon, Supabase, or another
+PostgreSQL provider. SQLite is reserved for a future release.
+
 The Brain step offers `OpenRouter (managed model routing)` or
 `OpenAI-compatible API (custom endpoint)`. The custom option asks for the
 OpenAI-compatible base URL, model ID, and the name of an environment variable
