@@ -71,6 +71,8 @@ When documents disagree, use this order:
 32. [T6 security and operations contract](./T6-SECURITY-OPERATIONS-CONTRACT.md)
     — capability, isolation, secrets, failure, ingress, egress, and runbook
     boundaries.
+33. [T7 release evidence contract](./T7-RELEASE-EVIDENCE-CONTRACT.md) —
+    candidate-commit gates, vertical scenarios, sign-off, and no-go rules.
 
 ## Current status
 

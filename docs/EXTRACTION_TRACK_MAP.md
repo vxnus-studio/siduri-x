@@ -38,7 +38,7 @@ earlier missing contract.
 | T4 — evidence | [EVIDENCE-EXTRACTION-HANDOFF.md](./EVIDENCE-EXTRACTION-HANDOFF.md), [T4-EVIDENCE-CHAIN-CONTRACT.md](./T4-EVIDENCE-CHAIN-CONTRACT.md) | Ready after T2/T1 | T1 audience + T2 provenance | Grounded citations and independent response approval |
 | T5 — experience | [EXPERIENCE-EXTRACTION-HANDOFF.md](./EXPERIENCE-EXTRACTION-HANDOFF.md), [T5-EXPERIENCE-EVENT-CONTRACT.md](./T5-EXPERIENCE-EVENT-CONTRACT.md) | Ready after T4 | T4 approved response/event contract | Voice/body/overlay/platform output gates |
 | T6 — security/operations | [SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md](./SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md), [T6-SECURITY-OPERATIONS-CONTRACT.md](./T6-SECURITY-OPERATIONS-CONTRACT.md) | Pending | T0–T5 | Isolation, secrets, failure, approval, and audit evidence |
-| T7 — release | [PUBLIC_RELEASE_READINESS.md](./PUBLIC_RELEASE_READINESS.md), [REPOSITORY_HEALTH_AUDIT.md](./REPOSITORY_HEALTH_AUDIT.md) | RED | T0–T6 | Clean scan, runtime evidence, manual vertical slice |
+| T7 — release | [PUBLIC_RELEASE_READINESS.md](./PUBLIC_RELEASE_READINESS.md), [REPOSITORY_HEALTH_AUDIT.md](./REPOSITORY_HEALTH_AUDIT.md), [T7-RELEASE-EVIDENCE-CONTRACT.md](./T7-RELEASE-EVIDENCE-CONTRACT.md) | RED | T0–T6 | Clean scan, runtime evidence, manual vertical slice |
 
 ## Current critical path
 

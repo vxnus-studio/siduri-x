@@ -101,6 +101,8 @@ Security and operations gates are specified in
 [`SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md`](./SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md).
 The concrete capability, isolation, secret, and output checks are in
 [`T6-SECURITY-OPERATIONS-CONTRACT.md`](./T6-SECURITY-OPERATIONS-CONTRACT.md).
+Candidate-commit evidence and release sign-off are governed by
+[`T7-RELEASE-EVIDENCE-CONTRACT.md`](./T7-RELEASE-EVIDENCE-CONTRACT.md).
 
 ## Repeatable verification commands
 

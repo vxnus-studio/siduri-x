@@ -34,6 +34,10 @@ Security and operations evidence must follow
 [`T6-SECURITY-OPERATIONS-CONTRACT.md`](./T6-SECURITY-OPERATIONS-CONTRACT.md),
 including capability, isolation, secret, failure, and runbook tests.
 
+Release evidence must follow
+[`T7-RELEASE-EVIDENCE-CONTRACT.md`](./T7-RELEASE-EVIDENCE-CONTRACT.md); a
+candidate commit and clean-checkout result are required for every gate.
+
 ## Current evidence
 
 | Current test | What it proves | What it does not prove |
