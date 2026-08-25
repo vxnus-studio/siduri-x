@@ -10,7 +10,7 @@ import { createRemoteProvider, loadPack } from '@vxnus/e-knowledge';
 
 const execFile = promisify(execFileCallback);
 const DEFAULT_REGISTRY_URL = 'https://e.vxnus.xyz/api/packs';
-const CLI_VERSION = '0.0.2';
+const CLI_VERSION = '0.0.3';
 const RUNTIME_DEPENDENCIES = {
   '@vxnus/e': '^0.1.3',
   '@vxnus/e-knowledge': '^0.1.2',
@@ -31,7 +31,7 @@ const colors = {
 
 function printHeader(): void {
   console.log(`\n${colors.cyan}◈ SIDURI${colors.reset} ${colors.dim}companion setup${colors.reset}`);
-  console.log(`${colors.yellow}Experimental release 0.0.2${colors.reset} · configuration may change\n`);
+  console.log(`${colors.yellow}Experimental release 0.0.3${colors.reset} · configuration may change\n`);
 }
 
 function printSection(title: string): void {
