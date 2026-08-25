@@ -66,6 +66,8 @@ When documents disagree, use this order:
     prompt trust boundaries, scope filtering, and failure semantics.
 30. [T4 evidence-chain contract](./T4-EVIDENCE-CHAIN-CONTRACT.md) — provenance,
     grounding, disclosure filtering, and response approval.
+31. [T5 experience event contract](./T5-EXPERIENCE-EVENT-CONTRACT.md) — approved
+    voice, avatar, overlay, ingress, and outbound event boundaries.
 
 ## Current status
 

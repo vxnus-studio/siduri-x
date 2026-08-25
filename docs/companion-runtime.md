@@ -16,3 +16,7 @@ conversation audience, and learned subject identity. It also carries legacy
 private/personal defaults. The target flow is defined in
 [`NEUTRAL_CONTRACT_DECISIONS.md`](./NEUTRAL_CONTRACT_DECISIONS.md); this file
 must not be read as proof of parity.
+
+Approved output dispatch is targeted by
+[`T5-EXPERIENCE-EVENT-CONTRACT.md`](./T5-EXPERIENCE-EVENT-CONTRACT.md); current
+adapter calls do not yet prove the unified event boundary.

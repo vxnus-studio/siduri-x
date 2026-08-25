@@ -36,7 +36,7 @@ earlier missing contract.
 | T2 — memory | [PHASE-2-MEMORY-EXTRACTION-HANDOFF.md](./PHASE-2-MEMORY-EXTRACTION-HANDOFF.md) | Ready after T1 | T1 actor/subject/audience/lifecycle | Source events, candidates, approval, revision, disclosure |
 | T3 — behavior | [BEHAVIOR-EXTRACTION-HANDOFF.md](./BEHAVIOR-EXTRACTION-HANDOFF.md) | Ready after T2 | T1 context + T2 approved memory | Neutral Active Self and prompt trust tests |
 | T4 — evidence | [EVIDENCE-EXTRACTION-HANDOFF.md](./EVIDENCE-EXTRACTION-HANDOFF.md), [T4-EVIDENCE-CHAIN-CONTRACT.md](./T4-EVIDENCE-CHAIN-CONTRACT.md) | Ready after T2/T1 | T1 audience + T2 provenance | Grounded citations and independent response approval |
-| T5 — experience | [EXPERIENCE-EXTRACTION-HANDOFF.md](./EXPERIENCE-EXTRACTION-HANDOFF.md) | Ready after T4 | T4 approved response/event contract | Voice/body/overlay/platform output gates |
+| T5 — experience | [EXPERIENCE-EXTRACTION-HANDOFF.md](./EXPERIENCE-EXTRACTION-HANDOFF.md), [T5-EXPERIENCE-EVENT-CONTRACT.md](./T5-EXPERIENCE-EVENT-CONTRACT.md) | Ready after T4 | T4 approved response/event contract | Voice/body/overlay/platform output gates |
 | T6 — security/operations | [SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md](./SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md) | Pending | T0–T5 | Isolation, secrets, failure, approval, and audit evidence |
 | T7 — release | [PUBLIC_RELEASE_READINESS.md](./PUBLIC_RELEASE_READINESS.md), [REPOSITORY_HEALTH_AUDIT.md](./REPOSITORY_HEALTH_AUDIT.md) | RED | T0–T6 | Clean scan, runtime evidence, manual vertical slice |
 

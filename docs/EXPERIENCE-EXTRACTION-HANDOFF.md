@@ -2,6 +2,9 @@
 
 Status: ready after evidence and response contracts
 
+The normative output envelope and adapter boundary are defined in
+[`T5-EXPERIENCE-EVENT-CONTRACT.md`](./T5-EXPERIENCE-EVENT-CONTRACT.md).
+
 ## Objective
 
 Extract the original Siduri visible experience—voice lifecycle, avatar/body

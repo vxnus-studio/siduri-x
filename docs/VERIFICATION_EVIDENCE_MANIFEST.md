@@ -26,6 +26,10 @@ Evidence and response tests must follow
 [`T4-EVIDENCE-CHAIN-CONTRACT.md`](./T4-EVIDENCE-CHAIN-CONTRACT.md), including
 redaction, citation, disclosure, and independent response approval.
 
+Output evidence must follow
+[`T5-EXPERIENCE-EVENT-CONTRACT.md`](./T5-EXPERIENCE-EVENT-CONTRACT.md),
+including adapter metadata, lifecycle, disclosure, and outbound approval.
+
 ## Current evidence
 
 | Current test | What it proves | What it does not prove |
