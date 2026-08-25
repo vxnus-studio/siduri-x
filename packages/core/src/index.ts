@@ -57,6 +57,11 @@ export interface MemoryProposal {
 export interface BehaviorProposal {
   directive: string;
   priority: number;
+  subject?: string;
+  predicate?: string;
+  value?: string;
+  memoryClass?: 'identity' | 'relationship' | 'behavioral' | 'semantic' | 'episodic';
+  sourceEventId?: string;
 }
 
 export interface ResponsePlan {
@@ -123,6 +128,7 @@ export interface MemoryOrgan {
   rejectDirective(id: string): Promise<void>;
   revokeDirective(id: string): Promise<void>;
   disableDirective(id: string): Promise<void>;
+  supersedeClaim?(id: string, replacement: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
   addSourceEvent?(event: SourceEvent): Promise<SourceEvent>;
   getSourceEvent?(id: string): Promise<SourceEvent | undefined>;
 }

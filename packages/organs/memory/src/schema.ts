@@ -39,6 +39,18 @@ CREATE TABLE IF NOT EXISTS memory_source_events (
 );
 CREATE INDEX IF NOT EXISTS memory_source_events_companion_idx ON memory_source_events(companion_id);
 
+CREATE TABLE IF NOT EXISTS memory_claim_history (
+  id BIGSERIAL PRIMARY KEY,
+  claim_id UUID NOT NULL,
+  companion_id VARCHAR NOT NULL,
+  status VARCHAR NOT NULL,
+  changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  reason VARCHAR NOT NULL,
+  snapshot JSONB NOT NULL
+);
+CREATE INDEX IF NOT EXISTS memory_claim_history_lookup_idx
+  ON memory_claim_history(companion_id, claim_id, changed_at DESC);
+
 CREATE TABLE IF NOT EXISTS memory_directives (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   companion_id VARCHAR NOT NULL,

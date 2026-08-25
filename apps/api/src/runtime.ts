@@ -1,5 +1,61 @@
 import { BrainOrgan, MemoryOrgan, VoiceOrgan, KnowledgeOrgan, VisionOrgan, BehaviorOrgan, BodyOrgan, CompanionConfig, Message, SourceEvent } from '@siduri-y/core';
 
+function extractExplicitTeaching(message: string) {
+  const claims: Array<{
+    subject: string;
+    predicate: string;
+    value: string;
+    claimType: 'semantic' | 'preference' | 'episodic' | 'relationship';
+    sensitivity: string;
+    allowedAudiences: string[];
+  }> = [];
+  const behaviorProposals: Array<{
+    directive: string;
+    priority: number;
+    subject: string;
+    predicate: string;
+    value: string;
+    memoryClass: 'behavioral';
+  }> = [];
+  const clean = message.replace(/\s+/g, ' ').trim();
+  const privateAudience = ['MASTER_PRIVATE'];
+
+  const preferredAddress = clean.match(/^call me\s+(.+?)(?:\s+in private)?[.!]?$/i);
+  if (preferredAddress?.[1]) {
+    const value = preferredAddress[1].trim();
+    claims.push({ subject: 'primary_user', predicate: 'preferred_address', value, claimType: 'preference', sensitivity: 'private', allowedAudiences: privateAudience });
+    behaviorProposals.push({
+      directive: `Address the primary user as ${value} in private conversations.`,
+      priority: 80,
+      subject: 'primary_user',
+      predicate: 'preferred_address',
+      value,
+      memoryClass: 'behavioral',
+    });
+  }
+
+  const identity = clean.match(/^my name is\s+(.+?)(?:\s+and I am your creator)?[.!]?$/i);
+  if (identity?.[1]) {
+    const value = identity[1].trim();
+    claims.push({ subject: 'primary_user', predicate: 'name', value, claimType: 'semantic', sensitivity: 'private', allowedAudiences: privateAudience });
+    if (/\band I am your creator\b/i.test(clean)) {
+      claims.push({ subject: 'primary_user', predicate: 'relationship_to_siduri', value: 'creator', claimType: 'relationship', sensitivity: 'private', allowedAudiences: privateAudience });
+    }
+  }
+
+  const profilePatterns: Array<[RegExp, string, string, 'semantic' | 'preference' | 'episodic' | 'relationship']> = [
+    [/^my genshin uid is\s+(.+?)[.!]?$/i, 'primary_user.genshin', 'uid', 'semantic'],
+    [/^my genshin server is\s+(.+?)[.!]?$/i, 'primary_user.genshin', 'server', 'semantic'],
+    [/^my main character is\s+(.+?)[.!]?$/i, 'primary_user.genshin', 'main_character', 'preference'],
+  ];
+  for (const [pattern, subject, predicate, claimType] of profilePatterns) {
+    const match = clean.match(pattern);
+    if (match?.[1]) claims.push({ subject, predicate, value: match[1].trim(), claimType, sensitivity: 'private', allowedAudiences: privateAudience });
+  }
+
+  return { claims, behaviorProposals };
+}
+
 export class SiduriRuntime {
   public id: string;
   public config: CompanionConfig;
@@ -72,7 +128,8 @@ export class SiduriRuntime {
     this.conversationHistory = [...boundedHistory, { role: 'user', content: message }].slice(-20);
 
     const normalizedMessage = message.replace(/\s+/g, ' ').trim().toLowerCase();
-    const teachingLike = /\b(my name is|call me|i am your|my (?:genshin )?(?:uid|server|main character)|remember that)\b/.test(normalizedMessage);
+    const explicitTeaching = extractExplicitTeaching(message);
+    const teachingLike = explicitTeaching.claims.length > 0 || explicitTeaching.behaviorProposals.length > 0 || /\bremember that\b/.test(normalizedMessage);
     const selfIdentityRequest = /\b(?:who|what) are you\b|\bwho is siduri\b|\b(?:your|my) name\b|\btell me about yourself\b/.test(normalizedMessage);
     const shouldQueryKnowledge = !teachingLike && !selfIdentityRequest;
 
@@ -118,7 +175,7 @@ export class SiduriRuntime {
 
     const createdMemoryProposals: any[] = [];
     let sourceEventId: string | undefined;
-    if ((plan.memoryProposals?.length || plan.behaviorProposals?.length) && this.memory.addSourceEvent) {
+    if ((explicitTeaching.claims.length || explicitTeaching.behaviorProposals.length || plan.memoryProposals?.length || plan.behaviorProposals?.length) && this.memory.addSourceEvent) {
       const sourceEvent: SourceEvent = {
         id: `evt_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         sourceType: 'private_chat',
@@ -128,8 +185,14 @@ export class SiduriRuntime {
       await this.memory.addSourceEvent(sourceEvent);
       sourceEventId = sourceEvent.id;
     }
-    if (plan.memoryProposals) {
-      for (const proposal of plan.memoryProposals) {
+    const proposedClaims = [
+      ...explicitTeaching.claims,
+      ...(plan.memoryProposals || []),
+    ].filter((proposal, index, all) => all.findIndex((candidate) =>
+      candidate.subject === proposal.subject && candidate.predicate === proposal.predicate && candidate.value === proposal.value
+    ) === index);
+    if (proposedClaims.length) {
+      for (const proposal of proposedClaims) {
         const claim = await this.memory.proposeClaim({
           subject: proposal.subject,
           predicate: proposal.predicate,
@@ -156,8 +219,14 @@ export class SiduriRuntime {
     }
 
     const createdBehavioralProposals: any[] = [];
-    if (plan.behaviorProposals) {
-      for (const p of plan.behaviorProposals) {
+    const proposedBehavior = [
+      ...explicitTeaching.behaviorProposals,
+      ...(plan.behaviorProposals || []),
+    ].filter((proposal, index, all) => all.findIndex((candidate) =>
+      candidate.directive === proposal.directive
+    ) === index);
+    if (proposedBehavior.length) {
+      for (const p of proposedBehavior) {
         const directive = await this.memory.proposeDirective({
           directive: p.directive,
           scopeMatcher: ['*'],
@@ -174,7 +243,9 @@ export class SiduriRuntime {
             instruction: p.directive,
             frequency: 'always',
             preferred_positions: []
-          }
+          },
+          source_event_id: sourceEventId,
+          runtime_effect: p.predicate || 'behavioral_rule',
         });
       }
     }

@@ -183,9 +183,12 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
   async approveClaim(id: string): Promise<void> {
     this.ensureInitialized();
     await this.pool.query(
-      `UPDATE memory_claims SET status = 'APPROVED' WHERE id = $1 AND companion_id = $2`,
+      `UPDATE memory_claims
+       SET status = 'APPROVED', user_confirmation = 'explicit'
+       WHERE id = $1 AND companion_id = $2 AND status = 'PENDING'`,
       [id, this.companionId]
     );
+    await this.recordClaimHistory(id, 'APPROVED', 'operator_approved');
   }
 
   async rejectClaim(id: string): Promise<void> {
@@ -194,6 +197,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       `UPDATE memory_claims SET status = 'REJECTED' WHERE id = $1 AND companion_id = $2`,
       [id, this.companionId]
     );
+    await this.recordClaimHistory(id, 'REJECTED', 'operator_rejected');
   }
 
   async getClaims(): Promise<Claim[]> {
@@ -309,6 +313,26 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
 
   async close(): Promise<void> {
     await this.pool.end();
+  }
+
+  private async recordClaimHistory(id: string, status: string, reason: string): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO memory_claim_history (claim_id, companion_id, status, reason, snapshot)
+       SELECT id, companion_id, $3, $4, to_jsonb(memory_claims)
+       FROM memory_claims WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId, status, reason]
+    );
+  }
+
+  async supersedeClaim(id: string, replacement: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim> {
+    this.ensureInitialized();
+    const claim = await this.proposeClaim({ ...replacement, supersedes: id });
+    await this.pool.query(
+      `UPDATE memory_claims SET status = 'SUPERSEDED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+    await this.recordClaimHistory(id, 'SUPERSEDED', 'claim_replaced');
+    return claim;
   }
 
   async addSourceEvent(event: SourceEvent): Promise<SourceEvent> {
