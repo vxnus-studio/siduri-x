@@ -6,7 +6,7 @@
 
 ## Outcome
 
-Siduri resolves `@vxnus/teyvat` from the deployed E Hub, validates the provider
+Siduri resolves an explicitly selected package from the deployed E Hub, validates the provider
 manifest, and uses the live Teyvat provider without a local pack or database
 connection.
 

@@ -1,4 +1,4 @@
-import { OpenRouterBrain } from './index';
+import { OpenAICompatibleBrain, OpenRouterBrain } from './index';
 import { PromptAssembler } from './prompt';
 import { BrainContext } from '@siduri-y/core';
 
@@ -97,6 +97,25 @@ describe('OpenRouterBrain', () => {
 
     await expect(brain.generatePlan(mockContext)).rejects.toThrow("Failed to generate plan after retries");
     expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('OpenAICompatibleBrain', () => {
+  test('uses a configurable OpenAI-compatible endpoint', async () => {
+    (global.fetch as jest.Mock).mockClear();
+    const brain = new OpenAICompatibleBrain({
+      apiKey: 'test-key',
+      model: 'local-model',
+      baseUrl: 'http://localhost:1234/v1',
+    });
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ choices: [{ message: { tool_calls: [{ function: { name: 'submitResponsePlan', arguments: JSON.stringify({ speech: 'Hi', language: 'en' }) } }] } }] }),
+    });
+    await brain.generatePlan({ systemPrompt: 'system', contextPrompt: 'context', recentMessages: [] });
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toBe('http://localhost:1234/v1/chat/completions');
+    expect(init.headers.Authorization).toBe('Bearer test-key');
   });
 });
 

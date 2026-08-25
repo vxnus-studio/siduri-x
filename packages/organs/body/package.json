@@ -13,10 +13,10 @@
     "ws": "^8.21.3"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^26.2.0",
     "@types/ws": "^8.18.1",
-    "jest": "^30.4.2",
+    "jest": "^29.7.0",
     "ts-jest": "^29.4.12",
     "typescript": "^5.3.3"
   }

@@ -31,7 +31,7 @@ unavailable.
   "knowledge": {
     "provider": "e-hub",
     "registryUrl": "https://e.vxnus.xyz/api/packs",
-    "packId": "@vxnus/teyvat",
+    "packId": "@publisher/installed-pack",
     "timeoutMs": 5000
   }
 }

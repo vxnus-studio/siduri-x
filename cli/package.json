@@ -1,6 +1,24 @@
 {
-  "name": "@siduri-y/cli",
-  "version": "1.0.0",
+  "name": "@vxnus/siduri",
+  "version": "0.0.1",
+  "description": "Experimental CLI for installing and configuring Siduri companions",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vxnuslabs/siduri-y",
+    "directory": "cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "siduri": "./dist/index.js"
   },
@@ -10,6 +28,8 @@
     "dev": "tsc -w"
   },
   "dependencies": {
+    "@vxnus/e": "^0.1.3",
+    "@vxnus/e-knowledge": "^0.1.2",
     "inquirer": "^9.2.12"
   },
   "devDependencies": {

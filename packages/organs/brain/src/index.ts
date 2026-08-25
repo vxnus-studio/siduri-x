@@ -2,6 +2,12 @@ import { BrainOrgan, BrainContext, ResponsePlan, Message } from '@siduri-y/core'
 import { PromptAssembler } from './prompt';
 import { z } from 'zod';
 
+export interface OpenAICompatibleBrainConfig {
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+}
+
 export interface OpenRouterBrainConfig {
   apiKey: string;
   model: string;
@@ -26,11 +32,11 @@ const ResponsePlanSchema = z.object({
   behaviorProposals: z.array(BehaviorProposalSchema).optional()
 });
 
-export class OpenRouterBrain implements BrainOrgan {
-  private config: OpenRouterBrainConfig;
+export class OpenAICompatibleBrain implements BrainOrgan {
+  private config: OpenAICompatibleBrainConfig;
   private assembler: PromptAssembler;
   
-  constructor(config: OpenRouterBrainConfig) {
+  constructor(config: OpenAICompatibleBrainConfig) {
     this.config = config;
     this.assembler = new PromptAssembler();
   }
@@ -83,7 +89,7 @@ export class OpenRouterBrain implements BrainOrgan {
     let retries = 3;
     while (retries > 0) {
       try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        const response = await fetch(`${this.config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${this.config.apiKey}`,
@@ -122,6 +128,12 @@ export class OpenRouterBrain implements BrainOrgan {
     }
 
     throw new Error("Failed to generate plan after retries");
+  }
+}
+
+export class OpenRouterBrain extends OpenAICompatibleBrain {
+  constructor(config: OpenRouterBrainConfig) {
+    super({ ...config, baseUrl: 'https://openrouter.ai/api/v1' });
   }
 }
 

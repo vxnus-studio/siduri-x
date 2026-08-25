@@ -5,12 +5,12 @@
 
 ## Delivered
 
-- Default Siduri API configuration now selects `e-hub` and
-  `@vxnus/teyvat` through `https://e.vxnus.xyz/api/packs`.
-- Local filesystem packs remain supported as an explicit development and
-  recovery mode.
+- Siduri no longer selects a specific Hub package by default.
+- Installed local packs are the default; Hub packages remain explicit through
+  configuration.
 - `SIDURI_KNOWLEDGE_MODE` controls lexical, semantic, or hybrid preference;
-  lexical remains the default until Teyvat advertises semantic readiness.
+  lexical remains the default until the selected provider advertises semantic
+  readiness.
 
 ## Completion gate
 

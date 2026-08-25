@@ -5,3 +5,6 @@ packages:
   - 'cli'
 allowBuilds:
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@vxnus/e-knowledge@0.1.2'
+  - '@vxnus/e@0.1.3'

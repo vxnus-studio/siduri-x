@@ -1,20 +1,43 @@
 # Siduri-Y
 
-**NOTICE:** This project is currently under active development. It is being made public solely for documentation and reference purposes. It is strictly **untested for stability** and should not be relied upon for production use. 
+**NOTICE:** This project is currently under active development. The first
+experimental CLI release is `@vxnus/siduri@0.0.1`; it is strictly **untested
+for stability** and should not be relied upon for production use.
 
 > **Important Disclaimer:** **Siduri-Y** is an experimental variant of the Siduri architecture built specifically for maximal testing and boundary validation. Please note that this is **NOT** the original `Siduri` core project, nor is it `Siduri-X`.
 
 ## Overview
 Siduri-Y is a next-generation TypeScript monorepo implementation of the Siduri AI companion architecture. It orchestrates autonomous AI agents with rich capabilities across several modular "organs":
 
-- **Brain**: Powered by OpenRouter for structured AI inference and strict response planning.
+- **Brain**: Uses a provider-neutral OpenAI-compatible client, with OpenRouter
+  available as a managed routing preset, for structured AI inference and strict
+  response planning.
 - **Memory**: A powerful conversational memory engine utilizing PostgreSQL Full-Text Search (FTS) for highly relevant context retrieval and companion isolation.
 - **Behavior**: An atomic directive state machine for managing AI companion goals and guidelines.
-- **Knowledge (E-Teyvat)**: External retrieval and bounded context integration for domain-specific lore and data.
+- **Knowledge**: Installed or hosted E-compatible packs/providers with bounded,
+  cited context integration for domain-specific data.
 - **Voice & Vision**: Advanced queueing for speech synthesis and visual processing (via ffmpeg).
 - **Body**: A real-time `Live2DAdapter` that broadcasts expressions, speech, and lifecycle transitions via WebSockets for seamless integration with overlays and frontends.
 
 The project encompasses a backend API layer, a CLI tool, Next.js web frontends (Chat UI, Operator Console, DOM-based OBS Overlay), and experimental Model Context Protocol (MCP) microservice scaffolding (`apps/gateway` and `apps/memory-service`).
 
+## Experimental CLI
+
+Install and run the experimental CLI with Node.js 20 or newer:
+
+```bash
+npx @vxnus/siduri@0.0.1 create
+```
+
+The wizard requires a Brain and Memory configuration. Voice, Knowledge,
+Behavior, Body, and Vision are optional and can each be set to **Do not use**.
+It creates `siduri.config.json`, keeps API keys in environment variables, and
+supports OpenRouter or any OpenAI-compatible chat-completions endpoint.
+
+See [CLI usage](./docs/cli.md), [configuration](./docs/configuration.md), and
+[development and release](./docs/development.md) for details.
+
 ## License
-All rights are restricted until the project is officially released publicly to VXNUS Creative Technology Studio. See the [LICENSE](./LICENSE) file for more details.
+All rights are restricted until the project is officially released publicly to
+VXNUS Creative Technology Studio. See the
+[experimental CLI license](./cli/LICENSE) for more details.

@@ -8,5 +8,5 @@ Status: Implemented
   and exposes its cited retrieval results through `KnowledgeOrgan`.
 
 Siduri installs or selects the pack path during companion creation. The Hub
-will later provide discovery and distribution URLs; it does not perform local
-companion installation.
+provides discovery and distribution URLs; it does not perform local companion
+installation.

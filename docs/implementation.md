@@ -7,7 +7,7 @@
 * **Voice**: Implemented VOICEVOX Priority Queue logic.
 * **Knowledge**: Implemented bounds-checked e-Teyvat integration.
 * **Vision**: Implemented OpenRouter vision adapter.
-* **Body**: Implemented Live2D stub.
+* **Body**: Implemented Live2D/WebSocket adapter with optional VTube Studio API control.
 * **Orchestrator API**: Implemented multi-companion isolated lifecycle in Hono/Express.
 
 ## Completed Tasks

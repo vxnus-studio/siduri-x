@@ -5,11 +5,11 @@ export class SiduriRuntime {
   public config: CompanionConfig;
   public brain: BrainOrgan;
   public memory: MemoryOrgan;
-  public voice: VoiceOrgan;
-  public knowledge: KnowledgeOrgan;
-  public vision: VisionOrgan;
-  public behavior: BehaviorOrgan;
-  public body: BodyOrgan;
+  public voice?: VoiceOrgan;
+  public knowledge?: KnowledgeOrgan;
+  public vision?: VisionOrgan;
+  public behavior?: BehaviorOrgan;
+  public body?: BodyOrgan;
 
   private conversationHistory: Message[] = [];
 
@@ -19,11 +19,11 @@ export class SiduriRuntime {
     organs: {
       brain: BrainOrgan;
       memory: MemoryOrgan;
-      voice: VoiceOrgan;
-      knowledge: KnowledgeOrgan;
-      vision: VisionOrgan;
-      behavior: BehaviorOrgan;
-      body: BodyOrgan;
+      voice?: VoiceOrgan;
+      knowledge?: KnowledgeOrgan;
+      vision?: VisionOrgan;
+      behavior?: BehaviorOrgan;
+      body?: BodyOrgan;
     }
   ) {
     this.id = id;
@@ -45,10 +45,10 @@ export class SiduriRuntime {
     this.conversationHistory.push({ role: 'user', content: message });
 
     const [knowledgeData, memoryData, activeDirectives] = await Promise.all([
-      this.knowledge.search(message).catch(e => {
+      this.knowledge ? this.knowledge.search(message).catch(e => {
         console.error("[SiduriRuntime] Knowledge search failed:", e.message);
         return [];
-      }),
+      }) : Promise.resolve([]),
       this.memory.searchClaims(message, role, 5),
       this.memory.getDirectives()
     ]);
@@ -62,10 +62,9 @@ export class SiduriRuntime {
     }
 
     // 3. Compile Behavior
-    const behaviorInjections = await this.behavior.compile({
-      activeRole: role,
-      directives: activeDirectives
-    });
+    const behaviorInjections = this.behavior
+      ? await this.behavior.compile({ activeRole: role, directives: activeDirectives })
+      : '';
 
     const systemPrompt = `You are ${this.config.name}.\n${behaviorInjections}`;
 
@@ -122,8 +121,10 @@ export class SiduriRuntime {
       }
     }
 
-    const speechId = this.voice.enqueueSpeech(plan.speech, plan.language, 0);
-    this.body.speak(speechId);
+    if (this.voice) {
+      const speechId = this.voice.enqueueSpeech(plan.speech, plan.language, 0);
+      this.body?.speak(speechId);
+    }
 
     // Map to the expected UI contract format
     return {

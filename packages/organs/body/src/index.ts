@@ -6,6 +6,28 @@ export type BodyState = 'idle' | 'speaking' | 'acting';
 export interface Live2DAdapterConfig {
   port?: number;
   server?: Server;
+  vtsUrl?: string;
+  vtsPluginName?: string;
+  vtsPluginDeveloper?: string;
+  vtsAuthToken?: string;
+}
+
+type VtsRequest = {
+  apiName: 'VTubeStudioPublicAPI';
+  apiVersion: '1.0';
+  requestID: string;
+  messageType: string;
+  data?: Record<string, unknown>;
+};
+
+export function createVtsRequest(messageType: string, data: Record<string, unknown> = {}): VtsRequest {
+  return {
+    apiName: 'VTubeStudioPublicAPI',
+    apiVersion: '1.0',
+    requestID: `siduri-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    messageType,
+    data,
+  };
 }
 
 export class Live2DAdapter implements BodyOrgan {
@@ -17,8 +39,19 @@ export class Live2DAdapter implements BodyOrgan {
   private wss: Server | null = null;
   public clients: Set<WebSocket> = new Set();
   private ownServer: boolean = false;
+  private vts: WebSocket | null = null;
+  private vtsReady = false;
+  private vtsToken: string | undefined;
+  private readonly vtsConfig: Required<Pick<Live2DAdapterConfig, 'vtsPluginName' | 'vtsPluginDeveloper'>> & { url?: string };
 
   constructor(config: Live2DAdapterConfig = {}) {
+    this.vtsConfig = {
+      url: config.vtsUrl,
+      vtsPluginName: config.vtsPluginName ?? 'Siduri',
+      vtsPluginDeveloper: config.vtsPluginDeveloper ?? 'vxnuslabs',
+    };
+    this.vtsToken = config.vtsAuthToken;
+
     if (config.server) {
       this.wss = config.server;
     } else if (config.port) {
@@ -46,6 +79,63 @@ export class Live2DAdapter implements BodyOrgan {
         });
       });
     }
+
+    if (this.vtsConfig.url) this.connectToVtubeStudio();
+  }
+
+  private connectToVtubeStudio(): void {
+    const socket = new WebSocket(this.vtsConfig.url as string);
+    this.vts = socket;
+    socket.on('open', () => {
+      const request = this.vtsToken
+        ? createVtsRequest('AuthenticationRequest', {
+            pluginName: this.vtsConfig.vtsPluginName,
+            pluginDeveloper: this.vtsConfig.vtsPluginDeveloper,
+            authenticationToken: this.vtsToken,
+          })
+        : createVtsRequest('AuthenticationTokenRequest', {
+            pluginName: this.vtsConfig.vtsPluginName,
+            pluginDeveloper: this.vtsConfig.vtsPluginDeveloper,
+          });
+      socket.send(JSON.stringify(request));
+    });
+    socket.on('message', (data) => {
+      try {
+        const response = JSON.parse(data.toString()) as {
+          messageType?: string;
+          data?: { authenticationToken?: string };
+        };
+        if (response.messageType === 'AuthenticationTokenResponse' && response.data?.authenticationToken) {
+          this.vtsToken = response.data.authenticationToken;
+          socket.send(JSON.stringify(createVtsRequest('AuthenticationRequest', {
+            pluginName: this.vtsConfig.vtsPluginName,
+            pluginDeveloper: this.vtsConfig.vtsPluginDeveloper,
+            authenticationToken: this.vtsToken,
+          })));
+        } else if (response.messageType === 'AuthenticationResponse') {
+          this.vtsReady = true;
+          console.log('[Live2DAdapter] Connected to VTube Studio');
+        } else if (response.messageType === 'APIError') {
+          console.warn('[Live2DAdapter] VTube Studio API error:', response);
+        }
+      } catch (error) {
+        console.warn('[Live2DAdapter] Invalid VTube Studio response:', error);
+      }
+    });
+    socket.on('close', () => {
+      this.vtsReady = false;
+      this.vts = null;
+    });
+    socket.on('error', (error) => {
+      this.vtsReady = false;
+      console.warn('[Live2DAdapter] VTube Studio unavailable:', error.message);
+    });
+  }
+
+  private sendToVtubeStudio(messageType: string, data: Record<string, unknown>): void {
+    if (this.vtsReady && this.vts?.readyState === WebSocket.OPEN) {
+      this.vts.send(JSON.stringify(createVtsRequest(messageType, data)));
+    }
   }
 
   private broadcast(message: any): void {
@@ -65,6 +155,15 @@ export class Live2DAdapter implements BodyOrgan {
 
   setExpression(expression: string): void {
     this.currentExpression = expression;
+    if (expression.endsWith('.exp3.json')) {
+      this.sendToVtubeStudio('ExpressionActivationRequest', {
+        expressionFile: expression,
+        fadeTime: 0.25,
+        active: true,
+      });
+    } else {
+      this.sendToVtubeStudio('HotkeyTriggerRequest', { hotkeyID: expression });
+    }
     this.broadcast({
       type: 'expression',
       expression: expression,
@@ -86,6 +185,7 @@ export class Live2DAdapter implements BodyOrgan {
   act(action: string): void {
     this.lastAction = action;
     this.state = 'acting';
+    this.sendToVtubeStudio('HotkeyTriggerRequest', { hotkeyID: action });
     this.broadcast({
       type: 'action',
       action: action,
@@ -112,6 +212,9 @@ export class Live2DAdapter implements BodyOrgan {
     if (this.ownServer && this.wss) {
       this.wss.close();
     }
+    this.vts?.close();
+    this.vts = null;
+    this.vtsReady = false;
     this.wss = null;
   }
 }

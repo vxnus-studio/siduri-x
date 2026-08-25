@@ -12,7 +12,7 @@ The API loads `siduri.config.json` and creates a `CompanionRuntime`. The runtime
 - **Knowledge**: Loads an E-compatible pack/provider and preserves citations
   and revision metadata for the Brain.
 - **Vision**: Analyzes images.
-- **Body**: Controls avatar expressions (currently stubbed).
+- **Body**: Controls overlay lifecycle and optional VTube Studio expressions/actions.
 
 ## Execution Flow
 1. API receives `/boot` with a config.

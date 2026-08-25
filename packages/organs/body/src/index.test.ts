@@ -1,4 +1,4 @@
-import { Live2DAdapter } from './index';
+import { createVtsRequest, Live2DAdapter } from './index';
 import WebSocket from 'ws';
 
 describe('Live2DAdapter', () => {
@@ -11,6 +11,15 @@ describe('Live2DAdapter', () => {
 
   afterEach(() => {
     adapter.cleanup();
+  });
+
+  test('builds VTube Studio API requests', () => {
+    expect(createVtsRequest('HotkeyTriggerRequest', { hotkeyID: 'happy' })).toMatchObject({
+      apiName: 'VTubeStudioPublicAPI',
+      apiVersion: '1.0',
+      messageType: 'HotkeyTriggerRequest',
+      data: { hotkeyID: 'happy' },
+    });
   });
 
   test('tracks state correctly', () => {

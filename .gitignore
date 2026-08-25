@@ -34,3 +34,6 @@ pnpm-debug.log*
 # vercel
 .vercel/
 dist/
+
+# local visual assets
+assets/
