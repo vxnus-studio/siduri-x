@@ -37,19 +37,20 @@ async function resolveManifest(provider: KnowledgeProvider, baseUrl: string, tim
   }
 }
 
-async function resolveHubProvider(config: EKnowledgeConfig, module: EKnowledgeModule): Promise<{ provider: KnowledgeProvider; baseUrl: string }> {
+async function resolveHubProvider(config: EKnowledgeConfig, module: EKnowledgeModule): Promise<{ provider: KnowledgeProvider; baseUrl: string; manifest?: KnowledgePackManifest }> {
   if (!config.registryUrl || !config.packId) throw new Error('E Hub provider requires registryUrl and packId');
   const match = config.packId.match(/^@([^/]+)\/([^/]+)$/);
   if (!match) throw new Error('E Hub packId must use the @publisher/name format');
   const registryUrl = config.registryUrl.replace(/\/+$/, '');
   const response = await fetch(`${registryUrl}/${encodeURIComponent(match[1])}/${encodeURIComponent(match[2])}`);
   if (!response.ok) throw new Error(`E Hub registry returned HTTP ${response.status}`);
-  const pack = await response.json() as { distribution?: { kind?: string; url?: string } };
+  const pack = await response.json() as (KnowledgePackManifest & { distribution?: { kind?: string; url?: string } });
   if (pack.distribution?.kind !== 'provider' || !pack.distribution.url) throw new Error(`E Hub pack ${config.packId} is not a remote provider`);
   const baseUrl = pack.distribution.url;
   return {
-    provider: module.createRemoteProvider({ baseUrl, timeoutMs: config.timeoutMs }),
+    provider: module.createRemoteProvider({ baseUrl, timeoutMs: config.timeoutMs, manifest: pack }),
     baseUrl,
+    manifest: pack,
   };
 }
 
@@ -61,8 +62,14 @@ export class EKnowledgeAdapter implements KnowledgeOrgan {
     this.preferredMode = config.preferredMode ?? 'lexical';
     this.loaded = loadEKnowledgeModule().then(async (module) => {
       if (config.provider === 'e-hub') {
-        const { provider, baseUrl } = await resolveHubProvider(config, module);
-        const manifest = await resolveManifest(provider, baseUrl, config.timeoutMs);
+        const { provider, baseUrl, manifest: hubManifest } = await resolveHubProvider(config, module);
+        let manifest: KnowledgePackManifest;
+        try {
+          manifest = await resolveManifest(provider, baseUrl, config.timeoutMs);
+        } catch {
+          if (!hubManifest) throw new Error('Could not resolve manifest for E Hub provider');
+          manifest = hubManifest;
+        }
         return { provider: provider as any, manifest };
       }
       if (config.provider === 'e-remote' || config.baseUrl) {
