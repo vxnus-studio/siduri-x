@@ -17,6 +17,10 @@ import {
   ResponseGatingEngine,
   StagedResponsePlan,
   ResponseGateEvaluation,
+  ExperienceDispatcher,
+  createExperienceEvents,
+  ExperienceEvent,
+  ExperienceAdapter,
 } from '@siduri-y/core';
 import { extractDeterministicTeaching } from '@siduri-y/memory';
 
@@ -52,6 +56,7 @@ export class SiduriRuntime {
   public behavior?: BehaviorOrgan;
   public body?: BodyOrgan;
   public gating: ResponseGatingEngine;
+  public dispatcher: ExperienceDispatcher;
   private conversationHistory: Message[] = [];
 
   constructor(id: string, config: SiduriRuntimeConfig, organs: RuntimeOrgans) {
@@ -65,6 +70,14 @@ export class SiduriRuntime {
     this.behavior = organs.behavior;
     this.body = organs.body;
     this.gating = new ResponseGatingEngine();
+    this.dispatcher = new ExperienceDispatcher();
+
+    if (this.voice && typeof (this.voice as any).handleEvent === 'function') {
+      this.dispatcher.registerAdapter(this.voice as any as ExperienceAdapter);
+    }
+    if (this.body && typeof (this.body as any).handleEvent === 'function') {
+      this.dispatcher.registerAdapter(this.body as any as ExperienceAdapter);
+    }
   }
 
   async initialize(): Promise<void> {
@@ -312,14 +325,34 @@ export class SiduriRuntime {
       }
     }
 
-    // 5. Enqueue Voice
+    // 5. T5 Output Path: Create ExperienceEvents and dispatch to registered adapters
+    const experienceEvents = createExperienceEvents({
+      responseId: stagedPlan.responseId,
+      companionId: this.id,
+      correlationId: requestContext.conversation.correlationId,
+      channel: requestContext.conversation.channel,
+      audienceId: requestContext.conversation.audienceId,
+      speech: plan.speech,
+      language: plan.language || 'ja',
+      evidenceIds: gateEval.filteredEvidenceIds,
+      citations: gateEval.filteredCitations,
+      expression: 'neutral',
+      action: 'talk',
+      expiresAt: stagedPlan.expiresAt,
+    });
+
+    const dispatchResult = await this.dispatcher.dispatchEvents(experienceEvents);
+
+    // If legacy voice adapter was used directly without handleEvent implementation
     let speechId: string | undefined;
-    if (this.voice) {
+    const voiceResult = dispatchResult.eventResults.find((r) => r.event.kind === 'voice');
+    if (voiceResult?.result?.metadata?.speechId) {
+      speechId = voiceResult.result.metadata.speechId as string;
+    } else if (this.voice && typeof (this.voice as any).handleEvent !== 'function') {
       speechId = this.voice.enqueueSpeech(plan.speech, plan.language || 'ja', 1);
     }
 
-    // 6. Actuate Body
-    if (this.body) {
+    if (this.body && typeof (this.body as any).handleEvent !== 'function') {
       if (typeof this.body.setExpression === 'function') {
         this.body.setExpression("neutral");
       }
@@ -353,6 +386,11 @@ export class SiduriRuntime {
         memory_proposals: memoryProposalReceipts,
         evidence_ids: gateEval.filteredEvidenceIds,
         citations: gateEval.filteredCitations,
+        events: experienceEvents.map(e => ({
+          event_id: e.eventId,
+          kind: e.kind,
+          lifecycle: e.lifecycle,
+        })),
       }
     };
   }

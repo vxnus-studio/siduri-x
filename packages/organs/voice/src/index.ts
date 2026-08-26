@@ -1,4 +1,4 @@
-import { VoiceOrgan, AudioEvent } from '@siduri-y/core';
+import { VoiceOrgan, AudioEvent, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult, validateExperienceEvent } from '@siduri-y/core';
 
 export interface VoicevoxConfig {
   baseUrl: string;
@@ -13,7 +13,8 @@ interface SpeechJob {
   sequence: number;
 }
 
-export class VoicevoxAdapter implements VoiceOrgan {
+export class VoicevoxAdapter implements VoiceOrgan, ExperienceAdapter {
+  readonly kind = 'voice' as const;
   private queue: SpeechJob[] = [];
   private sequenceCounter = 0;
   private currentJob: string | undefined;
@@ -21,6 +22,54 @@ export class VoicevoxAdapter implements VoiceOrgan {
   private callbacks: ((event: AudioEvent) => void)[] = [];
 
   constructor(private config: VoicevoxConfig) {}
+
+  async handleEvent(event: ExperienceEvent): Promise<ExperienceAdapterResult> {
+    const validation = validateExperienceEvent(event);
+    if (!validation.valid) {
+      return {
+        accepted: false,
+        eventId: event?.eventId || '',
+        lifecycle: 'FAILED',
+        error: validation.error,
+        reason: 'INVALID_EVENT_ENVELOPE',
+      };
+    }
+
+    if (event.kind !== 'voice') {
+      return {
+        accepted: false,
+        eventId: event.eventId,
+        lifecycle: 'FAILED',
+        error: `Voice adapter received incompatible event kind: ${event.kind}`,
+        reason: 'INCOMPATIBLE_EVENT_KIND',
+      };
+    }
+
+    if (event.approval !== 'APPROVED') {
+      return {
+        accepted: false,
+        eventId: event.eventId,
+        lifecycle: 'FAILED',
+        error: 'Event is not APPROVED',
+        reason: 'APPROVAL_REQUIRED',
+      };
+    }
+
+    const text = event.text ?? '';
+    const language = event.language ?? 'ja';
+    const speechId = this.enqueueSpeech(text, language, 1);
+
+    return {
+      accepted: true,
+      eventId: event.eventId,
+      lifecycle: 'STARTED',
+      metadata: {
+        speechId,
+        companionId: event.companionId,
+        correlationId: event.correlationId,
+      },
+    };
+  }
 
   enqueueSpeech(text: string, language: string, priority: number = 0): string {
     const id = `job_${Math.random().toString(36).substr(2, 9)}`;

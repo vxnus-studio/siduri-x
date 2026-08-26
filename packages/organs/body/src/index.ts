@@ -1,4 +1,4 @@
-import { BodyOrgan } from '@siduri-y/core';
+import { BodyOrgan, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult, validateExperienceEvent } from '@siduri-y/core';
 import WebSocket, { Server } from 'ws';
 
 export type BodyState = 'idle' | 'speaking' | 'acting';
@@ -30,7 +30,8 @@ export function createVtsRequest(messageType: string, data: Record<string, unkno
   };
 }
 
-export class Live2DAdapter implements BodyOrgan {
+export class Live2DAdapter implements BodyOrgan, ExperienceAdapter {
+  readonly kind = 'avatar' as const;
   public currentExpression: string = 'neutral';
   public lastSpeechId: string | null = null;
   public lastAction: string | null = null;
@@ -81,6 +82,58 @@ export class Live2DAdapter implements BodyOrgan {
     }
 
     if (this.vtsConfig.url) this.connectToVtubeStudio();
+  }
+
+  async handleEvent(event: ExperienceEvent): Promise<ExperienceAdapterResult> {
+    const validation = validateExperienceEvent(event);
+    if (!validation.valid) {
+      return {
+        accepted: false,
+        eventId: event?.eventId || '',
+        lifecycle: 'FAILED',
+        error: validation.error,
+        reason: 'INVALID_EVENT_ENVELOPE',
+      };
+    }
+
+    if (event.kind !== 'avatar') {
+      return {
+        accepted: false,
+        eventId: event.eventId,
+        lifecycle: 'FAILED',
+        error: `Body adapter received incompatible event kind: ${event.kind}`,
+        reason: 'INCOMPATIBLE_EVENT_KIND',
+      };
+    }
+
+    if (event.approval !== 'APPROVED') {
+      return {
+        accepted: false,
+        eventId: event.eventId,
+        lifecycle: 'FAILED',
+        error: 'Event is not APPROVED',
+        reason: 'APPROVAL_REQUIRED',
+      };
+    }
+
+    if (event.expression) {
+      this.setExpression(event.expression);
+    }
+    if (event.action) {
+      this.act(event.action);
+    }
+
+    return {
+      accepted: true,
+      eventId: event.eventId,
+      lifecycle: 'STARTED',
+      metadata: {
+        expression: this.currentExpression,
+        action: this.lastAction,
+        companionId: event.companionId,
+        correlationId: event.correlationId,
+      },
+    };
   }
 
   private connectToVtubeStudio(): void {

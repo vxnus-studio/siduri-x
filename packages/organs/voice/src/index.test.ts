@@ -51,3 +51,67 @@ describe('VoicevoxAdapter Queue Semantics', () => {
     expect(JSON.parse(synthCall[1].body).some).toBe("query_data");
   });
 });
+
+describe('VoicevoxAdapter T5 Experience Event Interface', () => {
+  let adapter: VoicevoxAdapter;
+
+  beforeEach(() => {
+    adapter = new VoicevoxAdapter({ baseUrl: 'http://localhost:50021', speakerId: 1 });
+  });
+
+  test('handleEvent processes valid approved voice event', async () => {
+    (adapter as any).isProcessing = true; // prevent live http calls
+    const res = await adapter.handleEvent({
+      eventId: 'evt-voice-1',
+      companionId: 'companion-a',
+      responseId: 'resp-1',
+      correlationId: 'corr-1',
+      channel: 'public',
+      audienceId: 'audience-public',
+      approval: 'APPROVED',
+      kind: 'voice',
+      lifecycle: 'STARTED',
+      evidenceIds: [],
+      text: 'Hello T5 voice',
+      language: 'en',
+      createdAt: new Date().toISOString(),
+    });
+
+    expect(res.accepted).toBe(true);
+    expect(res.lifecycle).toBe('STARTED');
+    expect(res.metadata?.speechId).toBeDefined();
+  });
+
+  test('handleEvent rejects unapproved event or incompatible kind', async () => {
+    const unapprovedRes = await adapter.handleEvent({
+      eventId: 'evt-voice-2',
+      companionId: 'companion-a',
+      responseId: 'resp-1',
+      correlationId: 'corr-1',
+      channel: 'public',
+      audienceId: 'audience-public',
+      approval: 'STAGED' as any,
+      kind: 'voice',
+      lifecycle: 'STARTED',
+      evidenceIds: [],
+      createdAt: new Date().toISOString(),
+    });
+    expect(unapprovedRes.accepted).toBe(false);
+
+    const incompatibleRes = await adapter.handleEvent({
+      eventId: 'evt-voice-3',
+      companionId: 'companion-a',
+      responseId: 'resp-1',
+      correlationId: 'corr-1',
+      channel: 'public',
+      audienceId: 'audience-public',
+      approval: 'APPROVED',
+      kind: 'avatar',
+      lifecycle: 'STARTED',
+      evidenceIds: [],
+      createdAt: new Date().toISOString(),
+    });
+    expect(incompatibleRes.accepted).toBe(false);
+    expect(incompatibleRes.reason).toBe('INCOMPATIBLE_EVENT_KIND');
+  });
+});
