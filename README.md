@@ -1,7 +1,7 @@
 # Siduri-Y
 
 **NOTICE:** This project is currently under active development. The first
-experimental CLI release is `@vxnus/siduri@0.0.4`; it is strictly **untested**
+experimental CLI release is `@vxnus/siduri@0.0.5`; it is strictly **untested**
 and should only be used by developers who are willing to inspect the generated
 artifacts directly.
 
@@ -27,7 +27,7 @@ The project encompasses a backend API layer, a CLI tool, Next.js web frontends (
 Install and run the experimental CLI with Node.js 20 or newer:
 
 ```bash
-npx @vxnus/siduri@0.0.4 create
+npx @vxnus/siduri@0.0.5 create
 ```
 
 The companion name becomes the generated project directory, such as

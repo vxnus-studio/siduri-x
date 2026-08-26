@@ -34,7 +34,7 @@ Local archives are installed under `~/.siduri/knowledge/` and validated with
 The published experimental package requires Node.js 20 or newer:
 
 ```bash
-npx @vxnus/siduri@0.0.4 create
+npx @vxnus/siduri@0.0.5 create
 ```
 
 The companion name becomes a safe project directory under the current
