@@ -286,12 +286,15 @@ async function configureKnowledge(): Promise<KnowledgeConfig> {
   if (pack.distribution.kind !== 'provider') {
     throw new Error('Archive installation was declined and no hosted provider is available');
   }
-  const provider = createRemoteProvider({ baseUrl: pack.distribution.url, timeoutMs: 5000 });
+  const provider = createRemoteProvider({ baseUrl: pack.distribution.url, timeoutMs: 5000, manifest: pack as any });
   await withTask('Checking provider manifest', async () => {
-    if (!provider.manifest) {
-      throw new Error('Remote knowledge provider does not support manifest inspection');
+    if (provider.manifest) {
+      return provider.manifest();
     }
-    return provider.manifest();
+    const cleanUrl = pack.distribution.url.replace(/\/+$/, '');
+    const res = await fetch(`${cleanUrl}/manifest`, { headers: { accept: 'application/json' } });
+    if (res.ok) return res.json();
+    return pack;
   });
   printSuccess(`Provider ready · ${pack.id}`);
   return { provider: 'e-hub', registryUrl, packId: pack.id, timeoutMs: 5000 };
