@@ -164,8 +164,9 @@ describe('T4 Response Gating and Staged Approval Integration Suite', () => {
         correlation_id: 'corr-stage-2',
       });
 
-    // Approval changes state but evaluation sees it or unknown
-    expect(approveRes.status).toBe(200);
+    expect(approveRes.status).toBe(400);
+    expect(approveRes.body.approved).toBe(false);
+    expect(approveRes.body.error).toBe('EXPLICITLY_REJECTED');
   });
 
   test('4. Unknown or cross-companion approval ID is rejected with 400', async () => {

@@ -42,6 +42,7 @@ function generateId(prefix: string): string {
 
 export class ResponseGatingEngine {
   private readonly stagedPlans = new Map<string, StagedResponsePlan>();
+  private readonly consumedApprovals = new Set<string>();
 
   stageResponse(options: StageResponseOptions): StagedResponsePlan {
     const { requestContext } = options;
@@ -195,6 +196,10 @@ export class ResponseGatingEngine {
       return { success: false, reason: 'UNKNOWN_APPROVAL_ID' };
     }
 
+    if (this.consumedApprovals.has(options.responseId) || plan.status === 'APPROVED') {
+      return { success: false, reason: 'APPROVAL_ALREADY_CONSUMED' };
+    }
+
     if (plan.companionId !== options.companionId) {
       return { success: false, reason: 'COMPANION_MISMATCH' };
     }
@@ -211,7 +216,12 @@ export class ResponseGatingEngine {
       return { success: false, reason: 'EVIDENCE_EXPIRED' };
     }
 
+    if (plan.status === 'REJECTED') {
+      return { success: false, reason: 'EXPLICITLY_REJECTED' };
+    }
+
     plan.status = 'APPROVED';
+    this.consumedApprovals.add(options.responseId);
     return { success: true, plan };
   }
 
