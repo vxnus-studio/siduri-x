@@ -1,43 +1,57 @@
 import { resolveIdentity } from './auth';
 
-function testResolveIdentity() {
-  console.log("Testing resolveIdentity...");
+describe('Auth Identity Resolution', () => {
+  const originalEnv = process.env;
 
-  // Mock Request object
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...originalEnv };
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
   const mockReq = (token?: string) => ({
     headers: {
       authorization: token ? `Bearer ${token}` : undefined
     }
   } as any);
 
-  // Set environment vars
-  process.env.OWNER_TOKEN = 'owner-secret';
-  process.env.OPERATOR_TOKEN = 'operator-secret';
-  process.env.NODE_ENV = 'production';
-  process.env.DEV_LOCAL_AUTH_ROLE = 'OWNER';
+  test('resolves explicit owner token', () => {
+    process.env.OWNER_TOKEN = 'owner-secret';
+    process.env.OPERATOR_TOKEN = 'operator-secret';
+    process.env.NODE_ENV = 'production';
 
-  // 1. Explicit Owner Token
-  const ownerId = resolveIdentity(mockReq('owner-secret'));
-  if (ownerId.role !== 'OWNER') throw new Error("Expected OWNER");
+    const ownerId = resolveIdentity(mockReq('owner-secret'));
+    expect(ownerId.role).toBe('OWNER');
+  });
 
-  // 2. Explicit Operator Token
-  const opId = resolveIdentity(mockReq('operator-secret'));
-  if (opId.role !== 'OPERATOR') throw new Error("Expected OPERATOR");
+  test('resolves explicit operator token', () => {
+    process.env.OWNER_TOKEN = 'owner-secret';
+    process.env.OPERATOR_TOKEN = 'operator-secret';
+    process.env.NODE_ENV = 'production';
 
-  // 3. No token (Production)
-  const viewerId = resolveIdentity(mockReq());
-  if (viewerId.role !== 'VIEWER') throw new Error("Expected VIEWER in prod");
+    const opId = resolveIdentity(mockReq('operator-secret'));
+    expect(opId.role).toBe('OPERATOR');
+  });
 
-  // 4. Invalid token
-  const invalidId = resolveIdentity(mockReq('invalid-token'));
-  if (invalidId.role !== 'VIEWER') throw new Error("Expected VIEWER for invalid token");
+  test('defaults to viewer when no token is present in production', () => {
+    process.env.NODE_ENV = 'production';
+    const viewerId = resolveIdentity(mockReq());
+    expect(viewerId.role).toBe('VIEWER');
+  });
 
-  // 5. Development Fallback
-  process.env.NODE_ENV = 'development';
-  const devId = resolveIdentity(mockReq());
-  if (devId.role !== 'OWNER') throw new Error("Expected OWNER in dev fallback");
+  test('defaults to viewer for invalid token in production', () => {
+    process.env.NODE_ENV = 'production';
+    const invalidId = resolveIdentity(mockReq('invalid-token'));
+    expect(invalidId.role).toBe('VIEWER');
+  });
 
-  console.log("SUCCESS: Identity resolution correctly handles tokens and environments.");
-}
-
-testResolveIdentity();
+  test('resolves development fallback role', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.DEV_LOCAL_AUTH_ROLE = 'OWNER';
+    const devId = resolveIdentity(mockReq());
+    expect(devId.role).toBe('OWNER');
+  });
+});

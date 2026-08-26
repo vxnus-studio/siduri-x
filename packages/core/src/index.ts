@@ -1,3 +1,6 @@
+// Export neutral context types and validator
+export * from './context';
+
 // Config
 export interface OrganConfig {
   provider: string;
@@ -76,7 +79,7 @@ export interface BrainOrgan {
   generatePlan(context: BrainContext): Promise<ResponsePlan>;
 }
 
-// Memory Isolation
+// Memory Isolation (Legacy compatibility scope)
 export type MemoryScope = 'OWNER' | 'VIEWER' | 'OPERATOR' | 'PUBLIC';
 
 export interface Claim {
