@@ -103,7 +103,11 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   app.get('/platforms/status', (req, res) => res.json({ platforms: {} }));
   app.get('/me', attachIdentity, (req, res) => {
     const identity = (req as any).identity as Identity;
-    res.json({ name: "Primary User", role: identity.role });
+    res.json({
+      actorId: identity.role === 'OWNER' ? 'owner-user' : 'anonymous-session',
+      role: identity.role,
+      authenticated: identity.role === 'OWNER',
+    });
   });
   app.put('/me', requireRole(['OWNER']), (req, res) => res.json({ success: true }));
 
