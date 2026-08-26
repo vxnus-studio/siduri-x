@@ -1,9 +1,13 @@
+const mClient = {
+  query: jest.fn().mockResolvedValue({ rowCount: 1, rows: [{ id: 'claim-1', status: 'PENDING' }] }),
+  release: jest.fn(),
+};
+const mPool = {
+  query: jest.fn(),
+  end: jest.fn(),
+  connect: jest.fn().mockResolvedValue(mClient),
+};
 jest.mock('pg', () => {
-  const mPool = {
-    query: jest.fn(),
-    end: jest.fn(),
-    connect: jest.fn(),
-  };
   return { Pool: jest.fn(() => mPool) };
 });
 
@@ -19,6 +23,8 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
     const pool = new Pool();
     poolQueryMock = pool.query as jest.Mock;
     poolQueryMock.mockClear();
+    mClient.query.mockClear();
+    mClient.query.mockResolvedValue({ rowCount: 1, rows: [{ id: 'claim-1', status: 'PENDING' }] });
     await organ.initialize('companion-a');
   });
 
@@ -62,22 +68,21 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
   });
 
   test('Lifecycle methods: markClaimSessionOnly, expireClaim, revokeClaim update status atomically', async () => {
-    poolQueryMock.mockResolvedValue({ rows: [] });
-
     await organ.markClaimSessionOnly('claim-1');
-    expect(poolQueryMock).toHaveBeenCalledWith(
+    expect(mClient.query).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'SESSION_ONLY'"),
       ['claim-1', 'companion-a']
     );
 
     await organ.expireClaim('claim-1');
-    expect(poolQueryMock).toHaveBeenCalledWith(
+    expect(mClient.query).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'EXPIRED'"),
       ['claim-1', 'companion-a']
     );
 
+    mClient.query.mockResolvedValueOnce({}).mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 'claim-1', status: 'APPROVED' }] });
     await organ.revokeClaim('claim-1', 'revoked_reason');
-    expect(poolQueryMock).toHaveBeenCalledWith(
+    expect(mClient.query).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'REVOKED'"),
       ['claim-1', 'companion-a']
     );

@@ -1,6 +1,7 @@
 import { MemoryOrgan, Claim, MemoryScope, BehaviorDirective, SourceEvent, MemoryQueryOptions } from '@siduri-y/core';
 import { Pool } from 'pg';
 import { UP_MIGRATION } from './schema';
+export * from './teaching';
 
 export interface PostgresMemoryConfig {
   connectionString: string;
@@ -230,49 +231,154 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
 
   async approveClaim(id: string): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_claims
-       SET status = 'APPROVED', user_confirmation = 'explicit'
-       WHERE id = $1 AND companion_id = $2 AND status = 'PENDING'`,
-      [id, this.companionId]
-    );
-    await this.recordClaimHistory(id, 'APPROVED', 'operator_approved');
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_claims WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Claim not found`);
+      }
+      if (res.rows[0].status !== 'PENDING') {
+        throw new Error(`Invalid transition: Claim is already ${res.rows[0].status}`);
+      }
+
+      await client.query(
+        `UPDATE memory_claims
+         SET status = 'APPROVED', user_confirmation = 'explicit'
+         WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await this.recordClaimHistoryWithClient(client, id, 'APPROVED', 'operator_approved');
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async rejectClaim(id: string): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_claims SET status = 'REJECTED' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
-    await this.recordClaimHistory(id, 'REJECTED', 'operator_rejected');
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_claims WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Claim not found`);
+      }
+      if (res.rows[0].status !== 'PENDING') {
+        throw new Error(`Invalid transition: Claim is already ${res.rows[0].status}`);
+      }
+
+      await client.query(
+        `UPDATE memory_claims SET status = 'REJECTED' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await this.recordClaimHistoryWithClient(client, id, 'REJECTED', 'operator_rejected');
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async markClaimSessionOnly(id: string): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
-    await this.recordClaimHistory(id, 'SESSION_ONLY', 'marked_session_only');
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_claims WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Claim not found`);
+      }
+      if (res.rows[0].status !== 'PENDING') {
+        throw new Error(`Invalid transition: Claim is already ${res.rows[0].status}`);
+      }
+
+      await client.query(
+        `UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await this.recordClaimHistoryWithClient(client, id, 'SESSION_ONLY', 'marked_session_only');
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async expireClaim(id: string): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_claims SET status = 'EXPIRED' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
-    await this.recordClaimHistory(id, 'EXPIRED', 'claim_expired');
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_claims WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Claim not found`);
+      }
+      if (res.rows[0].status !== 'PENDING' && res.rows[0].status !== 'APPROVED' && res.rows[0].status !== 'SESSION_ONLY') {
+        throw new Error(`Invalid transition: Claim is already ${res.rows[0].status}`);
+      }
+
+      await client.query(
+        `UPDATE memory_claims SET status = 'EXPIRED' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await this.recordClaimHistoryWithClient(client, id, 'EXPIRED', 'claim_expired');
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async revokeClaim(id: string, reason: string = 'revoked_by_policy'): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_claims SET status = 'REVOKED' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
-    await this.recordClaimHistory(id, 'REVOKED', reason);
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_claims WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Claim not found`);
+      }
+      if (res.rows[0].status !== 'APPROVED') {
+        throw new Error(`Invalid transition: Only APPROVED claims can be REVOKED (current: ${res.rows[0].status})`);
+      }
+
+      await client.query(
+        `UPDATE memory_claims SET status = 'REVOKED' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await this.recordClaimHistoryWithClient(client, id, 'REVOKED', reason);
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async getClaims(): Promise<Claim[]> {
@@ -398,8 +504,8 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
     await this.pool.end();
   }
 
-  private async recordClaimHistory(id: string, status: string, reason: string): Promise<void> {
-    await this.pool.query(
+  private async recordClaimHistoryWithClient(client: any, id: string, status: string, reason: string): Promise<void> {
+    await client.query(
       `INSERT INTO memory_claim_history (claim_id, companion_id, status, reason, snapshot)
        SELECT id, companion_id, $3, $4, to_jsonb(memory_claims)
        FROM memory_claims WHERE id = $1 AND companion_id = $2`,
@@ -409,13 +515,64 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
 
   async supersedeClaim(id: string, replacement: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim> {
     this.ensureInitialized();
-    const claim = await this.proposeClaim({ ...replacement, supersedes: id });
-    await this.pool.query(
-      `UPDATE memory_claims SET status = 'SUPERSEDED' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
-    await this.recordClaimHistory(id, 'SUPERSEDED', 'claim_replaced');
-    return claim;
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const prev = await client.query(
+        `SELECT id, status FROM memory_claims WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (prev.rowCount === 0) {
+        throw new Error(`Superseded claim ${id} not found`);
+      }
+      if (prev.rows[0].status !== 'APPROVED') {
+        throw new Error(`Cannot supersede claim in status ${prev.rows[0].status}`);
+      }
+
+      await client.query(
+        `UPDATE memory_claims SET status = 'SUPERSEDED' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await this.recordClaimHistoryWithClient(client, id, 'SUPERSEDED', 'claim_replaced');
+
+      const result = await client.query(
+        `INSERT INTO memory_claims
+         (companion_id, subject, predicate, value, status, scope, evidence, provenance,
+          source_event_id, claim_type, authority, user_confirmation, sensitivity,
+          allowed_audiences, confidence, valid_from, valid_until, supersedes, replaces)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+         RETURNING *`,
+        [
+          this.companionId,
+          replacement.subject,
+          replacement.predicate,
+          replacement.value,
+          'PENDING',
+          replacement.scope,
+          JSON.stringify(replacement.evidence || []),
+          replacement.provenance || 'siduri_y_memory',
+          replacement.sourceEventId || null,
+          replacement.claimType || 'semantic',
+          replacement.authority || 'user_explicit',
+          replacement.userConfirmation || 'none',
+          replacement.sensitivity || 'private',
+          JSON.stringify(replacement.allowedAudiences || []),
+          replacement.confidence ?? 1,
+          replacement.validFrom || null,
+          replacement.validUntil || null,
+          id,
+          replacement.replaces || null
+        ]
+      );
+
+      await client.query('COMMIT');
+      return this.mapClaim(result.rows[0]);
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async addSourceEvent(event: SourceEvent): Promise<SourceEvent> {
