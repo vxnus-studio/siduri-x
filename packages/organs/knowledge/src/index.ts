@@ -1,6 +1,6 @@
 import { KnowledgeItem, KnowledgeOrgan } from '@siduri-y/core';
 import type { LoadedPack } from '@vxnus/e-knowledge';
-import type { KnowledgeProvider, RetrievalResult } from '@vxnus/e';
+import type { KnowledgeProvider, RetrievalResult, KnowledgePackManifest, RetrievalRequest, RetrievalResponse } from '@vxnus/e';
 
 type EKnowledgeModule = typeof import('@vxnus/e-knowledge');
 const loadEKnowledgeModule = (): Promise<EKnowledgeModule> =>
@@ -16,7 +16,28 @@ export interface EKnowledgeConfig {
   preferredMode?: 'lexical' | 'semantic' | 'hybrid';
 }
 
-async function resolveHubProvider(config: EKnowledgeConfig, module: EKnowledgeModule): Promise<KnowledgeProvider> {
+async function resolveManifest(provider: KnowledgeProvider, baseUrl: string, timeoutMs?: number): Promise<KnowledgePackManifest> {
+  if (typeof provider.manifest === 'function') {
+    return await provider.manifest();
+  }
+  const cleanUrl = baseUrl.replace(/\/+$/, '');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || 5000);
+  try {
+    const res = await fetch(`${cleanUrl}/manifest`, {
+      headers: { accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch manifest from remote provider: ${res.status}`);
+    }
+    return (await res.json()) as KnowledgePackManifest;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function resolveHubProvider(config: EKnowledgeConfig, module: EKnowledgeModule): Promise<{ provider: KnowledgeProvider; baseUrl: string }> {
   if (!config.registryUrl || !config.packId) throw new Error('E Hub provider requires registryUrl and packId');
   const match = config.packId.match(/^@([^/]+)\/([^/]+)$/);
   if (!match) throw new Error('E Hub packId must use the @publisher/name format');
@@ -25,23 +46,30 @@ async function resolveHubProvider(config: EKnowledgeConfig, module: EKnowledgeMo
   if (!response.ok) throw new Error(`E Hub registry returned HTTP ${response.status}`);
   const pack = await response.json() as { distribution?: { kind?: string; url?: string } };
   if (pack.distribution?.kind !== 'provider' || !pack.distribution.url) throw new Error(`E Hub pack ${config.packId} is not a remote provider`);
-  return module.createRemoteProvider({ baseUrl: pack.distribution.url, timeoutMs: config.timeoutMs });
+  const baseUrl = pack.distribution.url;
+  return {
+    provider: module.createRemoteProvider({ baseUrl, timeoutMs: config.timeoutMs }),
+    baseUrl,
+  };
 }
 
 export class EKnowledgeAdapter implements KnowledgeOrgan {
-  private loaded: Promise<LoadedPack | { provider: KnowledgeProvider; manifest: Awaited<ReturnType<KnowledgeProvider['manifest']>> }>;
+  private loaded: Promise<LoadedPack | { provider: KnowledgeProvider & { retrieve: (request: RetrievalRequest) => Promise<RetrievalResponse> }; manifest: KnowledgePackManifest }>;
   private readonly preferredMode: EKnowledgeConfig['preferredMode'];
 
   constructor(config: EKnowledgeConfig) {
     this.preferredMode = config.preferredMode ?? 'lexical';
     this.loaded = loadEKnowledgeModule().then(async (module) => {
       if (config.provider === 'e-hub') {
-        const provider = await resolveHubProvider(config, module);
-        return { provider, manifest: await provider.manifest() };
+        const { provider, baseUrl } = await resolveHubProvider(config, module);
+        const manifest = await resolveManifest(provider, baseUrl, config.timeoutMs);
+        return { provider: provider as any, manifest };
       }
       if (config.provider === 'e-remote' || config.baseUrl) {
-        const provider = module.createRemoteProvider({ baseUrl: config.baseUrl || '', timeoutMs: config.timeoutMs });
-        return { provider, manifest: await provider.manifest() };
+        const baseUrl = config.baseUrl || '';
+        const provider = module.createRemoteProvider({ baseUrl, timeoutMs: config.timeoutMs });
+        const manifest = await resolveManifest(provider, baseUrl, config.timeoutMs);
+        return { provider: provider as any, manifest };
       }
       if (!config.packPath) throw new Error('EKnowledgeAdapter requires packPath, baseUrl, or E Hub configuration');
       return module.loadPack(config.packPath);
@@ -58,12 +86,12 @@ export class EKnowledgeAdapter implements KnowledgeOrgan {
     const modeSupported = requestedMode === 'lexical' || manifest.capabilities.semanticSearch;
     let response;
     try {
-      response = await pack.provider.retrieve({ query, mode: modeSupported ? requestedMode : 'lexical', limit: 8 });
+      response = await pack.provider.retrieve!({ query, mode: modeSupported ? requestedMode : 'lexical', limit: 8 });
     } catch (error) {
       if (requestedMode === 'lexical') throw error;
       // Semantic infrastructure is optional: an outage must not remove the
       // provider's cited lexical path.
-      response = await pack.provider.retrieve({ query, mode: 'lexical', limit: 8 });
+      response = await pack.provider.retrieve!({ query, mode: 'lexical', limit: 8 });
     }
     return response.results.map((result: RetrievalResult) => ({
       content: result.content,

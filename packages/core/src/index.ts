@@ -35,7 +35,7 @@ export interface BrainContext {
 
 export type ClaimType = 'semantic' | 'preference' | 'episodic' | 'relationship';
 export type ClaimAuthority = 'user_explicit' | 'user_correction' | 'import' | 'repeated_dialogue' | 'inference' | 'observation';
-export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUPERSEDED' | 'REVOKED';
+export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SESSION_ONLY' | 'EXPIRED' | 'SUPERSEDED' | 'REVOKED';
 
 export interface SourceEvent {
   id: string;
@@ -112,18 +112,28 @@ export interface BehaviorDirective {
   directive: string;
   scopeMatcher: string[]; // Generic role matching
   priority: number;
-  status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED';
+  status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
   supersedesId?: string;
+}
+
+export interface MemoryQueryOptions {
+  channel?: 'public' | 'direct' | 'private' | 'operator';
+  audienceId?: string;
+  sensitivity?: string;
+  limit?: number;
 }
 
 export interface MemoryOrgan {
   initialize(companionId: string): Promise<void>;
   proposeClaim(claim: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
-  searchClaims(query: string, scope: MemoryScope, limit?: number): Promise<Claim[]>;
+  searchClaims(query: string, scopeOrOptions: MemoryScope | MemoryQueryOptions, limit?: number): Promise<Claim[]>;
   getClaims(): Promise<Claim[]>;
   getPendingClaims(): Promise<Claim[]>;
   approveClaim(id: string): Promise<void>;
   rejectClaim(id: string): Promise<void>;
+  markClaimSessionOnly?(id: string): Promise<void>;
+  expireClaim?(id: string): Promise<void>;
+  revokeClaim?(id: string, reason?: string): Promise<void>;
 
   getDirectives(): Promise<BehaviorDirective[]>;
   proposeDirective(directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'>): Promise<BehaviorDirective>;
@@ -131,6 +141,7 @@ export interface MemoryOrgan {
   rejectDirective(id: string): Promise<void>;
   revokeDirective(id: string): Promise<void>;
   disableDirective(id: string): Promise<void>;
+  expireDirective?(id: string): Promise<void>;
   supersedeClaim?(id: string, replacement: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
   addSourceEvent?(event: SourceEvent): Promise<SourceEvent>;
   getSourceEvent?(id: string): Promise<SourceEvent | undefined>;

@@ -1,4 +1,4 @@
-import { MemoryOrgan, Claim, MemoryScope, BehaviorDirective, SourceEvent } from '@siduri-y/core';
+import { MemoryOrgan, Claim, MemoryScope, BehaviorDirective, SourceEvent, MemoryQueryOptions } from '@siduri-y/core';
 import { Pool } from 'pg';
 import { UP_MIGRATION } from './schema';
 
@@ -113,8 +113,8 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       value: row.value,
       status: row.status as any,
       scope: row.scope as any,
-      evidence: row.evidence
-      , provenance: row.provenance,
+      evidence: row.evidence,
+      provenance: row.provenance,
       sourceEventId: row.source_event_id,
       claimType: row.claim_type,
       authority: row.authority,
@@ -130,31 +130,80 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
     };
   }
 
-  async searchClaims(query: string, scope: MemoryScope, limit: number = 10): Promise<Claim[]> {
+  async searchClaims(
+    query: string,
+    scopeOrOptions: MemoryScope | MemoryQueryOptions = 'PUBLIC',
+    limit: number = 10
+  ): Promise<Claim[]> {
     this.ensureInitialized();
-    
-    // We strictly enforce companionId scoping here
-    const safeScope = ['OWNER', 'VIEWER', 'OPERATOR', 'PUBLIC'].includes(scope) ? scope : 'PUBLIC';
-    let sql = `SELECT * FROM memory_claims WHERE companion_id = $1 AND status = 'APPROVED'
-      AND (scope = 'PUBLIC' OR scope = '${safeScope}')`;
+
+    const isOptionObject = typeof scopeOrOptions === 'object' && scopeOrOptions !== null;
+    const channel = isOptionObject ? scopeOrOptions.channel : undefined;
+    const audienceId = isOptionObject ? scopeOrOptions.audienceId : undefined;
+    const sensitivity = isOptionObject ? scopeOrOptions.sensitivity : undefined;
+    const effectiveLimit = isOptionObject ? (scopeOrOptions.limit ?? limit) : limit;
+
+    let sql = `SELECT * FROM memory_claims WHERE companion_id = $1 AND status = 'APPROVED'`;
     const params: any[] = [this.companionId];
-    
+
+    if (isOptionObject) {
+      if (channel === 'public' || (!channel && !audienceId)) {
+        // Public channel: only records marked public sensitivity and public-safe audience
+        sql += ` AND (sensitivity = 'public' OR scope = 'PUBLIC')`;
+        if (audienceId) {
+          sql += ` AND (allowed_audiences @> $${params.length + 1} OR allowed_audiences = '[]'::jsonb)`;
+          params.push(JSON.stringify([audienceId]));
+        }
+      } else if (channel === 'direct') {
+        // Direct channel: public + direct audience records
+        sql += ` AND (sensitivity IN ('public', 'private') OR scope IN ('PUBLIC', 'VIEWER'))`;
+        if (audienceId) {
+          sql += ` AND (allowed_audiences @> $${params.length + 1} OR allowed_audiences = '[]'::jsonb)`;
+          params.push(JSON.stringify([audienceId]));
+        }
+      } else if (channel === 'private') {
+        // Private channel: public + direct + private restricted records
+        sql += ` AND (sensitivity IN ('public', 'private', 'restricted') OR scope IN ('PUBLIC', 'VIEWER', 'OWNER'))`;
+        if (audienceId) {
+          sql += ` AND (allowed_audiences @> $${params.length + 1} OR allowed_audiences = '[]'::jsonb)`;
+          params.push(JSON.stringify([audienceId]));
+        }
+      } else if (channel === 'operator') {
+        // Operator channel: explicit operator audience
+        if (audienceId) {
+          sql += ` AND (allowed_audiences @> $${params.length + 1} OR allowed_audiences = '[]'::jsonb)`;
+          params.push(JSON.stringify([audienceId]));
+        }
+      }
+      if (sensitivity) {
+        sql += ` AND sensitivity = $${params.length + 1}`;
+        params.push(sensitivity);
+      }
+    } else {
+      // Legacy MemoryScope fallback
+      const safeScope = ['OWNER', 'VIEWER', 'OPERATOR', 'PUBLIC'].includes(scopeOrOptions)
+        ? scopeOrOptions
+        : 'PUBLIC';
+      sql += ` AND (scope = 'PUBLIC' OR scope = '${safeScope}')`;
+    }
+
     if (query) {
       const rawTerms = Array.from(new Set(query.toLowerCase().split(/\s+/)));
       const safeTerms = rawTerms.filter(term => /^[a-z0-9]+$/.test(term)).sort();
-      
+
       if (safeTerms.length === 0) {
         return [];
       }
-      
+
       const tsQueryStr = safeTerms.map(term => `${term}:*`).join(' | ');
-      sql += ` AND search_document @@ to_tsquery('simple', $2)`;
+      const queryParamIndex = params.length + 1;
+      sql += ` AND search_document @@ to_tsquery('simple', $${queryParamIndex})`;
       params.push(tsQueryStr);
-      sql += ` ORDER BY ts_rank(search_document, to_tsquery('simple', $2)) DESC LIMIT $3`;
-      params.push(limit);
+      sql += ` ORDER BY ts_rank(search_document, to_tsquery('simple', $${queryParamIndex})) DESC LIMIT $${params.length + 1}`;
+      params.push(effectiveLimit);
     } else {
       sql += ` ORDER BY id LIMIT $${params.length + 1}`;
-      params.push(limit);
+      params.push(effectiveLimit);
     }
 
     const result = await this.pool.query(sql, params);
@@ -164,7 +213,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
   async getDirectives(): Promise<BehaviorDirective[]> {
     this.ensureInitialized();
     const result = await this.pool.query(
-      `SELECT * FROM memory_directives WHERE companion_id = $1 ORDER BY priority DESC`,
+      `SELECT * FROM memory_directives WHERE companion_id = $1 AND status = 'ACTIVE' ORDER BY priority DESC`,
       [this.companionId]
     );
 
@@ -178,8 +227,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       supersedesId: row.supersedes_id
     }));
   }
-  
-  // For tests/admin to quickly approve claims
+
   async approveClaim(id: string): Promise<void> {
     this.ensureInitialized();
     await this.pool.query(
@@ -198,6 +246,33 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       [id, this.companionId]
     );
     await this.recordClaimHistory(id, 'REJECTED', 'operator_rejected');
+  }
+
+  async markClaimSessionOnly(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+    await this.recordClaimHistory(id, 'SESSION_ONLY', 'marked_session_only');
+  }
+
+  async expireClaim(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_claims SET status = 'EXPIRED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+    await this.recordClaimHistory(id, 'EXPIRED', 'claim_expired');
+  }
+
+  async revokeClaim(id: string, reason: string = 'revoked_by_policy'): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_claims SET status = 'REVOKED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+    await this.recordClaimHistory(id, 'REVOKED', reason);
   }
 
   async getClaims(): Promise<Claim[]> {
@@ -298,7 +373,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
   async revokeDirective(id: string): Promise<void> {
     this.ensureInitialized();
     await this.pool.query(
-      `UPDATE memory_directives SET status = 'SUPERSEDED' WHERE id = $1 AND companion_id = $2`,
+      `UPDATE memory_directives SET status = 'REVOKED' WHERE id = $1 AND companion_id = $2`,
       [id, this.companionId]
     );
   }
@@ -307,6 +382,14 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
     this.ensureInitialized();
     await this.pool.query(
       `UPDATE memory_directives SET status = 'DISABLED' WHERE id = $1 AND companion_id = $2`,
+      [id, this.companionId]
+    );
+  }
+
+  async expireDirective(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.pool.query(
+      `UPDATE memory_directives SET status = 'EXPIRED' WHERE id = $1 AND companion_id = $2`,
       [id, this.companionId]
     );
   }
