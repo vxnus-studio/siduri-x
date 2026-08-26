@@ -66,7 +66,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   function createBody(config: any) {
     return isDisabled(config)
       ? undefined
-      : new Live2DAdapter({ port: 8089, vtsUrl: config.vtsUrl || process.env.VTS_URL, vtsAuthToken: config.vtsAuthToken || process.env.VTS_AUTH_TOKEN });
+      : new Live2DAdapter(config);
   }
 
   app.post('/boot', requireRole(['OWNER']), async (req, res) => {

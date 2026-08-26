@@ -380,7 +380,7 @@ async function main(): Promise<void> {
   const knowledge = await configureKnowledge();
   const remaining = await inquirer.prompt([
     { type: 'list', name: 'behavior', message: 'Behavior preset?', choices: [{ name: 'Calm', value: 'Calm' }, { name: 'Cheerful, Encouraging', value: 'Cheerful, Encouraging' }, { name: 'Do not use custom behavior', value: 'none' }] },
-    { type: 'list', name: 'body', message: 'Body provider?', choices: [{ name: 'VTube Studio / Live2D', value: 'live2d' }, { name: 'Do not use body', value: 'none' }] },
+    { type: 'list', name: 'body', message: 'Body provider?', choices: [{ name: 'Live2D Body (Renderer-agnostic)', value: 'live2d' }, { name: 'Do not use body', value: 'none' }] },
     { type: 'list', name: 'vision', message: 'Vision provider?', choices: [{ name: 'OpenRouter vision', value: 'openrouter' }, { name: 'Do not use vision', value: 'none' }] },
   ]);
 
@@ -392,7 +392,7 @@ async function main(): Promise<void> {
     memory: { provider: answers.memoryEngine, deployment: memoryDeployment },
     knowledge,
     behavior: { provider: remaining.behavior === 'none' ? 'none' : 'active_self', preset: remaining.behavior },
-    body: { provider: remaining.body, vtsUrl: process.env.VTS_URL || 'ws://127.0.0.1:8001' },
+    body: { provider: remaining.body },
     vision: { provider: remaining.vision, model: 'gpt-4-vision' },
   };
   const configPath = path.join(projectPath, 'siduri.config.json');
@@ -445,8 +445,6 @@ async function main(): Promise<void> {
   await writeFile(path.join(projectPath, '.env.example'), [
     `${keyEnv}=`,
     'DATABASE_URL=postgresql://postgres:postgres@localhost:5432/siduri',
-    'VTS_URL=ws://127.0.0.1:8001',
-    'VTS_AUTH_TOKEN=',
     '',
   ].join('\n'), { mode: 0o600 });
   await withTask('Installing Siduri runtime dependencies', () => execFile('npm', ['install', '--no-audit', '--no-fund'], { cwd: projectPath }).then(() => undefined));

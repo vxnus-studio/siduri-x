@@ -1,118 +1,98 @@
-import { createVtsRequest, Live2DAdapter } from './index';
-import WebSocket from 'ws';
+import { NeutralBodyOrgan, Live2DAdapter, BodySnapshot } from './index';
 
-describe('Live2DAdapter', () => {
-  let adapter: Live2DAdapter;
-  const port = 8089; // Use a specific port for testing
+describe('NeutralBodyOrgan', () => {
+  let organ: NeutralBodyOrgan;
 
   beforeEach(() => {
-    adapter = new Live2DAdapter({ port });
+    organ = new NeutralBodyOrgan();
   });
 
   afterEach(() => {
+    organ.cleanup();
+  });
+
+  test('constructs with default or custom initial expression with zero external config', () => {
+    expect(organ.currentExpression).toBe('neutral');
+    expect(organ.state).toBe('idle');
+    expect(organ.lastSpeechId).toBeNull();
+    expect(organ.lastAction).toBeNull();
+
+    const customOrgan = new NeutralBodyOrgan({ initialExpression: 'happy' });
+    expect(customOrgan.currentExpression).toBe('happy');
+    customOrgan.cleanup();
+  });
+
+  test('Live2DAdapter is exported as a compatible alias', () => {
+    const adapter = new Live2DAdapter();
+    expect(adapter).toBeInstanceOf(NeutralBodyOrgan);
     adapter.cleanup();
   });
 
-  test('builds VTube Studio API requests', () => {
-    expect(createVtsRequest('HotkeyTriggerRequest', { hotkeyID: 'happy' })).toMatchObject({
-      apiName: 'VTubeStudioPublicAPI',
-      apiVersion: '1.0',
-      messageType: 'HotkeyTriggerRequest',
-      data: { hotkeyID: 'happy' },
-    });
-  });
+  test('tracks body state machine transitions locally', () => {
+    organ.setExpression('smile');
+    expect(organ.currentExpression).toBe('smile');
 
-  test('tracks state correctly', () => {
-    expect(adapter.currentExpression).toBe('neutral');
-    expect(adapter.state).toBe('idle');
+    organ.speak('speech_101', 'Hello world', 'en');
+    expect(organ.lastSpeechId).toBe('speech_101');
+    expect(organ.lastText).toBe('Hello world');
+    expect(organ.lastLanguage).toBe('en');
+    expect(organ.state).toBe('speaking');
 
-    adapter.setExpression('happy');
-    expect(adapter.currentExpression).toBe('happy');
+    organ.act('wave_hand');
+    expect(organ.lastAction).toBe('wave_hand');
+    expect(organ.state).toBe('acting');
 
-    adapter.speak('job_123');
-    expect(adapter.lastSpeechId).toBe('job_123');
-    expect(adapter.state).toBe('speaking');
+    organ.completeAction();
+    expect(organ.state).toBe('idle');
 
-    adapter.act('wave');
-    expect(adapter.lastAction).toBe('wave');
-    expect(adapter.state).toBe('acting');
-
-    adapter.completeAction();
-    expect(adapter.state).toBe('idle');
-  });
-
-  test('broadcasts events to connected websocket clients', (done) => {
-    const client = new WebSocket(`ws://localhost:${port}`);
-    const messages: any[] = [];
-
-    client.on('message', (data) => {
-      messages.push(JSON.parse(data.toString()));
-      if (messages.length === 3) {
-        // 1st is lifecycle (connected)
-        expect(messages[0].type).toBe('lifecycle');
-        expect(messages[0].event).toBe('connected');
-
-        // 2nd is expression
-        expect(messages[1].type).toBe('expression');
-        expect(messages[1].expression).toBe('sad');
-
-        // 3rd is speech
-        expect(messages[2].type).toBe('speech');
-        expect(messages[2].speechId).toBe('job_999');
-
-        client.close();
-        done();
-      }
-    });
-
-    client.on('open', () => {
-      // Simulate actions
-      adapter.setExpression('sad');
-      adapter.speak('job_999');
-    });
-  });
-});
-
-describe('Live2DAdapter T5 Experience Event Interface', () => {
-  let adapter: Live2DAdapter;
-
-  beforeEach(() => {
-    adapter = new Live2DAdapter({ port: 8092 });
-  });
-
-  afterEach(() => {
-    adapter.cleanup();
+    const snapshot: BodySnapshot = organ.getSnapshot();
+    expect(snapshot.state).toBe('idle');
+    expect(snapshot.currentExpression).toBe('smile');
+    expect(snapshot.lastSpeechId).toBe('speech_101');
+    expect(snapshot.lastAction).toBe('wave_hand');
+    expect(snapshot.lastText).toBe('Hello world');
+    expect(snapshot.lastLanguage).toBe('en');
   });
 
   test('handleEvent processes valid approved avatar event', async () => {
-    const res = await adapter.handleEvent({
+    const res = await organ.handleEvent({
       eventId: 'evt-avatar-1',
-      companionId: 'companion-a',
-      responseId: 'resp-1',
-      correlationId: 'corr-1',
+      companionId: 'companion-test',
+      responseId: 'resp-100',
+      correlationId: 'corr-100',
       channel: 'public',
       audienceId: 'audience-public',
       approval: 'APPROVED',
       kind: 'avatar',
       lifecycle: 'STARTED',
       evidenceIds: [],
-      expression: 'happy',
-      action: 'wave',
+      expression: 'surprised',
+      action: 'nod',
+      text: 'Affirmative.',
+      language: 'en',
       createdAt: new Date().toISOString(),
     });
 
     expect(res.accepted).toBe(true);
     expect(res.lifecycle).toBe('STARTED');
-    expect(adapter.currentExpression).toBe('happy');
-    expect(adapter.lastAction).toBe('wave');
+    expect(res.metadata).toMatchObject({
+      expression: 'surprised',
+      action: 'nod',
+      state: 'acting',
+      companionId: 'companion-test',
+      correlationId: 'corr-100',
+    });
+    expect(organ.currentExpression).toBe('surprised');
+    expect(organ.lastAction).toBe('nod');
+    expect(organ.lastText).toBe('Affirmative.');
   });
 
-  test('handleEvent rejects unapproved event or incompatible kind', async () => {
-    const unapprovedRes = await adapter.handleEvent({
+  test('handleEvent rejects unapproved events or incompatible kinds', async () => {
+    const unapprovedRes = await organ.handleEvent({
       eventId: 'evt-avatar-2',
-      companionId: 'companion-a',
-      responseId: 'resp-1',
-      correlationId: 'corr-1',
+      companionId: 'companion-test',
+      responseId: 'resp-100',
+      correlationId: 'corr-100',
       channel: 'public',
       audienceId: 'audience-public',
       approval: 'STAGED' as any,
@@ -122,12 +102,13 @@ describe('Live2DAdapter T5 Experience Event Interface', () => {
       createdAt: new Date().toISOString(),
     });
     expect(unapprovedRes.accepted).toBe(false);
+    expect(unapprovedRes.error).toContain('APPROVED');
 
-    const incompatibleRes = await adapter.handleEvent({
+    const incompatibleRes = await organ.handleEvent({
       eventId: 'evt-avatar-3',
-      companionId: 'companion-a',
-      responseId: 'resp-1',
-      correlationId: 'corr-1',
+      companionId: 'companion-test',
+      responseId: 'resp-100',
+      correlationId: 'corr-100',
       channel: 'public',
       audienceId: 'audience-public',
       approval: 'APPROVED',
@@ -138,5 +119,78 @@ describe('Live2DAdapter T5 Experience Event Interface', () => {
     });
     expect(incompatibleRes.accepted).toBe(false);
     expect(incompatibleRes.reason).toBe('INCOMPATIBLE_EVENT_KIND');
+  });
+
+  test('handleEvent rejects invalid envelope', async () => {
+    const invalidRes = await organ.handleEvent({} as any);
+    expect(invalidRes.accepted).toBe(false);
+    expect(invalidRes.reason).toBe('INVALID_EVENT_ENVELOPE');
+  });
+
+  test('requires no open network sockets or transport listeners', () => {
+    // Verifies the object has no transport handles
+    expect((organ as any).wss).toBeUndefined();
+    expect((organ as any).vts).toBeUndefined();
+    expect((organ as any).clients).toBeUndefined();
+  });
+
+  test('handles sequential avatar events where latest valid event updates active state', async () => {
+    await organ.handleEvent({
+      eventId: 'evt-avatar-10',
+      companionId: 'companion-test',
+      responseId: 'resp-101',
+      correlationId: 'corr-101',
+      channel: 'public',
+      audienceId: 'audience-public',
+      approval: 'APPROVED',
+      kind: 'avatar',
+      lifecycle: 'STARTED',
+      evidenceIds: [],
+      expression: 'happy',
+      action: 'wave',
+      createdAt: new Date().toISOString(),
+    });
+    expect(organ.currentExpression).toBe('happy');
+    expect(organ.lastAction).toBe('wave');
+
+    // Newer event arrives
+    await organ.handleEvent({
+      eventId: 'evt-avatar-11',
+      companionId: 'companion-test',
+      responseId: 'resp-102',
+      correlationId: 'corr-102',
+      channel: 'public',
+      audienceId: 'audience-public',
+      approval: 'APPROVED',
+      kind: 'avatar',
+      lifecycle: 'STARTED',
+      evidenceIds: [],
+      expression: 'surprised',
+      action: 'nod',
+      createdAt: new Date().toISOString(),
+    });
+    expect(organ.currentExpression).toBe('surprised');
+    expect(organ.lastAction).toBe('nod');
+  });
+
+  test('speech synchronization sets speaking state and reset returns to idle', () => {
+    organ.speak('speech_v1', 'Konnichiwa', 'ja');
+    expect(organ.state).toBe('speaking');
+    expect(organ.lastSpeechId).toBe('speech_v1');
+
+    organ.completeAction();
+    expect(organ.state).toBe('idle');
+  });
+
+  test('handles unknown expressions and actions with graceful baseline fallbacks', () => {
+    organ.setExpression('unknown_custom_expression');
+    expect(organ.currentExpression).toBe('unknown_custom_expression');
+
+    organ.act('unknown_action');
+    expect(organ.lastAction).toBe('unknown_action');
+    expect(organ.state).toBe('acting');
+
+    organ.completeAction();
+    expect(organ.state).toBe('idle');
   });
 });

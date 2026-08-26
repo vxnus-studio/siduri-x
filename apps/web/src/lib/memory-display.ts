@@ -10,8 +10,8 @@ type RuntimeEffectLike = ClaimLike & {
   behavior?: { instruction?: string };
 };
 
-const SELF_SUBJECTS = new Set(["siduri", "self"]);
-const USER_SUBJECTS = new Set(["primary_user", "user", "master", "master_private"]);
+const SELF_SUBJECTS = new Set(["siduri", "self", "companion"]);
+const USER_SUBJECTS = new Set(["primary_user", "user", "actor", "master", "master_private"]);
 
 function words(value: string): string {
   return value.replace(/[._]+/g, " ").replace(/\s+/g, " ").trim();
@@ -36,20 +36,24 @@ export function formatClaimReceipt(item: ClaimLike): string {
   if (!subject || !predicate || !value) return sentence(item.content ?? value);
 
   if (SELF_SUBJECTS.has(normalizedSubject)) {
-    return sentence(normalizedPredicate === "name" ? `My name is ${value}` : `My ${words(predicate)} is ${value}`);
+    if (normalizedPredicate === "name") return sentence(`Companion name is ${value}`);
+    return sentence(`Companion ${words(predicate)} is ${value}`);
   }
 
   if (USER_SUBJECTS.has(normalizedSubject)) {
-    if (normalizedPredicate === "name") return sentence(`Your name is ${value}`);
-    if (normalizedPredicate === "preferred_address") return sentence(`You prefer to be addressed as ${value}`);
-    if (normalizedPredicate === "relationship_to_siduri") return sentence(`You are my ${value}`);
-    return sentence(`Your ${words(predicate)} is ${value}`);
+    if (normalizedPredicate === "name") return sentence(`User name is ${value}`);
+    if (normalizedPredicate === "preferred_address") return sentence(`User preferred address is ${value}`);
+    if (normalizedPredicate === "relationship_to_siduri" || normalizedPredicate === "relationship") {
+      return sentence(`User role configured as ${value}`);
+    }
+    return sentence(`User ${words(predicate)} is ${value}`);
   }
 
-  if (normalizedSubject.startsWith("primary_user.")) {
-    const area = words(subject.slice("primary_user.".length));
-    const label = normalizedPredicate === "uid" ? "UID" : words(predicate);
-    return sentence(`Your ${area} ${label} is ${value}`);
+  if (normalizedSubject.startsWith("primary_user.") || normalizedSubject.startsWith("user.")) {
+    const prefix = normalizedSubject.startsWith("primary_user.") ? "primary_user." : "user.";
+    const area = words(subject.slice(prefix.length));
+    const label = normalizedPredicate === "uid" || normalizedPredicate === "id" ? "ID" : words(predicate);
+    return sentence(`User ${area} ${label} is ${value}`);
   }
 
   const label = words(subject);
@@ -63,9 +67,11 @@ export function formatRuntimeEffect(item: RuntimeEffectLike): string {
   const instruction = item.behavior?.instruction?.trim() ?? "";
 
   if (item.memory_class === "behavioral" && instruction) return sentence(instruction);
-  if (SELF_SUBJECTS.has(subject) && predicate === "name") return sentence(`Use ${value} as my identity/name`);
-  if (SELF_SUBJECTS.has(subject)) return sentence(`Use ${value} as my ${words(predicate)}`);
-  if (USER_SUBJECTS.has(subject) && predicate === "relationship_to_siduri") return sentence(`Recognize you as my ${value}`);
-  if (USER_SUBJECTS.has(subject) && predicate === "name") return sentence(`Recognize ${value} as your name`);
+  if (SELF_SUBJECTS.has(subject) && predicate === "name") return sentence(`Set companion identity/name to ${value}`);
+  if (SELF_SUBJECTS.has(subject)) return sentence(`Set companion ${words(predicate)} to ${value}`);
+  if (USER_SUBJECTS.has(subject) && (predicate === "relationship_to_siduri" || predicate === "relationship")) {
+    return sentence(`Set user role to ${value}`);
+  }
+  if (USER_SUBJECTS.has(subject) && predicate === "name") return sentence(`Set user name to ${value}`);
   return formatClaimReceipt(item);
 }

@@ -290,9 +290,6 @@ importers:
       '@siduri-y/core':
         specifier: workspace:*
         version: link:../../core
-      ws:
-        specifier: ^8.21.3
-        version: 8.21.3
     devDependencies:
       '@types/jest':
         specifier: ^29.5.14
@@ -300,9 +297,6 @@ importers:
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.1
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@26.2.0)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.2.0)(typescript@5.9.3))
@@ -1479,9 +1473,6 @@ packages:
 
   '@types/through@0.0.33':
     resolution: {integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==}
-
-  '@types/ws@8.18.1':
-    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -5217,10 +5208,6 @@ snapshots:
       '@types/superagent': 8.1.11
 
   '@types/through@0.0.33':
-    dependencies:
-      '@types/node': 20.19.43
-
-  '@types/ws@8.18.1':
     dependencies:
       '@types/node': 20.19.43
 

@@ -45,7 +45,11 @@ function createVoice(config: any) {
 }
 
 function createKnowledge(config: any) {
-  return isDisabled(config) ? undefined : new EKnowledgeAdapter(config);
+  if (isDisabled(config)) return undefined;
+  if (!config?.packPath && !config?.registryUrl && !config?.baseUrl && !config?.hubUrl) {
+    return undefined;
+  }
+  return new EKnowledgeAdapter(config);
 }
 
 function createVision(config: any) {
@@ -61,7 +65,7 @@ function createBehavior(config: any) {
 function createBody(config: any) {
   return isDisabled(config)
     ? undefined
-    : new Live2DAdapter({ port: 8089, vtsUrl: config.vtsUrl || process.env.VTS_URL, vtsAuthToken: config.vtsAuthToken || process.env.VTS_AUTH_TOKEN });
+    : new Live2DAdapter(config);
 }
 
 const PORT = process.env.PORT || 3001;
@@ -83,8 +87,6 @@ const defaultCompanionConfig = {
   behavior: { provider: 'active_self' },
   body: {
     provider: 'live2d',
-    vtsUrl: process.env.VTS_URL || 'ws://127.0.0.1:8001',
-    vtsAuthToken: process.env.VTS_AUTH_TOKEN || '',
   },
   vision: { provider: 'openrouter', model: 'gpt-4-vision' }
 };
@@ -118,8 +120,6 @@ async function loadCompanionConfig() {
   if (process.env.SIDURI_KNOWLEDGE_REGISTRY_URL) config.knowledge.registryUrl = process.env.SIDURI_KNOWLEDGE_REGISTRY_URL;
   if (process.env.SIDURI_KNOWLEDGE_PACK_ID) config.knowledge.packId = process.env.SIDURI_KNOWLEDGE_PACK_ID;
   if (process.env.SIDURI_KNOWLEDGE_MODE) config.knowledge.preferredMode = process.env.SIDURI_KNOWLEDGE_MODE;
-  if (process.env.VTS_URL) config.body.vtsUrl = process.env.VTS_URL;
-  if (process.env.VTS_AUTH_TOKEN) config.body.vtsAuthToken = process.env.VTS_AUTH_TOKEN;
   return config;
 }
 

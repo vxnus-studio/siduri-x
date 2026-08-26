@@ -50,8 +50,15 @@ type Conversation = {
   updatedAt: number;
 };
 
+import {
+  AvatarDock,
+  type ActiveAvatarEvent,
+  type AvatarExpression,
+  type AvatarAction,
+} from "../../components/live2d";
+
 type ChatResponse = {
-  response: { spoken_ja: string; subtitle_en: string; evidence_ids: string[] };
+  response: { speech_id?: string; spoken_ja: string; subtitle_en: string; evidence_ids: string[] };
   metadata?: {
     memory_proposals?: MemoryProposalData[];
     behavioral_proposals?: BehavioralProposalData[];
@@ -63,6 +70,15 @@ type ChatResponse = {
       revision?: string;
       provenance?: string;
       preview?: string;
+    }>;
+    events?: Array<{
+      event_id: string;
+      kind: string;
+      lifecycle: string;
+      approval?: string;
+      expression?: string;
+      action?: string;
+      durationMs?: number;
     }>;
   };
 };
@@ -102,12 +118,23 @@ export default function ChatClient() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isDockOpen, setIsDockOpen] = useState(false);
+  const [activeAvatarEvent, setActiveAvatarEvent] = useState<ActiveAvatarEvent | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const avatarTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.id === activeId) ?? null,
     [activeId, conversations],
   );
+
+  useEffect(() => {
+    return () => {
+      if (avatarTimerRef.current) {
+        clearTimeout(avatarTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const stored = readConversations();
@@ -235,6 +262,42 @@ export default function ChatClient() {
         messages: [...current.messages, assistant],
         updatedAt: Date.now(),
       }));
+
+      // Process approved avatar events if present
+      const avatarEvents = data.metadata?.events?.filter(
+        (e) => e.kind === "avatar" && (e.approval === "APPROVED" || !e.approval),
+      );
+      if (avatarEvents && avatarEvents.length > 0) {
+        const latest = avatarEvents[avatarEvents.length - 1];
+        const speechId = data.response?.speech_id;
+
+        if (avatarTimerRef.current) {
+          clearTimeout(avatarTimerRef.current);
+        }
+
+        setActiveAvatarEvent({
+          eventId: latest.event_id,
+          expression: (latest.expression as AvatarExpression) || "neutral",
+          action: (latest.action as AvatarAction) || "talk",
+          state: "speaking",
+          speechId,
+          durationMs: latest.durationMs,
+        });
+
+        const duration = latest.durationMs || 4500;
+        avatarTimerRef.current = setTimeout(() => {
+          setActiveAvatarEvent((current) =>
+            current
+              ? {
+                  ...current,
+                  state: "idle",
+                  action: "idle",
+                }
+              : null,
+          );
+        }, duration);
+      }
+
       setStatus("online");
     } catch (error) {
       const assistant: ChatMessage = {
@@ -401,7 +464,22 @@ export default function ChatClient() {
       </aside>
 
       <main className="chat-workspace">
-        <div className="chat-top-status">
+        <div className="chat-top-status flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsDockOpen((prev) => !prev)}
+            className={`connection-pill cursor-pointer transition-all focus-visible:ring-1 focus-visible:ring-[var(--siduri-border-ember)] outline-none ${
+              isDockOpen
+                ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)]"
+                : "hover:border-[var(--siduri-border-ember)] text-[var(--siduri-text-secondary)]"
+            }`}
+            aria-label="Toggle avatar presence"
+            aria-expanded={isDockOpen}
+            title={isDockOpen ? "Close Avatar Presence" : "Open Avatar Presence"}
+          >
+            <span className={`status-light ${isDockOpen ? "online" : ""}`} />
+            <span>Presence</span>
+          </button>
           <span className="connection-pill">
             <span
               className={`status-light ${status === "online" ? "online" : ""}`}
@@ -409,6 +487,7 @@ export default function ChatClient() {
             {status}
           </span>
         </div>
+        <div className="flex flex-col sm:flex-row flex-1 min-h-0 w-full overflow-hidden relative">
         <section className="conversation-surface" aria-label="Private chat">
           <div
             ref={messagesRef}
@@ -418,7 +497,7 @@ export default function ChatClient() {
             {messages.length === 0 ? (
               <div className="chat-empty-state">
                 <div className="siduri-orb">✦</div>
-                <h2>Teach Siduri about you.</h2>
+                <h2>Teach Siduri your preferences.</h2>
                 <p>
                   Choose a starting point, replace the blanks, and send it.
                   Nothing becomes memory until you approve the receipt.
@@ -427,41 +506,43 @@ export default function ChatClient() {
                   <button
                     type="button"
                     onClick={() =>
-                      setMessage("Call me [preferred name] in private.")
+                      setMessage("Call me [preferred name].")
                     }
                   >
-                    <span>Behavior</span>How she addresses you
+                    <span>Identity</span>Preferred name or title
                   </button>
                   <button
                     type="button"
                     onClick={() =>
                       setMessage(
-                        "My name is [your name] and I am your creator.",
+                        "My timezone is [timezone] and my preferred language is [language].",
                       )
                     }
                   >
-                    <span>Relationship</span>Who you are to Siduri
+                    <span>Localization</span>Timezone and language
                   </button>
                   <button
                     type="button"
                     onClick={() =>
                       setMessage(
-                        "My Genshin server is [server] and my main character is [character].",
+                        "My preferred response style is [concise / detailed / technical].",
                       )
                     }
                   >
-                    <span>Game profile</span>Server and main character
+                    <span>Response style</span>Tone and verbosity
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMessage("My Genshin UID is [UID].")}
+                    onClick={() =>
+                      setMessage("I am interested in [topics or domains of interest].")
+                    }
                   >
-                    <span>Game profile</span>Genshin UID
+                    <span>Knowledge</span>Topics of interest
                   </button>
                 </div>
                 <p className="onboarding-privacy">
-                  Only teach Siduri information you currently approve for her
-                  Supabase memory.
+                  Teach Siduri preferences explicitly. Information is stored in
+                  private memory only after you approve the receipt.
                 </p>
               </div>
             ) : (
@@ -471,7 +552,7 @@ export default function ChatClient() {
                   key={item.id}
                 >
                   <div className="message-avatar">
-                    {item.role === "user" ? "K" : "S"}
+                    {item.role === "user" ? "U" : "S"}
                   </div>
                   <div className="message-body">
                     <div className="message-meta">
@@ -644,6 +725,12 @@ export default function ChatClient() {
             </div>
           </form>
         </section>
+        <AvatarDock
+          isOpen={isDockOpen}
+          onToggle={() => setIsDockOpen(false)}
+          activeEvent={activeAvatarEvent}
+        />
+        </div>
         <p className="chat-disclaimer">
           Siduri can be uncertain. Verify important details against the
           evidence.

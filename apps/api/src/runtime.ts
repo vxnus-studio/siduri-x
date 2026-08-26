@@ -390,6 +390,9 @@ export class SiduriRuntime {
           event_id: e.eventId,
           kind: e.kind,
           lifecycle: e.lifecycle,
+          approval: e.approval,
+          expression: e.expression,
+          action: e.action,
         })),
       }
     };

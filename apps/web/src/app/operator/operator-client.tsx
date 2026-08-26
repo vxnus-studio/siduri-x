@@ -661,7 +661,7 @@ function Overview({
             Platform inbox <span>→</span>
           </button>
           <button onClick={() => onNavigate("settings")}>
-            Edit Me profile <span>→</span>
+            Identity & Directives <span>→</span>
           </button>
         </div>
       </section>
@@ -1061,7 +1061,7 @@ function EvidenceView({
       </div>
       <section className="console-panel table-panel">
         <div className="table-toolbar">
-          <strong>E-Teyvat citations</strong>
+          <strong>Knowledge Base Citations</strong>
           <span>{results.length} results</span>
         </div>
         {results.length ? (
@@ -1347,22 +1347,22 @@ function SettingsView({
     <div className="console-view">
       <div className="view-intro">
         <div>
-          <p className="console-eyebrow">LOCAL PROFILE</p>
-          <h2>Me, with a stream-safe boundary.</h2>
+          <p className="console-eyebrow">RUNTIME IDENTITY</p>
+          <h2>Companion Identity & Directives</h2>
           <p>
-            The static JSON profile editor has been deprecated in favor of
-            dynamic conversational memory.
+            Identity and behavioral preferences are governed dynamically through
+            conversational teaching and reviewed in the Memory tab.
           </p>
         </div>
       </div>
       <section className="console-panel profile-panel">
         <div className="table-toolbar">
-          <strong>Identity Settings</strong>
-          <span>Migrated to Memory v2</span>
+          <strong>Identity Directives</strong>
+          <span>Governed Memory Model</span>
         </div>
         <EmptyState
-          title="Static profile disabled"
-          detail="Siduri now learns facts and boundaries dynamically through conversation. Please use the Private Chat to teach her new facts, and the Memory tab to review them."
+          title="Dynamic identity active"
+          detail="Siduri establishes preferences and boundaries dynamically through conversation. Use the Private Chat to teach preferences, and the Memory tab to approve or revoke directives."
         />
       </section>
       <section className="console-panel profile-panel mt-6">
@@ -1374,8 +1374,8 @@ function SettingsView({
           <h3 className="text-red-400 font-medium mb-2">Reset All Memory</h3>
           <p className="text-sm text-gray-400 mb-4">
             This will permanently delete all memory items, proposals, revisions,
-            and claims from the database. Siduri will forget everything learned
-            in this session.
+            and claims from the database. The companion will forget all
+            approved claims, directives, and proposals.
           </p>
           <button
             className="bg-red-500/10 text-red-400 border border-red-500/50 hover:bg-red-500/20 px-4 py-2 rounded-md font-medium transition-colors"
