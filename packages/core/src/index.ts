@@ -1,5 +1,7 @@
 // Export neutral context types and validator
 export * from './context';
+export * from './evidence';
+export * from './gating';
 
 // Config
 export interface OrganConfig {

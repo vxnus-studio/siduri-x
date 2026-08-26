@@ -1,4 +1,23 @@
-import { BrainOrgan, MemoryOrgan, VoiceOrgan, KnowledgeOrgan, VisionOrgan, BehaviorOrgan, BodyOrgan, Message, ResponsePlan, SourceEvent, MemoryProposal, BehaviorProposal, RequestContext } from '@siduri-y/core';
+import {
+  BrainOrgan,
+  MemoryOrgan,
+  VoiceOrgan,
+  KnowledgeOrgan,
+  VisionOrgan,
+  BehaviorOrgan,
+  BodyOrgan,
+  Message,
+  ResponsePlan,
+  SourceEvent,
+  MemoryProposal,
+  BehaviorProposal,
+  RequestContext,
+  EvidenceRecord,
+  ResponseCitation,
+  ResponseGatingEngine,
+  StagedResponsePlan,
+  ResponseGateEvaluation,
+} from '@siduri-y/core';
 import { extractDeterministicTeaching } from '@siduri-y/memory';
 
 export interface SiduriRuntimeConfig {
@@ -32,6 +51,7 @@ export class SiduriRuntime {
   public vision?: VisionOrgan;
   public behavior?: BehaviorOrgan;
   public body?: BodyOrgan;
+  public gating: ResponseGatingEngine;
   private conversationHistory: Message[] = [];
 
   constructor(id: string, config: SiduriRuntimeConfig, organs: RuntimeOrgans) {
@@ -44,6 +64,7 @@ export class SiduriRuntime {
     this.vision = organs.vision;
     this.behavior = organs.behavior;
     this.body = organs.body;
+    this.gating = new ResponseGatingEngine();
   }
 
   async initialize(): Promise<void> {
@@ -71,7 +92,7 @@ export class SiduriRuntime {
           : (roleOrContext.actor.authorizationRole === 'operator' ? 'OPERATOR' : 'VIEWER'))
       : roleOrContext;
 
-    const requestContext: RequestContext | undefined = isContextObject
+    const requestContext: RequestContext = isContextObject
       ? roleOrContext
       : {
           companionId: this.id,
@@ -119,7 +140,37 @@ export class SiduriRuntime {
       this.memory.searchClaims(message, queryOptions, 5),
       this.memory.getDirectives()
     ]);
-    
+
+    // Build evidence records from retrieved knowledge and memory context
+    const collectedEvidence: EvidenceRecord[] = [];
+    const citations: ResponseCitation[] = [];
+
+    if (knowledgeData.length > 0) {
+      for (const k of knowledgeData) {
+        const evId = `ev-know-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const sourceId = k.provenance || 'configured-knowledge';
+        collectedEvidence.push({
+          evidenceId: evId,
+          sourceId,
+          revision: k.revision,
+          origin: 'knowledge',
+          trust: 'configured',
+          sensitivity: 'public',
+          allowedAudiences: ['audience-public', requestContext.conversation.audienceId],
+          companionId: this.id,
+          correlationId: requestContext.conversation.correlationId,
+          createdAt: new Date().toISOString(),
+        });
+        citations.push({
+          sourceId,
+          revision: k.revision,
+          documentId: k.citations?.[0]?.documentId,
+          chunkId: k.citations?.[0]?.chunkId,
+          locator: k.citations?.[0]?.locator,
+        });
+      }
+    }
+
     let contextPrompt = "";
     if (knowledgeData.length > 0) {
       contextPrompt += "KNOWLEDGE:\n" + knowledgeData.map(k => `- [revision:${k.revision} source:${k.provenance}] ${k.content}`).join("\n") + "\n";
@@ -155,6 +206,43 @@ export class SiduriRuntime {
       recentMessages: this.conversationHistory.slice(-10),
       recipient: role,
     });
+
+    // 4. Stage Response through T4 ResponseGatingEngine
+    const stagedPlan = this.gating.stageResponse({
+      requestContext,
+      candidateSpeech: plan.speech,
+      candidateLanguage: plan.language || 'ja',
+      internalMonologue: plan.internalMonologue,
+      memoryProposals: plan.memoryProposals,
+      behaviorProposals: plan.behaviorProposals,
+      evidenceRecords: collectedEvidence,
+      citations,
+    });
+
+    // Evaluate gate boundary
+    const gateEval = this.gating.evaluateGate(stagedPlan, collectedEvidence);
+
+    // If gate is not admissible (e.g. STAGED requiring approval or REJECTED), do not emit voice/body
+    if (!gateEval.admissible) {
+      return {
+        status: gateEval.disposition,
+        reasonCode: gateEval.reasonCode,
+        response_id: stagedPlan.responseId,
+        correlation_id: stagedPlan.correlationId,
+        response: {
+          subtitle_ja: undefined,
+          subtitle_en: undefined,
+        },
+        metadata: {
+          requires_approval: stagedPlan.requiresApproval,
+          staged: true,
+          confidence: stagedPlan.confidenceSummary,
+          uncertainty: stagedPlan.uncertaintySummary,
+          proposals: [],
+          memory_proposals: [],
+        },
+      };
+    }
 
     this.conversationHistory.push({ role: 'assistant', content: plan.speech });
 
@@ -249,6 +337,9 @@ export class SiduriRuntime {
     }));
 
     return {
+      status: 'APPROVED',
+      response_id: stagedPlan.responseId,
+      correlation_id: stagedPlan.correlationId,
       response: {
         speech_id: speechId,
         audio_url: speechId ? `/voice/stream?id=${speechId}` : undefined,
@@ -260,6 +351,8 @@ export class SiduriRuntime {
         internal_monologue: plan.internalMonologue,
         proposals: createdMemoryProposals,
         memory_proposals: memoryProposalReceipts,
+        evidence_ids: gateEval.filteredEvidenceIds,
+        citations: gateEval.filteredCitations,
       }
     };
   }

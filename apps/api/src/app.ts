@@ -286,14 +286,133 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   app.get('/evidence', (req, res) => res.json({ results: [] }));
   app.get('/observations', (req, res) => res.json({ observations: observationOrgan?.current() ?? [] }));
 
-  app.post('/dev/mock-response', (req, res) => res.json({ accepted: true }));
-  app.post('/dev/observe-and-respond', (req, res) => res.json({ accepted: true }));
-  app.post('/dev/approve-response', (req, res) => res.json({ approved: true }));
+  app.post('/dev/mock-response', async (req, res) => {
+    const companionId = req.body?.companionId || Array.from(runtimes.keys())[0] || 'default';
+    const runtime = runtimes.get(companionId);
+    if (!runtime) return res.status(404).json({ accepted: false, error: 'Companion not found' });
+    const staged = runtime.gating.stageResponse({
+      requestContext: {
+        companionId,
+        actor: {
+          actorId: 'operator-a',
+          sessionId: 'sess-op',
+          authorizationRole: 'operator',
+          capabilities: ['chat:public', 'memory:approve'],
+          authenticated: true,
+        },
+        conversation: {
+          channel: 'public',
+          audienceId: 'audience-public',
+          correlationId: req.body?.correlation_id || `corr-${Date.now()}`,
+        },
+      },
+      candidateSpeech: req.body?.speech || 'Mocked staged response for review',
+      candidateLanguage: req.body?.language || 'en',
+      requiresApproval: req.body?.requiresApproval ?? true,
+    });
+    res.json({
+      accepted: true,
+      staged: true,
+      status: staged.status,
+      response_id: staged.responseId,
+      correlation_id: staged.correlationId,
+      speech: staged.speech,
+    });
+  });
+
+  app.post('/dev/approve-response', async (req, res) => {
+    const companionId = req.body?.companionId || Array.from(runtimes.keys())[0] || 'default';
+    const runtime = runtimes.get(companionId);
+    if (!runtime) return res.status(404).json({ approved: false, error: 'Companion not found' });
+
+    let responseId = req.body?.responseId;
+    let correlationId = req.body?.correlation_id;
+
+    if (!responseId && correlationId) {
+      const found = runtime.gating.findStagedPlanByCorrelation(companionId, correlationId);
+      if (found) {
+        responseId = found.responseId;
+      }
+    } else if (responseId && !correlationId) {
+      const found = runtime.gating.getStagedPlan(responseId);
+      if (found) {
+        correlationId = found.correlationId;
+      }
+    }
+
+    if (!responseId) {
+      return res.status(400).json({ approved: false, error: 'UNKNOWN_APPROVAL_ID' });
+    }
+
+    const result = runtime.gating.approveResponse({
+      responseId,
+      companionId,
+      correlationId: correlationId || '',
+      audienceId: req.body?.audienceId,
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ approved: false, error: result.reason });
+    }
+
+    // Now evaluated as approved
+    const evaluation = runtime.gating.evaluateGate(result.plan!);
+    res.json({
+      approved: true,
+      status: evaluation.disposition,
+      response_id: result.plan!.responseId,
+      speech: result.plan!.speech,
+      language: result.plan!.language,
+    });
+  });
+
+  app.post('/dev/reject-response', async (req, res) => {
+    const companionId = req.body?.companionId || Array.from(runtimes.keys())[0] || 'default';
+    const runtime = runtimes.get(companionId);
+    if (!runtime) return res.status(404).json({ rejected: false, error: 'Companion not found' });
+
+    let responseId = req.body?.responseId;
+    let correlationId = req.body?.correlation_id;
+
+    if (!responseId && correlationId) {
+      const found = runtime.gating.findStagedPlanByCorrelation(companionId, correlationId);
+      if (found) {
+        responseId = found.responseId;
+      }
+    } else if (responseId && !correlationId) {
+      const found = runtime.gating.getStagedPlan(responseId);
+      if (found) {
+        correlationId = found.correlationId;
+      }
+    }
+
+    if (!responseId) {
+      return res.status(400).json({ rejected: false, error: 'UNKNOWN_APPROVAL_ID' });
+    }
+
+    const result = runtime.gating.rejectResponse({
+      responseId,
+      companionId,
+      correlationId: correlationId || '',
+      reason: req.body?.reason,
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ rejected: false, error: result.reason });
+    }
+
+    res.json({
+      rejected: true,
+      status: result.plan!.status,
+      response_id: result.plan!.responseId,
+    });
+  });
+
   app.post('/dev/mock-observation', async (req, res) => {
     if (!observationOrgan) return res.status(503).json({ accepted: false, reason: 'observation_unavailable' });
     const result = await observationOrgan.ingest(
       new Uint8Array([115, 121, 110, 116, 104, 101, 116, 105, 99]),
-      'fixture-genshin',
+      'fixture-observation',
       'configured-vision',
     );
     if (!result.observation) return res.status(result.duplicate ? 200 : 409).json({ accepted: false, ...result });
