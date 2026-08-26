@@ -4,6 +4,8 @@ Status: ready after neutral memory contracts
 
 The normative Active Self and prompt compilation target is
 [`T3-ACTIVE-SELF-CONTRACT.md`](./T3-ACTIVE-SELF-CONTRACT.md).
+The prompt section test matrix is in
+[`T3-PROMPT-SECTION-MATRIX.md`](./T3-PROMPT-SECTION-MATRIX.md).
 
 ## Objective
 

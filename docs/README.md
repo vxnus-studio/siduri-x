@@ -88,6 +88,8 @@ When documents disagree, use this order:
     — expected blank-slate experience sequence and reviewer evidence record.
 40. [T2 memory disclosure matrix](./T2-MEMORY-DISCLOSURE-MATRIX.md) — public,
     direct, private, operator, lifecycle, sensitivity, and isolation outcomes.
+41. [T3 prompt-section matrix](./T3-PROMPT-SECTION-MATRIX.md) — trusted,
+    permitted, untrusted, and forbidden prompt inputs by section.
 
 ## Current status
 

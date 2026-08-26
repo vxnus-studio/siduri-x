@@ -7,6 +7,9 @@ It extracts the original Active Self and prompt-boundary behavior while keeping
 Siduri-Y a blank slate. User memory is not companion identity, and a transport
 role is not a relationship.
 
+Section-level input and exclusion rules are in
+[`T3-PROMPT-SECTION-MATRIX.md`](./T3-PROMPT-SECTION-MATRIX.md).
+
 ## Three projections
 
 Prompt assembly must keep these projections distinct:

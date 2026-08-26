@@ -26,6 +26,10 @@ Prompt and Active Self evidence must follow
 [`T3-ACTIVE-SELF-CONTRACT.md`](./T3-ACTIVE-SELF-CONTRACT.md), including empty
 slate, scope, injection, and recipient-validation tests.
 
+Prompt section evidence must follow
+[`T3-PROMPT-SECTION-MATRIX.md`](./T3-PROMPT-SECTION-MATRIX.md), including trust,
+presence, exclusion, and failure assertions.
+
 Evidence and response tests must follow
 [`T4-EVIDENCE-CHAIN-CONTRACT.md`](./T4-EVIDENCE-CHAIN-CONTRACT.md), including
 redaction, citation, disclosure, and independent response approval.

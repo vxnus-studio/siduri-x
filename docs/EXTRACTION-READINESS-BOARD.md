@@ -45,6 +45,8 @@ The expected manual experience sequence is maintained in
 [`PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md`](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md).
 Memory include/exclude outcomes are maintained in
 [`T2-MEMORY-DISCLOSURE-MATRIX.md`](./T2-MEMORY-DISCLOSURE-MATRIX.md).
+Prompt section boundaries are maintained in
+[`T3-PROMPT-SECTION-MATRIX.md`](./T3-PROMPT-SECTION-MATRIX.md).
 
 ## Next implementation slice
 
