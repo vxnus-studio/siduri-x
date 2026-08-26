@@ -1,64 +1,29 @@
-import { BrainOrgan, MemoryOrgan, VoiceOrgan, KnowledgeOrgan, VisionOrgan, BehaviorOrgan, BodyOrgan, CompanionConfig, Message, SourceEvent } from '@siduri-y/core';
+import { BrainOrgan, MemoryOrgan, VoiceOrgan, KnowledgeOrgan, VisionOrgan, BehaviorOrgan, BodyOrgan, Message, ResponsePlan, SourceEvent, MemoryProposal, BehaviorProposal } from '@siduri-y/core';
 
-function extractExplicitTeaching(message: string) {
-  const claims: Array<{
-    subject: string;
-    predicate: string;
-    value: string;
-    claimType: 'semantic' | 'preference' | 'episodic' | 'relationship';
-    sensitivity: string;
-    allowedAudiences: string[];
-  }> = [];
-  const behaviorProposals: Array<{
-    directive: string;
-    priority: number;
-    subject: string;
-    predicate: string;
-    value: string;
-    memoryClass: 'behavioral';
-  }> = [];
-  const clean = message.replace(/\s+/g, ' ').trim();
-  const privateAudience = ['MASTER_PRIVATE'];
+export interface SiduriRuntimeConfig {
+  name: string;
+  brain: any;
+  voice: any;
+  memory: any;
+  knowledge: any;
+  behavior: any;
+  body: any;
+  vision: any;
+}
 
-  const preferredAddress = clean.match(/^call me\s+(.+?)(?:\s+in private)?[.!]?$/i);
-  if (preferredAddress?.[1]) {
-    const value = preferredAddress[1].trim();
-    claims.push({ subject: 'primary_user', predicate: 'preferred_address', value, claimType: 'preference', sensitivity: 'private', allowedAudiences: privateAudience });
-    behaviorProposals.push({
-      directive: `Address the primary user as ${value} in private conversations.`,
-      priority: 80,
-      subject: 'primary_user',
-      predicate: 'preferred_address',
-      value,
-      memoryClass: 'behavioral',
-    });
-  }
-
-  const identity = clean.match(/^my name is\s+(.+?)(?:\s+and I am your creator)?[.!]?$/i);
-  if (identity?.[1]) {
-    const value = identity[1].trim();
-    claims.push({ subject: 'primary_user', predicate: 'name', value, claimType: 'semantic', sensitivity: 'private', allowedAudiences: privateAudience });
-    if (/\band I am your creator\b/i.test(clean)) {
-      claims.push({ subject: 'primary_user', predicate: 'relationship_to_siduri', value: 'creator', claimType: 'relationship', sensitivity: 'private', allowedAudiences: privateAudience });
-    }
-  }
-
-  const profilePatterns: Array<[RegExp, string, string, 'semantic' | 'preference' | 'episodic' | 'relationship']> = [
-    [/^my genshin uid is\s+(.+?)[.!]?$/i, 'primary_user.genshin', 'uid', 'semantic'],
-    [/^my genshin server is\s+(.+?)[.!]?$/i, 'primary_user.genshin', 'server', 'semantic'],
-    [/^my main character is\s+(.+?)[.!]?$/i, 'primary_user.genshin', 'main_character', 'preference'],
-  ];
-  for (const [pattern, subject, predicate, claimType] of profilePatterns) {
-    const match = clean.match(pattern);
-    if (match?.[1]) claims.push({ subject, predicate, value: match[1].trim(), claimType, sensitivity: 'private', allowedAudiences: privateAudience });
-  }
-
-  return { claims, behaviorProposals };
+export interface RuntimeOrgans {
+  brain: BrainOrgan;
+  memory: MemoryOrgan;
+  voice?: VoiceOrgan;
+  knowledge?: KnowledgeOrgan;
+  vision?: VisionOrgan;
+  behavior?: BehaviorOrgan;
+  body?: BodyOrgan;
 }
 
 export class SiduriRuntime {
   public id: string;
-  public config: CompanionConfig;
+  public config: SiduriRuntimeConfig;
   public brain: BrainOrgan;
   public memory: MemoryOrgan;
   public voice?: VoiceOrgan;
@@ -66,22 +31,9 @@ export class SiduriRuntime {
   public vision?: VisionOrgan;
   public behavior?: BehaviorOrgan;
   public body?: BodyOrgan;
-
   private conversationHistory: Message[] = [];
 
-  constructor(
-    id: string,
-    config: CompanionConfig,
-    organs: {
-      brain: BrainOrgan;
-      memory: MemoryOrgan;
-      voice?: VoiceOrgan;
-      knowledge?: KnowledgeOrgan;
-      vision?: VisionOrgan;
-      behavior?: BehaviorOrgan;
-      body?: BodyOrgan;
-    }
-  ) {
+  constructor(id: string, config: SiduriRuntimeConfig, organs: RuntimeOrgans) {
     this.id = id;
     this.config = config;
     this.brain = organs.brain;
@@ -91,19 +43,9 @@ export class SiduriRuntime {
     this.vision = organs.vision;
     this.behavior = organs.behavior;
     this.body = organs.body;
-
-    if (this.voice && this.body) {
-      this.voice.onLifecycleEvent((event) => {
-        if (event.type === 'STARTED') {
-          this.body?.speak(event.speechId, event.text, event.language);
-        } else if (event.type === 'COMPLETED' || event.type === 'FAILED') {
-          this.body?.completeAction?.();
-        }
-      });
-    }
   }
 
-  async initialize() {
+  async initialize(): Promise<void> {
     await this.memory.initialize(this.id);
   }
 
@@ -132,7 +74,8 @@ export class SiduriRuntime {
     const explicitTeaching = extractExplicitTeaching(message);
     const teachingLike = explicitTeaching.claims.length > 0 || explicitTeaching.behaviorProposals.length > 0 || /\bremember that\b/.test(normalizedMessage);
     const selfIdentityRequest = /\b(?:who|what) are you\b|\bwho is siduri\b|\b(?:your|my) name\b|\btell me about yourself\b/.test(normalizedMessage);
-    const shouldQueryKnowledge = !teachingLike && !selfIdentityRequest;
+    const isGreeting = /^(?:hello|hi|hey|greetings|good morning|good afternoon|good evening)[.!]?$/.test(normalizedMessage);
+    const shouldQueryKnowledge = !teachingLike && !selfIdentityRequest && !isGreeting;
 
     const [knowledgeData, memoryData, activeDirectives] = await Promise.all([
       this.knowledge && shouldQueryKnowledge ? this.knowledge.search(message).catch(e => {
@@ -178,105 +121,135 @@ export class SiduriRuntime {
     let sourceEventId: string | undefined;
     if ((explicitTeaching.claims.length || explicitTeaching.behaviorProposals.length || plan.memoryProposals?.length || plan.behaviorProposals?.length) && this.memory.addSourceEvent) {
       const sourceEvent: SourceEvent = {
-        id: `evt_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        sourceType: 'private_chat',
+        id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        sourceType: 'user_chat_explicit',
         occurredAt: new Date().toISOString(),
-        payload: { message },
+        payload: {
+          message,
+          role,
+          companionId: this.id,
+        },
       };
       await this.memory.addSourceEvent(sourceEvent);
       sourceEventId = sourceEvent.id;
     }
-    const proposedClaims = [
-      ...explicitTeaching.claims,
-      ...(plan.memoryProposals || []),
-    ].filter((proposal, index, all) => all.findIndex((candidate) =>
-      candidate.subject === proposal.subject && candidate.predicate === proposal.predicate && candidate.value === proposal.value
-    ) === index);
-    if (proposedClaims.length) {
-      for (const proposal of proposedClaims) {
-        const claim = await this.memory.proposeClaim({
-          subject: proposal.subject,
-          predicate: proposal.predicate,
-          value: proposal.value,
-          scope: role,
-          evidence: [message],
-          provenance: 'private_chat',
-          sourceEventId,
-          claimType: proposal.claimType || 'semantic',
-          authority: 'user_explicit',
-          userConfirmation: 'none',
-          sensitivity: proposal.sensitivity || 'private',
-          allowedAudiences: proposal.allowedAudiences || ['MASTER_PRIVATE'],
+
+    // Persist memory proposals from regex heuristic as PENDING
+    for (const claim of explicitTeaching.claims) {
+      const proposal = await this.memory.proposeClaim({
+        subject: claim.subject,
+        predicate: claim.predicate,
+        value: claim.value,
+        scope: role === 'OWNER' ? 'OWNER' : (role === 'OPERATOR' ? 'OPERATOR' : 'PUBLIC'),
+        provenance: 'explicit_teaching_regex',
+        sourceEventId,
+        claimType: 'preference',
+        authority: 'user_explicit',
+        userConfirmation: 'none',
+        sensitivity: role === 'OWNER' ? 'private' : 'public',
+        allowedAudiences: role === 'OWNER' ? ['audience-private-a'] : ['audience-public'],
+      });
+      createdMemoryProposals.push(proposal);
+    }
+
+    // Also persist plan memory proposals
+    if (plan.memoryProposals && plan.memoryProposals.length > 0) {
+      for (const p of plan.memoryProposals) {
+        const proposal = await this.memory.proposeClaim({
+          subject: p.subject,
+          predicate: p.predicate,
+          value: p.value,
+          scope: role === 'OWNER' ? 'OWNER' : 'PUBLIC',
+          provenance: p.provenance || 'llm_proposal',
+          sourceEventId: sourceEventId || p.sourceEventId,
+          claimType: p.claimType || 'semantic',
+          sensitivity: p.sensitivity || 'private',
+          allowedAudiences: p.allowedAudiences || (role === 'OWNER' ? ['audience-private-a'] : ['audience-public']),
         });
-        createdMemoryProposals.push({
-          proposal_id: claim.id,
-          content: claim.value,
-          status: 'pending',
-          subject: claim.subject,
-          predicate: claim.predicate,
-          value: claim.value
+        createdMemoryProposals.push(proposal);
+      }
+    }
+
+    if (plan.behaviorProposals && plan.behaviorProposals.length > 0) {
+      for (const bp of plan.behaviorProposals) {
+        await this.memory.proposeDirective({
+          directive: bp.directive,
+          priority: bp.priority || 50,
+          scopeMatcher: [role],
         });
       }
     }
 
-    const createdBehavioralProposals: any[] = [];
-    const proposedBehavior = [
-      ...explicitTeaching.behaviorProposals,
-      ...(plan.behaviorProposals || []),
-    ].filter((proposal, index, all) => all.findIndex((candidate) =>
-      candidate.directive === proposal.directive
-    ) === index);
-    if (proposedBehavior.length) {
-      for (const p of proposedBehavior) {
-        const directive = await this.memory.proposeDirective({
-          directive: p.directive,
-          scopeMatcher: ['*'],
-          priority: p.priority,
-        });
-        createdBehavioralProposals.push({
-          directive_id: directive.id,
-          domain: 'behavior',
-          subject: 'self',
-          predicate: 'directive',
-          value: p.directive,
-          status: 'pending',
-          behavior: {
-            instruction: p.directive,
-            frequency: 'always',
-            preferred_positions: []
-          },
-          source_event_id: sourceEventId,
-          runtime_effect: p.predicate || 'behavioral_rule',
-        });
-      }
-    }
-
+    // 5. Enqueue Voice
+    let speechId: string | undefined;
     if (this.voice) {
-      this.voice.enqueueSpeech(plan.speech, plan.language, 0);
+      speechId = this.voice.enqueueSpeech(plan.speech, plan.language || 'ja', 1);
     }
 
-    // Map to the expected UI contract format
+    // 6. Actuate Body
+    if (this.body) {
+      if (typeof this.body.setExpression === 'function') {
+        this.body.setExpression("neutral");
+      }
+      if (typeof this.body.act === 'function') {
+        this.body.act("talk");
+      }
+    }
+
+    const memoryProposalReceipts = createdMemoryProposals.map(p => ({
+      proposal_id: p.id,
+      subject: p.subject,
+      predicate: p.predicate,
+      value: p.value,
+      status: p.status,
+    }));
+
     return {
       response: {
-        spoken_ja: plan.language === 'ja' ? plan.speech : undefined,
+        speech_id: speechId,
+        audio_url: speechId ? `/voice/stream?id=${speechId}` : undefined,
+        subtitle_ja: plan.speech,
         subtitle_en: plan.speech,
-        evidence_ids: [...new Set(knowledgeData.flatMap(item => item.citations.map(citation => citation.chunkId || citation.documentId || citation.sourceId)))]
       },
       metadata: {
-        memory_proposals: createdMemoryProposals,
-        behavioral_proposals: createdBehavioralProposals,
-        knowledge_revisions: [...new Set(knowledgeData.map(item => item.revision))],
-        citations: knowledgeData.flatMap(item => item.citations.map(citation => ({
-          evidence_id: citation.chunkId || citation.documentId || citation.sourceId,
-          source_id: citation.sourceId,
-          document_id: citation.documentId,
-          chunk_id: citation.chunkId,
-          locator: citation.locator,
-          revision: item.revision,
-          provenance: item.provenance,
-          preview: item.content.slice(0, 240),
-        }))),
+        language: plan.language,
+        internal_monologue: plan.internalMonologue,
+        proposals: createdMemoryProposals,
+        memory_proposals: memoryProposalReceipts,
       }
     };
   }
+}
+
+function extractExplicitTeaching(message: string): { claims: Omit<MemoryProposal, 'provenance'>[], behaviorProposals: Omit<BehaviorProposal, 'provenance'>[] } {
+  const claims: Omit<MemoryProposal, 'provenance'>[] = [];
+  const behaviorProposals: Omit<BehaviorProposal, 'provenance'>[] = [];
+
+  const callMeMatch = message.match(/(?:call me|my name is)\s+([A-Za-z0-9_\s]+)/i);
+  if (callMeMatch) {
+    claims.push({
+      subject: 'primary_user',
+      predicate: 'preferred_name',
+      value: callMeMatch[1].trim(),
+    });
+  }
+
+  const genshinMatch = message.match(/(?:my uid is|genshin uid is)\s+([0-9]+)/i);
+  if (genshinMatch) {
+    claims.push({
+      subject: 'primary_user',
+      predicate: 'genshin_uid',
+      value: genshinMatch[1].trim(),
+    });
+  }
+
+  const talkMatch = message.match(/always speak in\s+([A-Za-z]+)/i);
+  if (talkMatch) {
+    behaviorProposals.push({
+      directive: `Always speak in ${talkMatch[1].trim()}`,
+      priority: 80,
+    });
+  }
+
+  return { claims, behaviorProposals };
 }
