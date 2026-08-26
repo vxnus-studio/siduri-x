@@ -5,6 +5,14 @@ import {
   formatClaimReceipt,
   formatRuntimeEffect,
 } from "../../lib/memory-display";
+import PreferencesStarter from "../../components/PreferencesStarter";
+import {
+  AvatarCanvas,
+  type ActiveAvatarEvent,
+  type AvatarExpression,
+  type AvatarAction,
+} from "../../components/live2d";
+import { postJson, fetchApi } from "../../lib/api";
 
 type MemoryProposalData = {
   proposal_id: string;
@@ -15,6 +23,7 @@ type MemoryProposalData = {
   value?: string;
   claim_type?: string;
 };
+
 type BehavioralProposalData = {
   directive_id: string;
   memory_class: string;
@@ -50,13 +59,6 @@ type Conversation = {
   updatedAt: number;
 };
 
-import {
-  AvatarDock,
-  type ActiveAvatarEvent,
-  type AvatarExpression,
-  type AvatarAction,
-} from "../../components/live2d";
-
 type ChatResponse = {
   response: { speech_id?: string; spoken_ja: string; subtitle_en: string; evidence_ids: string[] };
   metadata?: {
@@ -83,7 +85,6 @@ type ChatResponse = {
   };
 };
 
-import { getJson, postJson, fetchApi } from "../../lib/api";
 const STORAGE_KEY = "siduri.chat.conversations.v1";
 
 function newId(): string {
@@ -118,7 +119,7 @@ export default function ChatClient() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isDockOpen, setIsDockOpen] = useState(false);
+  const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [activeAvatarEvent, setActiveAvatarEvent] = useState<ActiveAvatarEvent | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const avatarTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -327,7 +328,7 @@ export default function ChatClient() {
   ) {
     if (!activeConversation) return;
     try {
-      const result = await postJson<{ item?: any; proposal?: any }>(
+      await postJson<{ item?: any; proposal?: any }>(
         `/memory/proposals/${action}`,
         { id: proposalId, companionId: "default" },
       );
@@ -467,17 +468,17 @@ export default function ChatClient() {
         <div className="chat-top-status flex items-center gap-2.5">
           <button
             type="button"
-            onClick={() => setIsDockOpen((prev) => !prev)}
+            onClick={() => setIsPresenceOpen((prev) => !prev)}
             className={`connection-pill cursor-pointer transition-all focus-visible:ring-1 focus-visible:ring-[var(--siduri-border-ember)] outline-none ${
-              isDockOpen
+              isPresenceOpen
                 ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)]"
                 : "hover:border-[var(--siduri-border-ember)] text-[var(--siduri-text-secondary)]"
             }`}
             aria-label="Toggle avatar presence"
-            aria-expanded={isDockOpen}
-            title={isDockOpen ? "Close Avatar Presence" : "Open Avatar Presence"}
+            aria-expanded={isPresenceOpen}
+            title={isPresenceOpen ? "Disable Avatar Presence" : "Enable Avatar Presence"}
           >
-            <span className={`status-light ${isDockOpen ? "online" : ""}`} />
+            <span className={`status-light ${isPresenceOpen ? "online" : ""}`} />
             <span>Presence</span>
           </button>
           <span className="connection-pill">
@@ -487,249 +488,208 @@ export default function ChatClient() {
             {status}
           </span>
         </div>
-        <div className="flex flex-col sm:flex-row flex-1 min-h-0 w-full overflow-hidden relative">
-        <section className="conversation-surface" aria-label="Private chat">
-          <div
-            ref={messagesRef}
-            className="conversation-scroll"
-            aria-live="polite"
-          >
-            {messages.length === 0 ? (
-              <div className="chat-empty-state">
-                <div className="siduri-orb">✦</div>
-                <h2>Teach Siduri your preferences.</h2>
-                <p>
-                  Choose a starting point, replace the blanks, and send it.
-                  Nothing becomes memory until you approve the receipt.
-                </p>
-                <div className="starter-prompts onboarding-prompts">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMessage("Call me [preferred name].")
-                    }
-                  >
-                    <span>Identity</span>Preferred name or title
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMessage(
-                        "My timezone is [timezone] and my preferred language is [language].",
-                      )
-                    }
-                  >
-                    <span>Localization</span>Timezone and language
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMessage(
-                        "My preferred response style is [concise / detailed / technical].",
-                      )
-                    }
-                  >
-                    <span>Response style</span>Tone and verbosity
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMessage("I am interested in [topics or domains of interest].")
-                    }
-                  >
-                    <span>Knowledge</span>Topics of interest
-                  </button>
+
+        <div className="flex flex-col flex-1 min-h-0 w-full overflow-hidden relative">
+          <section className="conversation-surface" aria-label="Private chat">
+            <div
+              ref={messagesRef}
+              className={`conversation-scroll ${isPresenceOpen ? "presence-active" : ""}`}
+              aria-live="polite"
+            >
+              {isPresenceOpen ? (
+                <div className="avatar-presence-area" data-testid="avatar-presence-area">
+                  <AvatarCanvas
+                    expression={activeAvatarEvent?.expression || "neutral"}
+                    action={activeAvatarEvent?.action || "idle"}
+                    state={activeAvatarEvent?.state || "idle"}
+                    speechId={activeAvatarEvent?.speechId}
+                    lipSyncValue={activeAvatarEvent?.lipSyncValue}
+                    durationMs={activeAvatarEvent?.durationMs}
+                    className="w-full h-full"
+                  />
                 </div>
-                <p className="onboarding-privacy">
-                  Teach Siduri preferences explicitly. Information is stored in
-                  private memory only after you approve the receipt.
-                </p>
-              </div>
-            ) : (
-              messages.map((item) => (
-                <article
-                  className={`platform-message ${item.role}`}
-                  key={item.id}
-                >
-                  <div className="message-avatar">
-                    {item.role === "user" ? "U" : "S"}
-                  </div>
+              ) : messages.length === 0 ? (
+                <PreferencesStarter onSelectPrompt={(text) => setMessage(text)} />
+              ) : (
+                messages.map((item) => (
+                  <article
+                    className={`platform-message ${item.role}`}
+                    key={item.id}
+                  >
+                    <div className="message-avatar">
+                      {item.role === "user" ? "U" : "S"}
+                    </div>
+                    <div className="message-body">
+                      <div className="message-meta">
+                        <span>{item.role === "user" ? "You" : "Siduri"}</span>
+                        <time>{formatTime(item.createdAt)}</time>
+                      </div>
+                      <p className="message-primary">
+                        {item.role === "assistant"
+                          ? (item.spokenJa ?? item.content)
+                          : item.content}
+                      </p>
+                      {item.role === "assistant" && item.spokenJa && (
+                        <p className="message-translation">{item.content}</p>
+                      )}
+                      {item.evidenceIds && item.evidenceIds.length > 0 && (
+                        <span className="evidence-chip">
+                          {item.evidenceIds.length} evidence link
+                          {item.evidenceIds.length === 1 ? "" : "s"}
+                        </span>
+                      )}
+                      {item.memoryProposals &&
+                        item.memoryProposals.length > 0 && (
+                          <div className="memory-receipts">
+                            {item.memoryProposals.map((p) => (
+                              <div
+                                key={p.proposal_id}
+                                className={`memory-receipt status-${p.status}`}
+                              >
+                                <strong>
+                                  Remember
+                                  {p.claim_type ? ` (${p.claim_type})` : ""}:
+                                </strong>{" "}
+                                {formatClaimReceipt(p)}
+                                <div className="receipt-actions">
+                                  {p.status === "pending" ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleProposal(
+                                            item.id,
+                                            p.proposal_id,
+                                            "approve",
+                                          )
+                                        }
+                                      >
+                                        Approve
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleProposal(
+                                            item.id,
+                                            p.proposal_id,
+                                            "reject",
+                                          )
+                                        }
+                                      >
+                                        Reject
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span>{p.status.toUpperCase()}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      {item.behavioralProposals &&
+                        item.behavioralProposals.length > 0 && (
+                          <div className="memory-receipts">
+                            {item.behavioralProposals.map((p) => (
+                              <div
+                                key={p.directive_id}
+                                className={`memory-receipt status-${p.status}`}
+                              >
+                                <strong>
+                                  Runtime effect [{p.knowledge_domain ?? p.domain}{" "}
+                                  → {p.runtime_effect ?? p.memory_class}]:
+                                </strong>{" "}
+                                {formatRuntimeEffect(p)}
+                                <div className="receipt-actions">
+                                  {p.status === "pending" ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleBehavioralProposal(
+                                            item.id,
+                                            p.directive_id,
+                                            "approve",
+                                          )
+                                        }
+                                      >
+                                        Approve
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleBehavioralProposal(
+                                            item.id,
+                                            p.directive_id,
+                                            "reject",
+                                          )
+                                        }
+                                      >
+                                        Reject
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span>{p.status.toUpperCase()}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                  </article>
+                ))
+              )}
+              {busy && !isPresenceOpen && (
+                <div className="platform-message assistant thinking-message">
+                  <div className="message-avatar">S</div>
                   <div className="message-body">
                     <div className="message-meta">
-                      <span>{item.role === "user" ? "You" : "Siduri"}</span>
-                      <time>{formatTime(item.createdAt)}</time>
+                      <span>Siduri</span>
+                      <span className="thinking-label">thinking</span>
                     </div>
-                    <p className="message-primary">
-                      {item.role === "assistant"
-                        ? (item.spokenJa ?? item.content)
-                        : item.content}
-                    </p>
-                    {item.role === "assistant" && item.spokenJa && (
-                      <p className="message-translation">{item.content}</p>
-                    )}
-                    {item.evidenceIds && item.evidenceIds.length > 0 && (
-                      <span className="evidence-chip">
-                        {item.evidenceIds.length} evidence link
-                        {item.evidenceIds.length === 1 ? "" : "s"}
-                      </span>
-                    )}
-                    {item.memoryProposals &&
-                      item.memoryProposals.length > 0 && (
-                        <div className="memory-receipts">
-                          {item.memoryProposals.map((p) => (
-                            <div
-                              key={p.proposal_id}
-                              className={`memory-receipt status-${p.status}`}
-                            >
-                              <strong>
-                                Remember
-                                {p.claim_type ? ` (${p.claim_type})` : ""}:
-                              </strong>{" "}
-                              {formatClaimReceipt(p)}
-                              <div className="receipt-actions">
-                                {p.status === "pending" ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleProposal(
-                                          item.id,
-                                          p.proposal_id,
-                                          "approve",
-                                        )
-                                      }
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleProposal(
-                                          item.id,
-                                          p.proposal_id,
-                                          "reject",
-                                        )
-                                      }
-                                    >
-                                      Reject
-                                    </button>
-                                  </>
-                                ) : (
-                                  <span>{p.status.toUpperCase()}</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    {item.behavioralProposals &&
-                      item.behavioralProposals.length > 0 && (
-                        <div className="memory-receipts">
-                          {item.behavioralProposals.map((p) => (
-                            <div
-                              key={p.directive_id}
-                              className={`memory-receipt status-${p.status}`}
-                            >
-                              <strong>
-                                Runtime effect [{p.knowledge_domain ?? p.domain}{" "}
-                                → {p.runtime_effect ?? p.memory_class}]:
-                              </strong>{" "}
-                              {formatRuntimeEffect(p)}
-                              <div className="receipt-actions">
-                                {p.status === "pending" ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleBehavioralProposal(
-                                          item.id,
-                                          p.directive_id,
-                                          "approve",
-                                        )
-                                      }
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleBehavioralProposal(
-                                          item.id,
-                                          p.directive_id,
-                                          "reject",
-                                        )
-                                      }
-                                    >
-                                      Reject
-                                    </button>
-                                  </>
-                                ) : (
-                                  <span>{p.status.toUpperCase()}</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                </article>
-              ))
-            )}
-            {busy && (
-              <div className="platform-message assistant thinking-message">
-                <div className="message-avatar">S</div>
-                <div className="message-body">
-                  <div className="message-meta">
-                    <span>Siduri</span>
-                    <span className="thinking-label">thinking</span>
-                  </div>
-                  <div className="thinking-dots">
-                    <i />
-                    <i />
-                    <i />
+                    <div className="thinking-dots">
+                      <i />
+                      <i />
+                      <i />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-          <form className="platform-composer" onSubmit={submit}>
-            <textarea
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  event.currentTarget.form?.requestSubmit();
-                }
-              }}
-              placeholder="Message Siduri…"
-              rows={1}
-              maxLength={4000}
-              aria-label="Message Siduri"
-              disabled={busy}
-            />
-            <div className="composer-bottom">
-              <span>
-                Private local session ·{" "}
-                {evidenceCount
-                  ? `${evidenceCount} evidence link${evidenceCount === 1 ? "" : "s"}`
-                  : "No evidence attached"}
-              </span>
-              <button
-                type="submit"
-                disabled={busy || !message.trim()}
-                aria-label="Send message"
-              >
-                {busy ? "" : "↑"}
-              </button>
+              )}
             </div>
-          </form>
-        </section>
-        <AvatarDock
-          isOpen={isDockOpen}
-          onToggle={() => setIsDockOpen(false)}
-          activeEvent={activeAvatarEvent}
-        />
+            <form className="platform-composer" onSubmit={submit}>
+              <textarea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }}
+                placeholder="Message Siduri…"
+                rows={1}
+                maxLength={4000}
+                aria-label="Message Siduri"
+                disabled={busy}
+              />
+              <div className="composer-bottom">
+                <span>
+                  Private local session ·{" "}
+                  {evidenceCount
+                    ? `${evidenceCount} evidence link${evidenceCount === 1 ? "" : "s"}`
+                    : "No evidence attached"}
+                </span>
+                <button
+                  type="submit"
+                  disabled={busy || !message.trim()}
+                  aria-label="Send message"
+                >
+                  {busy ? "" : "↑"}
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
         <p className="chat-disclaimer">
           Siduri can be uncertain. Verify important details against the

@@ -26,6 +26,16 @@ export interface AvatarStateConfig {
   reducedMotion?: boolean;
 }
 
+export interface ActiveAvatarEvent {
+  eventId?: string;
+  expression: AvatarExpression;
+  action: AvatarAction;
+  state: AvatarState;
+  speechId?: string;
+  lipSyncValue?: number;
+  durationMs?: number;
+}
+
 export interface Model3ExpressionRef {
   Name: string;
   File: string;

@@ -102,9 +102,10 @@ export default function AvatarCanvas({
         const updateSize = () => {
           if (!containerRef.current || !canvasRef.current) return;
           const rect = containerRef.current.getBoundingClientRect();
+          if (rect.width <= 0 || rect.height <= 0) return;
           const dpr = Math.min(window.devicePixelRatio || 1, 2);
-          const width = Math.floor(rect.width * dpr);
-          const height = Math.floor(rect.height * dpr);
+          const width = Math.max(1, Math.floor(rect.width * dpr));
+          const height = Math.max(1, Math.floor(rect.height * dpr));
 
           if (canvasRef.current.width !== width || canvasRef.current.height !== height) {
             canvasRef.current.width = width;
@@ -183,15 +184,18 @@ export default function AvatarCanvas({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full min-h-[260px] flex items-center justify-center overflow-hidden bg-[#0b0b0e] ${className}`}
+      data-testid="avatar-canvas-container"
+      className={`relative w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-transparent ${className}`}
       aria-label="Live2D Companion Presence"
     >
       {/* WebGL Canvas */}
       <canvas
         ref={canvasRef}
         role="img"
+        data-testid="avatar-webgl-canvas"
         aria-label="Live2D companion presence"
-        className={`w-full h-full block transition-opacity duration-500 ${
+        style={{ width: "100%", height: "100%", display: "block" }}
+        className={`absolute inset-0 w-full h-full block transition-opacity duration-500 ${
           status === "ready" ? "opacity-100" : "opacity-0"
         }`}
       />

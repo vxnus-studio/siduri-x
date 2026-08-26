@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   /* Primary backgrounds */
   --siduri-bg: #0b0b0e;
@@ -521,6 +523,32 @@ a {
   padding: 38px 0 max(150px, calc(env(safe-area-inset-bottom) + 142px));
   scrollbar-color: #39363e transparent;
   scrollbar-width: thin;
+}
+
+.conversation-scroll.presence-active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+  padding-top: 20px;
+  padding-bottom: max(150px, calc(env(safe-area-inset-bottom) + 142px));
+}
+
+.avatar-presence-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 720px;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  flex: 1 1 0%;
+  position: relative;
+  overflow: hidden;
 }
 
 .platform-message {
@@ -1685,6 +1713,14 @@ body:has(#overlay) {
   .conversation-scroll {
     padding-top: 25px;
     padding-bottom: max(156px, calc(env(safe-area-inset-bottom) + 148px));
+  }
+  .conversation-scroll.presence-active {
+    padding-top: 10px;
+    padding-bottom: max(156px, calc(env(safe-area-inset-bottom) + 148px));
+  }
+  .avatar-presence-area {
+    min-height: 0;
+    max-width: 100%;
   }
   .platform-composer {
     bottom: max(36px, calc(env(safe-area-inset-bottom) + 28px));
