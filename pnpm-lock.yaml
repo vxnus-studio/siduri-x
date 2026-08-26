@@ -232,11 +232,11 @@ importers:
   cli:
     dependencies:
       '@vxnus/e':
-        specifier: ^0.1.3
-        version: 0.1.3
+        specifier: ^0.1.4
+        version: 0.1.4
       '@vxnus/e-knowledge':
-        specifier: ^0.1.2
-        version: 0.1.2(@vxnus/e@0.1.3)
+        specifier: ^0.1.4
+        version: 0.1.4(@vxnus/e@0.1.4)
       cors:
         specifier: ^2.8.5
         version: 2.8.6
@@ -1680,14 +1680,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vxnus/e-knowledge@0.1.2':
-    resolution: {integrity: sha512-vBrLMrL56ZhLnh2zP0sPbkWMeDwVrUdpXEAJdpZ658cfgjraWJ+F/09qRpUKmrUeYG293+c2ZcLybNWUx1FO2Q==}
+  '@vxnus/e-knowledge@0.1.4':
+    resolution: {integrity: sha512-ZV5sWaPO6lTW/vPG8UQxjwMRkdRgs3zKiQGlXe6+nPJ9dd818FQBhqKmGMyeUnFsVSnYbIwmF8NMALO4zlNrpw==}
     hasBin: true
     peerDependencies:
-      '@vxnus/e': '>=0.1.2'
+      '@vxnus/e': '>=0.1.4'
 
-  '@vxnus/e@0.1.3':
-    resolution: {integrity: sha512-o89F6DojUUKyqMQS82l0WgMOnYinXBrw4ScA4/WdDu4SWD+aiZ/RwfHDoNgJLuEa6YYp6K7xRkBfdAzcMl4x0g==}
+  '@vxnus/e@0.1.4':
+    resolution: {integrity: sha512-9AbBZkFqiEr5zUnYRvRvrobJVjH0us7CKPmTAxR1rXZKC6789cwSnPLkxDzRsdcvm7+emYf+xb3pk1GyQO7feg==}
 
   accepts@1.3.8:
     resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
@@ -5403,11 +5403,11 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
-  '@vxnus/e-knowledge@0.1.2(@vxnus/e@0.1.3)':
+  '@vxnus/e-knowledge@0.1.4(@vxnus/e@0.1.4)':
     dependencies:
-      '@vxnus/e': 0.1.3
+      '@vxnus/e': 0.1.4
 
-  '@vxnus/e@0.1.3': {}
+  '@vxnus/e@0.1.4': {}
 
   accepts@1.3.8:
     dependencies:

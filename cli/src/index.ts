@@ -9,11 +9,11 @@ import inquirer from 'inquirer';
 import { createRemoteProvider, loadPack } from '@vxnus/e-knowledge';
 
 const execFile = promisify(execFileCallback);
-const DEFAULT_REGISTRY_URL = 'https://e.vxnus.xyz/api/packs';
-const CLI_VERSION = '0.0.3';
+const DEFAULT_REGISTRY_URL = 'https://e.vxnus.xyz/api/v1/knowledge';
+const CLI_VERSION = '0.0.4';
 const RUNTIME_DEPENDENCIES = {
-  '@vxnus/e': '^0.1.3',
-  '@vxnus/e-knowledge': '^0.1.2',
+  '@vxnus/e': '^0.1.4',
+  '@vxnus/e-knowledge': '^0.1.4',
   cors: '^2.8.5',
   express: '^4.18.2',
   pg: '^8.23.0',
@@ -31,7 +31,7 @@ const colors = {
 
 function printHeader(): void {
   console.log(`\n${colors.cyan}◈ SIDURI${colors.reset} ${colors.dim}companion setup${colors.reset}`);
-  console.log(`${colors.yellow}Experimental release 0.0.3${colors.reset} · configuration may change\n`);
+  console.log(`${colors.yellow}Experimental release 0.0.4${colors.reset} · configuration may change\n`);
 }
 
 function printSection(title: string): void {
@@ -203,13 +203,13 @@ async function chooseHubPack(registryUrl: string): Promise<RegistryPack> {
   const { query } = await inquirer.prompt<{ query: string }>({
     type: 'input',
     name: 'query',
-    message: 'Search the Knowledge Hub or enter a package ID:',
+    message: 'Search E Knowledge Hub or enter package ID (e.g. @vxnus/e-teyvat):',
   });
   const normalized = query.trim().replace(/^@/, '');
   const [publisher, name] = normalized.split('/');
   const result: RegistryPack | { packs: RegistryPack[] } = publisher && name && !query.includes(' ')
-    ? await withTask('Searching Knowledge Hub', () => getJson<RegistryPack>(`${registryUrl}/${encodeURIComponent(publisher)}/${encodeURIComponent(name)}`))
-    : await withTask('Searching Knowledge Hub', () => getJson<{ packs: RegistryPack[] }>(`${registryUrl}?q=${encodeURIComponent(query)}&limit=20`));
+    ? await withTask('Searching E Knowledge Hub', () => getJson<RegistryPack>(`${registryUrl}/${encodeURIComponent(publisher)}/${encodeURIComponent(name)}`))
+    : await withTask('Searching E Knowledge Hub', () => getJson<{ packs: RegistryPack[] }>(`${registryUrl}?q=${encodeURIComponent(query)}&limit=20`));
   const packs: RegistryPack[] = 'packs' in result ? result.packs : [result];
   if (packs.length === 0) throw new Error(`No knowledge packs found for '${query}'`);
   if (packs.length === 1) return packs[0];
@@ -228,7 +228,7 @@ async function configureKnowledge(): Promise<KnowledgeConfig> {
     name: 'mode',
     message: 'Knowledge source?',
     choices: [
-      { name: 'Knowledge Hub', value: 'hub' },
+      { name: 'E Knowledge Hub', value: 'hub' },
       { name: 'Installed local pack', value: 'local' },
       { name: 'Hosted provider URL', value: 'remote' },
       { name: 'Do not use knowledge', value: 'none' },
@@ -257,19 +257,17 @@ async function configureKnowledge(): Promise<KnowledgeConfig> {
       message: 'Remote knowledge provider URL:',
     });
     const provider = createRemoteProvider({ baseUrl, timeoutMs: 5000 });
-    const manifest = await withTask('Checking provider manifest', async () => provider.manifest());
+    const manifest = await withTask('Checking provider manifest', async () => {
+      if (!provider.manifest) {
+        throw new Error('Remote knowledge provider does not support manifest inspection');
+      }
+      return provider.manifest();
+    });
     printSuccess(`Provider ready · ${manifest.id}`);
     return { provider: 'e-remote', baseUrl: baseUrl.replace(/\/+$/, ''), timeoutMs: 5000 };
   }
 
-  const { registryUrl: enteredRegistryUrl } = await inquirer.prompt<{ registryUrl: string }>({
-    type: 'input',
-    name: 'registryUrl',
-    message: 'Knowledge Hub registry URL:',
-    default: process.env.SIDURI_KNOWLEDGE_REGISTRY_URL || DEFAULT_REGISTRY_URL,
-    validate: urlValue,
-  });
-  const registryUrl = enteredRegistryUrl.replace(/\/+$/, '');
+  const registryUrl = (process.env.E_REGISTRY_URL || process.env.SIDURI_KNOWLEDGE_REGISTRY_URL || DEFAULT_REGISTRY_URL).replace(/\/+$/, '');
   const pack = await chooseHubPack(registryUrl);
   if (pack.distribution.kind === 'archive') {
     const { install } = await inquirer.prompt<{ install: boolean }>({
@@ -289,7 +287,12 @@ async function configureKnowledge(): Promise<KnowledgeConfig> {
     throw new Error('Archive installation was declined and no hosted provider is available');
   }
   const provider = createRemoteProvider({ baseUrl: pack.distribution.url, timeoutMs: 5000 });
-  await withTask('Checking provider manifest', async () => provider.manifest());
+  await withTask('Checking provider manifest', async () => {
+    if (!provider.manifest) {
+      throw new Error('Remote knowledge provider does not support manifest inspection');
+    }
+    return provider.manifest();
+  });
   printSuccess(`Provider ready · ${pack.id}`);
   return { provider: 'e-hub', registryUrl, packId: pack.id, timeoutMs: 5000 };
 }

@@ -5,7 +5,7 @@ Experimental CLI for creating and configuring Siduri companions.
 Requires Node.js 20 or newer.
 
 ```bash
-npx @vxnus/siduri@0.0.3 create
+npx @vxnus/siduri@0.0.4 create
 ```
 
 The companion name becomes the project directory. For example, answering
