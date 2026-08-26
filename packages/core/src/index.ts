@@ -114,6 +114,13 @@ export interface BehaviorDirective {
   priority: number;
   status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
   supersedesId?: string;
+  memoryClass?: 'identity' | 'relationship' | 'behavioral';
+  subject?: string;
+  predicate?: string;
+  value?: string;
+  allowedAudiences?: string[];
+  validFrom?: string;
+  validUntil?: string;
 }
 
 export interface MemoryQueryOptions {
@@ -168,13 +175,30 @@ export interface VisionOrgan {
 }
 
 // Behavior
+export interface ActiveSelfProjection {
+  identityFacts: string[];
+  relationshipFacts: string[];
+  behavioralRules: string[];
+  activeIds: string[];
+  excludedIds: string[];
+  diagnostics: Record<string, string>;
+  render(): string;
+}
+
 export interface BehaviorContext {
   activeRole: string;
   directives: BehaviorDirective[];
+  companionId?: string;
+  channel?: 'public' | 'direct' | 'private' | 'operator';
+  audienceId?: string;
+  actorId?: string;
+  sessionId?: string;
+  now?: string;
 }
 
 export interface BehaviorOrgan {
   compile(context: BehaviorContext): Promise<string>;
+  compileProjection?(context: BehaviorContext): Promise<ActiveSelfProjection>;
 }
 
 // Knowledge

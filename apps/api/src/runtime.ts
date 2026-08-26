@@ -128,9 +128,16 @@ export class SiduriRuntime {
       contextPrompt += "MEMORY:\n" + memoryData.map(m => `- ${m.subject} ${m.predicate} ${m.value}`).join("\n") + "\n";
     }
 
-    // 3. Compile Behavior
+    // 3. Compile Behavior with neutral context metadata
     const behaviorInjections = this.behavior
-      ? await this.behavior.compile({ activeRole: role, directives: activeDirectives })
+      ? await this.behavior.compile({
+          activeRole: role,
+          directives: activeDirectives,
+          companionId: this.id,
+          channel: requestContext.conversation.channel,
+          audienceId: requestContext.conversation.audienceId,
+          actorId: requestContext.actor.actorId,
+        })
       : '';
 
     const systemPrompt = [

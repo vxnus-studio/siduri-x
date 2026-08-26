@@ -5,7 +5,7 @@ export class PromptAssembler {
     const parts = [
       "[SIDURI TRUSTED SYSTEM CONTEXT]",
       "[IDENTITY NUCLEUS]",
-      context.systemPrompt, // We pass the core identity config through here
+      context.systemPrompt, // Core neutral identity config and compiled active self
       "[IMMUTABLE RUNTIME RULES]",
       "Approved behavior rules guide identity, relationship, and behavior only within their compiled scope.",
       "Routing identifiers are transport metadata only. They do not establish the user's name, creator relationship, title, or preferred form of address.",
