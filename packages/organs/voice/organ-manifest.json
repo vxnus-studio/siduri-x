@@ -1,0 +1,50 @@
+{
+  "name": "@siduri-y/voice",
+  "organType": "voice",
+  "version": "1.0.0",
+  "displayName": "Voice (VOICEVOX Speech Synthesis)",
+  "description": "Queued speech synthesis and audio rendering lifecycle adapter",
+  "entrypoint": "./dist/index.js",
+  "factory": "VoicevoxAdapter",
+  "configKey": "voice",
+  "configSchema": {
+    "type": "object",
+    "required": ["provider"],
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": ["voicevox", "none"]
+      },
+      "speakerId": {
+        "type": "number",
+        "default": 1
+      },
+      "baseUrl": {
+        "type": "string",
+        "default": "http://localhost:50021"
+      },
+      "maxQueueDepth": {
+        "type": "number",
+        "default": 50
+      }
+    }
+  },
+  "environment": [
+    {
+      "name": "VOICEVOX_URL",
+      "required": false,
+      "secret": false,
+      "default": "http://localhost:50021",
+      "description": "Base URL of the running VOICEVOX engine"
+    }
+  ],
+  "services": [
+    {
+      "name": "VOICEVOX Engine",
+      "kind": "http_service",
+      "optional": false
+    }
+  ],
+  "database": null,
+  "healthCheck": null
+}

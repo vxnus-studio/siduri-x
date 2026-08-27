@@ -1,0 +1,43 @@
+{
+  "name": "@siduri-y/hands",
+  "organType": "hands",
+  "version": "1.0.0",
+  "displayName": "Hands (MCP Tool Execution)",
+  "description": "Model Context Protocol tool management and cryptographically authorized action execution",
+  "entrypoint": "./dist/index.js",
+  "factory": "DefaultHandsOrgan",
+  "configKey": "hands",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "defaultTimeoutMs": {
+        "type": "number",
+        "default": 10000
+      },
+      "providers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["serverName"],
+          "properties": {
+            "serverName": { "type": "string" },
+            "baseUrl": { "type": "string" },
+            "command": { "type": "string" },
+            "args": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  },
+  "environment": [
+    {
+      "name": "ACTION_POLICY_SECRET",
+      "required": false,
+      "secret": true,
+      "description": "HMAC secret key for signing and verifying action execution capabilities (required in production)"
+    }
+  ],
+  "services": [],
+  "database": null,
+  "healthCheck": null
+}

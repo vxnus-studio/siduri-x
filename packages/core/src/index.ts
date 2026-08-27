@@ -8,6 +8,8 @@ export * from './action';
 export * from './action-policy';
 export * from './ear-types';
 export * from './capability';
+export * from './teaching';
+export * from './runtime';
 
 import { ActionIntent } from './action';
 import { EarIngestOptions } from './ear-types';
@@ -256,4 +258,39 @@ export interface BodyOrgan {
   act(action: string): void;
   completeAction?(): void;
 }
+
+// Observation
+export interface ObservationReading {
+  entity: string;
+  value: string;
+  confidence: number;
+  sourceCrop?: string;
+  ocrText?: string;
+  competingInterpretations?: string[];
+}
+
+export interface Observation {
+  observationId: string;
+  evidenceId: string;
+  sourceName: string;
+  providerId: string;
+  readings: ObservationReading[];
+  confidence: number;
+  createdAt: string;
+  expiresAt: string;
+  frameDigest: string;
+}
+
+export interface ObservationResult {
+  observation?: Observation;
+  duplicate: boolean;
+  reason?: 'empty_frame' | 'duplicate_frame' | 'invalid_reading' | 'provider_failure';
+}
+
+export interface ObservationOrgan {
+  ingest(frame: Uint8Array, sourceName: string, providerId?: string): Promise<ObservationResult>;
+  current(now?: Date): Observation[];
+  clearExpired(now?: Date): number;
+}
+
 

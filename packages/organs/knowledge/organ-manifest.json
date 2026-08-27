@@ -1,0 +1,65 @@
+{
+  "name": "@siduri-y/knowledge",
+  "organType": "knowledge",
+  "version": "1.0.0",
+  "displayName": "Knowledge (E-Compatible Cited Facts)",
+  "description": "Factual context retrieval from local or hosted E Knowledge packs",
+  "entrypoint": "./dist/index.js",
+  "factory": "EKnowledgeAdapter",
+  "configKey": "knowledge",
+  "configSchema": {
+    "type": "object",
+    "required": ["provider"],
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": ["e-knowledge", "e-remote", "e-hub", "none"]
+      },
+      "packPath": {
+        "type": "string"
+      },
+      "baseUrl": {
+        "type": "string"
+      },
+      "registryUrl": {
+        "type": "string"
+      },
+      "packId": {
+        "type": "string"
+      },
+      "timeoutMs": {
+        "type": "number",
+        "default": 5000
+      },
+      "preferredMode": {
+        "type": "string",
+        "enum": ["lexical", "semantic", "hybrid"],
+        "default": "lexical"
+      }
+    }
+  },
+  "environment": [
+    {
+      "name": "SIDURI_KNOWLEDGE_PACK",
+      "required": false,
+      "secret": false,
+      "description": "Path to local E knowledge pack"
+    },
+    {
+      "name": "SIDURI_KNOWLEDGE_REGISTRY_URL",
+      "required": false,
+      "secret": false,
+      "default": "https://e.vxnus.xyz/api/v1/knowledge",
+      "description": "URL of the E Knowledge Hub registry"
+    }
+  ],
+  "services": [
+    {
+      "name": "E Knowledge Hub",
+      "kind": "http_service",
+      "optional": true
+    }
+  ],
+  "database": null,
+  "healthCheck": null
+}

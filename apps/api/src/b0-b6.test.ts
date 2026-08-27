@@ -67,8 +67,8 @@ describe('T0 B0 & B6 Runtime Proof Suite', () => {
   // B0: Fresh companion is empty (no prior claims, no user relationship, no knowledge search on greeting)
   describe('B0 — Fresh companion is empty', () => {
     test('initial state has empty memory and empty directives', async () => {
-      const claims = await runtime.memory.getClaims();
-      const directives = await runtime.memory.getDirectives();
+      const claims = await runtime.memory?.getClaims();
+      const directives = await runtime.memory?.getDirectives();
       expect(claims).toEqual([]);
       expect(directives).toEqual([]);
     });

@@ -1,0 +1,18 @@
+{
+  "name": "@siduri-y/observation",
+  "organType": "observation",
+  "version": "1.0.0",
+  "displayName": "Observation (Grounded Observation Ingestion)",
+  "description": "Cryptographically hashed video/image observation ingest and duplicate detection",
+  "entrypoint": "./dist/index.js",
+  "factory": "FixtureObservationOrgan",
+  "configKey": "observation",
+  "configSchema": {
+    "type": "object",
+    "properties": {}
+  },
+  "environment": [],
+  "services": [],
+  "database": null,
+  "healthCheck": null
+}

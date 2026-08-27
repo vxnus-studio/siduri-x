@@ -1,0 +1,27 @@
+{
+  "name": "@siduri-y/behavior",
+  "organType": "behavior",
+  "version": "1.0.0",
+  "displayName": "Behavior (Active Self Directives)",
+  "description": "Atomic directive state machine and personality projection compiler",
+  "entrypoint": "./dist/index.js",
+  "factory": "ActiveSelfCompiler",
+  "configKey": "behavior",
+  "configSchema": {
+    "type": "object",
+    "required": ["provider"],
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": ["active_self", "none"]
+      },
+      "preset": {
+        "type": "string"
+      }
+    }
+  },
+  "environment": [],
+  "services": [],
+  "database": null,
+  "healthCheck": null
+}

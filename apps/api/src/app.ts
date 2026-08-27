@@ -179,6 +179,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.json({ proposals: [] });
     try {
       const proposals = await runtime.memory.getPendingClaims();
       res.json({ proposals });
@@ -191,6 +192,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.json({ items: [] });
     try {
       const items = await runtime.memory.getClaims();
       res.json({ items });
@@ -203,6 +205,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.json({ claims: [] });
     try {
       const claims = await runtime.memory.getClaims();
       res.json({ claims });
@@ -215,6 +218,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.json({ directives: [] });
     try {
       const directives = await runtime.memory.getDirectives();
       res.json({ directives });
@@ -230,6 +234,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.approveClaim(req.body.id);
       res.json({ approved: true });
@@ -242,6 +247,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.rejectClaim(req.body.id);
       res.json({ rejected: true });
@@ -255,6 +261,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.approveDirective(req.body.id);
       res.json({ approved: true });
@@ -267,6 +274,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.rejectDirective(req.body.id);
       res.json({ rejected: true });
@@ -279,6 +287,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.revokeDirective(req.body.id);
       res.json({ revoked: true });
@@ -291,6 +300,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.disableDirective(req.body.id);
       res.json({ disabled: true });

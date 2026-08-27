@@ -1,0 +1,56 @@
+{
+  "name": "@siduri-y/brain",
+  "organType": "brain",
+  "version": "1.0.0",
+  "displayName": "Brain (Cognition & Planning)",
+  "description": "Provider-neutral LLM reasoning, response planning, and proposal generation",
+  "entrypoint": "./dist/index.js",
+  "factory": "OpenRouterBrain",
+  "configKey": "brain",
+  "configSchema": {
+    "type": "object",
+    "required": ["provider", "model"],
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": ["openrouter", "openai-compatible"]
+      },
+      "model": {
+        "type": "string"
+      },
+      "apiKey": {
+        "type": "string"
+      },
+      "apiKeyEnv": {
+        "type": "string",
+        "default": "OPENROUTER_API_KEY"
+      },
+      "baseUrl": {
+        "type": "string"
+      }
+    }
+  },
+  "environment": [
+    {
+      "name": "OPENROUTER_API_KEY",
+      "required": false,
+      "secret": true,
+      "description": "API key for OpenRouter managed routing"
+    },
+    {
+      "name": "OPENAI_COMPATIBLE_API_KEY",
+      "required": false,
+      "secret": true,
+      "description": "API key for OpenAI-compatible endpoint"
+    }
+  ],
+  "services": [
+    {
+      "name": "LLM Inference API",
+      "kind": "http_service",
+      "optional": false
+    }
+  ],
+  "database": null,
+  "healthCheck": null
+}

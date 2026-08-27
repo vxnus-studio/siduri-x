@@ -1,0 +1,52 @@
+{
+  "name": "@siduri-y/memory",
+  "organType": "memory",
+  "version": "1.0.0",
+  "displayName": "Memory (PostgreSQL FTS Claims)",
+  "description": "Relational semantic claims with Full-Text Search and companion isolation",
+  "entrypoint": "./dist/index.js",
+  "factory": "PostgresMemoryOrgan",
+  "configKey": "memory",
+  "configSchema": {
+    "type": "object",
+    "required": ["provider"],
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": ["postgres"]
+      },
+      "deployment": {
+        "type": "string",
+        "enum": ["local", "neon", "supabase", "other"]
+      },
+      "connectionString": {
+        "type": "string"
+      },
+      "maxConnections": {
+        "type": "number",
+        "default": 10
+      }
+    }
+  },
+  "environment": [
+    {
+      "name": "DATABASE_URL",
+      "required": true,
+      "secret": true,
+      "default": "postgresql://postgres:postgres@localhost:5432/siduri",
+      "description": "PostgreSQL connection string"
+    }
+  ],
+  "services": [
+    {
+      "name": "PostgreSQL Database",
+      "kind": "database",
+      "optional": false
+    }
+  ],
+  "database": {
+    "engine": "postgres",
+    "migrationsDir": "./migrations"
+  },
+  "healthCheck": null
+}

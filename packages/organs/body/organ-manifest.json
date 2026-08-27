@@ -1,0 +1,28 @@
+{
+  "name": "@siduri-y/body",
+  "organType": "body",
+  "version": "1.0.0",
+  "displayName": "Body (Live2D & Avatar State)",
+  "description": "Renderer-agnostic avatar expression and embodiment event adapter",
+  "entrypoint": "./dist/index.js",
+  "factory": "NeutralBodyOrgan",
+  "configKey": "body",
+  "configSchema": {
+    "type": "object",
+    "required": ["provider"],
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": ["live2d", "none"]
+      },
+      "initialExpression": {
+        "type": "string",
+        "default": "neutral"
+      }
+    }
+  },
+  "environment": [],
+  "services": [],
+  "database": null,
+  "healthCheck": null
+}

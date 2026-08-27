@@ -1,0 +1,47 @@
+{
+  "name": "@siduri-y/vision",
+  "organType": "vision",
+  "version": "1.0.0",
+  "displayName": "Vision (Visual Perception & OCR)",
+  "description": "Image inspection, cropping, and multi-pass OCR perception adapter",
+  "entrypoint": "./dist/index.js",
+  "factory": "OpenRouterVisionAdapter",
+  "configKey": "vision",
+  "configSchema": {
+    "type": "object",
+    "required": ["provider"],
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": ["openrouter", "none"]
+      },
+      "model": {
+        "type": "string",
+        "default": "gpt-4-vision"
+      },
+      "apiKey": {
+        "type": "string"
+      },
+      "baseUrl": {
+        "type": "string"
+      }
+    }
+  },
+  "environment": [
+    {
+      "name": "OPENROUTER_API_KEY",
+      "required": false,
+      "secret": true,
+      "description": "API key for vision model inference"
+    }
+  ],
+  "services": [
+    {
+      "name": "Vision Inference API",
+      "kind": "http_service",
+      "optional": false
+    }
+  ],
+  "database": null,
+  "healthCheck": null
+}

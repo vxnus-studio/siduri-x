@@ -406,11 +406,11 @@ importers:
         specifier: workspace:*
         version: link:../../core
       '@vxnus/e':
-        specifier: link:../../../../e/packages/protocol
-        version: link:../../../../e/packages/protocol
+        specifier: ^0.1.4
+        version: 0.1.4
       '@vxnus/e-knowledge':
-        specifier: link:../../../../e/packages/knowledge
-        version: link:../../../../e/packages/knowledge
+        specifier: ^0.1.4
+        version: 0.1.4(@vxnus/e@0.1.4)
     devDependencies:
       '@types/jest':
         specifier: ^29.5.14

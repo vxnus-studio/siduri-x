@@ -1,0 +1,31 @@
+{
+  "name": "@siduri-y/ear",
+  "organType": "ear",
+  "version": "1.0.0",
+  "displayName": "Ear (Perception Ingress)",
+  "description": "Multi-modal sensory input ingestion, transcription bounds, and mime validation",
+  "entrypoint": "./dist/index.js",
+  "factory": "DefaultEarOrgan",
+  "configKey": "ear",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "defaultSource": {
+        "type": "string",
+        "default": "text_chat"
+      },
+      "maxTextLength": {
+        "type": "number",
+        "default": 4000
+      },
+      "maxAudioBytes": {
+        "type": "number",
+        "default": 10485760
+      }
+    }
+  },
+  "environment": [],
+  "services": [],
+  "database": null,
+  "healthCheck": null
+}
