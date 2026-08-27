@@ -1,39 +1,54 @@
-# Configuration
+# Configuration Reference
 
-Status: configuration baseline; extraction parity incomplete
+Status: Composable standalone configuration schema (`@siduri-x/*` ecosystem)
 
-The `siduri.config.json` determines the composition of the companion. The API
-loads it from the current directory, or from the path in `SIDURI_CONFIG`.
-Brain and memory are required; optional organs use `{ "provider": "none" }`.
+The `siduri.config.json` determines the identity and active organ composition of a Siduri companion.
 
-Configuration defines the companion and its organs, not a predeclared user
-relationship. Public/private channels, audiences, and learned subjects must
-follow the neutral contract rather than personal defaults.
+Each generated companion instance validates its configuration against a tailored JSON schema (`siduri.schema.json`) dynamically compiled from the manifests of its selected organs.
+
+---
+
+## Configuration Schema
 
 ```json
 {
+  "$schema": "./siduri.schema.json",
+  "id": "companion-unique-id",
   "name": "My Companion",
-  "brain": {
-    "provider": "openai-compatible",
-    "baseUrl": "http://127.0.0.1:1234/v1",
-    "model": "local-model",
-    "apiKeyEnv": "OPENAI_COMPATIBLE_API_KEY"
-  },
-  "voice": { "provider": "voicevox", "speakerId": 1 },
-  "memory": { "provider": "postgres", "deployment": "local" },
-  "knowledge": {
-    "provider": "e-knowledge",
-    "packPath": "/path/to/installed/knowledge-pack"
-  },
-  "behavior": { "preset": "Calm" },
-  "vision": { "provider": "openrouter" },
-  "body": {
-    "provider": "live2d",
-    "vtsUrl": "ws://127.0.0.1:8001"
+  "organs": {
+    "brain": {
+      "provider": "openrouter",
+      "model": "anthropic/claude-3.5-sonnet",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    "memory": {
+      "provider": "postgres",
+      "deployment": "local"
+    },
+    "hands": {
+      "defaultTimeoutMs": 10000,
+      "providers": []
+    },
+    "voice": {
+      "provider": "voicevox",
+      "speakerId": 1,
+      "baseUrl": "http://localhost:50021"
+    },
+    "body": {
+      "provider": "live2d",
+      "initialExpression": "neutral"
+    }
   }
 }
 ```
 
-VTube Studio authentication is handled through the local plugin permission
-flow. Set `VTS_AUTH_TOKEN` only if a previously approved token is being reused;
-otherwise Siduri requests permission when it connects.
+---
+
+## Key Configuration Principles
+
+1. **Blank-Slate Identity**:
+   Configuration defines the companion's operational capabilities, not a predeclared persona, back-story, or private user relationship (per [`BLANK_SLATE_CONTRACT.md`](../contracts/BLANK_SLATE_CONTRACT.md)).
+2. **Organ Subtrees**:
+   Active organ configurations are isolated within the `organs` dictionary keyed by their organ type or configuration key. Unused organs are omitted from the configuration rather than stubbed with disabled placeholders.
+3. **Secret Separation**:
+   API keys, passwords, and cryptographic secrets are never saved into `siduri.config.json`. The configuration references environment variable names (e.g. `apiKeyEnv: "OPENROUTER_API_KEY"`), and secrets are loaded from the environment or `.env` at runtime.

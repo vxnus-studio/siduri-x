@@ -1,6 +1,6 @@
 {
   "name": "@vxnus/siduri",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Experimental CLI for installing and configuring Siduri companions",
   "license": "Apache-2.0",
   "repository": {

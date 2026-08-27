@@ -1,62 +1,71 @@
-# CLI
+# CLI Architecture & Reference (`@vxnus/siduri`)
 
-Status: CLI baseline; public blank-slate parity incomplete
+Status: Composable standalone architecture implemented (`v0.0.6`)
 
-The CLI is a Node script using `inquirer` to run an interactive wizard.
-`npx @vxnus/siduri create`
+The Siduri CLI (`@vxnus/siduri`) provides tooling to dynamically discover `@siduri-x/*` organ manifests, scaffold standalone ESM companion instances, run environment & service diagnostics, and manage database migrations.
 
-Brain and memory are required. Voice, knowledge, behavior, body, and vision
-each remain visible in the wizard and offer an explicit `Do not use` option.
+---
 
-Memory currently uses PostgreSQL. The wizard separates the database engine
-from its deployment and offers Local PostgreSQL, Neon, Supabase, or another
-PostgreSQL provider. SQLite is reserved for a future release.
-
-The Brain step offers `OpenRouter (managed model routing)` or
-`OpenAI-compatible API (custom endpoint)`. The custom option asks for the
-OpenAI-compatible base URL, model ID, and the name of an environment variable
-that contains the API key. Keys are never written to `siduri.config.json`.
-
-During creation, the knowledge step can:
-
-- search the E Hub and install a validated archive locally;
-- use an already-installed local E pack; or
-- validate and configure a hosted E provider.
-
-Local archives are installed under `~/.siduri/knowledge/` and validated with
-`@vxnus/e-knowledge` before the configuration is written. The CLI writes
-`siduri.config.json`, which the API loads from the current directory (or from
-`SIDURI_CONFIG`). Environment variables such as `SIDURI_KNOWLEDGE_PACK` and
-`VTS_URL` override the corresponding generated settings.
-
-## Install and run
-
-The published experimental package requires Node.js 20 or newer:
+## 1. Standalone Companion Creation (`siduri create`)
 
 ```bash
-npx @vxnus/siduri@0.0.5 create
+npx @vxnus/siduri create [directory]
 ```
 
-The companion name becomes a safe project directory under the current
-directory. For example, `My Companion` creates
-`./my-companion/siduri.config.json`.
+### Architecture Invariants:
+1. **Dynamic Manifest Discovery**: Rather than relying on hardcoded organs, the CLI discovers installed or workspace `@siduri-x/*` packages and inspects their `organ-manifest.json`.
+2. **Cognition Authority**: Brain is required for cognition planning. All other organs (`memory`, `hands`, `voice`, `body`, `behavior`, `ear`, `vision`, `knowledge`, `observation`) can be freely selected or omitted.
+3. **No Monolithic Bundling**: Scaffolds a clean project containing only the selected organ dependencies and standard Node.js ESM imports.
+4. **Blank-Slate Neutrality**: The CLI generates purely neutral configuration without embedding predeclared personas or private memories (per [`BLANK_SLATE_CONTRACT.md`](../contracts/BLANK_SLATE_CONTRACT.md)).
 
-The CLI must generate neutral configuration only. It must not embed a user
-name, relationship, private audience, or personal memory. See
-[`BLANK_SLATE_CONTRACT.md`](./BLANK_SLATE_CONTRACT.md).
+### Generated Output Structure:
 
-The wizard creates a project directory, copies the bundled runtime into it,
-installs runtime dependencies, and writes `siduri.config.json`. API keys stay
-outside the configuration file; set the environment variable selected during
-the Brain step before starting the API.
+```text
+my-companion/
+├── package.json          # ESM package referencing only selected @siduri-x/* organs
+├── siduri.config.json    # Selected organ configurations
+├── siduri.schema.json    # Composed JSON Schema from organ manifests
+├── .env.example          # Organ-scoped environment variables
+├── README.md             # Composition-specific guide
+└── src/
+    └── index.js          # Direct SiduriRuntime bootstrapping with explicit organ factories
+```
 
-Start the generated instance with:
+---
+
+## 2. Instance Diagnostics (`siduri doctor`)
 
 ```bash
-cd my-companion
-npm run start
+npx @vxnus/siduri doctor [directory]
 ```
 
-`siduri start` can also be used from the generated directory. The runtime
-still depends on external services selected by the configuration, including
-PostgreSQL for memory and VTube Studio for the Live2D body.
+Inspects the companion directory and runs:
+- **Environment Checks**: Validates required and optional environment variables per organ.
+- **Service Availability**: Validates reachability for external endpoints (e.g. VTS WebSocket, VOICEVOX).
+- **Database Connectivity**: Validates PostgreSQL connectivity if database-owning organs are active.
+- **Health Probes**: Executes organ-level health probes exposed by `@siduri-x/*` organs.
+
+---
+
+## 3. Database Migrations (`siduri db push`)
+
+```bash
+npx @vxnus/siduri db push [directory]
+```
+
+Inspects active organs for database migration requirements:
+- Automatically loads SQL migrations packaged within database organs (e.g. `@siduri-x/memory/migrations`).
+- Validates SHA-256 migration checksums to prevent schema drift.
+- If the instance does not configure any database organs, reports `NOOP` cleanly without failing.
+
+---
+
+## 4. Running a Standalone Instance
+
+From the generated instance directory:
+
+```bash
+npm install
+cp .env.example .env
+npm start
+```
