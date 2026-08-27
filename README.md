@@ -1,8 +1,12 @@
 # Siduri (Siduri-X)
 
+> [!WARNING]
+> **Experimental & Active Development Notice:**
+> Siduri-X is in an **active, experimental, and fast-evolving phase**. APIs, schemas, configurations, and organ protocols are subject to breaking changes. While core boundary contracts and clean-machine distribution are verified, current builds should be considered **unstable/untested in live production environments**. Use at your own discretion, inspect generated code directly, and report any architectural issues.
+
 > [!IMPORTANT]
-> **Siduri-X is officially released!**
-> Siduri-Y has been unified into **Siduri-X**. This repository is the canonical TypeScript implementation of the Siduri architecture, combining the core conceptual framework with the clean-machine, manifest-driven standalone instance distribution system under the **`@siduri-x/*`** package ecosystem.
+> **Siduri-X Architecture Migration:**
+> Siduri-Y has been unified into **Siduri-X**. This repository is the canonical TypeScript monorepo implementation of the Siduri architecture, combining the core conceptual framework with the clean-machine, manifest-driven standalone instance distribution system under the **`@siduri-x/*`** package ecosystem.
 
 Siduri is an intelligent AI companion framework designed with **persistent, authoritative memory**, atomic behavioral gating, and modular capability organs.
 
@@ -22,7 +26,7 @@ Our goal is simple: **Siduri should be as easy to install or run anywhere as a s
 
 ---
 
-## Released Packages (`@siduri-x/*`)
+## Canonical Packages (`@siduri-x/*`)
 
 All canonical Siduri-X organ and core packages are independently distributed:
 
@@ -105,4 +109,4 @@ Explore the concepts behind Siduri:
 ---
 
 ## License
-All rights are restricted until the project is officially released publicly to VXNUS Creative Technology Studio. See [LICENSE](./LICENSE) for details.
+Licensed under the [Apache License, Version 2.0](./LICENSE).

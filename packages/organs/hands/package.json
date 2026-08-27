@@ -19,7 +19,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Hands organ for tool execution, action policy enforcement, and MCP provider integration",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

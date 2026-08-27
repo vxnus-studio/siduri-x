@@ -20,7 +20,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Memory organ for episodic, semantic, and preference claim storage and search",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

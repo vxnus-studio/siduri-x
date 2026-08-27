@@ -19,7 +19,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Voice organ for speech synthesis, voice output queuing, and TTS provider integration",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

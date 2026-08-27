@@ -21,7 +21,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Knowledge organ for semantic search and retrieval from external sources",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

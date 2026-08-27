@@ -18,7 +18,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Behavior organ for personality, directive gating, and active proposal generation",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

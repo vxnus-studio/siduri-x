@@ -19,7 +19,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Body organ for embodiment, avatar expression state machine, and physical animation",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

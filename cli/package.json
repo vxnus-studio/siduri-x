@@ -2,7 +2,7 @@
   "name": "@vxnus/siduri",
   "version": "0.0.5",
   "description": "Experimental CLI for installing and configuring Siduri companions",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

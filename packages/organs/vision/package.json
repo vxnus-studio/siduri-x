@@ -19,7 +19,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Vision organ for multi-pass visual observation, OCR, and scene interpretation",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

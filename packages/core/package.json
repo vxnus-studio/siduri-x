@@ -2,7 +2,7 @@
   "name": "@siduri-x/core",
   "version": "1.0.0",
   "description": "Core runtime types, evidence protocol, action dispatcher, capability validation, and SiduriRuntime protocol",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

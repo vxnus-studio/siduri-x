@@ -17,7 +17,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Observation organ for evidence extraction, frame deduplication, and OCR readings",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",

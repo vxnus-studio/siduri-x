@@ -19,7 +19,7 @@
     "typescript": "^5.3.3"
   },
   "description": "Ear organ for audio transcription, text perception, and sensory stream ingestion",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnuslabs/siduri-y",
