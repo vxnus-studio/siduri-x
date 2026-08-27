@@ -127,4 +127,24 @@ describe('Phase 4: Diagnostics and Database Provisioning Tests', () => {
     // 2. db push fails clearly without DATABASE_URL
     await expect(runDbPush({ projectDir: instanceDir, env: {} })).rejects.toThrow(/DATABASE_URL is required/);
   });
+
+  test('Test Matrix D: Diagnostics and Error Handling for invalid or missing configs', async () => {
+    // 1. Missing siduri.config.json
+    const nonExistentDir = path.join(testTempRoot, 'non-existent-dir');
+    await expect(runDoctor({ projectDir: nonExistentDir })).rejects.toThrow(/siduri.config.json not found/);
+    await expect(runDbPush({ projectDir: nonExistentDir })).rejects.toThrow(/siduri.config.json not found/);
+
+    // 2. Unreachable PostgreSQL host reported gracefully by doctor
+    const instDir = path.join(testTempRoot, 'brain-memory');
+    const doctorUnreachable = await runDoctor({
+      projectDir: instDir,
+      env: {
+        OPENROUTER_API_KEY: 'test-key',
+        DATABASE_URL: 'postgresql://postgres:postgres@127.0.0.1:59999/non_existent_db',
+      },
+    });
+    expect(doctorUnreachable.passed).toBe(false);
+    expect(doctorUnreachable.results.some((r) => r.category === 'Database' && r.status === 'FAIL')).toBe(true);
+  });
 });
+

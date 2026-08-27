@@ -1,63 +1,72 @@
 # Siduri-Y
 
-**NOTICE:** This project is currently under active development. The first
-experimental CLI release is `@vxnus/siduri@0.0.5`; it is strictly **untested**
-and should only be used by developers who are willing to inspect the generated
-artifacts directly.
+**Siduri-Y** is the modular, composable TypeScript implementation of the Siduri AI companion architecture.
 
-> **Important Disclaimer:** **Siduri-Y** is an experimental variant of the Siduri architecture built specifically for maximal testing and boundary validation. Please note that this is **NOT** the original `Siduri` core project, nor is it `Siduri-X`.
+A Siduri instance is composed of **@siduri-y/core** plus whatever user-selected **@siduri-y/<organ>** packages are chosen—with **zero bundling**, standard Node.js ESM module resolution, and clean-machine portability.
 
-## Overview
-Siduri-Y is a next-generation TypeScript monorepo implementation of the Siduri AI companion architecture. It orchestrates autonomous AI agents with rich capabilities across several modular "organs":
+## Composable Organs
 
-- **Brain**: Uses a provider-neutral OpenAI-compatible client, with OpenRouter
-  available as a managed routing preset, for structured AI inference and strict
-  response planning.
-- **Memory**: A powerful conversational memory engine utilizing PostgreSQL Full-Text Search (FTS) for highly relevant context retrieval and companion isolation.
-- **Behavior**: An atomic directive state machine for managing AI companion goals and guidelines.
-- **Knowledge**: Installed or hosted E-compatible packs/providers with bounded,
-  cited context integration for domain-specific data.
-- **Voice & Vision**: Advanced queueing for speech synthesis and visual processing (via ffmpeg).
-- **Body**: A real-time `Live2DAdapter` that broadcasts expressions, speech, and lifecycle transitions via WebSockets for seamless integration with overlays and frontends.
+There are **NO presets**. A user can compose any combination of organs into a runnable standalone application:
 
-The project encompasses a backend API layer, a CLI tool, Next.js web frontends (Chat UI, Operator Console, DOM-based OBS Overlay), and experimental Model Context Protocol (MCP) microservice scaffolding (`apps/gateway` and `apps/memory-service`).
+- **Brain (`@siduri-y/brain`)**: Provider-neutral LLM reasoning, response planning, and proposal generation.
+- **Memory (`@siduri-y/memory`)**: PostgreSQL-backed conversational memory, episodic/semantic claims, and companion isolation.
+- **Hands (`@siduri-y/hands`)**: Tool execution, cryptographic action policy capability verification, and MCP provider integration.
+- **Knowledge (`@siduri-y/knowledge`)**: Installed or hosted E-compatible packs with bounded, cited context integration.
+- **Behavior (`@siduri-y/behavior`)**: Atomic directive state machine and personality projection compiler.
+- **Ear (`@siduri-y/ear`)**: Multi-modal sensory input ingestion, audio transcription, and MIME boundary validation.
+- **Vision (`@siduri-y/vision`)**: Visual observation, cropping, and multi-pass OCR perception adapter.
+- **Body (`@siduri-y/body`)**: Renderer-agnostic avatar expression state machine and embodiment event adapter.
+- **Voice (`@siduri-y/voice`)**: Queued speech synthesis and TTS adapter (VOICEVOX).
+- **Observation (`@siduri-y/observation`)**: Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest.
 
-## Experimental CLI
+## Standalone Instance CLI (`@vxnus/siduri`)
 
-Install and run the experimental CLI with Node.js 20 or newer:
+### 1. Create a Standalone Companion
 
-```bash
-npx @vxnus/siduri@0.0.5 create
-```
-
-The companion name becomes the generated project directory, such as
-`./my-companion/siduri.config.json` for a companion named `My Companion`.
-
-The wizard requires a Brain and Memory configuration. Voice, Knowledge,
-Behavior, Body, and Vision are optional and can each be set to **Do not use**.
-It creates a runnable project, installs its runtime dependencies, keeps API
-keys in environment variables, and supports OpenRouter or any
-OpenAI-compatible chat-completions endpoint.
-
-After setup:
+Requires Node.js >=20:
 
 ```bash
-cd my-companion
-npm run start
+npx @vxnus/siduri create my-siduri
 ```
 
-The runtime still requires external services selected by the configuration,
-such as PostgreSQL or VTube Studio.
+The CLI dynamically discovers installed `@siduri-y/*` organ manifests and generates a clean, standalone ESM application containing only the selected organ dependencies:
 
-For the behavioral extraction plan, blank-slate contract, and current RED
-health status, start with the [documentation index](./docs/README.md).
-The current next-session handoff is
-[CURRENT_EXTRACTION_HANDOFF.md](./docs/CURRENT_EXTRACTION_HANDOFF.md).
-The [Siduri-Y parity roadmap](./docs/SIDURI_PARITY_ROADMAP.md) tracks phase
-gates; it does not treat build success as behavioral parity.
+```text
+my-siduri/
+├── package.json          # ESM package referencing only selected @siduri-y/* organs
+├── siduri.config.json    # Selected organ configurations
+├── siduri.schema.json    # Composed JSON Schema from organ manifests
+├── .env.example          # Only environment variables required by selected organs
+├── README.md             # Composition-specific guide
+└── src/
+    └── index.js          # Direct runtime bootstrapping with explicit organ factories
+```
 
-See [CLI usage](./docs/cli.md), [configuration](./docs/configuration.md), and
-[development and release](./docs/development.md) for details.
+### 2. Run Diagnostics (`siduri doctor`)
+
+Inspects environment variables, external service declarations, database connectivity (only if memory is selected), and executes organ health probes:
+
+```bash
+cd my-siduri
+npx @vxnus/siduri doctor
+```
+
+### 3. Apply Database Migrations (`siduri db push`)
+
+Executes SQL migrations with SHA-256 checksum validation exclusively for database-owning organs (`@siduri-y/memory`):
+
+```bash
+npx @vxnus/siduri db push
+```
+
+If the companion has no database organs (e.g. Brain only, or Brain + Hands), `siduri db push` reports that no migrations are required.
+
+### 4. Start Your Companion
+
+```bash
+npm install
+npm start
+```
 
 ## License
 All rights are restricted until the project is officially released publicly to

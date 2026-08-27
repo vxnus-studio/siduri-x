@@ -6,7 +6,8 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "release:check": "node cli/dist/release-check.js"
   },
   "devDependencies": {
     "turbo": "^1.11.2",

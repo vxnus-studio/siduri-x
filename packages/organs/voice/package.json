@@ -17,5 +17,32 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.4.12",
     "typescript": "^5.3.3"
+  },
+  "description": "Voice organ for speech synthesis, voice output queuing, and TTS provider integration",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vxnuslabs/siduri-y",
+    "directory": "packages/organs/voice"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist",
+    "organ-manifest.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./organ-manifest.json": "./organ-manifest.json"
   }
 }
