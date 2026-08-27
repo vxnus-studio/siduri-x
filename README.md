@@ -1,8 +1,8 @@
-# Siduri
+# Siduri (Siduri-X)
 
-> [!NOTE]
-> **Siduri-Y is currently being merged with Siduri-X.**
-> This repository represents the unified TypeScript monorepo implementation of the Siduri architecture, combining the core conceptual framework with the clean-machine, manifest-driven standalone instance distribution system.
+> [!IMPORTANT]
+> **Siduri-X is officially released!**
+> Siduri-Y has been unified into **Siduri-X**. This repository is the canonical TypeScript implementation of the Siduri architecture, combining the core conceptual framework with the clean-machine, manifest-driven standalone instance distribution system under the **`@siduri-x/*`** package ecosystem.
 
 Siduri is an intelligent AI companion framework designed with **persistent, authoritative memory**, atomic behavioral gating, and modular capability organs.
 
@@ -22,20 +22,23 @@ Our goal is simple: **Siduri should be as easy to install or run anywhere as a s
 
 ---
 
-## Composable Organs (`@siduri-x/*`)
+## Released Packages (`@siduri-x/*`)
 
-There are **NO presets**. A user can compose any combination of organs into a runnable standalone application:
+All canonical Siduri-X organ and core packages are independently distributed:
 
-- **Brain (`@siduri-x/brain`)**: Provider-neutral LLM reasoning, response planning, and proposal generation.
-- **Memory (`@siduri-x/memory`)**: PostgreSQL-backed conversational memory, episodic/semantic claims, and companion isolation.
-- **Hands (`@siduri-x/hands`)**: Tool execution, cryptographic action policy capability verification, and MCP provider integration.
-- **Knowledge (`@siduri-x/knowledge`)**: Installed or hosted E-compatible packs with bounded, cited context integration.
-- **Behavior (`@siduri-x/behavior`)**: Atomic directive state machine and personality projection compiler.
-- **Ear (`@siduri-x/ear`)**: Multi-modal sensory input ingestion, audio transcription, and MIME boundary validation.
-- **Vision (`@siduri-x/vision`)**: Visual observation, cropping, and multi-pass OCR perception adapter.
-- **Body (`@siduri-x/body`)**: Renderer-agnostic avatar expression state machine and embodiment event adapter.
-- **Voice (`@siduri-x/voice`)**: Queued speech synthesis and TTS adapter (VOICEVOX).
-- **Observation (`@siduri-x/observation`)**: Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest.
+| Package | Version | Description |
+| :--- | :---: | :--- |
+| **`@siduri-x/core`** | `^1.0.0` | Core runtime protocol, action dispatcher, capability validation, and evidence bounds |
+| **`@siduri-x/brain`** | `^1.0.0` | Provider-neutral LLM reasoning, response planning, and proposal generation |
+| **`@siduri-x/memory`** | `^1.0.0` | PostgreSQL-backed conversational memory, episodic/semantic claims, and SQL migrations |
+| **`@siduri-x/hands`** | `^1.0.0` | Tool execution, cryptographic action policy capability verification, and MCP integration |
+| **`@siduri-x/knowledge`** | `^1.0.0` | Installed or hosted E-compatible packs with bounded, cited context integration |
+| **`@siduri-x/behavior`** | `^1.0.0` | Atomic directive state machine and personality projection compiler |
+| **`@siduri-x/ear`** | `^1.0.0` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation |
+| **`@siduri-x/vision`** | `^1.0.0` | Visual observation, cropping, and multi-pass OCR perception adapter |
+| **`@siduri-x/body`** | `^1.0.0` | Renderer-agnostic avatar expression state machine and embodiment event adapter |
+| **`@siduri-x/voice`** | `^1.0.0` | Queued speech synthesis and TTS adapter (VOICEVOX) |
+| **`@siduri-x/observation`** | `^1.0.0` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest |
 
 ---
 
