@@ -1,6 +1,6 @@
 # CLI Architecture & Reference (`@vxnus/siduri`)
 
-Status: Composable standalone architecture implemented (`v0.0.6`)
+Status: Composable standalone architecture implemented (`v0.0.7`)
 
 The Siduri CLI (`@vxnus/siduri`) provides tooling to dynamically discover `@siduri-x/*` organ manifests, scaffold standalone ESM companion instances, run environment & service diagnostics, and manage database migrations.
 

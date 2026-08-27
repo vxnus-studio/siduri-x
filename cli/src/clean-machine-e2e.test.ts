@@ -23,7 +23,7 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
     { filter: '@siduri-x/body', tarName: 'siduri-x-body-1.0.0.tgz', isOrgan: true },
     { filter: '@siduri-x/voice', tarName: 'siduri-x-voice-1.0.0.tgz', isOrgan: true },
     { filter: '@siduri-x/observation', tarName: 'siduri-x-observation-1.0.0.tgz', isOrgan: true },
-    { filter: '@vxnus/siduri', tarName: 'vxnus-siduri-0.0.6.tgz', isOrgan: false },
+    { filter: '@vxnus/siduri', tarName: 'vxnus-siduri-0.0.7.tgz', isOrgan: false },
   ];
 
   beforeAll(() => {

@@ -11,7 +11,7 @@ import { runDoctor, DoctorCheckResult } from './doctor';
 import { runDbPush } from './db';
 
 const execFile = promisify(execFileCallback);
-const CLI_VERSION = '0.0.6';
+const CLI_VERSION = '0.0.7';
 
 const colors = {
   cyan: '\u001b[36m',
