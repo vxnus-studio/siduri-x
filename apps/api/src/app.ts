@@ -9,6 +9,8 @@ import { OpenRouterVisionAdapter } from '@siduri-y/vision';
 import { ActiveSelfCompiler } from '@siduri-y/behavior';
 import { Live2DAdapter } from '@siduri-y/body';
 import { FixtureObservationOrgan } from '@siduri-y/observation';
+import { DefaultHandsOrgan } from '@siduri-y/hands';
+import { DefaultEarOrgan } from '@siduri-y/ear';
 import { attachIdentity, requireRole, Identity } from './auth';
 import { mapRequestContext } from './context-mapper';
 
@@ -69,6 +71,18 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       : new Live2DAdapter(config);
   }
 
+  function createHands(config: any) {
+    return isDisabled(config)
+      ? new DefaultHandsOrgan()
+      : new DefaultHandsOrgan(config);
+  }
+
+  function createEar(config: any) {
+    return isDisabled(config)
+      ? new DefaultEarOrgan()
+      : new DefaultEarOrgan(config);
+  }
+
   app.post('/boot', requireRole(['OWNER']), async (req, res) => {
     try {
       const { id, config } = req.body;
@@ -83,11 +97,14 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       const vision = createVision(config.vision);
       const behavior = createBehavior(config.behavior);
       const body = createBody(config.body);
+      const hands = createHands(config.hands);
+      const ear = createEar(config.ear);
 
-      const runtime = new SiduriRuntime(id, config, { brain, memory, voice, knowledge, vision, behavior, body });
+      const runtime = new SiduriRuntime(id, config, { brain, memory, voice, knowledge, vision, behavior, body, hands, ear });
       await runtime.initialize();
 
       runtimes.set(id, runtime);
+
       res.json({ success: true, id });
     } catch (e: any) {
       res.status(500).json({ error: e.message });

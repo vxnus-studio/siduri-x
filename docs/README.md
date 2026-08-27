@@ -1,142 +1,81 @@
-# Siduri-Y documentation index
+# Siduri Documentation Hub
 
-Siduri-Y has two documentation tracks: the current behavior-extraction track
-and older implementation/knowledge handoffs. Read the current track first.
+Siduri is an agentic AI cognition and runtime system structured as independent, composable organs.
 
-## Authority order
+The documentation is organized into four distinct sections:
 
-When documents disagree, use this order:
-
-1. [Repository health audit](./REPOSITORY_HEALTH_AUDIT.md) — current health,
-   severity, and evidence.
-2. [Behavior extraction boundary](./SIDURI_BEHAVIOR_EXTRACTION.md) — what is
-   extracted from original Siduri and what is deliberately excluded.
-3. [Blank-slate contract](./BLANK_SLATE_CONTRACT.md) — public default
-   invariants.
-4. [Neutral contract decisions](./NEUTRAL_CONTRACT_DECISIONS.md) — canonical
-   actor, channel, audience, subject, memory, and approval semantics.
-5. [Parity roadmap](./SIDURI_PARITY_ROADMAP.md) — phase status and exit gates.
-6. [Extraction matrix](./SIDURI_EXTRACTION_MATRIX.md) — source-to-contract
-   inventory.
-7. [Phase 0 baseline](./PHASE-0-EXTRACTION-BASELINE.md) — executable scenario
-   requirements.
-8. [Phase 1 extraction handoff](./PHASE-1-EXTRACTION-HANDOFF.md) — next
-   implementation work packages.
-9. [Extraction change record template](./EXTRACTION_CHANGE_RECORD_TEMPLATE.md)
-   — evidence required for each future behavior or memory change.
-10. [Legacy identifier migration](./LEGACY_IDENTIFIER_MIGRATION.md) — removal
-    map for personal and overloaded identifiers.
-11. [Public release readiness](./PUBLIC_RELEASE_READINESS.md) — go/no-go
-    checklist for a public blank-slate release.
-12. [Limitations](./limitations.md) — current known gaps and non-completion
-    conditions.
-13. [Open extraction decisions](./OPEN_EXTRACTION_DECISIONS.md) — policy
-    questions that must not be resolved implicitly in runtime code.
-14. [Phase 0 golden trace](./PHASE-0-GOLDEN-TRACE.md) — neutral state and
-    response transitions to port as executable fixtures.
-15. [Verification evidence manifest](./VERIFICATION_EVIDENCE_MANIFEST.md) —
-    what current tests prove and what parity evidence is missing.
-16. [Phase 2 memory extraction handoff](./PHASE-2-MEMORY-EXTRACTION-HANDOFF.md)
-    — lifecycle and disclosure implementation target.
-17. [Behavior extraction handoff](./BEHAVIOR-EXTRACTION-HANDOFF.md) — Active
-    Self, prompt, and disclosure implementation target.
-18. [Evidence extraction handoff](./EVIDENCE-EXTRACTION-HANDOFF.md) — grounding,
-    citations, observations, and response approval target.
-19. [Experience extraction handoff](./EXPERIENCE-EXTRACTION-HANDOFF.md) — voice,
-    avatar, overlay, platform, and outbound delivery target.
-20. [Extraction track map](./EXTRACTION_TRACK_MAP.md) — dependency order across
-    all current extraction handoffs.
-21. [Security and operations extraction handoff](./SECURITY-OPERATIONS-EXTRACTION-HANDOFF.md)
-    — public deployment, isolation, failure, and audit target.
-22. [Extraction source catalog](./EXTRACTION_SOURCE_CATALOG.md) — which
-    original files are behavioral oracles versus personal/domain data.
-23. [Current extraction handoff](./CURRENT_EXTRACTION_HANDOFF.md) — current
-    RED status and the next authorized implementation slice.
-24. [T1 neutral context specification](./T1-NEUTRAL-CONTEXT-SPEC.md) — concrete
-    actor, channel, audience, subject, and compatibility shapes.
-25. [T1 implementation checklist](./T1-IMPLEMENTATION-CHECKLIST.md) — bounded
-    P1/P2 work packages, test matrix, and stop conditions.
-26. [Original source traceability](./ORIGINAL-SOURCE-TRACEABILITY.md) — exact
-    original tests mapped to neutral B0–B9 behavior and memory guarantees.
-27. [Blank-slate fixture guide](./BLANK-SLATE-FIXTURE-GUIDE.md) — neutral
-    fixture envelope, identifier rules, and review checklist.
-28. [T2 memory state machine](./T2-MEMORY-STATE-MACHINE.md) — neutral claim,
-    behavior, response, approval, revision, expiry, and retrieval lifecycle.
-29. [T3 Active Self contract](./T3-ACTIVE-SELF-CONTRACT.md) — approved behavior,
-    prompt trust boundaries, scope filtering, and failure semantics.
-30. [T4 evidence-chain contract](./T4-EVIDENCE-CHAIN-CONTRACT.md) — provenance,
-    grounding, disclosure filtering, and response approval.
-31. [T5 experience event contract](./T5-EXPERIENCE-EVENT-CONTRACT.md) — approved
-    voice, avatar, overlay, ingress, and outbound event boundaries.
-32. [T6 security and operations contract](./T6-SECURITY-OPERATIONS-CONTRACT.md)
-    — capability, isolation, secrets, failure, ingress, egress, and runbook
-    boundaries.
-33. [T7 release evidence contract](./T7-RELEASE-EVIDENCE-CONTRACT.md) —
-    candidate-commit gates, vertical scenarios, sign-off, and no-go rules.
-34. [Extraction readiness board](./EXTRACTION-READINESS-BOARD.md) — one-page
-    status, blockers, dependencies, and next authorized implementation slice.
-35. [T1 implementation plan](./T1-IMPLEMENTATION-PLAN.md) — file-level P1/P2
-    boundary, mapper decisions, proof, and stop conditions.
-36. [Forbidden-default scan baseline](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md) —
-    reproducible scan, classified current hits, and release disposition.
-37. [Neutral terminology glossary](./NEUTRAL-TERMINOLOGY-GLOSSARY.md) —
-    canonical meanings for actor, role, channel, audience, subject, memory,
-    evidence, and approval.
-38. [T1 neutral API contract examples](./T1-API-CONTRACT-EXAMPLES.md) — public,
-    direct, private, operator, compatibility, and rejection envelopes.
-39. [Phase 0 neutral manual walkthrough](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md)
-    — expected blank-slate experience sequence and reviewer evidence record.
-40. [T2 memory disclosure matrix](./T2-MEMORY-DISCLOSURE-MATRIX.md) — public,
-    direct, private, operator, lifecycle, sensitivity, and isolation outcomes.
-41. [T3 prompt-section matrix](./T3-PROMPT-SECTION-MATRIX.md) — trusted,
-    permitted, untrusted, and forbidden prompt inputs by section.
-
-## Current status
-
-Siduri-Y is **RED** for public blank-slate and behavioral parity. The organs
-are integrated, but runtime contracts still contain legacy personal/private
-assumptions. The health audit is the authoritative status document.
-
-## Reference repository
-
-The original repository is the behavioral and memory reference:
-
-```text
-/home/zagin/Projects/vxnuslabs/siduri/
+```
+docs/
+├── architecture/   # Core organ architecture, runtime design, and subsystem specifications
+├── contracts/      # Neutral context specs, memory state machine, safety gating, and event contracts
+├── extraction/     # Behavioral parity extraction track, roadmaps, and audit records
+└── archive/        # Historical phase records, milestone logs, and experimental handoffs
 ```
 
-Extract its safety boundaries, lifecycle, provenance, prompt behavior, and
-user-visible outcomes. Do not copy its personal identity, relationship policy,
-recipient names, or deployment configuration into Siduri-Y defaults.
+---
 
-## Historical documents
+## 1. Architecture (`docs/architecture/`)
+Core specifications for the decoupled organ architecture and system components:
 
-The following are useful implementation records but are not current parity
-status:
+- **[Siduri Organ Architecture](./architecture/siduri-organ-architecture.md)** — **Primary architectural blueprint:** Decoupling philosophy, the 10 core organs (Brain, Memory, Knowledge, Behavior, Ear, Vision, Mouth, Hands, Body, Voice), perception-decision-action loops, and the E-ecosystem.
+- **[Architecture Overview](./architecture/architecture.md)** — High-level runtime overview.
+- **[Organs Reference](./architecture/organs.md)** — Detailed responsibilities and interfaces of organ packages.
+- **[Companion Runtime](./architecture/companion-runtime.md)** — Orchestration of organs inside the active companion runtime.
+- **[Behavior & Active Self](./architecture/behavior.md)** — Behavioral compilation, directive scoping, and safety projection.
+- **[Memory Subsystem](./architecture/memory.md)** — PostgreSQL claims persistence, lifecycle, and temporal indexing.
+- **[Knowledge & E-Packs](./architecture/knowledge-e.md)** — E-Knowledge integration, provenance, and citations.
+- **[API Reference](./architecture/api.md)** — REST API surface and endpoint contracts.
+- **[CLI Reference](./architecture/cli.md)** — Command-line interface and diagnostic tools.
+- **[Configuration Guide](./architecture/configuration.md)** — Runtime and companion YAML/JSON configuration.
+- **[Development Guide](./architecture/development.md)** — Local development environment, building, and running.
+- **[Testing Strategy](./architecture/testing.md)** — Test suite layout and execution.
+- **[Subsystem Integrations](./architecture/integrations.md)** — External adapters (Voicevox, Live2D, OpenRouter).
+- **[Limitations & Boundaries](./architecture/limitations.md)** — System boundaries and non-goals.
+- **[Migration & V1 Roadmap](./architecture/migration.md)** — Transition from legacy multi-viewer streaming to 1-User Agent model.
 
-- `handoff.md` and `PHASE-1-PARITY-HANDOFF.md` — earlier compatibility slices;
-- `PHASE-1-HANDOFF.md` through `PHASE-8-HANDOFF.md` — knowledge, deployment,
-  observation, or modularization tracks;
-- `phase4-modularization.md` — experimental API/MCP service-boundary track;
-- `implementation.md`, `organs.md`, and organ-specific pages — component
-  baselines, not proof of extracted behavior.
+---
 
-Historical “complete” language is scoped to its original track and cannot
-override the health audit or extraction roadmap.
+## 2. Contracts & Safety (`docs/contracts/`)
+Type-safe interfaces, gating engine, memory state machines, and neutral security contracts:
 
-## Contributor rule
+- **[T1 Neutral Context Spec](./contracts/T1-NEUTRAL-CONTEXT-SPEC.md)** — Actor, request context, and authorization definitions.
+- **[T1 API Contract Examples](./contracts/T1-API-CONTRACT-EXAMPLES.md)** — Concrete payload examples for API endpoints.
+- **[T1 Implementation Plan](./contracts/T1-IMPLEMENTATION-PLAN.md)** & **[Checklist](./contracts/T1-IMPLEMENTATION-CHECKLIST.md)** — Context mapper implementation details.
+- **[T2 Memory State Machine](./contracts/T2-MEMORY-STATE-MACHINE.md)** — Claim lifecycle (`PENDING` -> `APPROVED` -> `EXPIRED` / `REVOKED`).
+- **[T2 Memory Disclosure Matrix](./contracts/T2-MEMORY-DISCLOSURE-MATRIX.md)** — Channel sensitivity and disclosure boundaries.
+- **[T3 Active Self Contract](./contracts/T3-ACTIVE-SELF-CONTRACT.md)** & **[Prompt Section Matrix](./contracts/T3-PROMPT-SECTION-MATRIX.md)** — Behavior projection and prompt assembly rules.
+- **[T4 Evidence Chain Contract](./contracts/T4-EVIDENCE-CHAIN-CONTRACT.md)** — Citations, grounding, and response gating evaluation.
+- **[T5 Experience Event Contract](./contracts/T5-EXPERIENCE-EVENT-CONTRACT.md)** — Outbound event envelopes (voice, avatar, action).
+- **[T6 Security Operations Contract](./contracts/T6-SECURITY-OPERATIONS-CONTRACT.md)** — Secret isolation, capabilities, and failure boundaries.
+- **[T7 Release Evidence Contract](./contracts/T7-RELEASE-EVIDENCE-CONTRACT.md)** — Release gating criteria and verification.
+- **[Neutral Contract Decisions](./contracts/NEUTRAL_CONTRACT_DECISIONS.md)** — Architectural decision log on context neutrality.
+- **[Neutral Terminology Glossary](./contracts/NEUTRAL-TERMINOLOGY-GLOSSARY.md)** — Standard terminology dictionary.
+- **[Legacy Identifier Migration](./contracts/LEGACY_IDENTIFIER_MIGRATION.md)** — Guide on removing overloaded legacy identifiers.
+- **[Blank Slate Contract](./contracts/BLANK_SLATE_CONTRACT.md)** & **[Fixture Guide](./contracts/BLANK-SLATE-FIXTURE-GUIDE.md)** — Invariants for clean-slate initializations.
+- **[Forbidden Default Baseline](./contracts/FORBIDDEN-DEFAULT-SCAN-BASELINE.md)** — Safety baseline preventing default relationship assumptions.
 
-Before adding a behavior or memory implementation:
+---
 
-1. identify the original source/test that defines the behavior;
-2. identify the neutral contract it maps to;
-3. preserve blank-slate defaults;
-4. add the scenario and acceptance evidence;
-5. update the extraction matrix and health status.
+## 3. Extraction & Parity (`docs/extraction/`)
+Documentation tracking the behavioral extraction from the original Siduri reference into the clean organ architecture:
 
-Do not mark parity complete because a package builds or a compatibility test
-passes.
+- **[Repository Health Audit](./extraction/REPOSITORY_HEALTH_AUDIT.md)** — Health audit, parity metrics, and evidence state.
+- **[Behavior Extraction Boundary](./extraction/SIDURI_BEHAVIOR_EXTRACTION.md)** — Scope of extracted cognition behaviors.
+- **[Extraction Matrix](./extraction/SIDURI_EXTRACTION_MATRIX.md)** — Source-to-contract traceability matrix.
+- **[Extraction Readiness Board](./extraction/EXTRACTION-READINESS-BOARD.md)** — Implementation status and track dependencies.
+- **[Parity Roadmap](./extraction/SIDURI_PARITY_ROADMAP.md)** — Phase breakdown and completion criteria.
+- **[Verification Evidence Manifest](./extraction/VERIFICATION_EVIDENCE_MANIFEST.md)** — Test proof inventory.
+- **[Original Source Traceability](./extraction/ORIGINAL-SOURCE-TRACEABILITY.md)** — Mapping original test suite to neutral guarantees.
+- **[Public Release Readiness](./extraction/PUBLIC_RELEASE_READINESS.md)** — Go/No-go deployment checklist.
+- **[Extraction Track Map](./extraction/EXTRACTION_TRACK_MAP.md)** & **[Source Catalog](./extraction/EXTRACTION_SOURCE_CATALOG.md)** — Source catalog and track dependencies.
+- **[Open Extraction Decisions](./extraction/OPEN_EXTRACTION_DECISIONS.md)** — Policy decisions log.
 
-For a concrete change, copy
-[`EXTRACTION_CHANGE_RECORD_TEMPLATE.md`](./EXTRACTION_CHANGE_RECORD_TEMPLATE.md)
-and attach the completed record to the implementation work.
+---
+
+## 4. Archive (`docs/archive/`)
+Historical milestones, experimental records, and phased development handoffs:
+
+- `PHASE-0-*` through `PHASE-8-HANDOFF.md` — Milestone handoff notes.
+- `phase4-modularization.md` — Early modularization experiments.
+- `handoff.md` — Legacy compatibility handoff notes.
+

@@ -24,13 +24,23 @@ const BehaviorProposalSchema = z.object({
   priority: z.number(),
 });
 
+const ActionIntentSchema = z.object({
+  actionId: z.string(),
+  toolName: z.string(),
+  parameters: z.record(z.string(), z.unknown()),
+  description: z.string().optional(),
+});
+
+
 const ResponsePlanSchema = z.object({
   speech: z.string(),
   language: z.string(),
   internalMonologue: z.string().optional(),
   memoryProposals: z.array(MemoryProposalSchema).optional(),
-  behaviorProposals: z.array(BehaviorProposalSchema).optional()
+  behaviorProposals: z.array(BehaviorProposalSchema).optional(),
+  actionIntents: z.array(ActionIntentSchema).optional(),
 });
+
 
 export class OpenAICompatibleBrain implements BrainOrgan {
   private config: OpenAICompatibleBrainConfig;

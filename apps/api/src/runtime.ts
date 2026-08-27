@@ -6,11 +6,15 @@ import {
   VisionOrgan,
   BehaviorOrgan,
   BodyOrgan,
+  HandsOrgan,
+  EarOrgan,
   Message,
   ResponsePlan,
   SourceEvent,
   MemoryProposal,
   BehaviorProposal,
+  ActionIntent,
+  ActionExecutionResult,
   RequestContext,
   EvidenceRecord,
   ResponseCitation,
@@ -33,6 +37,8 @@ export interface SiduriRuntimeConfig {
   behavior: any;
   body: any;
   vision: any;
+  hands?: any;
+  ear?: any;
 }
 
 export interface RuntimeOrgans {
@@ -43,6 +49,8 @@ export interface RuntimeOrgans {
   vision?: VisionOrgan;
   behavior?: BehaviorOrgan;
   body?: BodyOrgan;
+  hands?: HandsOrgan;
+  ear?: EarOrgan;
 }
 
 export class SiduriRuntime {
@@ -55,6 +63,8 @@ export class SiduriRuntime {
   public vision?: VisionOrgan;
   public behavior?: BehaviorOrgan;
   public body?: BodyOrgan;
+  public hands?: HandsOrgan;
+  public ear?: EarOrgan;
   public gating: ResponseGatingEngine;
   public dispatcher: ExperienceDispatcher;
   private conversationHistory: Message[] = [];
@@ -69,6 +79,8 @@ export class SiduriRuntime {
     this.vision = organs.vision;
     this.behavior = organs.behavior;
     this.body = organs.body;
+    this.hands = organs.hands;
+    this.ear = organs.ear;
     this.gating = new ResponseGatingEngine();
     this.dispatcher = new ExperienceDispatcher();
 
@@ -83,6 +95,7 @@ export class SiduriRuntime {
   async initialize(): Promise<void> {
     await this.memory.initialize(this.id);
   }
+
 
   async handleUserMessage(
     message: string,
@@ -325,8 +338,18 @@ export class SiduriRuntime {
       }
     }
 
+    // Execute ActionIntents via HandsOrgan
+    const actionResults: ActionExecutionResult[] = [];
+    if (this.hands && plan.actionIntents && plan.actionIntents.length > 0) {
+      for (const action of plan.actionIntents) {
+        const res = await this.hands.executeAction(action);
+        actionResults.push(res);
+      }
+    }
+
     // 5. T5 Output Path: Create ExperienceEvents and dispatch to registered adapters
     const experienceEvents = createExperienceEvents({
+
       responseId: stagedPlan.responseId,
       companionId: this.id,
       correlationId: requestContext.conversation.correlationId,
@@ -384,6 +407,7 @@ export class SiduriRuntime {
         internal_monologue: plan.internalMonologue,
         proposals: createdMemoryProposals,
         memory_proposals: memoryProposalReceipts,
+        action_results: actionResults,
         evidence_ids: gateEval.filteredEvidenceIds,
         citations: gateEval.filteredCitations,
         events: experienceEvents.map(e => ({
@@ -398,3 +422,4 @@ export class SiduriRuntime {
     };
   }
 }
+

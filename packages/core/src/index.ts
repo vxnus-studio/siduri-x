@@ -76,12 +76,14 @@ export interface ResponsePlan {
   language: string;
   memoryProposals?: MemoryProposal[];
   behaviorProposals?: BehaviorProposal[];
+  actionIntents?: ActionIntent[];
   internalMonologue?: string;
 }
 
 export interface BrainOrgan {
   generatePlan(context: BrainContext): Promise<ResponsePlan>;
 }
+
 
 // Memory Isolation (Legacy compatibility scope)
 export type MemoryScope = 'OWNER' | 'VIEWER' | 'OPERATOR' | 'PUBLIC';
@@ -224,6 +226,47 @@ export interface KnowledgeOrgan {
   search(query: string): Promise<KnowledgeItem[]>;
 }
 
+export interface ActionIntent {
+  actionId: string;
+  toolName: string;
+  parameters: Record<string, unknown>;
+  description?: string;
+}
+
+export interface ActionExecutionResult {
+  actionId: string;
+  toolName: string;
+  success: boolean;
+  result?: unknown;
+  error?: string;
+}
+
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+}
+
+export interface HandsOrgan {
+  listTools(): Promise<ToolDefinition[]>;
+  executeAction(action: ActionIntent): Promise<ActionExecutionResult>;
+}
+
+// Ear (Perception)
+export interface EarPerception {
+  id: string;
+  source: string; // 'microphone' | 'text_chat' | 'system_event' | 'platform_webhook'
+  text?: string;
+  audioBuffer?: Uint8Array;
+  metadata?: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface EarOrgan {
+  listen(source: string, payload: unknown): Promise<EarPerception>;
+  transcribeAudio?(audio: Uint8Array): Promise<string>;
+}
+
 // Body
 export interface BodyOrgan {
   setExpression(expression: string): void;
@@ -231,3 +274,4 @@ export interface BodyOrgan {
   act(action: string): void;
   completeAction?(): void;
 }
+

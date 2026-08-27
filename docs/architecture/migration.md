@@ -34,3 +34,31 @@ For every piece copied from `siduri/`:
 - **Changed**: Implemented via OpenRouter function calling instead of ZAI GLM-5.2 specific structured outputs. Removed hardcoded language tuples (JA/EN/ID).
 - **Why**: To support standard LLMs and user-configured languages.
 - **Preserved**: The ability to think, speak, and propose memories in a single generation pass.
+
+
+## Version 1: Single-User Agent Architecture & Decoupling Plan
+
+### Objective
+Simplify Siduri into a clean, single-user autonomous cognitive agent and decouple all streaming / VTuber / multi-viewer mechanics into external host applications.
+
+### 1. Architectural Scope Boundary
+- **Siduri Core**:
+  - Serves strictly **1 User / Owner**.
+  - Owns Brain (cognition), Memory (claims), Knowledge (factual evidence), Behavior (Active Self), Ear/Vision (perception), Hands (MCP actions), and Mouth/Body (expression via Experience Events).
+  - Agnostic to streaming platforms, broadcast overlays, and viewer management.
+- **External Streaming Application**:
+  - Ingests platform streams (Twitch, YouTube, etc.), processes chat, manages multi-viewer traffic, and filters events.
+  - Sends clean perception events to Siduri and receives Mouth/Body events to render on stream overlays.
+
+### 2. Implementation Roadmap
+1. **Context & Auth Simplification**:
+   - Strip multi-viewer authorization states (`VIEWER`, `OPERATOR`) from core contracts.
+   - Unify `RequestContext` around the authenticated single owner.
+2. **Memory & Gating Streamlining**:
+   - Remove audience-isolation leak checks (`allowedAudiences` per viewer) and channel-based disclosure barriers designed for live streams.
+   - Retain companion isolation (`companionId`) and memory lifecycle states (`PENDING`, `APPROVED`, `EXPIRED`, `REVOKED`).
+3. **Hands Organ (MCP)**:
+   - Build `@siduri-y/hands` package enabling standardized tool use via Model Context Protocol.
+4. **Ear Perception Ingestion**:
+   - Build a formal perception ingress abstraction for multi-modal sensory inputs (audio, text, webhooks).
+
