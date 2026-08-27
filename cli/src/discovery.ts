@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { OrganManifest, validateOrganManifest } from './manifest';
+import { BUILTIN_ORGAN_MANIFESTS } from './builtin-manifests';
 
 export class OrganRegistry {
   private manifests: Map<string, OrganManifest> = new Map();
@@ -71,6 +72,14 @@ export class OrganRegistry {
         }
       } catch (err: any) {
         // Continue scanning other roots
+      }
+    }
+
+    // If running in a standalone environment without local package folders (e.g. via npx in an empty directory),
+    // register canonical built-in @siduri-x/* organ manifests as fallback.
+    if (registry.getAll().length === 0) {
+      for (const builtinManifest of BUILTIN_ORGAN_MANIFESTS) {
+        registry.register(builtinManifest);
       }
     }
 

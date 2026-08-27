@@ -64,4 +64,12 @@ describe('Discovery & Dynamic Composition System Tests (Phase 3)', () => {
       invalidRegistry.register({} as any);
     }).toThrow(/Invalid manifest/);
   });
+
+  test('Fallback to builtin organ manifests when scanning non-existent search roots', () => {
+    const registry = OrganRegistry.discover(['/non-existent-directory/empty']);
+    const manifests = registry.getAll();
+    expect(manifests.length).toBe(10);
+    expect(registry.get('brain')).toBeDefined();
+    expect(registry.get('memory')).toBeDefined();
+  });
 });
