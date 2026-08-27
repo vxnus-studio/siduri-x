@@ -1,10 +1,28 @@
-# Siduri-Y
+# Siduri
 
-**Siduri-Y** is the modular, composable TypeScript implementation of the Siduri AI companion architecture.
+> [!NOTE]
+> **Siduri-Y is currently being merged with Siduri-X.**
+> This repository represents the unified TypeScript monorepo implementation of the Siduri architecture, combining the core conceptual framework with the clean-machine, manifest-driven standalone instance distribution system.
 
-A Siduri instance is composed of **@siduri-x/core** plus whatever user-selected **@siduri-x/<organ>** packages are chosen—with **zero bundling**, standard Node.js ESM module resolution, and clean-machine portability.
+Siduri is an intelligent AI companion framework designed with **persistent, authoritative memory**, atomic behavioral gating, and modular capability organs.
 
-## Composable Organs
+Unlike standard conversational agents that lose context when a session ends or a context window fills up, Siduri is built around a robust memory foundation. She learns, remembers, and adapts over time, treating her memory as a central source of truth for identity, relationships, and learned behaviors.
+
+Our goal is simple: **Siduri should be as easy to install or run anywhere as a single command** — no matter the platform, no matter the setup.
+
+---
+
+## Core Features & Architecture
+
+- **Blank Slate Instance**: Every Siduri instance starts with no pre-baked persona or backstory. She isn't scripted into being — she's *grown* into it, forming her identity entirely through accumulated memory and real interaction. Same core, completely different Siduri depending on who she grows with.
+- **Persistent Memory**: Siduri remembers past interactions, preferences, and established facts across sessions. Her memory is not a temporary cache, but an authoritative database of shared history.
+- **Modular Capabilities**: Extensible by design. Whether she needs to speak, see, or interact with platforms, her capabilities act as independent `@siduri-x/*` packages that plug into her core runtime with **zero bundling** and standard Node.js ESM resolution.
+- **Contextual Awareness**: Siduri dynamically retrieves relevant memories to ground her responses in established facts, maintaining a consistent persona over time.
+- **Privacy & Safety First**: Designed for local-first operations and explicit consent. Action policies and capability tokens prevent unauthorized actions.
+
+---
+
+## Composable Organs (`@siduri-x/*`)
 
 There are **NO presets**. A user can compose any combination of organs into a runnable standalone application:
 
@@ -18,6 +36,8 @@ There are **NO presets**. A user can compose any combination of organs into a ru
 - **Body (`@siduri-x/body`)**: Renderer-agnostic avatar expression state machine and embodiment event adapter.
 - **Voice (`@siduri-x/voice`)**: Queued speech synthesis and TTS adapter (VOICEVOX).
 - **Observation (`@siduri-x/observation`)**: Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest.
+
+---
 
 ## Standalone Instance CLI (`@vxnus/siduri`)
 
@@ -68,7 +88,18 @@ npm install
 npm start
 ```
 
+---
+
+## Documentation & Conceptual Architecture
+
+Explore the concepts behind Siduri:
+- [Persistent Memory](docs/concepts/memory.md)
+- [Modular Design](docs/concepts/modular-design.md)
+- [The Truth Gate](docs/concepts/the-anchor.md)
+- [CLI Reference](docs/architecture/cli.md)
+- [Organ Contracts](docs/architecture/organs.md)
+
+---
+
 ## License
-All rights are restricted until the project is officially released publicly to
-VXNUS Creative Technology Studio. See the
-[experimental CLI license](./cli/LICENSE) for more details.
+All rights are restricted until the project is officially released publicly to VXNUS Creative Technology Studio. See [LICENSE](./LICENSE) for details.
