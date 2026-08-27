@@ -147,8 +147,8 @@ export interface MemoryOrgan {
   initialize(companionId: string): Promise<void>;
   proposeClaim(claim: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
   searchClaims(query: string, scopeOrOptions: MemoryScope | MemoryQueryOptions, limit?: number): Promise<Claim[]>;
-  getClaims(): Promise<Claim[]>;
-  getPendingClaims(): Promise<Claim[]>;
+  getClaims(limit?: number): Promise<Claim[]>;
+  getPendingClaims(limit?: number): Promise<Claim[]>;
   approveClaim(id: string): Promise<void>;
   rejectClaim(id: string): Promise<void>;
   markClaimSessionOnly?(id: string): Promise<void>;

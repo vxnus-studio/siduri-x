@@ -6,13 +6,14 @@ import {
   VisionReading
 } from './index';
 import { VisionOrgan } from '@siduri-y/core';
+import EventEmitter from 'events';
 
 global.fetch = jest.fn();
 
 jest.mock('child_process', () => ({
-  spawnSync: jest.fn()
+  spawn: jest.fn()
 }));
-import { spawnSync } from 'child_process';
+import { spawn } from 'child_process';
 
 describe('OpenRouterVisionAdapter', () => {
   let adapter: OpenRouterVisionAdapter;
@@ -23,13 +24,16 @@ describe('OpenRouterVisionAdapter', () => {
   });
 
   test('analyze sends correct payload', async () => {
+    const payloadJson = JSON.stringify({
+      choices: [
+        { message: { content: 'This is a test image' } }
+      ]
+    });
+
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        choices: [
-          { message: { content: 'This is a test image' } }
-        ]
-      })
+      text: async () => payloadJson,
+      json: async () => JSON.parse(payloadJson),
     });
 
     const result = await adapter.analyze('data:image/png;base64,ABC', 'What is this?');
@@ -57,19 +61,37 @@ describe('OpenRouterVisionAdapter', () => {
   });
 });
 
+function createMockProcess(stdoutData: Buffer, exitCode: number = 0) {
+  const proc: any = new EventEmitter();
+  proc.stdout = new EventEmitter();
+  proc.stderr = new EventEmitter();
+  proc.stdin = {
+    write: jest.fn(),
+    end: jest.fn(),
+    on: jest.fn(),
+  };
+  proc.kill = jest.fn();
+
+  process.nextTick(() => {
+    if (stdoutData && stdoutData.length > 0) {
+      proc.stdout.emit('data', stdoutData);
+    }
+    proc.emit('close', exitCode);
+  });
+
+  return proc;
+}
+
 describe('CroppedVisionAdapter', () => {
   let mockProvider: jest.Mocked<VisionOrgan>;
 
   beforeEach(() => {
     mockProvider = { analyze: jest.fn() };
-    (spawnSync as jest.Mock).mockClear();
+    (spawn as jest.Mock).mockClear();
   });
 
   test('crops image and modifies source_crop', async () => {
-    (spawnSync as jest.Mock).mockReturnValue({
-      status: 0,
-      stdout: Buffer.from('CROPPED', 'utf8')
-    });
+    (spawn as jest.Mock).mockImplementation(() => createMockProcess(Buffer.from('CROPPED', 'utf8'), 0));
 
     mockProvider.analyze.mockResolvedValueOnce(JSON.stringify([
       { entity: 'test', value: '123', confidence: 0.9 }
@@ -79,16 +101,13 @@ describe('CroppedVisionAdapter', () => {
     const resultStr = await adapter.analyze('data:image/png;base64,ORIGINAL', 'prompt');
     const result = JSON.parse(resultStr);
 
-    expect(spawnSync).toHaveBeenCalled();
+    expect(spawn).toHaveBeenCalled();
     expect(mockProvider.analyze).toHaveBeenCalledWith('data:image/png;base64,Q1JPUFBFRA==', 'prompt');
     expect(result[0].source_crop).toBe('test-region');
   });
 
   test('sets top party as active if missing and requested', async () => {
-    (spawnSync as jest.Mock).mockReturnValue({
-      status: 0,
-      stdout: Buffer.from('CROPPED', 'utf8')
-    });
+    (spawn as jest.Mock).mockImplementation(() => createMockProcess(Buffer.from('CROPPED', 'utf8'), 0));
 
     mockProvider.analyze.mockResolvedValueOnce(JSON.stringify([
       { entity: 'party_member', value: 'Venti', confidence: 0.9, ocr_text: 'Venti' }

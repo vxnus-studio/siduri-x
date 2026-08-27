@@ -53,7 +53,15 @@ export class ActionPolicyEngine {
     this.defaultRiskLevel = options.defaultRiskLevel ?? 'HIGH';
     this.defaultRequireApprovalForHighRisk = options.defaultRequireApprovalForHighRisk ?? true;
     this.store = options.store ?? new InMemoryActionStore();
-    this.secretKey = options.secretKey ?? 'siduri_y_action_policy_secret';
+
+    const envSecret = typeof process !== 'undefined' && process.env ? process.env.ACTION_POLICY_SECRET : undefined;
+    const providedSecret = options.secretKey || envSecret;
+
+    if (!providedSecret && typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
+      throw new Error('FATAL: ACTION_POLICY_SECRET is required in production environment');
+    }
+
+    this.secretKey = providedSecret ?? 'siduri_y_action_policy_secret';
   }
 
   registerToolDefinition(tool: ToolDefinition): void {

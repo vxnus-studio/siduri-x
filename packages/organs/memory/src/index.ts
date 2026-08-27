@@ -5,14 +5,25 @@ export * from './teaching';
 
 export interface PostgresMemoryConfig {
   connectionString: string;
+  maxConnections?: number;
+  connectionTimeoutMillis?: number;
+  idleTimeoutMillis?: number;
+  maxQueryTimeoutMillis?: number;
 }
 
 export class PostgresMemoryOrgan implements MemoryOrgan {
   private pool: Pool;
   private companionId: string | null = null;
+  private readonly queryTimeoutMs: number;
 
   constructor(config: PostgresMemoryConfig) {
-    this.pool = new Pool({ connectionString: config.connectionString });
+    this.queryTimeoutMs = config.maxQueryTimeoutMillis ?? 5000;
+    this.pool = new Pool({
+      connectionString: config.connectionString,
+      max: config.maxConnections ?? 10,
+      connectionTimeoutMillis: config.connectionTimeoutMillis ?? 3000,
+      idleTimeoutMillis: config.idleTimeoutMillis ?? 10000,
+    });
   }
 
   async runMigrations(): Promise<void> {
@@ -188,9 +199,16 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       sql += ` AND (scope = 'PUBLIC' OR scope = '${safeScope}')`;
     }
 
-    if (query) {
-      const rawTerms = Array.from(new Set(query.toLowerCase().split(/\s+/)));
-      const safeTerms = rawTerms.filter(term => /^[a-z0-9]+$/.test(term)).sort();
+    const safeLimit = Math.min(Math.max(1, effectiveLimit || 10), 100);
+
+    if (query && query.trim()) {
+      // Split on whitespace or punctuation, keeping alphanumeric and non-ASCII unicode characters
+      const rawTerms = Array.from(new Set(query.toLowerCase().split(/[\s,.;:!?_#@$*()\[\]{}"'\\\/~`^&+=|<>-]+/)));
+      // Filter out empty strings or characters that would break tsquery syntax
+      const safeTerms = rawTerms
+        .map(t => t.replace(/['":*&|!()\\]/g, '').trim())
+        .filter(t => t.length > 0)
+        .sort();
 
       if (safeTerms.length === 0) {
         return [];
@@ -201,10 +219,10 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       sql += ` AND search_document @@ to_tsquery('simple', $${queryParamIndex})`;
       params.push(tsQueryStr);
       sql += ` ORDER BY ts_rank(search_document, to_tsquery('simple', $${queryParamIndex})) DESC LIMIT $${params.length + 1}`;
-      params.push(effectiveLimit);
+      params.push(safeLimit);
     } else {
       sql += ` ORDER BY id LIMIT $${params.length + 1}`;
-      params.push(effectiveLimit);
+      params.push(safeLimit);
     }
 
     const result = await this.pool.query(sql, params);
@@ -381,20 +399,22 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
     }
   }
 
-  async getClaims(): Promise<Claim[]> {
+  async getClaims(limit: number = 100): Promise<Claim[]> {
     this.ensureInitialized();
+    const safeLimit = Math.min(Math.max(1, limit || 100), 1000);
     const result = await this.pool.query(
-      `SELECT * FROM memory_claims WHERE companion_id = $1 ORDER BY id DESC`,
-      [this.companionId]
+      `SELECT * FROM memory_claims WHERE companion_id = $1 ORDER BY id DESC LIMIT $2`,
+      [this.companionId, safeLimit]
     );
     return result.rows.map((row) => this.mapClaim(row));
   }
 
-  async getPendingClaims(): Promise<Claim[]> {
+  async getPendingClaims(limit: number = 100): Promise<Claim[]> {
     this.ensureInitialized();
+    const safeLimit = Math.min(Math.max(1, limit || 100), 1000);
     const result = await this.pool.query(
-      `SELECT * FROM memory_claims WHERE companion_id = $1 AND status = 'PENDING' ORDER BY id DESC`,
-      [this.companionId]
+      `SELECT * FROM memory_claims WHERE companion_id = $1 AND status = 'PENDING' ORDER BY id DESC LIMIT $2`,
+      [this.companionId, safeLimit]
     );
     return result.rows.map((row) => this.mapClaim(row));
   }

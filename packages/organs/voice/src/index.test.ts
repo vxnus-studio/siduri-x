@@ -114,4 +114,39 @@ describe('VoicevoxAdapter T5 Experience Event Interface', () => {
     expect(incompatibleRes.accepted).toBe(false);
     expect(incompatibleRes.reason).toBe('INCOMPATIBLE_EVENT_KIND');
   });
+
+  test('handleEvent enforces queue depth limits and applies backpressure', async () => {
+    const smallQueueAdapter = new VoicevoxAdapter({
+      baseUrl: 'http://localhost:50021',
+      speakerId: 1,
+      maxQueueDepth: 2,
+    });
+    (smallQueueAdapter as any).isProcessing = true; // hold queue
+
+    // Fill queue to capacity
+    smallQueueAdapter.enqueueSpeech('msg 1', 'en');
+    smallQueueAdapter.enqueueSpeech('msg 2', 'en');
+
+    // Attempting to enqueue when full via enqueueSpeech throws
+    expect(() => smallQueueAdapter.enqueueSpeech('msg 3', 'en')).toThrow(/Voice queue capacity exceeded/);
+
+    // Attempting via handleEvent returns structured failure with QUEUE_CAPACITY_EXCEEDED
+    const eventRes = await smallQueueAdapter.handleEvent({
+      eventId: 'evt-voice-overflow',
+      companionId: 'companion-a',
+      responseId: 'resp-1',
+      correlationId: 'corr-1',
+      channel: 'public',
+      audienceId: 'audience-public',
+      approval: 'APPROVED',
+      kind: 'voice',
+      lifecycle: 'STARTED',
+      evidenceIds: [],
+      text: 'overflow text',
+      createdAt: new Date().toISOString(),
+    });
+
+    expect(eventRes.accepted).toBe(false);
+    expect(eventRes.reason).toBe('QUEUE_CAPACITY_EXCEEDED');
+  });
 });

@@ -142,6 +142,43 @@ describe('DefaultHandsOrgan Adversarial Remediation Suite', () => {
       expect(executed).toBe(true);
       expect((res.result as any).query).toBe('hello');
     });
+
+    it('rejects tampered companionId, executionId, expiresAt, and cross-companion capability reuse', async () => {
+      const hands = new DefaultHandsOrgan({ secretKey });
+      hands.registerTool({
+        definition: { name: 'search', inputSchema: {}, description: 'search' },
+        execute: async () => ({ results: [] }),
+      });
+      engine.registerToolDefinition({ name: 'search', inputSchema: {}, description: 'search', riskLevel: 'LOW' });
+
+      const action = {
+        actionId: 'act-tamper-1',
+        toolName: 'search',
+        parameters: { q: 'secure' },
+        context: sampleContext,
+      };
+
+      const { capability } = await engine.evaluateAction(action);
+      expect(capability).toBeDefined();
+
+      // Tamper companionId
+      const tamperedCompanionCap = { ...capability!, companionId: 'attacker-companion' };
+      const compRes = await hands.executeAction(action, tamperedCompanionCap);
+      expect(compRes.success).toBe(false);
+      expect(compRes.error).toContain('Invalid or forged AuthorizationCapability signature');
+
+      // Tamper executionId
+      const tamperedExecCap = { ...capability!, executionId: 'exec-hijacked' };
+      const execRes = await hands.executeAction(action, tamperedExecCap);
+      expect(execRes.success).toBe(false);
+      expect(execRes.error).toContain('Invalid or forged AuthorizationCapability signature');
+
+      // Expired capability
+      const expiredCap = { ...capability!, expiresAt: new Date(Date.now() - 1000).toISOString() };
+      const expRes = await hands.executeAction(action, expiredCap);
+      expect(expRes.success).toBe(false);
+      expect(expRes.error).toContain('Invalid or forged AuthorizationCapability signature');
+    });
   });
 
   describe('P1 — Recursive Schema Validation & Prototype Pollution Defense', () => {

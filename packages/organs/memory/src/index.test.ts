@@ -91,9 +91,38 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
     );
   });
 
-  test('returns empty array immediately if no valid alphanumeric terms exist', async () => {
+  test('supports non-ASCII Unicode search queries (e.g. Japanese/Chinese characters)', async () => {
+    poolQueryMock.mockResolvedValueOnce({ rows: [] });
+    await organ.searchClaims("甘雨 フリーナ", "PUBLIC");
+
+    expect(poolQueryMock).toHaveBeenCalledWith(
+      expect.stringMatching(/to_tsquery\('simple',\s*\$2\)/),
+      expect.arrayContaining(['test-id', 'フリーナ:* | 甘雨:*'])
+    );
+  });
+
+  test('enforces upper bound caps on getClaims and searchClaims limit parameter', async () => {
+    poolQueryMock.mockResolvedValueOnce({ rows: [] });
+    await organ.getClaims(5000); // requested 5000, should be capped to 1000
+
+    expect(poolQueryMock).toHaveBeenCalledWith(
+      expect.stringContaining('LIMIT $2'),
+      ['test-id', 1000]
+    );
+
     poolQueryMock.mockClear();
-    const result = await organ.searchClaims("!!! @@@", "OWNER");
+    poolQueryMock.mockResolvedValueOnce({ rows: [] });
+    await organ.searchClaims("test", "PUBLIC", 500); // should be capped to 100
+
+    expect(poolQueryMock).toHaveBeenCalledWith(
+      expect.stringContaining('LIMIT $3'),
+      ['test-id', 'test:*', 100]
+    );
+  });
+
+  test('returns empty array immediately if no valid terms exist after normalization', async () => {
+    poolQueryMock.mockClear();
+    const result = await organ.searchClaims("!!! @@@ \"\"", "OWNER");
     
     expect(result).toEqual([]);
     expect(poolQueryMock).not.toHaveBeenCalled();
@@ -140,5 +169,16 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
     await organ.searchClaims('Captain', 'VIEWER');
     expect(poolQueryMock.mock.calls[0][0]).toContain("scope = 'PUBLIC' OR scope = 'VIEWER'");
+  });
+
+  test('configures bounded connection pool with acquisition timeouts', () => {
+    const customOrgan = new PostgresMemoryOrgan({
+      connectionString: 'postgresql://custom',
+      maxConnections: 5,
+      connectionTimeoutMillis: 2000,
+      idleTimeoutMillis: 5000,
+      maxQueryTimeoutMillis: 3000,
+    });
+    expect((customOrgan as any).pool).toBeDefined();
   });
 });

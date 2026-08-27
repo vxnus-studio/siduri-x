@@ -1,4 +1,5 @@
 import { VisionOrgan } from '@siduri-y/core';
+import { createHash } from 'node:crypto';
 
 export interface ObservationReading {
   entity: string;
@@ -33,21 +34,13 @@ export interface ObservationOrgan {
   clearExpired(now?: Date): number;
 }
 
-function digestFrame(frame: Uint8Array): string {
-  // A stable, dependency-free digest is sufficient for the bounded local
-  // duplicate guard. Raw frame bytes are never retained after provider use.
-  let hash = 2166136261;
-  for (const byte of frame) {
-    hash ^= byte;
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0');
+export function digestFrame(frame: Uint8Array): string {
+  // Cryptographically robust SHA-256 content identity digest
+  return createHash('sha256').update(frame).digest('hex');
 }
 
 function frameDataUrl(frame: Uint8Array): string {
-  let binary = '';
-  for (const byte of frame) binary += String.fromCharCode(byte);
-  return `data:image/png;base64,${btoa(binary)}`;
+  return `data:image/png;base64,${Buffer.from(frame).toString('base64')}`;
 }
 
 function id(prefix: string): string {
@@ -91,12 +84,16 @@ export class FixtureObservationOrgan implements ObservationOrgan {
     private readonly vision: VisionOrgan,
     private readonly ttlMs = 30_000,
     private readonly maxFrames = 8,
+    private readonly maxFrameBytes = 10 * 1024 * 1024, // 10MB default
   ) {
     if (ttlMs <= 0 || maxFrames <= 0) throw new Error('observation limits must be positive');
   }
 
   async ingest(frame: Uint8Array, sourceName: string, providerId = 'vision'): Promise<ObservationResult> {
     if (!frame.length) return { duplicate: false, reason: 'empty_frame' };
+    if (frame.byteLength > this.maxFrameBytes) {
+      throw new Error(`Observation frame exceeds maximum allowed size of ${this.maxFrameBytes} bytes (received ${frame.byteLength})`);
+    }
     this.clearExpired();
     const frameDigest = digestFrame(frame);
     if (this.digests.has(frameDigest)) return { duplicate: true, reason: 'duplicate_frame' };

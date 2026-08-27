@@ -1,4 +1,4 @@
-import { FixtureObservationOrgan } from './index';
+import { FixtureObservationOrgan, digestFrame } from './index';
 
 describe('FixtureObservationOrgan', () => {
   test('creates bounded evidence without retaining the raw frame', async () => {
@@ -26,6 +26,26 @@ describe('FixtureObservationOrgan', () => {
     expect(duplicate).toMatchObject({ duplicate: true, reason: 'duplicate_frame' });
     expect(organ.clearExpired(new Date(Date.now() + 2000))).toBe(1);
     expect(organ.current(new Date(Date.now() + 2000))).toEqual([]);
+  });
+
+  test('generates deterministic and distinct SHA-256 digests for distinct frames', () => {
+    const frame1 = new Uint8Array([1, 2, 3, 4]);
+    const frame2 = new Uint8Array([1, 2, 3, 5]);
+    const digest1a = digestFrame(frame1);
+    const digest1b = digestFrame(frame1);
+    const digest2 = digestFrame(frame2);
+
+    expect(digest1a).toBe(digest1b);
+    expect(digest1a).not.toBe(digest2);
+    expect(digest1a).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  test('rejects oversized observation frames exceeding configured maximum bytes', async () => {
+    const vision = { analyze: jest.fn().mockResolvedValue('[]') };
+    const organ = new FixtureObservationOrgan(vision, 1000, 2, 100); // 100 bytes max
+    const oversizedFrame = new Uint8Array(200);
+
+    await expect(organ.ingest(oversizedFrame, 'test')).rejects.toThrow(/exceeds maximum allowed size/);
   });
 
   test('rejects malformed provider readings', async () => {
