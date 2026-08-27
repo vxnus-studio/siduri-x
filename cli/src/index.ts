@@ -7,6 +7,8 @@ import inquirer from 'inquirer';
 import { OrganRegistry } from './discovery';
 import { generateInstanceFiles } from './generator';
 import { OrganManifest } from './manifest';
+import { runDoctor, DoctorCheckResult } from './doctor';
+import { runDbPush } from './db';
 
 const execFile = promisify(execFileCallback);
 const CLI_VERSION = '0.0.5';
@@ -178,6 +180,89 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   console.log(`  npm start              ${colors.dim}# Start your standalone companion${colors.reset}\n`);
 }
 
+export async function runCliDoctor(targetDir?: string): Promise<void> {
+  printHeader();
+  const dir = targetDir ? path.resolve(process.cwd(), targetDir) : process.cwd();
+  console.log(`${colors.cyan}Siduri Doctor${colors.reset}`);
+  console.log(`${colors.dim}─────────────${colors.reset}\n`);
+
+  try {
+    const report = await runDoctor({ projectDir: dir });
+    console.log(`${colors.dim}Instance:${colors.reset} ${report.instanceName}`);
+    console.log(`${colors.dim}Organs:${colors.reset}   ${report.configuredOrgans.join(', ')}\n`);
+
+    const categories = ['Environment', 'Services', 'Database', 'Health Probe'] as const;
+    for (const cat of categories) {
+      const items = report.results.filter((r: DoctorCheckResult) => r.category === cat);
+      if (items.length > 0) {
+        console.log(`${colors.cyan}${cat}${colors.reset}`);
+        for (const item of items) {
+          if (item.status === 'PASS') {
+            console.log(`  ${colors.green}✓${colors.reset} ${item.name} ${colors.dim}(${item.message || 'OK'})${colors.reset}`);
+          } else if (item.status === 'OPTIONAL_MISSING') {
+            console.log(`  ${colors.dim}○${colors.reset} ${item.name} ${colors.dim}(Optional, not set)${colors.reset}`);
+          } else if (item.status === 'SKIPPED') {
+            console.log(`  ${colors.dim}— ${item.name} (${item.message})${colors.reset}`);
+          } else {
+            console.log(`  ${colors.yellow}✗${colors.reset} ${item.name}`);
+            if (item.organName) {
+              console.log(`    ${colors.dim}Required by:${colors.reset} ${item.organName}`);
+            }
+            if (item.message) {
+              console.log(`    ${colors.yellow}${item.message}${colors.reset}`);
+            }
+            if (item.remediation) {
+              console.log(`    ${colors.dim}Remediation:${colors.reset} ${item.remediation}`);
+            }
+          }
+        }
+        console.log();
+      }
+    }
+
+    if (report.passed) {
+      console.log(`${colors.green}Result: PASS${colors.reset}\n`);
+      process.exitCode = 0;
+    } else {
+      console.log(`${colors.yellow}Result: FAIL${colors.reset}\n`);
+      process.exitCode = 1;
+    }
+  } catch (err: any) {
+    console.error(`\n${colors.yellow}Doctor Error:${colors.reset} ${err.message}\n`);
+    process.exitCode = 2;
+  }
+}
+
+export async function runCliDb(subcommand?: string, targetDir?: string): Promise<void> {
+  printHeader();
+  if (subcommand !== 'push') {
+    console.log('Usage: siduri db push');
+    process.exitCode = 2;
+    return;
+  }
+
+  const dir = targetDir ? path.resolve(process.cwd(), targetDir) : process.cwd();
+  console.log(`${colors.cyan}Siduri Database Migrations${colors.reset}`);
+  console.log(`${colors.dim}──────────────────────────${colors.reset}\n`);
+
+  try {
+    const res = await runDbPush({ projectDir: dir });
+    if (res.status === 'NOOP') {
+      console.log(`${colors.dim}— ${res.message}${colors.reset}\n`);
+    } else {
+      printSuccess(res.message);
+      if (res.appliedMigrations.length > 0) {
+        console.log(`${colors.dim}Applied:${colors.reset} ${res.appliedMigrations.join(', ')}`);
+      }
+      console.log();
+    }
+    process.exitCode = 0;
+  } catch (err: any) {
+    console.error(`\n${colors.yellow}Database Migration Error:${colors.reset} ${err.message}\n`);
+    process.exitCode = 3;
+  }
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const command = args[0];
@@ -193,8 +278,23 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === 'doctor') {
+    const targetDir = args[1];
+    await runCliDoctor(targetDir);
+    return;
+  }
+
+  if (command === 'db') {
+    const subcommand = args[1];
+    const targetDir = args[2];
+    await runCliDb(subcommand, targetDir);
+    return;
+  }
+
   printHeader();
   console.log('Usage: npx @vxnus/siduri create [directory]');
+  console.log('       npx @vxnus/siduri doctor [directory]');
+  console.log('       npx @vxnus/siduri db push [directory]');
   console.log('       npx @vxnus/siduri --version\n');
 }
 
@@ -208,3 +308,4 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
+

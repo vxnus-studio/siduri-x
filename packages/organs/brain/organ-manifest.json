@@ -52,5 +52,5 @@
     }
   ],
   "database": null,
-  "healthCheck": null
+  "healthCheck": "probeBrainHealth"
 }

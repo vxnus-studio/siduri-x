@@ -378,4 +378,17 @@ export class DefaultHandsOrgan implements HandsOrgan {
   }
 }
 
+export function probeHandsHealth(context: { config?: any; env?: Record<string, string | undefined> }): { ok: boolean; message?: string } {
+  const secret = context?.config?.secretKey || (context?.env !== undefined ? context.env.ACTION_POLICY_SECRET : process.env.ACTION_POLICY_SECRET);
+  if (!secret && process.env.NODE_ENV === 'production') {
+    return {
+      ok: false,
+      message: 'Missing ACTION_POLICY_SECRET in production environment.',
+    };
+  }
+  return { ok: true, message: 'Hands organ configured and operational' };
+}
+
 export * from './schema-validator';
+
+

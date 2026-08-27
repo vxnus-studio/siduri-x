@@ -39,5 +39,5 @@
   ],
   "services": [],
   "database": null,
-  "healthCheck": null
+  "healthCheck": "probeHandsHealth"
 }

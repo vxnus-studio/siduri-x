@@ -624,3 +624,28 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
     };
   }
 }
+
+export async function probeMemoryHealth(context: { config?: any; env?: Record<string, string | undefined> }): Promise<{ ok: boolean; message?: string }> {
+  const connectionString = context?.config?.connectionString || context?.env?.DATABASE_URL || process.env.DATABASE_URL;
+  if (!connectionString) {
+    return {
+      ok: false,
+      message: 'Missing DATABASE_URL for Memory organ.',
+    };
+  }
+  const pool = new Pool({ connectionString, connectionTimeoutMillis: 3000 });
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    await pool.end();
+    return { ok: true, message: 'PostgreSQL connection successful' };
+  } catch (err: any) {
+    await pool.end().catch(() => {});
+    return {
+      ok: false,
+      message: `PostgreSQL connection failed: ${err.message}`,
+    };
+  }
+}
+

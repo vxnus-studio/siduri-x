@@ -160,4 +160,19 @@ export class OpenRouterBrain extends OpenAICompatibleBrain {
   }
 }
 
+export function probeBrainHealth(context: { config?: any; env?: Record<string, string | undefined> }): { ok: boolean; message?: string } {
+  const provider = context?.config?.provider || 'openrouter';
+  const apiKeyEnv = context?.config?.apiKeyEnv || (provider === 'openrouter' ? 'OPENROUTER_API_KEY' : 'OPENAI_COMPATIBLE_API_KEY');
+  const apiKey = context?.config?.apiKey || (context?.env !== undefined ? context.env[apiKeyEnv] : process.env[apiKeyEnv]);
+
+  if (!apiKey) {
+    return {
+      ok: false,
+      message: `Missing API key for Brain (${provider}). Set ${apiKeyEnv} in environment.`,
+    };
+  }
+  return { ok: true, message: `Brain configured with ${provider}` };
+}
+
 export * from './prompt';
+

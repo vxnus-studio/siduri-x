@@ -48,5 +48,5 @@
     "engine": "postgres",
     "migrationsDir": "./migrations"
   },
-  "healthCheck": null
+  "healthCheck": "probeMemoryHealth"
 }

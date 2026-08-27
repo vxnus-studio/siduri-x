@@ -31,12 +31,14 @@
   "dependencies": {
     "@vxnus/e": "^0.1.4",
     "@vxnus/e-knowledge": "^0.1.4",
-    "inquirer": "^9.2.12"
+    "inquirer": "^9.2.12",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.43",
+    "@types/pg": "^8.21.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.4.12",
     "typescript": "^5.3.3"

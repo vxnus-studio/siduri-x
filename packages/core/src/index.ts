@@ -293,4 +293,19 @@ export interface ObservationOrgan {
   clearExpired(now?: Date): number;
 }
 
+// Health Probe Contract
+export interface HealthProbeContext {
+  config: unknown;
+  env: NodeJS.ProcessEnv | Record<string, string | undefined>;
+}
+
+export interface HealthProbeResult {
+  ok: boolean;
+  message?: string;
+  details?: Record<string, unknown>;
+}
+
+export type HealthProbeFn = (context: HealthProbeContext) => Promise<HealthProbeResult> | HealthProbeResult;
+
+
 
