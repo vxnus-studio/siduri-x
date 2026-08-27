@@ -15,6 +15,8 @@ import {
   BehaviorProposal,
   ActionIntent,
   ActionExecutionResult,
+  ActionPolicyEngine,
+  ActionPolicyDecision,
   RequestContext,
   EvidenceRecord,
   ResponseCitation,
@@ -25,6 +27,7 @@ import {
   createExperienceEvents,
   ExperienceEvent,
   ExperienceAdapter,
+  HardenedEarPerception,
 } from '@siduri-y/core';
 import { extractDeterministicTeaching } from '@siduri-y/memory';
 
@@ -39,6 +42,7 @@ export interface SiduriRuntimeConfig {
   vision: any;
   hands?: any;
   ear?: any;
+  actionPolicy?: any;
 }
 
 export interface RuntimeOrgans {
@@ -51,6 +55,7 @@ export interface RuntimeOrgans {
   body?: BodyOrgan;
   hands?: HandsOrgan;
   ear?: EarOrgan;
+  actionPolicy?: ActionPolicyEngine;
 }
 
 export class SiduriRuntime {
@@ -66,6 +71,7 @@ export class SiduriRuntime {
   public hands?: HandsOrgan;
   public ear?: EarOrgan;
   public gating: ResponseGatingEngine;
+  public actionPolicy: ActionPolicyEngine;
   public dispatcher: ExperienceDispatcher;
   private conversationHistory: Message[] = [];
 
@@ -82,6 +88,7 @@ export class SiduriRuntime {
     this.hands = organs.hands;
     this.ear = organs.ear;
     this.gating = new ResponseGatingEngine();
+    this.actionPolicy = organs.actionPolicy || new ActionPolicyEngine();
     this.dispatcher = new ExperienceDispatcher();
 
     if (this.voice && typeof (this.voice as any).handleEvent === 'function') {
@@ -94,8 +101,13 @@ export class SiduriRuntime {
 
   async initialize(): Promise<void> {
     await this.memory.initialize(this.id);
+    if (this.hands) {
+      const tools = await this.hands.listTools();
+      for (const tool of tools) {
+        this.actionPolicy.registerToolDefinition(tool);
+      }
+    }
   }
-
 
   async handleUserMessage(
     message: string,
@@ -136,15 +148,24 @@ export class SiduriRuntime {
           },
         };
 
+    // Universal Perception: Route user input through EarOrgan if available
+    let perceivedText = message;
+    if (this.ear) {
+      const perception = await this.ear.listen('text_chat', message, {
+        context: requestContext,
+      });
+      perceivedText = perception.text || message;
+    }
+
     const boundedHistory = history.map((item) => ({
       role: item.role,
       content: item.content.slice(0, 2000).replace(/\0/g, ''),
     })) as Message[];
-    const currentMessage: Message = { role: 'user', content: message };
+    const currentMessage: Message = { role: 'user', content: perceivedText };
     this.conversationHistory = [...boundedHistory, currentMessage].slice(-20);
 
-    const normalizedMessage = message.replace(/\s+/g, ' ').trim().toLowerCase();
-    const explicitTeaching = extractDeterministicTeaching(message, requestContext);
+    const normalizedMessage = perceivedText.replace(/\s+/g, ' ').trim().toLowerCase();
+    const explicitTeaching = extractDeterministicTeaching(perceivedText, requestContext);
     const teachingLike = explicitTeaching.claims.length > 0 || explicitTeaching.behaviorProposals.length > 0 || /\bremember that\b/.test(normalizedMessage);
     const selfIdentityRequest = /\b(?:who|what) are you\b|\bwho is siduri\b|\b(?:your|my) name\b|\btell me about yourself\b/.test(normalizedMessage);
     const isGreeting = /^(?:hello|hi|hey|greetings|good morning|good afternoon|good evening)[.!]?$/.test(normalizedMessage);
@@ -159,11 +180,11 @@ export class SiduriRuntime {
       : role;
 
     const [knowledgeData, memoryData, activeDirectives] = await Promise.all([
-      this.knowledge && shouldQueryKnowledge ? this.knowledge.search(message).catch(e => {
+      this.knowledge && shouldQueryKnowledge ? this.knowledge.search(perceivedText).catch(e => {
         console.error("[SiduriRuntime] Knowledge search failed:", e.message);
         return [];
       }) : Promise.resolve([]),
-      this.memory.searchClaims(message, queryOptions, 5),
+      this.memory.searchClaims(perceivedText, queryOptions, 5),
       this.memory.getDirectives()
     ]);
 
@@ -280,7 +301,7 @@ export class SiduriRuntime {
         sourceType: 'user_chat_explicit',
         occurredAt: new Date().toISOString(),
         payload: {
-          message,
+          message: perceivedText,
           role,
           companionId: this.id,
           actorId: requestContext.actor.actorId,
@@ -338,18 +359,58 @@ export class SiduriRuntime {
       }
     }
 
-    // Execute ActionIntents via HandsOrgan
+    // PRIMARY SECURITY INVARIANT:
+    // Brain may propose an action, but Brain must never authorize its own action.
+    // Brain proposes; the policy layer authorizes; Hands executes; the audit layer records.
     const actionResults: ActionExecutionResult[] = [];
     if (this.hands && plan.actionIntents && plan.actionIntents.length > 0) {
-      for (const action of plan.actionIntents) {
-        const res = await this.hands.executeAction(action);
-        actionResults.push(res);
+      for (const rawAction of plan.actionIntents) {
+        // 1. Context Propagation: Attach request provenance to ActionIntent
+        const actionWithContext: ActionIntent = {
+          ...rawAction,
+          context: requestContext,
+          executionId: rawAction.executionId || `exec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        };
+
+        // 2. Action Policy Authorization Boundary Check
+        const { decision, capability } = await this.actionPolicy.evaluateAction(actionWithContext, requestContext);
+
+        if (!decision.allowed || !capability) {
+          // Action was rejected by policy
+          actionResults.push({
+            actionId: actionWithContext.actionId,
+            executionId: decision.executionId,
+            toolName: actionWithContext.toolName,
+            lifecycle: 'REJECTED',
+            success: false,
+            error: `Action authorization rejected by policy: ${decision.reason}`,
+            decision,
+          });
+          continue;
+        }
+
+        // 3. Hands Execution (only authorized actions execute with AuthorizationCapability)
+        const res = await this.hands.executeAction(actionWithContext, capability);
+        actionResults.push({
+          ...res,
+          decision,
+        });
+
+        // 4. Audit recording for execution outcome
+        await this.actionPolicy.recordAudit(
+          actionWithContext,
+          requestContext,
+          decision,
+          res.lifecycle,
+          res.result,
+          res.error,
+          res.durationMs
+        );
       }
     }
 
     // 5. T5 Output Path: Create ExperienceEvents and dispatch to registered adapters
     const experienceEvents = createExperienceEvents({
-
       responseId: stagedPlan.responseId,
       companionId: this.id,
       correlationId: requestContext.conversation.correlationId,
@@ -422,4 +483,3 @@ export class SiduriRuntime {
     };
   }
 }
-

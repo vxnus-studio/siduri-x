@@ -4,6 +4,13 @@ export * from './evidence';
 export * from './gating';
 export * from './experience';
 export * from './dispatcher';
+export * from './action';
+export * from './action-policy';
+export * from './ear-types';
+export * from './capability';
+
+import { ActionIntent } from './action';
+import { EarIngestOptions } from './ear-types';
 
 // Config
 export interface OrganConfig {
@@ -226,31 +233,6 @@ export interface KnowledgeOrgan {
   search(query: string): Promise<KnowledgeItem[]>;
 }
 
-export interface ActionIntent {
-  actionId: string;
-  toolName: string;
-  parameters: Record<string, unknown>;
-  description?: string;
-}
-
-export interface ActionExecutionResult {
-  actionId: string;
-  toolName: string;
-  success: boolean;
-  result?: unknown;
-  error?: string;
-}
-
-export interface ToolDefinition {
-  name: string;
-  description: string;
-  inputSchema: Record<string, unknown>;
-}
-
-export interface HandsOrgan {
-  listTools(): Promise<ToolDefinition[]>;
-  executeAction(action: ActionIntent): Promise<ActionExecutionResult>;
-}
 
 // Ear (Perception)
 export interface EarPerception {
@@ -263,7 +245,7 @@ export interface EarPerception {
 }
 
 export interface EarOrgan {
-  listen(source: string, payload: unknown): Promise<EarPerception>;
+  listen(source: string, payload: unknown, options?: EarIngestOptions): Promise<EarPerception>;
   transcribeAudio?(audio: Uint8Array): Promise<string>;
 }
 

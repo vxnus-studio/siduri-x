@@ -88,6 +88,19 @@ export class OpenAICompatibleBrain implements BrainOrgan {
                   },
                   required: ["directive", "priority"]
                 }
+              },
+              actionIntents: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    actionId: { type: "string" },
+                    toolName: { type: "string" },
+                    parameters: { type: "object" },
+                    description: { type: "string" }
+                  },
+                  required: ["actionId", "toolName", "parameters"]
+                }
               }
             },
             required: ["speech", "language"]
