@@ -1,5 +1,5 @@
 {
-  "name": "@siduri/memory",
+  "name": "@siduri-x/memory",
   "organType": "memory",
   "version": "1.0.0",
   "displayName": "Memory (PostgreSQL FTS Claims)",

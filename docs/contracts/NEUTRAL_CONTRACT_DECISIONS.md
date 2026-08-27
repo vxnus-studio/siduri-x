@@ -132,7 +132,7 @@ them into the neutral contract explicitly and record ambiguity. In particular:
 
 ## Contract acceptance gates
 
-Before runtime extraction begins, `@siduri/core` must be able to represent:
+Before runtime extraction begins, `@siduri-x/core` must be able to represent:
 
 - actor authorization independently from channel and audience;
 - explicit subject identity without a global primary-user assumption;

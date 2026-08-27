@@ -10,7 +10,7 @@ import {
   InMemoryActionStore,
   verifyCapabilitySignature,
   computeParametersHash,
-} from '@siduri/core';
+} from '@siduri-x/core';
 import { validateInputSchema } from './schema-validator';
 
 export interface ToolHandler {

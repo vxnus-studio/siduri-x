@@ -1,5 +1,5 @@
 {
-  "name": "@siduri/knowledge",
+  "name": "@siduri-x/knowledge",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +11,7 @@
   "dependencies": {
     "@vxnus/e": "^0.1.4",
     "@vxnus/e-knowledge": "^0.1.4",
-    "@siduri/core": "workspace:*"
+    "@siduri-x/core": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

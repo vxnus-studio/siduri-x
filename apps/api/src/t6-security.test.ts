@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp } from './app';
 import { SiduriRuntime } from './runtime';
-import { BrainContext, ResponsePlan, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult } from '@siduri/core';
+import { BrainContext, ResponsePlan, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult } from '@siduri-x/core';
 
 describe('T6 Security & Operations Threat Model Suite', () => {
   let mockBrain: any;

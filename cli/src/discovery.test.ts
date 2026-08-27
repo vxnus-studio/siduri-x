@@ -41,10 +41,10 @@ describe('Discovery & Dynamic Composition System Tests (Phase 3)', () => {
 
     const pkg = JSON.parse(files['package.json']);
     expect(Object.keys(pkg.dependencies).sort()).toEqual([
-      '@siduri/brain',
-      '@siduri/core',
-      '@siduri/hands',
-      '@siduri/vision',
+      '@siduri-x/brain',
+      '@siduri-x/core',
+      '@siduri-x/hands',
+      '@siduri-x/vision',
     ]);
 
     const schema = JSON.parse(files['siduri.schema.json']);

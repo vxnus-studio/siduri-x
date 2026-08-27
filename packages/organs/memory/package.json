@@ -1,5 +1,5 @@
 {
-  "name": "@siduri/memory",
+  "name": "@siduri-x/memory",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "pg": "^8.23.0",
-    "@siduri/core": "workspace:*"
+    "@siduri-x/core": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

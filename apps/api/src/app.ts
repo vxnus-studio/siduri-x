@@ -1,16 +1,16 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import { SiduriRuntime } from './runtime';
-import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri/brain';
-import { PostgresMemoryOrgan } from '@siduri/memory';
-import { VoicevoxAdapter } from '@siduri/voice';
-import { EKnowledgeAdapter } from '@siduri/knowledge';
-import { OpenRouterVisionAdapter } from '@siduri/vision';
-import { ActiveSelfCompiler } from '@siduri/behavior';
-import { Live2DAdapter } from '@siduri/body';
-import { FixtureObservationOrgan } from '@siduri/observation';
-import { DefaultHandsOrgan } from '@siduri/hands';
-import { DefaultEarOrgan } from '@siduri/ear';
+import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
+import { PostgresMemoryOrgan } from '@siduri-x/memory';
+import { VoicevoxAdapter } from '@siduri-x/voice';
+import { EKnowledgeAdapter } from '@siduri-x/knowledge';
+import { OpenRouterVisionAdapter } from '@siduri-x/vision';
+import { ActiveSelfCompiler } from '@siduri-x/behavior';
+import { Live2DAdapter } from '@siduri-x/body';
+import { FixtureObservationOrgan } from '@siduri-x/observation';
+import { DefaultHandsOrgan } from '@siduri-x/hands';
+import { DefaultEarOrgan } from '@siduri-x/ear';
 import { attachIdentity, requireRole, Identity } from './auth';
 import { mapRequestContext } from './context-mapper';
 

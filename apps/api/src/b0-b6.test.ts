@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp } from './app';
 import { SiduriRuntime } from './runtime';
-import { Message, BrainContext, ResponsePlan } from '@siduri/core';
+import { Message, BrainContext, ResponsePlan } from '@siduri-x/core';
 
 describe('T0 B0 & B6 Runtime Proof Suite', () => {
   let mockBrain: any;

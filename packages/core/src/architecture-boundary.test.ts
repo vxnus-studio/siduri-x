@@ -7,16 +7,16 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
   const corePackageJsonPath = path.resolve(__dirname, '../package.json');
 
   const EXPECTED_ORGANS = [
-    { dir: 'brain', name: '@siduri/brain', organType: 'brain', configKey: 'brain' },
-    { dir: 'memory', name: '@siduri/memory', organType: 'memory', configKey: 'memory' },
-    { dir: 'knowledge', name: '@siduri/knowledge', organType: 'knowledge', configKey: 'knowledge' },
-    { dir: 'behavior', name: '@siduri/behavior', organType: 'behavior', configKey: 'behavior' },
-    { dir: 'ear', name: '@siduri/ear', organType: 'ear', configKey: 'ear' },
-    { dir: 'vision', name: '@siduri/vision', organType: 'vision', configKey: 'vision' },
-    { dir: 'hands', name: '@siduri/hands', organType: 'hands', configKey: 'hands' },
-    { dir: 'body', name: '@siduri/body', organType: 'body', configKey: 'body' },
-    { dir: 'voice', name: '@siduri/voice', organType: 'voice', configKey: 'voice' },
-    { dir: 'observation', name: '@siduri/observation', organType: 'observation', configKey: 'observation' },
+    { dir: 'brain', name: '@siduri-x/brain', organType: 'brain', configKey: 'brain' },
+    { dir: 'memory', name: '@siduri-x/memory', organType: 'memory', configKey: 'memory' },
+    { dir: 'knowledge', name: '@siduri-x/knowledge', organType: 'knowledge', configKey: 'knowledge' },
+    { dir: 'behavior', name: '@siduri-x/behavior', organType: 'behavior', configKey: 'behavior' },
+    { dir: 'ear', name: '@siduri-x/ear', organType: 'ear', configKey: 'ear' },
+    { dir: 'vision', name: '@siduri-x/vision', organType: 'vision', configKey: 'vision' },
+    { dir: 'hands', name: '@siduri-x/hands', organType: 'hands', configKey: 'hands' },
+    { dir: 'body', name: '@siduri-x/body', organType: 'body', configKey: 'body' },
+    { dir: 'voice', name: '@siduri-x/voice', organType: 'voice', configKey: 'voice' },
+    { dir: 'observation', name: '@siduri-x/observation', organType: 'observation', configKey: 'observation' },
   ];
 
   it('package.json has zero dependencies on @siduri-y organ packages', () => {
@@ -28,7 +28,7 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
     };
 
     const organDeps = Object.keys(allDeps).filter(
-      (dep) => dep.startsWith('@siduri/') && dep !== '@siduri/core'
+      (dep) => dep.startsWith('@siduri-x/') && dep !== '@siduri-x/core'
     );
 
     expect(organDeps).toEqual([]);
@@ -45,8 +45,8 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
       for (const line of lines) {
         if (
           (line.includes('import ') || line.includes('require(') || line.includes('export * from')) &&
-          line.includes('@siduri/') &&
-          !line.includes('@siduri/core')
+          line.includes('@siduri-x/') &&
+          !line.includes('@siduri-x/core')
         ) {
           forbiddenImports.push({ file, match: line.trim() });
         }

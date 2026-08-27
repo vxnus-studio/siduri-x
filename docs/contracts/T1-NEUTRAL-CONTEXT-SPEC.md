@@ -3,7 +3,7 @@
 Status: implementation target; not yet represented by the current runtime
 
 This specification turns the neutral contract decisions into concrete boundary
-shapes for T1 P1/P2. It is a target for `@siduri/core` and the API
+shapes for T1 P1/P2. It is a target for `@siduri-x/core` and the API
 compatibility mapper. It does not authorize changing later memory, prompt, or
 UI behavior before the boundary is implemented.
 

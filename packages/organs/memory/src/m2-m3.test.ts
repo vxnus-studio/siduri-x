@@ -1,6 +1,6 @@
 import { extractDeterministicTeaching } from './teaching';
 import { PostgresMemoryOrgan } from './index';
-import { RequestContext } from '@siduri/core';
+import { RequestContext } from '@siduri-x/core';
 import { Pool } from 'pg';
 
 jest.mock('pg', () => {

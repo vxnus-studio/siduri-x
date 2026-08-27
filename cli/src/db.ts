@@ -57,7 +57,7 @@ export async function runDbPush(options: DbPushOptions = {}): Promise<DbPushResu
 
   // 1. Discover manifests of configured organs
   const registry = OrganRegistry.discover([
-    path.join(projectDir, 'node_modules/@siduri'),
+    path.join(projectDir, 'node_modules/@siduri-x'),
     path.resolve(__dirname, '../../packages/organs'),
     path.resolve(process.cwd(), 'packages/organs'),
   ]);

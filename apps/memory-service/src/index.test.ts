@@ -10,7 +10,7 @@ jest.mock('@modelcontextprotocol/sdk/server/sse.js', () => ({
   SSEServerTransport: jest.fn()
 }));
 
-jest.mock('@siduri/memory', () => {
+jest.mock('@siduri-x/memory', () => {
   return {
     PostgresMemoryOrgan: jest.fn().mockImplementation(() => ({
       initialize: jest.fn().mockResolvedValue(undefined),

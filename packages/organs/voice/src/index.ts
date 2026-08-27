@@ -1,4 +1,4 @@
-import { VoiceOrgan, AudioEvent, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult, validateExperienceEvent } from '@siduri/core';
+import { VoiceOrgan, AudioEvent, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult, validateExperienceEvent } from '@siduri-x/core';
 
 export interface VoicevoxConfig {
   baseUrl: string;

@@ -4,7 +4,7 @@ Status: in progress
 
 ## Implemented
 
-The new `@siduri/observation` organ provides a provider-independent boundary
+The new `@siduri-x/observation` organ provides a provider-independent boundary
 for screen/image evidence:
 
 - accepts an in-memory frame and never persists raw bytes;
@@ -30,7 +30,7 @@ publish anything to the public overlay.
 ## Verification
 
 ```bash
-pnpm --filter @siduri/api build
+pnpm --filter @siduri-x/api build
 cd packages/organs/observation && pnpm exec jest --config jest.config.json
 ```
 

@@ -36,9 +36,9 @@ copy:
 
 | Concern | Original reference | Siduri-Y destination |
 | --- | --- | --- |
-| Blank-slate prompt rules | `siduri/tests/test_chat.py`, `siduri/packages/persona/prompt.py` | `@siduri/brain` prompt contract and regression tests |
+| Blank-slate prompt rules | `siduri/tests/test_chat.py`, `siduri/packages/persona/prompt.py` | `@siduri-x/brain` prompt contract and regression tests |
 | Chat routing and history bounds | `siduri/apps/chat/`, `siduri/apps/orchestrator/` | runtime channel/audience contract |
-| Claim lifecycle | `siduri/docs/memory/TEACH_SIDURI.md`, `siduri/packages/memory/` | `@siduri/core` and memory organ |
+| Claim lifecycle | `siduri/docs/memory/TEACH_SIDURI.md`, `siduri/packages/memory/` | `@siduri-x/core` and memory organ |
 | Candidate approval boundary | `siduri/docs/memory/MEMORY_MODEL.md` | memory and operator contracts |
 | Provenance and evidence | `siduri/docs/memory/TEACH_SIDURI.md` | source events, claims, citations, response metadata |
 | Active behavior compilation | `siduri/packages/persona/behavior.py` | behavior organ |

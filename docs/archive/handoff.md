@@ -183,11 +183,11 @@ handoff, open decisions, limitations, and public-release checklist.
 1. **Phase 3A: API Contract Parity (COMPLETED)**
    - Performed source-to-source audit of `siduri/apps/orchestrator/server.py` against `siduri-y/apps/api/src/index.ts`.
    - Expanded `PostgresMemoryOrgan` with missing admin methods: `getClaims`, `getPendingClaims`, `approveClaim`, `rejectClaim`, `rejectDirective`, `revokeDirective`, and `disableDirective`.
-   - Updated `MemoryOrgan` interface in `@siduri/core` to expose these methods.
+   - Updated `MemoryOrgan` interface in `@siduri-x/core` to expose these methods.
    - Implemented full CRUD API surface in `apps/api/src/index.ts` to mirror the Python orchestrator's requirements.
 2. **Phase 3B: Web UI implementation (COMPLETED)**
    - Ported original Chat (`/chat`) and Operator Console (`/operator`) Next.js interfaces directly to `siduri-y/apps/web/src/app`.
    - Ported original OBS / Live2D Overlay (`/overlay`) to `siduri-y/apps/web/src/app`.
    - Updated Next.js clients to construct REST request bodies using `{ id: <UUID>, companionId: "default" }` rather than the old Python payload contracts to interface with the strictly isolated API.
-   - Adapted the Overlay client to correctly parse the newer `@siduri/body` WebSocket event schema (`type: "speech" | "state_transition" | "lifecycle"`) instead of relying on the legacy `response_plan` event, properly simulating amplitude where no longer explicitly provided.
+   - Adapted the Overlay client to correctly parse the newer `@siduri-x/body` WebSocket event schema (`type: "speech" | "state_transition" | "lifecycle"`) instead of relying on the legacy `response_plan` event, properly simulating amplitude where no longer explicitly provided.
    - Removed broken legacy CSS imports from `globals.css` and successfully completed `pnpm run build` across all workspace apps. All frontend pages render successfully.

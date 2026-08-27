@@ -1,4 +1,4 @@
-import { BehaviorOrgan, BehaviorContext, BehaviorDirective, ActiveSelfProjection } from '@siduri/core';
+import { BehaviorOrgan, BehaviorContext, BehaviorDirective, ActiveSelfProjection } from '@siduri-x/core';
 
 const UNSAFE_INSTRUCTION_PATTERN = /\b(ignore|override|bypass)\b.{0,40}\b(system|policy|rules?|approval|permissions?)\b|\b(reveal|expose)\b.{0,40}\b(secret|token|prompt|private memory)\b/i;
 

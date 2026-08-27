@@ -39,8 +39,8 @@ export function validateOrganManifest(manifest: unknown, sourcePath?: string): O
     throw new Error(`Invalid manifest at ${sourcePath || 'unknown'}: expected an object`);
   }
   const m = manifest as Partial<OrganManifest>;
-  if (!m.name || typeof m.name !== 'string' || !m.name.startsWith('@siduri/')) {
-    throw new Error(`Invalid manifest name in ${sourcePath || 'unknown'}: expected package name starting with @siduri/`);
+  if (!m.name || typeof m.name !== 'string' || !m.name.startsWith('@siduri-x/')) {
+    throw new Error(`Invalid manifest name in ${sourcePath || 'unknown'}: expected package name starting with @siduri-x/`);
   }
   if (!m.organType || typeof m.organType !== 'string') {
     throw new Error(`Invalid manifest organType in ${sourcePath || m.name}`);

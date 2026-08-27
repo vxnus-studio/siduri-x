@@ -1,5 +1,5 @@
 {
-  "name": "@siduri/brain",
+  "name": "@siduri-x/brain",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "zod": "^4.4.3",
-    "@siduri/core": "workspace:*"
+    "@siduri-x/core": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

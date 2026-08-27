@@ -1,5 +1,5 @@
 import { ActiveSelfCompiler } from './index';
-import { BehaviorDirective, BehaviorContext } from '@siduri/core';
+import { BehaviorDirective, BehaviorContext } from '@siduri-x/core';
 
 describe('ActiveSelfCompiler', () => {
   const compiler = new ActiveSelfCompiler();

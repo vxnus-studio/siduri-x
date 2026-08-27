@@ -1,5 +1,5 @@
 {
-  "name": "@siduri/api",
+  "name": "@siduri-x/api",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
@@ -9,17 +9,17 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri/behavior": "workspace:*",
-    "@siduri/body": "workspace:*",
-    "@siduri/brain": "workspace:*",
-    "@siduri/core": "workspace:*",
-    "@siduri/ear": "workspace:*",
-    "@siduri/hands": "workspace:*",
-    "@siduri/knowledge": "workspace:*",
-    "@siduri/memory": "workspace:*",
-    "@siduri/observation": "workspace:*",
-    "@siduri/vision": "workspace:*",
-    "@siduri/voice": "workspace:*",
+    "@siduri-x/behavior": "workspace:*",
+    "@siduri-x/body": "workspace:*",
+    "@siduri-x/brain": "workspace:*",
+    "@siduri-x/core": "workspace:*",
+    "@siduri-x/ear": "workspace:*",
+    "@siduri-x/hands": "workspace:*",
+    "@siduri-x/knowledge": "workspace:*",
+    "@siduri-x/memory": "workspace:*",
+    "@siduri-x/observation": "workspace:*",
+    "@siduri-x/vision": "workspace:*",
+    "@siduri-x/voice": "workspace:*",
     "cors": "^2.8.5",
 
     "dotenv": "^16.3.1",

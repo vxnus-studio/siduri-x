@@ -4,7 +4,7 @@ import { generateInstanceFiles } from './generator';
 describe('Instance Generator Composition Invariants (Phase 3)', () => {
   const MOCK_MANIFESTS: Record<string, OrganManifest> = {
     brain: {
-      name: '@siduri/brain',
+      name: '@siduri-x/brain',
       organType: 'brain',
       version: '1.0.0',
       displayName: 'Brain (Cognition & Planning)',
@@ -16,7 +16,7 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
       services: [{ name: 'LLM Inference', kind: 'http_service' }],
     },
     hands: {
-      name: '@siduri/hands',
+      name: '@siduri-x/hands',
       organType: 'hands',
       version: '1.0.0',
       displayName: 'Hands (MCP Tool Execution)',
@@ -28,7 +28,7 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
       services: [],
     },
     memory: {
-      name: '@siduri/memory',
+      name: '@siduri-x/memory',
       organType: 'memory',
       version: '1.0.0',
       displayName: 'Memory (PostgreSQL FTS Claims)',
@@ -41,7 +41,7 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
       database: { engine: 'postgres', migrationsDir: './migrations' },
     },
     body: {
-      name: '@siduri/body',
+      name: '@siduri-x/body',
       organType: 'body',
       version: '1.0.0',
       displayName: 'Body (Live2D & Avatar State)',
@@ -53,7 +53,7 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
       services: [],
     },
     voice: {
-      name: '@siduri/voice',
+      name: '@siduri-x/voice',
       organType: 'voice',
       version: '1.0.0',
       displayName: 'Voice (VOICEVOX Speech Synthesis)',
@@ -73,17 +73,17 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     });
 
     const pkg = JSON.parse(files['package.json']);
-    expect(pkg.dependencies['@siduri/core']).toBeDefined();
-    expect(pkg.dependencies['@siduri/brain']).toBeDefined();
-    expect(pkg.dependencies['@siduri/memory']).toBeUndefined();
-    expect(pkg.dependencies['@siduri/hands']).toBeUndefined();
-    expect(pkg.dependencies['@siduri/voice']).toBeUndefined();
-    expect(pkg.dependencies['@siduri/body']).toBeUndefined();
+    expect(pkg.dependencies['@siduri-x/core']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/brain']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/memory']).toBeUndefined();
+    expect(pkg.dependencies['@siduri-x/hands']).toBeUndefined();
+    expect(pkg.dependencies['@siduri-x/voice']).toBeUndefined();
+    expect(pkg.dependencies['@siduri-x/body']).toBeUndefined();
 
     // src/index.js
-    expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@siduri/brain'");
-    expect(files['src/index.js']).not.toContain('@siduri/hands');
-    expect(files['src/index.js']).not.toContain('@siduri/memory');
+    expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@siduri-x/brain'");
+    expect(files['src/index.js']).not.toContain('@siduri-x/hands');
+    expect(files['src/index.js']).not.toContain('@siduri-x/memory');
     expect(files['src/index.js']).not.toContain('siduri-runtime.js');
 
     // siduri.config.json
@@ -108,15 +108,15 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     });
 
     const pkg = JSON.parse(files['package.json']);
-    expect(pkg.dependencies['@siduri/core']).toBeDefined();
-    expect(pkg.dependencies['@siduri/brain']).toBeDefined();
-    expect(pkg.dependencies['@siduri/hands']).toBeDefined();
-    expect(pkg.dependencies['@siduri/memory']).toBeUndefined();
+    expect(pkg.dependencies['@siduri-x/core']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/brain']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/hands']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/memory']).toBeUndefined();
 
     // src/index.js
-    expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@siduri/brain'");
-    expect(files['src/index.js']).toContain("import { DefaultHandsOrgan } from '@siduri/hands'");
-    expect(files['src/index.js']).not.toContain('@siduri/memory');
+    expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@siduri-x/brain'");
+    expect(files['src/index.js']).toContain("import { DefaultHandsOrgan } from '@siduri-x/hands'");
+    expect(files['src/index.js']).not.toContain('@siduri-x/memory');
 
     // .env.example
     expect(files['.env.example']).toContain('OPENROUTER_API_KEY');
@@ -133,10 +133,10 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     });
 
     const pkg = JSON.parse(files['package.json']);
-    expect(pkg.dependencies['@siduri/core']).toBeDefined();
-    expect(pkg.dependencies['@siduri/brain']).toBeDefined();
-    expect(pkg.dependencies['@siduri/memory']).toBeDefined();
-    expect(pkg.dependencies['@siduri/hands']).toBeUndefined();
+    expect(pkg.dependencies['@siduri-x/core']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/brain']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/memory']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/hands']).toBeUndefined();
 
     // .env.example
     expect(files['.env.example']).toContain('OPENROUTER_API_KEY');
@@ -161,12 +161,12 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     });
 
     const pkg = JSON.parse(files['package.json']);
-    expect(pkg.dependencies['@siduri/core']).toBeDefined();
-    expect(pkg.dependencies['@siduri/brain']).toBeDefined();
-    expect(pkg.dependencies['@siduri/memory']).toBeDefined();
-    expect(pkg.dependencies['@siduri/hands']).toBeDefined();
-    expect(pkg.dependencies['@siduri/body']).toBeDefined();
-    expect(pkg.dependencies['@siduri/voice']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/core']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/brain']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/memory']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/hands']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/body']).toBeDefined();
+    expect(pkg.dependencies['@siduri-x/voice']).toBeDefined();
 
     // Body asset directory requested
     expect(files.createAssetsBodyDir).toBe(true);

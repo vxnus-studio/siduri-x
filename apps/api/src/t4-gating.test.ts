@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp } from './app';
 import { SiduriRuntime } from './runtime';
-import { BrainContext, ResponsePlan } from '@siduri/core';
+import { BrainContext, ResponsePlan } from '@siduri-x/core';
 
 describe('T4 Response Gating and Staged Approval Integration Suite', () => {
   let mockBrain: any;

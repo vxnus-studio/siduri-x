@@ -61,7 +61,7 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<DoctorRepo
   const organKeys = Object.keys(configuredOrgansMap);
 
   const registry = OrganRegistry.discover([
-    path.join(projectDir, 'node_modules/@siduri'),
+    path.join(projectDir, 'node_modules/@siduri-x'),
     path.resolve(__dirname, '../../packages/organs'),
     path.resolve(process.cwd(), 'packages/organs'),
   ]);
@@ -78,7 +78,7 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<DoctorRepo
         name: `Manifest resolution: ${organKey}`,
         status: 'FAIL',
         message: `Could not resolve package manifest for configured organ '${organKey}'.`,
-        remediation: `Ensure @siduri/${organKey} is installed in package.json and npm install has been run.`,
+        remediation: `Ensure @siduri-x/${organKey} is installed in package.json and npm install has been run.`,
       });
     } else {
       selectedManifests.push(m);

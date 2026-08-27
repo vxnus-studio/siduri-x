@@ -1,6 +1,6 @@
 # E Knowledge Integration
 
-Siduri consumes E knowledge packs through `@siduri/knowledge`.
+Siduri consumes E knowledge packs through `@siduri-x/knowledge`.
 
 ## Installation
 
