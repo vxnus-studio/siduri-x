@@ -5,7 +5,7 @@ import {
   DiagnosticCode,
   ContextError,
   validateRequestContext,
-} from '@siduri-y/core';
+} from '@siduri/core';
 
 export interface ContextMapperOptions {
   endpointPolicy?: 'public' | 'private' | 'operator' | 'direct';

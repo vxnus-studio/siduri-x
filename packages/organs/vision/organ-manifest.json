@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/vision",
+  "name": "@siduri/vision",
   "organType": "vision",
   "version": "1.0.0",
   "displayName": "Vision (Visual Perception & OCR)",
@@ -9,11 +9,16 @@
   "configKey": "vision",
   "configSchema": {
     "type": "object",
-    "required": ["provider"],
+    "required": [
+      "provider"
+    ],
     "properties": {
       "provider": {
         "type": "string",
-        "enum": ["openrouter", "none"]
+        "enum": [
+          "openrouter",
+          "none"
+        ]
       },
       "model": {
         "type": "string",

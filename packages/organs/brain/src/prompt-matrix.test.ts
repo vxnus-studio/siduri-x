@@ -1,5 +1,5 @@
 import { PromptAssembler } from './prompt';
-import { BrainContext } from '@siduri-y/core';
+import { BrainContext } from '@siduri/core';
 
 describe('T3 Prompt Section Matrix Contract Suite', () => {
   const assembler = new PromptAssembler();

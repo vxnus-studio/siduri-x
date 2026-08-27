@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/hands",
+  "name": "@siduri/hands",
   "organType": "hands",
   "version": "1.0.0",
   "displayName": "Hands (MCP Tool Execution)",
@@ -18,12 +18,25 @@
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["serverName"],
+          "required": [
+            "serverName"
+          ],
           "properties": {
-            "serverName": { "type": "string" },
-            "baseUrl": { "type": "string" },
-            "command": { "type": "string" },
-            "args": { "type": "array", "items": { "type": "string" } }
+            "serverName": {
+              "type": "string"
+            },
+            "baseUrl": {
+              "type": "string"
+            },
+            "command": {
+              "type": "string"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         }
       }

@@ -23,17 +23,17 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
   fs.mkdirSync(tempPackDir, { recursive: true });
 
   const canonicalPackages = [
-    { name: '@siduri-y/core', dir: 'packages/core', isOrgan: false, tarName: 'siduri-y-core-1.0.0.tgz' },
-    { name: '@siduri-y/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: 'siduri-y-brain-1.0.0.tgz' },
-    { name: '@siduri-y/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: 'siduri-y-memory-1.0.0.tgz' },
-    { name: '@siduri-y/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: 'siduri-y-knowledge-1.0.0.tgz' },
-    { name: '@siduri-y/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: 'siduri-y-behavior-1.0.0.tgz' },
-    { name: '@siduri-y/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: 'siduri-y-ear-1.0.0.tgz' },
-    { name: '@siduri-y/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: 'siduri-y-vision-1.0.0.tgz' },
-    { name: '@siduri-y/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: 'siduri-y-hands-1.0.0.tgz' },
-    { name: '@siduri-y/body', dir: 'packages/organs/body', isOrgan: true, tarName: 'siduri-y-body-1.0.0.tgz' },
-    { name: '@siduri-y/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: 'siduri-y-voice-1.0.0.tgz' },
-    { name: '@siduri-y/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: 'siduri-y-observation-1.0.0.tgz' },
+    { name: '@siduri/core', dir: 'packages/core', isOrgan: false, tarName: 'siduri-core-1.0.0.tgz' },
+    { name: '@siduri/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: 'siduri-brain-1.0.0.tgz' },
+    { name: '@siduri/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: 'siduri-memory-1.0.0.tgz' },
+    { name: '@siduri/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: 'siduri-knowledge-1.0.0.tgz' },
+    { name: '@siduri/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: 'siduri-behavior-1.0.0.tgz' },
+    { name: '@siduri/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: 'siduri-ear-1.0.0.tgz' },
+    { name: '@siduri/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: 'siduri-vision-1.0.0.tgz' },
+    { name: '@siduri/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: 'siduri-hands-1.0.0.tgz' },
+    { name: '@siduri/body', dir: 'packages/organs/body', isOrgan: true, tarName: 'siduri-body-1.0.0.tgz' },
+    { name: '@siduri/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: 'siduri-voice-1.0.0.tgz' },
+    { name: '@siduri/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: 'siduri-observation-1.0.0.tgz' },
     { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: 'vxnus-siduri-0.0.5.tgz' },
   ];
 
@@ -91,7 +91,7 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
         }
       }
 
-      if (pkg.name === '@siduri-y/memory') {
+      if (pkg.name === '@siduri/memory') {
         if (!listing.some((l) => l.includes('package/migrations/001_initial_schema.sql'))) {
           errors.push(`${pkg.name}: migrations/001_initial_schema.sql missing in tarball`);
         }

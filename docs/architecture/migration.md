@@ -58,7 +58,7 @@ Simplify Siduri into a clean, single-user autonomous cognitive agent and decoupl
    - Remove audience-isolation leak checks (`allowedAudiences` per viewer) and channel-based disclosure barriers designed for live streams.
    - Retain companion isolation (`companionId`) and memory lifecycle states (`PENDING`, `APPROVED`, `EXPIRED`, `REVOKED`).
 3. **Hands Organ (MCP)**:
-   - Build `@siduri-y/hands` package enabling standardized tool use via Model Context Protocol.
+   - Build `@siduri/hands` package enabling standardized tool use via Model Context Protocol.
 4. **Ear Perception Ingestion**:
    - Build a formal perception ingress abstraction for multi-modal sensory inputs (audio, text, webhooks).
 

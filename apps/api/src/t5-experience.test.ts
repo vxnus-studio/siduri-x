@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp } from './app';
 import { SiduriRuntime } from './runtime';
-import { BrainContext, ResponsePlan, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult } from '@siduri-y/core';
+import { BrainContext, ResponsePlan, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult } from '@siduri/core';
 
 describe('T5 Experience Event and Output Adapters Suite', () => {
   let mockBrain: any;

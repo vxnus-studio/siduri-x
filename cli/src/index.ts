@@ -74,7 +74,7 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   const availableManifests = registry.getAll();
 
   if (availableManifests.length === 0) {
-    throw new Error('No @siduri-y/* organ packages found. Please ensure organs are installed or in workspace.');
+    throw new Error('No @siduri/* organ packages found. Please ensure organs are installed or in workspace.');
   }
 
   printSection('Companion Details');
@@ -123,7 +123,7 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   printSection('Review Composition');
   console.log(`  ${colors.dim}Companion Name:${colors.reset}  ${companionName}`);
   console.log(`  ${colors.dim}Target Path:${colors.reset}     ${projectDir}`);
-  console.log(`  ${colors.dim}Core Protocol:${colors.reset}   @siduri-y/core`);
+  console.log(`  ${colors.dim}Core Protocol:${colors.reset}   @siduri/core`);
   console.log(`  ${colors.dim}Selected Organs:${colors.reset}`);
   for (const m of selectedManifests) {
     console.log(`    - ${m.displayName} (${colors.dim}${m.name}${colors.reset})`);

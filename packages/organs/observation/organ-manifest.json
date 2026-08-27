@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/observation",
+  "name": "@siduri/observation",
   "organType": "observation",
   "version": "1.0.0",
   "displayName": "Observation (Grounded Observation Ingestion)",

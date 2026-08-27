@@ -4,7 +4,7 @@ import {
   ExperienceEvent,
   ExperienceAdapterResult,
   validateExperienceEvent,
-} from '@siduri-y/core';
+} from '@siduri/core';
 
 export type BodyState = 'idle' | 'speaking' | 'acting';
 

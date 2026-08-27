@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/core",
+  "name": "@siduri/core",
   "version": "1.0.0",
   "description": "Core runtime types, evidence protocol, action dispatcher, capability validation, and SiduriRuntime protocol",
   "license": "UNLICENSED",

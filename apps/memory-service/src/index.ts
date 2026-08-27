@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { PostgresMemoryOrgan } from '@siduri-y/memory';
+import { PostgresMemoryOrgan } from '@siduri/memory';
 
 export function createServer(memoryConfig?: { connectionString: string }): { app: import("express").Express, memory: any, mcpServer: any } {
   const app = express();

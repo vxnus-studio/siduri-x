@@ -1,5 +1,5 @@
 import { DefaultHandsOrgan, ToolHandler } from './index';
-import { AuthorizationCapability, ActionPolicyEngine, RequestContext } from '@siduri-y/core';
+import { AuthorizationCapability, ActionPolicyEngine, RequestContext } from '@siduri/core';
 
 describe('DefaultHandsOrgan Adversarial Remediation Suite', () => {
   const secretKey = 'test_hands_secret';

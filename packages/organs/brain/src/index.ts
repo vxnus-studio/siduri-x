@@ -1,4 +1,4 @@
-import { BrainOrgan, BrainContext, ResponsePlan, Message } from '@siduri-y/core';
+import { BrainOrgan, BrainContext, ResponsePlan, Message } from '@siduri/core';
 import { PromptAssembler } from './prompt';
 import { z } from 'zod';
 

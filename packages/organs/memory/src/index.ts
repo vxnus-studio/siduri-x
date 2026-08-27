@@ -1,4 +1,4 @@
-import { MemoryOrgan, Claim, MemoryScope, BehaviorDirective, SourceEvent, MemoryQueryOptions } from '@siduri-y/core';
+import { MemoryOrgan, Claim, MemoryScope, BehaviorDirective, SourceEvent, MemoryQueryOptions } from '@siduri/core';
 import { Pool } from 'pg';
 import { UP_MIGRATION } from './schema';
 export * from './teaching';

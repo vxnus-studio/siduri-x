@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/knowledge",
+  "name": "@siduri/knowledge",
   "organType": "knowledge",
   "version": "1.0.0",
   "displayName": "Knowledge (E-Compatible Cited Facts)",
@@ -9,11 +9,18 @@
   "configKey": "knowledge",
   "configSchema": {
     "type": "object",
-    "required": ["provider"],
+    "required": [
+      "provider"
+    ],
     "properties": {
       "provider": {
         "type": "string",
-        "enum": ["e-knowledge", "e-remote", "e-hub", "none"]
+        "enum": [
+          "e-knowledge",
+          "e-remote",
+          "e-hub",
+          "none"
+        ]
       },
       "packPath": {
         "type": "string"
@@ -33,7 +40,11 @@
       },
       "preferredMode": {
         "type": "string",
-        "enum": ["lexical", "semantic", "hybrid"],
+        "enum": [
+          "lexical",
+          "semantic",
+          "hybrid"
+        ],
         "default": "lexical"
       }
     }

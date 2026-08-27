@@ -1,4 +1,4 @@
-import { VisionOrgan } from '@siduri-y/core';
+import { VisionOrgan } from '@siduri/core';
 import { spawn } from 'child_process';
 
 export interface OpenRouterVisionConfig {

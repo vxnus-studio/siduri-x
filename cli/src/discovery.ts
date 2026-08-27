@@ -43,8 +43,8 @@ export class OrganRegistry {
           // 2. Monorepo organs folder relative to cwd
           path.resolve(process.cwd(), 'packages/organs'),
           // 3. Node modules of current directory or global resolution
-          path.resolve(process.cwd(), 'node_modules/@siduri-y'),
-          path.resolve(__dirname, '../node_modules/@siduri-y'),
+          path.resolve(process.cwd(), 'node_modules/@siduri'),
+          path.resolve(__dirname, '../node_modules/@siduri'),
         ];
 
     const visitedDirs = new Set<string>();

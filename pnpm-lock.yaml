@@ -17,37 +17,37 @@ importers:
 
   apps/api:
     dependencies:
-      '@siduri-y/behavior':
+      '@siduri/behavior':
         specifier: workspace:*
         version: link:../../packages/organs/behavior
-      '@siduri-y/body':
+      '@siduri/body':
         specifier: workspace:*
         version: link:../../packages/organs/body
-      '@siduri-y/brain':
+      '@siduri/brain':
         specifier: workspace:*
         version: link:../../packages/organs/brain
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@siduri-y/ear':
+      '@siduri/ear':
         specifier: workspace:*
         version: link:../../packages/organs/ear
-      '@siduri-y/hands':
+      '@siduri/hands':
         specifier: workspace:*
         version: link:../../packages/organs/hands
-      '@siduri-y/knowledge':
+      '@siduri/knowledge':
         specifier: workspace:*
         version: link:../../packages/organs/knowledge
-      '@siduri-y/memory':
+      '@siduri/memory':
         specifier: workspace:*
         version: link:../../packages/organs/memory
-      '@siduri-y/observation':
+      '@siduri/observation':
         specifier: workspace:*
         version: link:../../packages/organs/observation
-      '@siduri-y/vision':
+      '@siduri/vision':
         specifier: workspace:*
         version: link:../../packages/organs/vision
-      '@siduri-y/voice':
+      '@siduri/voice':
         specifier: workspace:*
         version: link:../../packages/organs/voice
       cors:
@@ -136,10 +136,10 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^0.6.0
         version: 0.6.1
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@siduri-y/memory':
+      '@siduri/memory':
         specifier: workspace:*
         version: link:../../packages/organs/memory
       cors:
@@ -292,7 +292,7 @@ importers:
 
   packages/organs/behavior:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
     devDependencies:
@@ -311,7 +311,7 @@ importers:
 
   packages/organs/body:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
     devDependencies:
@@ -333,7 +333,7 @@ importers:
 
   packages/organs/brain:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
       zod:
@@ -358,7 +358,7 @@ importers:
 
   packages/organs/ear:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
     devDependencies:
@@ -380,7 +380,7 @@ importers:
 
   packages/organs/hands:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
     devDependencies:
@@ -402,7 +402,7 @@ importers:
 
   packages/organs/knowledge:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
       '@vxnus/e':
@@ -430,7 +430,7 @@ importers:
 
   packages/organs/memory:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
       pg:
@@ -455,7 +455,7 @@ importers:
 
   packages/organs/observation:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
     devDependencies:
@@ -474,7 +474,7 @@ importers:
 
   packages/organs/vision:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
     devDependencies:
@@ -496,7 +496,7 @@ importers:
 
   packages/organs/voice:
     dependencies:
-      '@siduri-y/core':
+      '@siduri/core':
         specifier: workspace:*
         version: link:../../core
     devDependencies:

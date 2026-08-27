@@ -78,7 +78,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
 
   // 1. package.json
   const dependencies: Record<string, string> = {
-    '@siduri-y/core': coreVersion,
+    '@siduri/core': coreVersion,
   };
   for (const m of manifests) {
     dependencies[m.name] = `^${m.version || '1.0.0'}`;
@@ -158,7 +158,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   // 5. src/index.js
   const importLines: string[] = [
     `import { readFile } from 'node:fs/promises';`,
-    `import { SiduriRuntime } from '@siduri-y/core';`,
+    `import { SiduriRuntime } from '@siduri/core';`,
   ];
   for (const m of manifests) {
     importLines.push(`import { ${m.factory} } from '${m.name}';`);

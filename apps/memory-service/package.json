@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/memory-service",
+  "name": "@siduri/memory-service",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,8 +12,8 @@
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "@modelcontextprotocol/sdk": "^0.6.0",
-    "@siduri-y/memory": "workspace:*",
-    "@siduri-y/core": "workspace:*",
+    "@siduri/memory": "workspace:*",
+    "@siduri/core": "workspace:*",
     "dotenv": "^16.0.3"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/voice",
+  "name": "@siduri/voice",
   "organType": "voice",
   "version": "1.0.0",
   "displayName": "Voice (VOICEVOX Speech Synthesis)",
@@ -9,11 +9,16 @@
   "configKey": "voice",
   "configSchema": {
     "type": "object",
-    "required": ["provider"],
+    "required": [
+      "provider"
+    ],
     "properties": {
       "provider": {
         "type": "string",
-        "enum": ["voicevox", "none"]
+        "enum": [
+          "voicevox",
+          "none"
+        ]
       },
       "speakerId": {
         "type": "number",

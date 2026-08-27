@@ -5,7 +5,7 @@ import {
   expandPartyList,
   VisionReading
 } from './index';
-import { VisionOrgan } from '@siduri-y/core';
+import { VisionOrgan } from '@siduri/core';
 import EventEmitter from 'events';
 
 global.fetch = jest.fn();

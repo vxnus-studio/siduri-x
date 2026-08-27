@@ -1,7 +1,7 @@
 import { SiduriRuntime } from './runtime';
-import { DefaultHandsOrgan } from '@siduri-y/hands';
-import { DefaultEarOrgan } from '@siduri-y/ear';
-import { ActionPolicyEngine, RequestContext } from '@siduri-y/core';
+import { DefaultHandsOrgan } from '@siduri/hands';
+import { DefaultEarOrgan } from '@siduri/ear';
+import { ActionPolicyEngine, RequestContext } from '@siduri/core';
 
 describe('Siduri Runtime Orchestration', () => {
   test('handles concurrent context retrieval and graceful degradation', async () => {

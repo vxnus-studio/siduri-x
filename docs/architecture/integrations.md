@@ -4,7 +4,7 @@ Status: integration baseline; behavioral extraction incomplete
 
 - **OpenRouter**: Used for Brain and Vision.
 - **VOICEVOX**: Voice adapter connects to external Voicevox engine HTTP endpoints.
-- **E Knowledge Packs**: `@siduri-y/knowledge` loads a validated local E pack
+- **E Knowledge Packs**: `@siduri/knowledge` loads a validated local E pack
   and exposes its cited retrieval results through `KnowledgeOrgan`.
 
 Siduri installs or selects the pack path during companion creation. The Hub

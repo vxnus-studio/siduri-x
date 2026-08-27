@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/memory",
+  "name": "@siduri/memory",
   "organType": "memory",
   "version": "1.0.0",
   "displayName": "Memory (PostgreSQL FTS Claims)",
@@ -9,15 +9,24 @@
   "configKey": "memory",
   "configSchema": {
     "type": "object",
-    "required": ["provider"],
+    "required": [
+      "provider"
+    ],
     "properties": {
       "provider": {
         "type": "string",
-        "enum": ["postgres"]
+        "enum": [
+          "postgres"
+        ]
       },
       "deployment": {
         "type": "string",
-        "enum": ["local", "neon", "supabase", "other"]
+        "enum": [
+          "local",
+          "neon",
+          "supabase",
+          "other"
+        ]
       },
       "connectionString": {
         "type": "string"

@@ -1,4 +1,4 @@
-import { KnowledgeItem, KnowledgeOrgan } from '@siduri-y/core';
+import { KnowledgeItem, KnowledgeOrgan } from '@siduri/core';
 import type { LoadedPack } from '@vxnus/e-knowledge';
 import type { KnowledgeProvider, RetrievalResult, KnowledgePackManifest, RetrievalRequest, RetrievalResponse } from '@vxnus/e';
 import net from 'node:net';

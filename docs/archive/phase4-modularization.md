@@ -32,7 +32,7 @@ Every organ will implement a dual-interface strategy:
 ### 2. Standalone Organ Microservices
 
 #### Memory Organ (`apps/memory-service`)
-- **API**: Provides REST endpoints (like `GET /api/claims`) leveraging the actual `PostgresMemoryOrgan` from `@siduri-y/memory`, preserving isolated contexts.
+- **API**: Provides REST endpoints (like `GET /api/claims`) leveraging the actual `PostgresMemoryOrgan` from `@siduri/memory`, preserving isolated contexts.
 - **MCP**: Provides a standard `/mcp` SSE endpoint configured with the Model Context Protocol SDK. (Tool registration is pending).
 - **Status**: Implemented with integration testing.
 

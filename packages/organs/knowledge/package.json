@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/knowledge",
+  "name": "@siduri/knowledge",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,9 +9,9 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-y/core": "workspace:*",
     "@vxnus/e": "^0.1.4",
-    "@vxnus/e-knowledge": "^0.1.4"
+    "@vxnus/e-knowledge": "^0.1.4",
+    "@siduri/core": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

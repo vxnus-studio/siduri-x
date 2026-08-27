@@ -2,22 +2,22 @@
 
 **Siduri-Y** is the modular, composable TypeScript implementation of the Siduri AI companion architecture.
 
-A Siduri instance is composed of **@siduri-y/core** plus whatever user-selected **@siduri-y/<organ>** packages are chosen—with **zero bundling**, standard Node.js ESM module resolution, and clean-machine portability.
+A Siduri instance is composed of **@siduri/core** plus whatever user-selected **@siduri/<organ>** packages are chosen—with **zero bundling**, standard Node.js ESM module resolution, and clean-machine portability.
 
 ## Composable Organs
 
 There are **NO presets**. A user can compose any combination of organs into a runnable standalone application:
 
-- **Brain (`@siduri-y/brain`)**: Provider-neutral LLM reasoning, response planning, and proposal generation.
-- **Memory (`@siduri-y/memory`)**: PostgreSQL-backed conversational memory, episodic/semantic claims, and companion isolation.
-- **Hands (`@siduri-y/hands`)**: Tool execution, cryptographic action policy capability verification, and MCP provider integration.
-- **Knowledge (`@siduri-y/knowledge`)**: Installed or hosted E-compatible packs with bounded, cited context integration.
-- **Behavior (`@siduri-y/behavior`)**: Atomic directive state machine and personality projection compiler.
-- **Ear (`@siduri-y/ear`)**: Multi-modal sensory input ingestion, audio transcription, and MIME boundary validation.
-- **Vision (`@siduri-y/vision`)**: Visual observation, cropping, and multi-pass OCR perception adapter.
-- **Body (`@siduri-y/body`)**: Renderer-agnostic avatar expression state machine and embodiment event adapter.
-- **Voice (`@siduri-y/voice`)**: Queued speech synthesis and TTS adapter (VOICEVOX).
-- **Observation (`@siduri-y/observation`)**: Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest.
+- **Brain (`@siduri/brain`)**: Provider-neutral LLM reasoning, response planning, and proposal generation.
+- **Memory (`@siduri/memory`)**: PostgreSQL-backed conversational memory, episodic/semantic claims, and companion isolation.
+- **Hands (`@siduri/hands`)**: Tool execution, cryptographic action policy capability verification, and MCP provider integration.
+- **Knowledge (`@siduri/knowledge`)**: Installed or hosted E-compatible packs with bounded, cited context integration.
+- **Behavior (`@siduri/behavior`)**: Atomic directive state machine and personality projection compiler.
+- **Ear (`@siduri/ear`)**: Multi-modal sensory input ingestion, audio transcription, and MIME boundary validation.
+- **Vision (`@siduri/vision`)**: Visual observation, cropping, and multi-pass OCR perception adapter.
+- **Body (`@siduri/body`)**: Renderer-agnostic avatar expression state machine and embodiment event adapter.
+- **Voice (`@siduri/voice`)**: Queued speech synthesis and TTS adapter (VOICEVOX).
+- **Observation (`@siduri/observation`)**: Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest.
 
 ## Standalone Instance CLI (`@vxnus/siduri`)
 
@@ -29,11 +29,11 @@ Requires Node.js >=20:
 npx @vxnus/siduri create my-siduri
 ```
 
-The CLI dynamically discovers installed `@siduri-y/*` organ manifests and generates a clean, standalone ESM application containing only the selected organ dependencies:
+The CLI dynamically discovers installed `@siduri/*` organ manifests and generates a clean, standalone ESM application containing only the selected organ dependencies:
 
 ```text
 my-siduri/
-├── package.json          # ESM package referencing only selected @siduri-y/* organs
+├── package.json          # ESM package referencing only selected @siduri/* organs
 ├── siduri.config.json    # Selected organ configurations
 ├── siduri.schema.json    # Composed JSON Schema from organ manifests
 ├── .env.example          # Only environment variables required by selected organs
@@ -53,7 +53,7 @@ npx @vxnus/siduri doctor
 
 ### 3. Apply Database Migrations (`siduri db push`)
 
-Executes SQL migrations with SHA-256 checksum validation exclusively for database-owning organs (`@siduri-y/memory`):
+Executes SQL migrations with SHA-256 checksum validation exclusively for database-owning organs (`@siduri/memory`):
 
 ```bash
 npx @vxnus/siduri db push

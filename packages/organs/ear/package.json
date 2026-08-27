@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/ear",
+  "name": "@siduri/ear",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,7 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-y/core": "workspace:*"
+    "@siduri/core": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

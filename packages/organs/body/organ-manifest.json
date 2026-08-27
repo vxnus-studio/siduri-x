@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/body",
+  "name": "@siduri/body",
   "organType": "body",
   "version": "1.0.0",
   "displayName": "Body (Live2D & Avatar State)",
@@ -9,11 +9,16 @@
   "configKey": "body",
   "configSchema": {
     "type": "object",
-    "required": ["provider"],
+    "required": [
+      "provider"
+    ],
     "properties": {
       "provider": {
         "type": "string",
-        "enum": ["live2d", "none"]
+        "enum": [
+          "live2d",
+          "none"
+        ]
       },
       "initialExpression": {
         "type": "string",

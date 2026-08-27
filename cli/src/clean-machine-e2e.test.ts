@@ -12,17 +12,17 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
   const cleanMachineRoot = path.resolve(__dirname, '../temp-clean-machine-e2e');
 
   const ALL_CANONICAL_PACKAGES = [
-    { filter: '@siduri-y/core', tarName: 'siduri-y-core-1.0.0.tgz', isOrgan: false },
-    { filter: '@siduri-y/brain', tarName: 'siduri-y-brain-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/memory', tarName: 'siduri-y-memory-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/knowledge', tarName: 'siduri-y-knowledge-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/behavior', tarName: 'siduri-y-behavior-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/ear', tarName: 'siduri-y-ear-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/vision', tarName: 'siduri-y-vision-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/hands', tarName: 'siduri-y-hands-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/body', tarName: 'siduri-y-body-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/voice', tarName: 'siduri-y-voice-1.0.0.tgz', isOrgan: true },
-    { filter: '@siduri-y/observation', tarName: 'siduri-y-observation-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/core', tarName: 'siduri-core-1.0.0.tgz', isOrgan: false },
+    { filter: '@siduri/brain', tarName: 'siduri-brain-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/memory', tarName: 'siduri-memory-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/knowledge', tarName: 'siduri-knowledge-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/behavior', tarName: 'siduri-behavior-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/ear', tarName: 'siduri-ear-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/vision', tarName: 'siduri-vision-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/hands', tarName: 'siduri-hands-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/body', tarName: 'siduri-body-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/voice', tarName: 'siduri-voice-1.0.0.tgz', isOrgan: true },
+    { filter: '@siduri/observation', tarName: 'siduri-observation-1.0.0.tgz', isOrgan: true },
     { filter: '@vxnus/siduri', tarName: 'vxnus-siduri-0.0.5.tgz', isOrgan: false },
   ];
 
@@ -92,7 +92,7 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
     });
 
     test('memory organ tarball packages migrations/001_initial_schema.sql', () => {
-      const memoryTarPath = path.join(tempPackDir, 'siduri-y-memory-1.0.0.tgz');
+      const memoryTarPath = path.join(tempPackDir, 'siduri-memory-1.0.0.tgz');
       const listing = execSync(`tar -tzf ${memoryTarPath}`, { encoding: 'utf8' });
       expect(listing).toContain('package/migrations/001_initial_schema.sql');
     });
@@ -116,8 +116,8 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
       // Write instance files referencing packed tarballs directly for true clean machine install
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-y/core': `file:${path.join(tempPackDir, 'siduri-y-core-1.0.0.tgz')}`,
-        '@siduri-y/brain': `file:${path.join(tempPackDir, 'siduri-y-brain-1.0.0.tgz')}`,
+        '@siduri/core': `file:${path.join(tempPackDir, 'siduri-core-1.0.0.tgz')}`,
+        '@siduri/brain': `file:${path.join(tempPackDir, 'siduri-brain-1.0.0.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
@@ -131,9 +131,9 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
       execSync('npm install --no-audit --no-fund', { cwd: instanceDir, stdio: 'pipe' });
 
       // 2. Assert unselected organs are NOT in node_modules
-      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-y/memory'))).toBe(false);
-      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-y/hands'))).toBe(false);
-      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-y/voice'))).toBe(false);
+      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri/memory'))).toBe(false);
+      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri/hands'))).toBe(false);
+      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri/voice'))).toBe(false);
       expect(fs.existsSync(path.join(instanceDir, 'siduri-runtime.js'))).toBe(false);
 
       // 3. Run node src/index.js (starts cleanly without PostgreSQL or unselected organs)
@@ -169,9 +169,9 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-y/core': `file:${path.join(tempPackDir, 'siduri-y-core-1.0.0.tgz')}`,
-        '@siduri-y/brain': `file:${path.join(tempPackDir, 'siduri-y-brain-1.0.0.tgz')}`,
-        '@siduri-y/hands': `file:${path.join(tempPackDir, 'siduri-y-hands-1.0.0.tgz')}`,
+        '@siduri/core': `file:${path.join(tempPackDir, 'siduri-core-1.0.0.tgz')}`,
+        '@siduri/brain': `file:${path.join(tempPackDir, 'siduri-brain-1.0.0.tgz')}`,
+        '@siduri/hands': `file:${path.join(tempPackDir, 'siduri-hands-1.0.0.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
@@ -183,7 +183,7 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       execSync('npm install --no-audit --no-fund', { cwd: instanceDir, stdio: 'pipe' });
 
-      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-y/memory'))).toBe(false);
+      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri/memory'))).toBe(false);
 
       const startOutput = execSync('node src/index.js', { cwd: instanceDir, encoding: 'utf8' });
       expect(startOutput).toContain('✓ Siduri [CleanBrainHands] initialized with [Brain, Hands].');
@@ -212,9 +212,9 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-y/core': `file:${path.join(tempPackDir, 'siduri-y-core-1.0.0.tgz')}`,
-        '@siduri-y/brain': `file:${path.join(tempPackDir, 'siduri-y-brain-1.0.0.tgz')}`,
-        '@siduri-y/memory': `file:${path.join(tempPackDir, 'siduri-y-memory-1.0.0.tgz')}`,
+        '@siduri/core': `file:${path.join(tempPackDir, 'siduri-core-1.0.0.tgz')}`,
+        '@siduri/brain': `file:${path.join(tempPackDir, 'siduri-brain-1.0.0.tgz')}`,
+        '@siduri/memory': `file:${path.join(tempPackDir, 'siduri-memory-1.0.0.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
@@ -226,8 +226,8 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       execSync('npm install --no-audit --no-fund', { cwd: instanceDir, stdio: 'pipe' });
 
-      // Verify migrations exist inside node_modules/@siduri-y/memory/migrations
-      const installedMigrationsPath = path.join(instanceDir, 'node_modules/@siduri-y/memory/migrations/001_initial_schema.sql');
+      // Verify migrations exist inside node_modules/@siduri/memory/migrations
+      const installedMigrationsPath = path.join(instanceDir, 'node_modules/@siduri/memory/migrations/001_initial_schema.sql');
       expect(fs.existsSync(installedMigrationsPath)).toBe(true);
 
       // Doctor detects database requirement

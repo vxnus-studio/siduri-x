@@ -91,7 +91,7 @@ manifest.
 
 Status: ready for implementation after contract review
 
-Extract the original domain contracts into `@siduri-y/core` before porting
+Extract the original domain contracts into `@siduri/core` before porting
 organs. Follow [`PHASE-1-EXTRACTION-HANDOFF.md`](./PHASE-1-EXTRACTION-HANDOFF.md).
 
 Required contracts:

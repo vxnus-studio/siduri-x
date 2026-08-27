@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/behavior",
+  "name": "@siduri/behavior",
   "organType": "behavior",
   "version": "1.0.0",
   "displayName": "Behavior (Active Self Directives)",
@@ -9,11 +9,16 @@
   "configKey": "behavior",
   "configSchema": {
     "type": "object",
-    "required": ["provider"],
+    "required": [
+      "provider"
+    ],
     "properties": {
       "provider": {
         "type": "string",
-        "enum": ["active_self", "none"]
+        "enum": [
+          "active_self",
+          "none"
+        ]
       },
       "preset": {
         "type": "string"

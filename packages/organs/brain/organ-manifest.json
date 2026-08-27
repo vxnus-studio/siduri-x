@@ -1,5 +1,5 @@
 {
-  "name": "@siduri-y/brain",
+  "name": "@siduri/brain",
   "organType": "brain",
   "version": "1.0.0",
   "displayName": "Brain (Cognition & Planning)",
@@ -9,11 +9,17 @@
   "configKey": "brain",
   "configSchema": {
     "type": "object",
-    "required": ["provider", "model"],
+    "required": [
+      "provider",
+      "model"
+    ],
     "properties": {
       "provider": {
         "type": "string",
-        "enum": ["openrouter", "openai-compatible"]
+        "enum": [
+          "openrouter",
+          "openai-compatible"
+        ]
       },
       "model": {
         "type": "string"
