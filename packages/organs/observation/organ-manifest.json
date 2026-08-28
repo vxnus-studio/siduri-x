@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/observation",
   "organType": "observation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Observation (Grounded Observation Ingestion)",
   "description": "Cryptographically hashed video/image observation ingest and duplicate detection",
   "entrypoint": "./dist/index.js",

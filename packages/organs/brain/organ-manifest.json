@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/brain",
   "organType": "brain",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Brain (Cognition & Planning)",
   "description": "Provider-neutral LLM reasoning, response planning, and proposal generation",
   "entrypoint": "./dist/index.js",

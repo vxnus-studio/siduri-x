@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/ear",
   "organType": "ear",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Ear (Perception Ingress)",
   "description": "Multi-modal sensory input ingestion, transcription bounds, and mime validation",
   "entrypoint": "./dist/index.js",

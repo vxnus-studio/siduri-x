@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Core runtime types, evidence protocol, action dispatcher, capability validation, and SiduriRuntime protocol",
   "license": "Apache-2.0",
   "repository": {

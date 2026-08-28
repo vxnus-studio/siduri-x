@@ -1,4 +1,5 @@
 import { OrganManifest } from './manifest';
+import { generateWebHtml } from './web-template';
 
 export interface GeneratedInstanceFiles {
   'package.json': string;
@@ -7,6 +8,8 @@ export interface GeneratedInstanceFiles {
   '.env.example': string;
   'README.md': string;
   'src/index.js': string;
+  'public/index.html': string;
+  'docker-compose.yml'?: string;
   createAssetsBodyDir?: boolean;
 }
 
@@ -73,32 +76,99 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^1.0.0';
+  const coreVersion = options.coreVersion || '^1.0.1';
   const manifests = options.selectedManifests;
 
-  // 1. package.json
+  const hasMemory = manifests.some((m) => m.organType === 'memory');
+  const hasVoice = manifests.some((m) => m.organType === 'voice');
+  const hasBody = manifests.some((m) => m.organType === 'body');
+
+  const voiceConfig = options.organConfigs?.voice || options.organConfigs?.['@siduri-x/voice'];
+  const isVoicevox = hasVoice && (!voiceConfig || voiceConfig.provider === 'voicevox');
+
+  const memoryConfig = options.organConfigs?.memory || options.organConfigs?.['@siduri-x/memory'];
+  const isPostgresLocal = hasMemory && (!memoryConfig || memoryConfig.deployment === 'local' || memoryConfig.provider === 'postgres');
+
+  // 1. Optional docker-compose.yml
+  let dockerComposeYaml: string | undefined;
+  const dockerServices: string[] = [];
+  const dockerVolumes: string[] = [];
+
+  if (hasMemory && isPostgresLocal) {
+    dockerServices.push([
+      '  db:',
+      '    image: postgres:15',
+      '    environment:',
+      '      POSTGRES_USER: postgres',
+      '      POSTGRES_PASSWORD: password',
+      '      POSTGRES_DB: siduri',
+      '    ports:',
+      '      - "5432:5432"',
+      '    volumes:',
+      '      - postgres_data:/var/lib/postgresql/data',
+      '    healthcheck:',
+      '      test: ["CMD-SHELL", "pg_isready -U postgres"]',
+      '      interval: 2s',
+      '      timeout: 5s',
+      '      retries: 5',
+    ].join('\n'));
+    dockerVolumes.push('  postgres_data:');
+  }
+
+  if (isVoicevox) {
+    dockerServices.push([
+      '  voicevox:',
+      '    image: voicevox/voicevox_engine:cpu-latest',
+      '    ports:',
+      '      - "50021:50021"',
+    ].join('\n'));
+  }
+
+  if (dockerServices.length > 0) {
+    const composeLines = [
+      'version: "3.8"',
+      '',
+      'services:',
+      ...dockerServices,
+    ];
+    if (dockerVolumes.length > 0) {
+      composeLines.push('', 'volumes:', ...dockerVolumes);
+    }
+    composeLines.push('');
+    dockerComposeYaml = composeLines.join('\n');
+  }
+
+  // 2. package.json
   const dependencies: Record<string, string> = {
     '@siduri-x/core': coreVersion,
   };
   for (const m of manifests) {
-    dependencies[m.name] = `^${m.version || '1.0.0'}`;
+    dependencies[m.name] = `^${m.version || '1.0.1'}`;
+  }
+
+  const scripts: Record<string, string> = {
+    start: 'node src/index.js',
+    dev: 'node --watch src/index.js',
+    doctor: 'siduri doctor',
+    db: 'siduri db',
+  };
+
+  if (dockerComposeYaml) {
+    scripts['services:up'] = 'docker compose up -d';
+    scripts['services:down'] = 'docker compose down';
+    scripts['services:logs'] = 'docker compose logs -f';
   }
 
   const packageJsonObj = {
     name: instanceName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'my-siduri',
     private: true,
     type: 'module',
-    scripts: {
-      start: 'node src/index.js',
-      dev: 'node --watch src/index.js',
-      doctor: 'siduri doctor',
-      db: 'siduri db',
-    },
+    scripts,
     dependencies,
   };
   const packageJson = JSON.stringify(packageJsonObj, null, 2) + '\n';
 
-  // 2. siduri.config.json
+  // 3. siduri.config.json
   const organsConfig: Record<string, any> = {};
   for (const m of manifests) {
     const customConfig = options.organConfigs?.[m.configKey] || options.organConfigs?.[m.organType];
@@ -113,7 +183,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   };
   const siduriConfigJson = JSON.stringify(configObj, null, 2) + '\n';
 
-  // 3. siduri.schema.json
+  // 4. siduri.schema.json
   const organPropertiesSchema: Record<string, any> = {};
   for (const m of manifests) {
     organPropertiesSchema[m.configKey] = m.configSchema || { type: 'object' };
@@ -138,7 +208,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   };
   const siduriSchemaJson = JSON.stringify(schemaObj, null, 2) + '\n';
 
-  // 4. .env.example
+  // 5. .env.example
   const envLines: string[] = [];
   for (const m of manifests) {
     if (m.environment && m.environment.length > 0) {
@@ -155,9 +225,12 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   }
   const envExample = envLines.length > 0 ? envLines.join('\n') : '# No external environment variables required\n';
 
-  // 5. src/index.js
+  // 6. src/index.js
   const importLines: string[] = [
-    `import { readFile } from 'node:fs/promises';`,
+    `import { createServer } from 'node:http';`,
+    `import { readFile, stat } from 'node:fs/promises';`,
+    `import path from 'node:path';`,
+    `import { fileURLToPath } from 'node:url';`,
     `import { SiduriRuntime } from '@siduri-x/core';`,
   ];
   for (const m of manifests) {
@@ -178,8 +251,12 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const srcIndexJs = [
     ...importLines,
     '',
+    `const __filename = fileURLToPath(import.meta.url);`,
+    `const __dirname = path.dirname(__filename);`,
+    `const rootDir = path.resolve(__dirname, '..');`,
+    '',
     `const config = JSON.parse(`,
-    `  await readFile(new URL('../siduri.config.json', import.meta.url), 'utf8')`,
+    `  await readFile(path.join(rootDir, 'siduri.config.json'), 'utf8')`,
     `);`,
     '',
     ...instantiationLines,
@@ -190,45 +267,235 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '',
     `await runtime.initialize();`,
     '',
-    `console.log(\`✓ Siduri [\${config.name}] initialized with [${selectedDisplayNames}].\`);`,
+    `const audioCache = new Map();`,
+    '',
+    `const server = createServer(async (req, res) => {`,
+    `  const parsedUrl = new URL(req.url, \`http://\${req.headers.host || 'localhost'}\`);`,
+    `  const pathname = parsedUrl.pathname;`,
+    '',
+    `  // API: Status & Diagnostics`,
+    `  if (pathname === '/api/status' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({`,
+    `      name: config.name,`,
+    `      id: config.id,`,
+    `      organs: config.organs,`,
+    `      uptime: process.uptime(),`,
+    `      status: 'online',`,
+    `    }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Audio buffer retrieval for voice playback`,
+    `  if (pathname.startsWith('/api/audio/') && req.method === 'GET') {`,
+    `    const audioId = pathname.slice('/api/audio/'.length);`,
+    `    const buffer = audioCache.get(audioId);`,
+    `    if (buffer) {`,
+    `      res.writeHead(200, { 'Content-Type': 'audio/wav' });`,
+    `      res.end(Buffer.from(buffer));`,
+    `      return;`,
+    `    }`,
+    `    res.writeHead(404, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({ error: 'Audio not found' }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Memory Claims`,
+    `  if (pathname === '/api/memory/claims' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    try {`,
+    `      const claims = typeof memory?.getAllClaims === 'function' ? await memory.getAllClaims() : [];`,
+    `      res.end(JSON.stringify({ claims }));`,
+    `    } catch (e) {`,
+    `      res.end(JSON.stringify({ claims: [] }));`,
+    `    }`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Behavioral Directives`,
+    `  if (pathname === '/api/memory/directives' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({`,
+    `      directives: [`,
+    `        { domain: 'personality', name: 'Active Self Tone', content: 'Warm, empathetic, and thoughtful conversational style.' },`,
+    `        { domain: 'cognition', name: 'Authoritative Memory', content: 'Ground responses in verified claims and personal history.' }`,
+    `      ]`,
+    `    }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Chat interaction`,
+    `  if (pathname === '/api/chat' && req.method === 'POST') {`,
+    `    let body = '';`,
+    `    req.on('data', (chunk) => { body += chunk; });`,
+    `    req.on('end', async () => {`,
+    `      try {`,
+    `        const payload = JSON.parse(body || '{}');`,
+    `        const userMessage = payload.message || payload.text || '';`,
+    `        let reply = \`Hello! I received: "\${userMessage}"\`;`,
+    `        let expression = 'neutral';`,
+    `        let audioUrl = undefined;`,
+    '',
+    `        if (typeof brain?.generatePlan === 'function') {`,
+    `          try {`,
+    `            const plan = await brain.generatePlan({ prompt: userMessage });`,
+    `            reply = plan.speech || plan.text || reply;`,
+    `          } catch (err) {`,
+    `            reply = \`Thinking about "\${userMessage}"... (Brain active)\`;`,
+    `          }`,
+    `        }`,
+    '',
+    `        if (typeof voice?.synthesize === 'function') {`,
+    `          try {`,
+    `            const wavData = await voice.synthesize(reply);`,
+    `            const audioId = \`audio_\${Date.now()}\`;`,
+    `            audioCache.set(audioId, wavData);`,
+    `            audioUrl = \`/api/audio/\${audioId}\`;`,
+    `          } catch (e) {}`,
+    `        }`,
+    '',
+    `        if (typeof body?.setExpression === 'function') {`,
+    `          expression = reply.includes('!') ? 'happy' : 'calm';`,
+    `          body.setExpression(expression);`,
+    `        }`,
+    '',
+    `        res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `        res.end(JSON.stringify({ reply, expression, audioUrl, status: 'ok' }));`,
+    `      } catch (err) {`,
+    `        res.writeHead(500, { 'Content-Type': 'application/json' });`,
+    `        res.end(JSON.stringify({ error: err.message }));`,
+    `      }`,
+    `    });`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // Static files & Web UI`,
+    `  let filePath = '';`,
+    `  if (pathname === '/' || pathname === '/operator' || pathname === '/chat') {`,
+    `    filePath = path.join(rootDir, 'public', 'index.html');`,
+    `  } else if (pathname.startsWith('/assets/')) {`,
+    `    filePath = path.join(rootDir, pathname);`,
+    `  } else if (pathname.startsWith('/public/')) {`,
+    `    filePath = path.join(rootDir, pathname);`,
+    `  } else {`,
+    `    filePath = path.join(rootDir, 'public', pathname);`,
+    `  }`,
+    '',
+    `  try {`,
+    `    const fileStat = await stat(filePath);`,
+    `    if (fileStat.isFile()) {`,
+    `      const ext = path.extname(filePath).toLowerCase();`,
+    `      const mimeTypes = {`,
+    `        '.html': 'text/html; charset=utf-8',`,
+    `        '.js': 'application/javascript; charset=utf-8',`,
+    `        '.css': 'text/css; charset=utf-8',`,
+    `        '.json': 'application/json',`,
+    `        '.png': 'image/png',`,
+    `        '.jpg': 'image/jpeg',`,
+    `        '.svg': 'image/svg+xml',`,
+    `        '.wav': 'audio/wav',`,
+    `        '.moc3': 'application/octet-stream',`,
+    `      };`,
+    `      const contentType = mimeTypes[ext] || 'application/octet-stream';`,
+    `      const content = await readFile(filePath);`,
+    `      res.writeHead(200, { 'Content-Type': contentType });`,
+    `      res.end(content);`,
+    `      return;`,
+    `    }`,
+    `  } catch (e) {}`,
+    '',
+    `  res.writeHead(404, { 'Content-Type': 'text/plain' });`,
+    `  res.end('Not Found');`,
+    `});`,
+    '',
+    `const PORT = process.env.PORT || 3000;`,
+    `server.listen(PORT, () => {`,
+    `  console.log(\`✓ Siduri [\${config.name}] initialized with [${selectedDisplayNames}].\`);`,
+    `  console.log(\`➜ Web Companion & Memory Console running at: http://localhost:\${PORT}\`);`,
+    `});`,
     '',
   ].join('\n');
 
-  // 6. README.md
+  // 7. README.md
   const readmeLines: string[] = [
     `# ${instanceName}`,
     '',
-    `Standalone Siduri instance generated with explicitly composed organs:`,
+    `Standalone Siduri AI companion instance generated with explicitly composed organs:`,
     '',
     ...manifests.map((m) => `- **${m.displayName}** (\`${m.name}\`)`),
     '',
+    '## Prerequisites',
+    '',
+    '- **Node.js**: `v20.0.0` or higher',
+    '- **Environment**: Valid `.env` file (configured from `.env.example`)',
+  ];
+
+  if (hasMemory || isVoicevox) {
+    readmeLines.push(
+      '- **Local Services (Optional)**: Docker (or standalone alternatives):',
+    );
+    if (hasMemory) {
+      readmeLines.push('  - **PostgreSQL**: Required for memory claims & durable state (or use cloud Supabase/Neon)');
+    }
+    if (isVoicevox) {
+      readmeLines.push('  - **VOICEVOX**: Required for voice synthesis (or run the official desktop app from [voicevox.hiroshiba.jp](https://voicevox.hiroshiba.jp/))');
+    }
+  }
+
+  readmeLines.push(
+    '',
     '## Getting Started',
     '',
-    '1. Install dependencies:',
+    '### 1. Install Dependencies',
     '```bash',
     'npm install',
     '```',
     '',
-    '2. Configure environment:',
+    '### 2. Configure Environment',
     '```bash',
     'cp .env.example .env',
     '```',
-  ];
+    'Fill in your LLM API key (e.g. `OPENROUTER_API_KEY`) and any other service credentials in `.env`.'
+  );
 
-  const hasMemory = manifests.some((m) => m.organType === 'memory');
+  if (dockerComposeYaml) {
+    readmeLines.push(
+      '',
+      '### 3. Start Local Services (Docker)',
+      '```bash',
+      'npm run services:up',
+      '```',
+      '*(To stop services later, run `npm run services:down`)*'
+    );
+  }
+
   if (hasMemory) {
     readmeLines.push(
       '',
-      '### Database Setup',
-      'This instance uses PostgreSQL Memory for durable claims and directives.',
-      'Ensure `DATABASE_URL` in `.env` is reachable, then run migrations:',
+      `### ${dockerComposeYaml ? '4' : '3'}. Database Migrations`,
+      'Ensure `DATABASE_URL` in `.env` is reachable, then push the memory organ PostgreSQL schema:',
       '```bash',
       'npx @vxnus/siduri db push',
       '```'
     );
   }
 
-  const hasBody = manifests.some((m) => m.organType === 'body');
+  readmeLines.push(
+    '',
+    `### ${hasMemory ? (dockerComposeYaml ? '5' : '4') : (dockerComposeYaml ? '4' : '3')}. Diagnostics & Health Probe`,
+    'Verify all environment variables, services, and organ connections:',
+    '```bash',
+    'npm run doctor',
+    '```',
+    '',
+    `### ${hasMemory ? (dockerComposeYaml ? '6' : '5') : (dockerComposeYaml ? '5' : '4')}. Start Companion & Web Console`,
+    'Launch your companion runtime and Web UI / Memory Control Panel:',
+    '```bash',
+    'npm start',
+    '```',
+    'Then open `http://localhost:3000` in your browser.'
+  );
+
   if (hasBody) {
     readmeLines.push(
       '',
@@ -240,31 +507,25 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     );
   }
 
-  readmeLines.push(
-    '',
-    '## Running the Instance',
-    '',
-    'Start the companion:',
-    '```bash',
-    'npm start',
-    '```',
-    '',
-    'Run diagnostics:',
-    '```bash',
-    'npm run doctor',
-    '```',
-    ''
-  );
-
+  readmeLines.push('');
   const readmeMd = readmeLines.join('\n');
 
-  return {
+  const webHtml = generateWebHtml(instanceName, manifests);
+
+  const result: GeneratedInstanceFiles = {
     'package.json': packageJson,
     'siduri.config.json': siduriConfigJson,
     'siduri.schema.json': siduriSchemaJson,
     '.env.example': envExample,
     'README.md': readmeMd,
     'src/index.js': srcIndexJs,
+    'public/index.html': webHtml,
     createAssetsBodyDir: hasBody,
   };
+
+  if (dockerComposeYaml) {
+    result['docker-compose.yml'] = dockerComposeYaml;
+  }
+
+  return result;
 }

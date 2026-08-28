@@ -171,7 +171,31 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     // Body asset directory requested
     expect(files.createAssetsBodyDir).toBe(true);
 
-    // README mentions Live2D model assets
+    // README mentions Live2D model assets & prerequisites
     expect(files['README.md']).toContain('assets/body/model');
+    expect(files['README.md']).toContain('Prerequisites');
+
+    // Docker compose generated for memory & voice
+    expect(files['docker-compose.yml']).toBeDefined();
+    expect(files['docker-compose.yml']).toContain('postgres:15');
+    expect(files['docker-compose.yml']).toContain('voicevox/voicevox_engine');
+    expect(pkg.scripts['services:up']).toBe('docker compose up -d');
+    expect(pkg.scripts['services:down']).toBe('docker compose down');
+  });
+
+  test('Composition E: Brain only has no docker-compose.yml', () => {
+    const files = generateInstanceFiles({
+      name: 'brain-solo',
+      selectedManifests: [MOCK_MANIFESTS.brain],
+    });
+
+    expect(files['docker-compose.yml']).toBeUndefined();
+    const pkg = JSON.parse(files['package.json']);
+    expect(pkg.scripts['services:up']).toBeUndefined();
+    expect(files['public/index.html']).toBeDefined();
+    expect(files['public/index.html']).toContain('Memory Console');
+    expect(files['public/index.html']).toContain('Companion Chat');
   });
 });
+
+

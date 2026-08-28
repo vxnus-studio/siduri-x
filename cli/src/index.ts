@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { execFile as execFileCallback, spawn } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { execFile as execFileCallback } from 'node:child_process';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import inquirer from 'inquirer';
@@ -9,32 +9,34 @@ import { generateInstanceFiles } from './generator';
 import { OrganManifest } from './manifest';
 import { runDoctor, DoctorCheckResult } from './doctor';
 import { runDbPush } from './db';
+import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-const CLI_VERSION = '0.0.7';
+export const CLI_VERSION = '0.0.8';
 
-const colors = {
+export const colors = {
   cyan: '\u001b[36m',
   dim: '\u001b[2m',
   green: '\u001b[32m',
   yellow: '\u001b[33m',
+  bold: '\u001b[1m',
   reset: '\u001b[0m',
 };
 
-function printHeader(): void {
+export function printHeader(): void {
   console.log(`\n${colors.cyan}◈ SIDURI${colors.reset} ${colors.dim}companion setup (manifest-driven)${colors.reset}`);
   console.log(`${colors.yellow}Version ${CLI_VERSION}${colors.reset} · composable standalone architecture\n`);
 }
 
-function printSection(title: string): void {
-  console.log(`\n${colors.cyan}── ${title} ${'─'.repeat(Math.max(2, 42 - title.length))}${colors.reset}`);
+export function printSection(title: string): void {
+  console.log(`\n${colors.cyan}── ${title} ${'─'.repeat(Math.max(2, 42 - title.length))}${colors.reset}\n`);
 }
 
-function printSuccess(message: string): void {
+export function printSuccess(message: string): void {
   console.log(`${colors.green}✓${colors.reset} ${message}`);
 }
 
-function projectDirectoryName(value: string): string {
+export function projectDirectoryName(value: string): string {
   const slug = value
     .trim()
     .toLowerCase()
@@ -43,7 +45,41 @@ function projectDirectoryName(value: string): string {
   return slug || 'siduri';
 }
 
-async function withTask<T>(label: string, task: () => Promise<T>): Promise<T> {
+export function formatReviewSummary(
+  companionName: string,
+  selectedManifests: OrganManifest[],
+  organSummaries: Record<string, Record<string, unknown>>
+): string {
+  const lines: string[] = [];
+
+  lines.push(`\n${colors.cyan}── Review ${companionName} ${'─'.repeat(Math.max(2, 42 - (companionName.length + 9)))}${colors.reset}\n`);
+  lines.push(`  ${colors.bold}Companion${colors.reset}`);
+  lines.push(`    ${colors.dim}Name:${colors.reset}     ${companionName}\n`);
+
+  for (const m of selectedManifests) {
+    const isRequired = m.organType === 'brain';
+    const tag = isRequired ? ` ${colors.dim}· required${colors.reset}` : '';
+    lines.push(`  ${colors.bold}${m.displayName.split(' ')[0] || m.organType}${colors.reset}${tag}`);
+
+    const summary = organSummaries[m.configKey] || organSummaries[m.organType] || {};
+    const entries = Object.entries(summary);
+
+    if (entries.length === 0) {
+      lines.push(`    ${colors.dim}Provider:${colors.reset} ${m.displayName}`);
+    } else {
+      for (const [key, val] of entries) {
+        const valStr = String(val);
+        lines.push(`    ${colors.dim}${key}:${colors.reset}${' '.repeat(Math.max(1, 10 - key.length))}${valStr}`);
+      }
+    }
+    lines.push('');
+  }
+
+  lines.push(`${colors.cyan}${'─'.repeat(46)}${colors.reset}\n`);
+  return lines.join('\n');
+}
+
+export async function withTask<T>(label: string, task: () => Promise<T>): Promise<T> {
   process.stdout.write(`${colors.dim}${label}${colors.reset}`);
   const frames = ['·', '•', '●', '•'];
   let index = 0;
@@ -120,35 +156,97 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
     if (m) selectedManifests.push(m);
   }
 
-  printSection('Review Composition');
-  console.log(`  ${colors.dim}Companion Name:${colors.reset}  ${companionName}`);
-  console.log(`  ${colors.dim}Target Path:${colors.reset}     ${projectDir}`);
-  console.log(`  ${colors.dim}Core Protocol:${colors.reset}   @siduri-x/core`);
-  console.log(`  ${colors.dim}Selected Organs:${colors.reset}`);
+  // 2. Interactive Organ Configuration Stage
+  const organConfigs: Record<string, any> = {};
+  const organSummaries: Record<string, Record<string, unknown>> = {};
+
   for (const m of selectedManifests) {
-    console.log(`    - ${m.displayName} (${colors.dim}${m.name}${colors.reset})`);
+    const isRequired = m.organType === 'brain';
+    const sectionTitle = isRequired ? `${m.displayName.split(' ')[0] || m.organType} · required` : m.displayName.split(' ')[0] || m.organType;
+    printSection(sectionTitle);
+
+    const res: OrganConfigurationResult = await configureOrgan(m, {
+      companionName,
+      existingConfig: organConfigs[m.configKey],
+    });
+
+    organConfigs[m.configKey] = res.config;
+    organSummaries[m.configKey] = res.summary || {};
   }
 
-  const { confirm } = await inquirer.prompt<{ confirm: boolean }>({
-    type: 'confirm',
-    name: 'confirm',
-    message: 'Generate standalone Siduri instance with these organs?',
-    default: true,
-  });
+  // 3. Final Review and Edit Loop
+  while (true) {
+    console.log(formatReviewSummary(companionName, selectedManifests, organSummaries));
 
-  if (!confirm) {
-    console.log('Instance creation cancelled.');
-    return;
+    const { reviewAction } = await inquirer.prompt<{ reviewAction: string }>({
+      type: 'list',
+      name: 'reviewAction',
+      message: `Create ${companionName} with this configuration?`,
+      choices: [
+        { name: 'Yes, create', value: 'create' },
+        { name: 'Go back and edit', value: 'edit' },
+        { name: 'Cancel', value: 'cancel' },
+      ],
+    });
+
+    if (reviewAction === 'cancel') {
+      console.log('Instance creation cancelled.');
+      return;
+    }
+
+    if (reviewAction === 'create') {
+      break;
+    }
+
+    if (reviewAction === 'edit') {
+      const editChoices = selectedManifests.map((m) => ({
+        name: `Edit ${m.displayName}`,
+        value: m.configKey,
+      }));
+      editChoices.push({ name: 'Edit all organs in sequence', value: '__ALL__' });
+      editChoices.push({ name: 'Back to review', value: '__BACK__' });
+
+      const { organToEdit } = await inquirer.prompt<{ organToEdit: string }>({
+        type: 'list',
+        name: 'organToEdit',
+        message: 'Which organ would you like to edit?',
+        choices: editChoices,
+      });
+
+      if (organToEdit === '__BACK__') {
+        continue;
+      }
+
+      const organsToReconfigure = organToEdit === '__ALL__'
+        ? selectedManifests
+        : selectedManifests.filter((m) => m.configKey === organToEdit);
+
+      for (const m of organsToReconfigure) {
+        const isRequired = m.organType === 'brain';
+        const sectionTitle = isRequired ? `${m.displayName.split(' ')[0] || m.organType} · required` : m.displayName.split(' ')[0] || m.organType;
+        printSection(sectionTitle);
+
+        const res = await configureOrgan(m, {
+          companionName,
+          existingConfig: organConfigs[m.configKey],
+        });
+
+        organConfigs[m.configKey] = res.config;
+        organSummaries[m.configKey] = res.summary || {};
+      }
+    }
   }
 
-  // 2. Generate Files
+  // 4. Generate Instance Files
   const files = generateInstanceFiles({
     name: companionName,
     selectedManifests,
+    organConfigs,
   });
 
   await mkdir(projectDir, { recursive: true });
   await mkdir(path.join(projectDir, 'src'), { recursive: true });
+  await mkdir(path.join(projectDir, 'public'), { recursive: true });
 
   await writeFile(path.join(projectDir, 'package.json'), files['package.json'], 'utf8');
   await writeFile(path.join(projectDir, 'siduri.config.json'), files['siduri.config.json'], 'utf8');
@@ -156,6 +254,11 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   await writeFile(path.join(projectDir, '.env.example'), files['.env.example'], 'utf8');
   await writeFile(path.join(projectDir, 'README.md'), files['README.md'], 'utf8');
   await writeFile(path.join(projectDir, 'src/index.js'), files['src/index.js'], 'utf8');
+  await writeFile(path.join(projectDir, 'public/index.html'), files['public/index.html'], 'utf8');
+
+  if (files['docker-compose.yml']) {
+    await writeFile(path.join(projectDir, 'docker-compose.yml'), files['docker-compose.yml'], 'utf8');
+  }
 
   if (files.createAssetsBodyDir) {
     await mkdir(path.join(projectDir, 'assets/body/model'), { recursive: true });
@@ -163,7 +266,7 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
 
   printSuccess(`Generated standalone files at ${projectDir}`);
 
-  // 3. Install packages if not in dry-run
+  // 5. Install packages if not in dry-run
   try {
     await withTask('Installing dependencies (npm install)', async () => {
       await execFile('npm', ['install', '--no-audit', '--no-fund'], { cwd: projectDir });
@@ -174,10 +277,18 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   }
 
   printSection('Instance Ready');
-  console.log(`\nYour Siduri companion is ready! Next steps:\n`);
+  console.log(`Your Siduri companion is ready! Next steps:\n`);
   console.log(`  cd ${path.relative(process.cwd(), projectDir) || '.'}`);
-  console.log(`  cp .env.example .env   ${colors.dim}# Fill in required API keys/credentials${colors.reset}`);
-  console.log(`  npm start              ${colors.dim}# Start your standalone companion${colors.reset}\n`);
+  console.log(`  cp .env.example .env          ${colors.dim}# Fill in required API keys/credentials${colors.reset}`);
+  if (files['docker-compose.yml']) {
+    console.log(`  npm run services:up           ${colors.dim}# Start local Docker services (PostgreSQL / VOICEVOX)${colors.reset}`);
+  }
+  const hasMemory = selectedManifests.some((m) => m.organType === 'memory');
+  if (hasMemory) {
+    console.log(`  npx @vxnus/siduri db push     ${colors.dim}# Push PostgreSQL memory schema${colors.reset}`);
+  }
+  console.log(`  npm run doctor                ${colors.dim}# Run diagnostic health probes${colors.reset}`);
+  console.log(`  npm start                     ${colors.dim}# Start Web Companion & Memory Console at http://localhost:3000${colors.reset}\n`);
 }
 
 export async function runCliDoctor(targetDir?: string): Promise<void> {
@@ -308,4 +419,3 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
-

@@ -32,17 +32,32 @@ All canonical Siduri-X organ and core packages are independently distributed:
 
 | Package | Version | Description |
 | :--- | :---: | :--- |
-| **`@siduri-x/core`** | `^1.0.0` | Core runtime protocol, action dispatcher, capability validation, and evidence bounds |
-| **`@siduri-x/brain`** | `^1.0.0` | Provider-neutral LLM reasoning, response planning, and proposal generation |
-| **`@siduri-x/memory`** | `^1.0.0` | PostgreSQL-backed conversational memory, episodic/semantic claims, and SQL migrations |
-| **`@siduri-x/hands`** | `^1.0.0` | Tool execution, cryptographic action policy capability verification, and MCP integration |
-| **`@siduri-x/knowledge`** | `^1.0.0` | Installed or hosted E-compatible packs with bounded, cited context integration |
-| **`@siduri-x/behavior`** | `^1.0.0` | Atomic directive state machine and personality projection compiler |
-| **`@siduri-x/ear`** | `^1.0.0` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation |
-| **`@siduri-x/vision`** | `^1.0.0` | Visual observation, cropping, and multi-pass OCR perception adapter |
-| **`@siduri-x/body`** | `^1.0.0` | Renderer-agnostic avatar expression state machine and embodiment event adapter |
-| **`@siduri-x/voice`** | `^1.0.0` | Queued speech synthesis and TTS adapter (VOICEVOX) |
-| **`@siduri-x/observation`** | `^1.0.0` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest |
+| **`@siduri-x/core`** | `^1.0.1` | Core runtime protocol, action dispatcher, capability validation, and evidence bounds |
+| **`@siduri-x/brain`** | `^1.0.1` | Provider-neutral LLM reasoning, response planning, and proposal generation |
+| **`@siduri-x/memory`** | `^1.0.1` | PostgreSQL-backed conversational memory, episodic/semantic claims, and SQL migrations |
+| **`@siduri-x/hands`** | `^1.0.1` | Tool execution, cryptographic action policy capability verification, and MCP integration |
+| **`@siduri-x/knowledge`** | `^1.0.1` | Installed or hosted E-compatible packs with bounded, cited context integration |
+| **`@siduri-x/behavior`** | `^1.0.1` | Atomic directive state machine and personality projection compiler |
+| **`@siduri-x/ear`** | `^1.0.1` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation |
+| **`@siduri-x/vision`** | `^1.0.1` | Visual observation, cropping, and multi-pass OCR perception adapter |
+| **`@siduri-x/body`** | `^1.0.1` | Renderer-agnostic avatar expression state machine and embodiment event adapter |
+| **`@siduri-x/voice`** | `^1.0.1` | Queued speech synthesis and TTS adapter (VOICEVOX) |
+| **`@siduri-x/observation`** | `^1.0.1` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest |
+
+---
+
+## Prerequisites
+
+Before setting up or running a Siduri companion instance, ensure you have:
+
+- **Node.js**: `v20.0.0` or higher (verify with `node -v`)
+- **LLM Credentials**: An API key for your chosen provider (e.g. `OPENROUTER_API_KEY`)
+- **Optional Local Services**:
+  - **Docker** (recommended for local PostgreSQL database and VOICEVOX speech synthesis):
+    - Run `docker compose up -d` (or `npm run services:up` in generated instances) to launch preconfigured services.
+  - **Non-Docker Alternatives**:
+    - **PostgreSQL**: Cloud-managed instances (e.g. Supabase, Neon) or local Postgres installation.
+    - **VOICEVOX**: Standalone desktop application from [voicevox.hiroshiba.jp](https://voicevox.hiroshiba.jp/).
 
 ---
 
@@ -50,13 +65,11 @@ All canonical Siduri-X organ and core packages are independently distributed:
 
 ### 1. Create a Standalone Companion
 
-Requires Node.js >=20:
-
 ```bash
 npx @vxnus/siduri create my-siduri
 ```
 
-The CLI dynamically discovers installed `@siduri-x/*` organ manifests and generates a clean, standalone ESM application containing only the selected organ dependencies:
+The CLI dynamically discovers installed `@siduri-x/*` organ manifests and guides you through an interactive setup:
 
 ```text
 my-siduri/
@@ -65,17 +78,17 @@ my-siduri/
 ├── siduri.schema.json    # Composed JSON Schema from organ manifests
 ├── .env.example          # Only environment variables required by selected organs
 ├── README.md             # Composition-specific guide
+├── docker-compose.yml    # Optional local services (PostgreSQL / VOICEVOX if selected)
 └── src/
     └── index.js          # Direct runtime bootstrapping with explicit organ factories
 ```
 
-### 2. Run Diagnostics (`siduri doctor`)
-
-Inspects environment variables, external service declarations, database connectivity (only if memory is selected), and executes organ health probes:
+### 2. Configure Environment & Start Services
 
 ```bash
 cd my-siduri
-npx @vxnus/siduri doctor
+cp .env.example .env      # Fill in API keys & database credentials
+npm run services:up       # Optional: Start local Docker containers (PostgreSQL / VOICEVOX)
 ```
 
 ### 3. Apply Database Migrations (`siduri db push`)
@@ -88,10 +101,17 @@ npx @vxnus/siduri db push
 
 If the companion has no database organs (e.g. Brain only, or Brain + Hands), `siduri db push` reports that no migrations are required.
 
-### 4. Start Your Companion
+### 4. Run Diagnostics (`siduri doctor`)
+
+Inspects environment variables, external service declarations, database connectivity, and executes organ health probes:
 
 ```bash
-npm install
+npm run doctor
+```
+
+### 5. Start Your Companion
+
+```bash
 npm start
 ```
 

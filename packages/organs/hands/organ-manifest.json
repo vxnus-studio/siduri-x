@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/hands",
   "organType": "hands",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Hands (MCP Tool Execution)",
   "description": "Model Context Protocol tool management and cryptographically authorized action execution",
   "entrypoint": "./dist/index.js",

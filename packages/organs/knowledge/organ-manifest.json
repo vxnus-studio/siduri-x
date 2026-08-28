@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/knowledge",
   "organType": "knowledge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Knowledge (E-Compatible Cited Facts)",
   "description": "Factual context retrieval from local or hosted E Knowledge packs",
   "entrypoint": "./dist/index.js",

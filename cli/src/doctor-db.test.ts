@@ -45,7 +45,9 @@ describe('Phase 4: Diagnostics and Database Provisioning Tests', () => {
     });
     for (const [name, content] of Object.entries(files)) {
       if (typeof content === 'string') {
-        fs.writeFileSync(path.join(instanceDir, name), content);
+        const fullPath = path.join(instanceDir, name);
+        fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+        fs.writeFileSync(fullPath, content);
       }
     }
 
@@ -79,7 +81,9 @@ describe('Phase 4: Diagnostics and Database Provisioning Tests', () => {
     });
     for (const [name, content] of Object.entries(files)) {
       if (typeof content === 'string') {
-        fs.writeFileSync(path.join(instanceDir, name), content);
+        const fullPath = path.join(instanceDir, name);
+        fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+        fs.writeFileSync(fullPath, content);
       }
     }
 
@@ -112,7 +116,9 @@ describe('Phase 4: Diagnostics and Database Provisioning Tests', () => {
     });
     for (const [name, content] of Object.entries(files)) {
       if (typeof content === 'string') {
-        fs.writeFileSync(path.join(instanceDir, name), content);
+        const fullPath = path.join(instanceDir, name);
+        fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+        fs.writeFileSync(fullPath, content);
       }
     }
 
