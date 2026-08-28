@@ -382,7 +382,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/voice',
     organType: 'voice',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Voice (VOICEVOX Speech Synthesis)',
     description: 'Queued speech synthesis and audio rendering lifecycle adapter',
     entrypoint: './dist/index.js',

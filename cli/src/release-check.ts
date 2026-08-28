@@ -32,9 +32,9 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
     { name: '@siduri-x/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: 'siduri-x-vision-1.0.1.tgz' },
     { name: '@siduri-x/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: 'siduri-x-hands-1.0.1.tgz' },
     { name: '@siduri-x/body', dir: 'packages/organs/body', isOrgan: true, tarName: 'siduri-x-body-1.0.1.tgz' },
-    { name: '@siduri-x/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: 'siduri-x-voice-1.0.1.tgz' },
+    { name: '@siduri-x/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: 'siduri-x-voice-1.0.2.tgz' },
     { name: '@siduri-x/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: 'siduri-x-observation-1.0.1.tgz' },
-    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: 'vxnus-siduri-0.1.0.tgz' },
+    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: 'vxnus-siduri-0.1.1.tgz' },
   ];
 
   let packagesChecked = 0;
