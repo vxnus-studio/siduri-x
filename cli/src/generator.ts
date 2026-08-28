@@ -399,7 +399,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `  }`,
     '',
     `  // Static files & Next.js apps/web export routing`,
-    `  const normalizedPath = pathname.replace(/^\/+|\/+$/g, '');`,
+    `  const normalizedPath = pathname.replace(/^[/]+|[/]+$/g, '');`,
     `  const candidatePaths = [`,
     `    path.join(rootDir, 'public', normalizedPath, 'index.html'),`,
     `    path.join(rootDir, 'public', normalizedPath + '.html'),`,
