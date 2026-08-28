@@ -1,11 +1,25 @@
 import { VoiceOrgan, AudioEvent, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult, validateExperienceEvent } from '@siduri-x/core';
 
+export interface RvcPostProcessorConfig {
+  enabled?: boolean;
+  serviceUrl?: string;
+  modelName?: string;
+  modelPath?: string;
+  indexPath?: string;
+  pitchShift?: number;
+  f0Method?: 'rmvpe' | 'pm' | 'harvest' | 'crepe';
+  indexRate?: number;
+  filterRadius?: number;
+  protect?: number;
+}
+
 export interface VoicevoxConfig {
   baseUrl: string;
   speakerId: number;
   maxQueueDepth?: number;
   timeoutMs?: number;
   maxTextLength?: number;
+  rvc?: RvcPostProcessorConfig;
 }
 
 interface SpeechJob {
@@ -199,7 +213,52 @@ export class VoicevoxAdapter implements VoiceOrgan, ExperienceAdapter {
       }
 
       const buffer = await synthResponse.arrayBuffer();
-      return new Uint8Array(buffer);
+      const rawWav = new Uint8Array(buffer);
+
+      if (this.config.rvc?.enabled && (this.config.rvc?.serviceUrl || process.env.RVC_SERVICE_URL || this.config.rvc?.modelName || this.config.rvc?.modelPath)) {
+        return await this.applyRvc(rawWav);
+      }
+
+      return rawWav;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async applyRvc(inputWav: Uint8Array): Promise<Uint8Array> {
+    const rvcConfig = this.config.rvc || {};
+    const serviceUrl = rvcConfig.serviceUrl || process.env.RVC_SERVICE_URL || 'http://localhost:50055';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const formData = new FormData();
+      const blob = new Blob([inputWav.buffer as ArrayBuffer], { type: 'audio/wav' });
+      formData.append('audio', blob, 'input.wav');
+      if (rvcConfig.modelName) formData.append('model', rvcConfig.modelName);
+      if (rvcConfig.modelPath) formData.append('model_path', rvcConfig.modelPath);
+      if (rvcConfig.indexPath) formData.append('index_path', rvcConfig.indexPath);
+      formData.append('pitch_shift', String(rvcConfig.pitchShift ?? 0));
+      formData.append('f0_method', rvcConfig.f0Method ?? 'rmvpe');
+      formData.append('index_rate', String(rvcConfig.indexRate ?? 0.75));
+
+      const convertUrl = new URL('/convert', serviceUrl);
+      const res = await fetch(convertUrl.toString(), {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        console.warn(`[VoicevoxAdapter] RVC conversion failed (${res.status}): fallback to base audio.`);
+        return inputWav;
+      }
+
+      const convertedBuffer = await res.arrayBuffer();
+      return new Uint8Array(convertedBuffer);
+    } catch (e: any) {
+      console.warn(`[VoicevoxAdapter] RVC service error (${e.message}): fallback to base audio.`);
+      return inputWav;
     } finally {
       clearTimeout(timer);
     }

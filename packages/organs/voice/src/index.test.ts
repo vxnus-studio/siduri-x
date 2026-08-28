@@ -50,6 +50,40 @@ describe('VoicevoxAdapter Queue Semantics', () => {
     expect(synthCall[0]).toContain("/synthesis?speaker=1");
     expect(JSON.parse(synthCall[1].body).some).toBe("query_data");
   });
+
+  test('synthesize chains RVC post-processing when configured', async () => {
+    const rvcAdapter = new VoicevoxAdapter({
+      baseUrl: 'http://localhost:50021',
+      speakerId: 1,
+      rvc: {
+        enabled: true,
+        serviceUrl: 'http://localhost:50055',
+        modelName: 'sparkle',
+      }
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ some: "query_data" })
+    });
+    
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8)
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(16)
+    });
+
+    const audio = await rvcAdapter.synthesize("Hello with RVC");
+    expect(audio.length).toBe(16);
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+
+    const rvcCall = (global.fetch as jest.Mock).mock.calls[2];
+    expect(rvcCall[0]).toBe("http://localhost:50055/convert");
+  });
 });
 
 describe('VoicevoxAdapter T5 Experience Event Interface', () => {

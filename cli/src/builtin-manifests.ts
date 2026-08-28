@@ -407,6 +407,19 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
         maxQueueDepth: {
           type: 'number',
           default: 50
+        },
+        rvc: {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean', default: false },
+            serviceUrl: { type: 'string', default: 'http://localhost:50055' },
+            modelName: { type: 'string' },
+            modelPath: { type: 'string' },
+            indexPath: { type: 'string' },
+            pitchShift: { type: 'number', default: 0 },
+            f0Method: { type: 'string', enum: ['rmvpe', 'pm', 'harvest', 'crepe'], default: 'rmvpe' },
+            indexRate: { type: 'number', default: 0.75 }
+          }
         }
       }
     },
@@ -417,6 +430,13 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
         secret: false,
         default: 'http://localhost:50021',
         description: 'Base URL of the running VOICEVOX engine'
+      },
+      {
+        name: 'RVC_SERVICE_URL',
+        required: false,
+        secret: false,
+        default: 'http://localhost:50055',
+        description: 'Base URL of headless RVC voice conversion microservice'
       }
     ],
     services: [
@@ -424,6 +444,11 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
         name: 'VOICEVOX Engine',
         kind: 'http_service',
         optional: false
+      },
+      {
+        name: 'RVC Headless Service',
+        kind: 'http_service',
+        optional: true
       }
     ],
     database: null,

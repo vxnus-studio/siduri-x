@@ -276,7 +276,11 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
     await writeFile(path.join(projectDir, 'docker-compose.yml'), files['docker-compose.yml'], 'utf8');
   }
 
-  if (files.createAssetsBodyDir) {
+  if (files.createAssetsDirs && files.createAssetsDirs.length > 0) {
+    for (const dir of files.createAssetsDirs) {
+      await mkdir(path.join(projectDir, dir), { recursive: true });
+    }
+  } else if (files.createAssetsBodyDir) {
     await mkdir(path.join(projectDir, 'assets/body/model'), { recursive: true });
   }
 

@@ -11,6 +11,7 @@ export interface GeneratedInstanceFiles {
   'public/index.html': string;
   'docker-compose.yml'?: string;
   createAssetsBodyDir?: boolean;
+  createAssetsDirs?: string[];
 }
 
 export interface InstanceGeneratorOptions {
@@ -124,6 +125,19 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     ].join('\n'));
   }
 
+  if (hasVoice && voiceConfig?.rvc?.enabled) {
+    dockerServices.push([
+      '  rvc:',
+      '    image: ghcr.io/vxnus-studio/rvc-headless:latest',
+      '    ports:',
+      '      - "50055:50055"',
+      '    volumes:',
+      '      - ./assets/voice:/app/models',
+      '    environment:',
+      '      - RVC_MODELS_DIR=/app/models',
+    ].join('\n'));
+  }
+
   if (dockerServices.length > 0) {
     const composeLines = [
       'version: "3.8"',
@@ -228,7 +242,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   // 6. src/index.js
   const importLines: string[] = [
     `import { createServer } from 'node:http';`,
-    `import { readFile, stat } from 'node:fs/promises';`,
+    `import { readFile, stat, readdir } from 'node:fs/promises';`,
     `import path from 'node:path';`,
     `import { fileURLToPath } from 'node:url';`,
     `import { SiduriRuntime } from '@siduri-x/core';`,
@@ -398,6 +412,33 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    return;`,
     `  }`,
     '',
+    `  // API: Model Catalog Discovery (Body & Voice)`,
+    `  if (pathname === '/api/models/body' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    try {`,
+    `      const bodyDir = path.join(rootDir, 'assets', 'body', 'model');`,
+    `      const entries = await readdir(bodyDir, { withFileTypes: true }).catch(() => []);`,
+    `      const models = entries.filter((e) => e.isDirectory()).map((e) => e.name);`,
+    `      res.end(JSON.stringify({ models: models.length ? models : ['default'] }));`,
+    `    } catch {`,
+    `      res.end(JSON.stringify({ models: ['default'] }));`,
+    `    }`,
+    `    return;`,
+    `  }`,
+    '',
+    `  if (pathname === '/api/models/voice' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    try {`,
+    `      const voiceDir = path.join(rootDir, 'assets', 'voice');`,
+    `      const entries = await readdir(voiceDir, { withFileTypes: true }).catch(() => []);`,
+    `      const models = entries.filter((e) => e.isDirectory()).map((e) => e.name);`,
+    `      res.end(JSON.stringify({ models: models.length ? models : ['default'] }));`,
+    `    } catch {`,
+    `      res.end(JSON.stringify({ models: ['default'] }));`,
+    `    }`,
+    `    return;`,
+    `  }`,
+    '',
     `  // Static files & Next.js apps/web export routing`,
     `  const normalizedPath = pathname.replace(/^[/]+|[/]+$/g, '');`,
     `  const candidatePaths = [`,
@@ -530,14 +571,29 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     'Then open `http://localhost:3000` in your browser.'
   );
 
+  const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
+  const createAssetsDirs: string[] = [];
+
   if (hasBody) {
+    createAssetsDirs.push(`assets/body/model/${companionSlug}`);
     readmeLines.push(
       '',
-      '### Avatar Assets',
-      'Place your Live2D Cubism model assets into `./assets/body/model/`:',
+      '### Body & Avatar Models',
+      `Place your Live2D Cubism model assets into \`./assets/body/model/${companionSlug}/\`:`,
       '- `model.model3.json`',
       '- `model.moc3`',
       '- textures directory'
+    );
+  }
+
+  if (hasVoice) {
+    createAssetsDirs.push(`assets/voice/${companionSlug}`);
+    readmeLines.push(
+      '',
+      '### Voice & RVC Models',
+      `Place your character RVC voice models into \`./assets/voice/${companionSlug}/\`:`,
+      `- \`${companionSlug}.pth\` (Target voice weights)`,
+      `- \`${companionSlug}.index\` (Feature index file)`
     );
   }
 
@@ -555,6 +611,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     'src/index.js': srcIndexJs,
     'public/index.html': webHtml,
     createAssetsBodyDir: hasBody,
+    createAssetsDirs,
   };
 
   if (dockerComposeYaml) {

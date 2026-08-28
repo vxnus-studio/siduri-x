@@ -92,7 +92,7 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
     });
 
     test('memory organ tarball packages migrations/001_initial_schema.sql', () => {
-      const memoryTarPath = path.join(tempPackDir, 'siduri-x-memory-1.0.0.tgz');
+      const memoryTarPath = path.join(tempPackDir, 'siduri-x-memory-1.0.1.tgz');
       const listing = execSync(`tar -tzf ${memoryTarPath}`, { encoding: 'utf8' });
       expect(listing).toContain('package/migrations/001_initial_schema.sql');
     });
@@ -116,8 +116,8 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
       // Write instance files referencing packed tarballs directly for true clean machine install
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.0.tgz')}`,
-        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.0.tgz')}`,
+        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.1.tgz')}`,
+        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.1.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
@@ -169,9 +169,9 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.0.tgz')}`,
-        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.0.tgz')}`,
-        '@siduri-x/hands': `file:${path.join(tempPackDir, 'siduri-x-hands-1.0.0.tgz')}`,
+        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.1.tgz')}`,
+        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.1.tgz')}`,
+        '@siduri-x/hands': `file:${path.join(tempPackDir, 'siduri-x-hands-1.0.1.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
@@ -212,9 +212,9 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.0.tgz')}`,
-        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.0.tgz')}`,
-        '@siduri-x/memory': `file:${path.join(tempPackDir, 'siduri-x-memory-1.0.0.tgz')}`,
+        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.1.tgz')}`,
+        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.1.tgz')}`,
+        '@siduri-x/memory': `file:${path.join(tempPackDir, 'siduri-x-memory-1.0.1.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
