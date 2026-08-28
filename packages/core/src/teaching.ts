@@ -65,7 +65,7 @@ export function extractDeterministicTeaching(
 
   // 2. Actor's Name: "my name is X"
   const myNameMatch = text.match(/\bmy name is\s+(.+?)(?=\s+and\s+(?:i\b|my\b|you\b)|[.;,]|$)/i);
-  if (myNameMatch && !/\b(?:private|public|stream|everywhere)\b/i.test(text)) {
+  if (myNameMatch && !/\b(?:private|public|everywhere)\b/i.test(text)) {
     const name = cleanValue(myNameMatch[1], 80);
     claims.push({
       subject: actorSubject,
@@ -80,8 +80,8 @@ export function extractDeterministicTeaching(
     });
   }
 
-  // 3. Preferred Address / Call me X: "call me X [in private / on stream / in public]"
-  const callMeMatch = text.match(/\b(?:(?:from now on|only),?\s*)?call me\s+(.+?)(?:\s+(in private|privately|on stream|in public|publicly|everywhere|in direct conversations))?(?=\s+and\s+(?:i\b|my\b|you\b)|[.;,]|$)/i);
+  // 3. Preferred Address / Call me X: "call me X"
+  const callMeMatch = text.match(/\b(?:(?:from now on|only),?\s*)?call me\s+(.+?)(?:\s+(in private|privately|in public|publicly|everywhere|in direct conversations))?(?=\s+and\s+(?:i\b|my\b|you\b)|[.;,]|$)/i);
   if (callMeMatch) {
     const address = cleanValue(callMeMatch[1], 80);
     const scopePhrase = (callMeMatch[2] || '').toLowerCase();
@@ -93,7 +93,7 @@ export function extractDeterministicTeaching(
       claimSensitivity = 'private';
       claimAudiences = [context?.conversation?.audienceId || `audience-private-${actorId}`];
       directiveInstruction += ' in private conversations';
-    } else if (scopePhrase.includes('stream') || scopePhrase.includes('public') || scopePhrase.includes('publicly')) {
+    } else if (scopePhrase.includes('public') || scopePhrase.includes('publicly')) {
       claimSensitivity = 'public';
       claimAudiences = ['audience-public'];
       directiveInstruction += ' in public conversations';

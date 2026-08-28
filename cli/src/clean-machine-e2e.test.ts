@@ -137,7 +137,11 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
       expect(fs.existsSync(path.join(instanceDir, 'siduri-x-runtime.js'))).toBe(false);
 
       // 3. Run node src/index.js (starts cleanly without PostgreSQL or unselected organs)
-      const startOutput = execSync('node src/index.js', { cwd: instanceDir, encoding: 'utf8' });
+      const startOutput = execSync('node src/index.js', {
+        cwd: instanceDir,
+        env: { ...process.env, PORT: '0' },
+        encoding: 'utf8',
+      });
       expect(startOutput).toContain('✓ Siduri [CleanBrainOnly] initialized with [Brain].');
 
       // 4. Verify doctor from standalone directory
@@ -185,7 +189,11 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-x/memory'))).toBe(false);
 
-      const startOutput = execSync('node src/index.js', { cwd: instanceDir, encoding: 'utf8' });
+      const startOutput = execSync('node src/index.js', {
+        cwd: instanceDir,
+        env: { ...process.env, PORT: '0' },
+        encoding: 'utf8',
+      });
       expect(startOutput).toContain('✓ Siduri [CleanBrainHands] initialized with [Brain, Hands].');
 
       const doctorOutput = execSync(`node ${path.resolve(repoRoot, 'cli/dist/index.js')} doctor`, {
