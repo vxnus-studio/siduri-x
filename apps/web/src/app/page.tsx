@@ -14,7 +14,6 @@ export default function HomePage() {
           <nav className="nav-links" aria-label="Main Navigation">
             <Link href="/chat">Chat</Link>
             <Link href="/operator">Operator Console</Link>
-            <Link href="/overlay">Overlay</Link>
           </nav>
 
           <div>
@@ -373,9 +372,6 @@ export default function HomePage() {
             </Link>
             <Link href="/operator" className="hover:text-[var(--siduri-text-primary)]">
               Operator
-            </Link>
-            <Link href="/overlay" className="hover:text-[var(--siduri-text-primary)]">
-              Overlay
             </Link>
           </div>
         </div>
