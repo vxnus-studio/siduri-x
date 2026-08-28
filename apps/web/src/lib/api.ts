@@ -1,5 +1,10 @@
-export const API_URL = "http://localhost:3001";
-export const WS_URL = "ws://127.0.0.1:8089";
+export const API_URL = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_API_URL || '')
+  : (process.env.API_URL || 'http://localhost:3000');
+
+export const WS_URL = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`)
+  : 'ws://127.0.0.1:8089';
 
 export async function fetchApi(path: string, options?: RequestInit): Promise<Response> {
   return fetch(`${API_URL}${path}`, options);

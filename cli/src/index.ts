@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execFile as execFileCallback } from 'node:child_process';
+import fs from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -246,7 +247,8 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
 
   await mkdir(projectDir, { recursive: true });
   await mkdir(path.join(projectDir, 'src'), { recursive: true });
-  await mkdir(path.join(projectDir, 'public'), { recursive: true });
+  const publicDir = path.join(projectDir, 'public');
+  await mkdir(publicDir, { recursive: true });
 
   await writeFile(path.join(projectDir, 'package.json'), files['package.json'], 'utf8');
   await writeFile(path.join(projectDir, 'siduri.config.json'), files['siduri.config.json'], 'utf8');
@@ -254,7 +256,21 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   await writeFile(path.join(projectDir, '.env.example'), files['.env.example'], 'utf8');
   await writeFile(path.join(projectDir, 'README.md'), files['README.md'], 'utf8');
   await writeFile(path.join(projectDir, 'src/index.js'), files['src/index.js'], 'utf8');
-  await writeFile(path.join(projectDir, 'public/index.html'), files['public/index.html'], 'utf8');
+
+  // Copy full Next.js apps/web production build if present
+  const webDistCandidates = [
+    path.resolve(__dirname, 'web-dist'),
+    path.resolve(__dirname, '../dist/web-dist'),
+    path.resolve(__dirname, '../../apps/web/out'),
+    path.resolve(process.cwd(), 'apps/web/out'),
+  ];
+  const foundWebDist = webDistCandidates.find((p) => fs.existsSync(p));
+
+  if (foundWebDist) {
+    fs.cpSync(foundWebDist, publicDir, { recursive: true });
+  } else {
+    await writeFile(path.join(publicDir, 'index.html'), files['public/index.html'], 'utf8');
+  }
 
   if (files['docker-compose.yml']) {
     await writeFile(path.join(projectDir, 'docker-compose.yml'), files['docker-compose.yml'], 'utf8');

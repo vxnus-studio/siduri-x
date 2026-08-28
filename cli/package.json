@@ -24,7 +24,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node ./scripts/copy-web-dist.cjs",
     "dev": "tsc -w",
     "test": "jest --config jest.config.json"
   },
