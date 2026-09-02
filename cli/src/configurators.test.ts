@@ -249,7 +249,8 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
     test('Voice configurator configures VOICEVOX engine and speaker ID', async () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ provider: 'voicevox' })
-        .mockResolvedValueOnce({ baseUrl: 'http://localhost:50021', speakerId: '2' });
+        .mockResolvedValueOnce({ baseUrl: 'http://localhost:50021' })
+        .mockResolvedValueOnce({ speaker: { id: 2, label: '四国めたん (Shikoku Metan) - ノーマル (Normal) (ID: 2)' } });
 
       const result = await configureVoice({ companionName: 'Sparkle', manifest: voiceManifest });
       expect(result.config.provider).toBe('voicevox');
