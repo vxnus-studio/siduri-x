@@ -152,7 +152,7 @@ async function bootDefaultCompanion() {
 if (process.env.NODE_ENV !== 'test') {
   bootDefaultCompanion().then(() => {
     app.listen(PORT, () => {
-      console.log(`Siduri-Y API running on port ${PORT}`);
+      console.log(`Siduri-X API running on port ${PORT}`);
     });
   }).catch(e => {
     console.error("Failed to boot default companion:", e);

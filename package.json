@@ -1,5 +1,5 @@
 {
-  "name": "siduri-y",
+  "name": "siduri-x",
   "private": true,
   "scripts": {
     "build": "turbo run build",

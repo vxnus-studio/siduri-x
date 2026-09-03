@@ -113,7 +113,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
 
   // STATUS / HEALTH ENDPOINTS
   app.get('/health', (req, res) => res.json({ status: "ok" }));
-  app.get('/version', (req, res) => res.json({ name: "siduri-y-api", version: "0.2.0-y" }));
+  app.get('/version', (req, res) => res.json({ name: "siduri-x-api", version: "0.2.0-x" }));
   app.get('/ready', (req, res) => res.json({ status: "ready", dependencies: {} }));
   app.get('/voice/health', (req, res) => res.json({ provider: "voicevox", healthy: true }));
   app.get('/obs/health', (req, res) => res.json({ connected: true }));

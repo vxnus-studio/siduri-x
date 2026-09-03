@@ -1,4 +1,4 @@
--- Initial schema for PostgreSQL Memory Organ in Siduri-Y
+-- Initial schema for PostgreSQL Memory Organ in Siduri-X
 
 CREATE TABLE IF NOT EXISTS memory_claims (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

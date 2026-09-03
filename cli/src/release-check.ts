@@ -23,18 +23,18 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
   fs.mkdirSync(tempPackDir, { recursive: true });
 
   const canonicalPackages = [
-    { name: '@siduri-x/core', dir: 'packages/core', isOrgan: false, tarName: 'siduri-x-core-1.0.1.tgz' },
-    { name: '@siduri-x/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: 'siduri-x-brain-1.0.1.tgz' },
-    { name: '@siduri-x/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: 'siduri-x-memory-1.0.1.tgz' },
-    { name: '@siduri-x/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: 'siduri-x-knowledge-1.0.1.tgz' },
-    { name: '@siduri-x/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: 'siduri-x-behavior-1.0.1.tgz' },
-    { name: '@siduri-x/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: 'siduri-x-ear-1.0.1.tgz' },
-    { name: '@siduri-x/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: 'siduri-x-vision-1.0.1.tgz' },
-    { name: '@siduri-x/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: 'siduri-x-hands-1.0.1.tgz' },
-    { name: '@siduri-x/body', dir: 'packages/organs/body', isOrgan: true, tarName: 'siduri-x-body-1.0.3.tgz' },
-    { name: '@siduri-x/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: 'siduri-x-voice-1.0.2.tgz' },
-    { name: '@siduri-x/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: 'siduri-x-observation-1.0.1.tgz' },
-    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: 'vxnus-siduri-0.1.4.tgz' },
+    { name: '@siduri-x/core', dir: 'packages/core', isOrgan: false, tarName: 'siduri-x-core-1.0.2.tgz' },
+    { name: '@siduri-x/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: 'siduri-x-brain-1.0.2.tgz' },
+    { name: '@siduri-x/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: 'siduri-x-memory-1.0.2.tgz' },
+    { name: '@siduri-x/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: 'siduri-x-knowledge-1.0.2.tgz' },
+    { name: '@siduri-x/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: 'siduri-x-behavior-1.0.2.tgz' },
+    { name: '@siduri-x/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: 'siduri-x-ear-1.0.2.tgz' },
+    { name: '@siduri-x/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: 'siduri-x-vision-1.0.2.tgz' },
+    { name: '@siduri-x/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: 'siduri-x-hands-1.0.2.tgz' },
+    { name: '@siduri-x/body', dir: 'packages/organs/body', isOrgan: true, tarName: 'siduri-x-body-1.0.4.tgz' },
+    { name: '@siduri-x/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: 'siduri-x-voice-1.0.3.tgz' },
+    { name: '@siduri-x/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: 'siduri-x-observation-1.0.2.tgz' },
+    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: 'vxnus-siduri-0.1.5.tgz' },
   ];
 
   let packagesChecked = 0;

@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/observation",
   "organType": "observation",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "displayName": "Observation (Screen Perception & Frame Ingest)",
   "description": "Screen capture frame ingest, SHA-256 deduplication, and visual grounding for Eyes/Vision",
   "entrypoint": "./dist/index.js",

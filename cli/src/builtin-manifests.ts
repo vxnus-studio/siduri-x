@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/behavior',
     organType: 'behavior',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Behavior (Active Self Directives)',
     description: 'Atomic directive state machine and personality projection compiler',
     entrypoint: './dist/index.js',
@@ -31,7 +31,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/body',
     organType: 'body',
-    version: '1.0.3',
+    version: '1.0.4',
     displayName: 'Body (Live2D & Avatar State)',
     description: 'Renderer-agnostic avatar expression and embodiment event adapter',
     entrypoint: './dist/index.js',
@@ -65,7 +65,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/brain',
     organType: 'brain',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Brain (Cognition & Planning)',
     description: 'Provider-neutral LLM reasoning, response planning, and proposal generation',
     entrypoint: './dist/index.js',
@@ -121,7 +121,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/ear',
     organType: 'ear',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Ear (Perception Ingress)',
     description: 'Multi-modal sensory input ingestion, transcription bounds, and mime validation',
     entrypoint: './dist/index.js',
@@ -152,7 +152,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/hands',
     organType: 'hands',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Hands (MCP Tool Execution)',
     description: 'Model Context Protocol tool management and cryptographically authorized action execution',
     entrypoint: './dist/index.js',
@@ -206,7 +206,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/knowledge',
     organType: 'knowledge',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Knowledge (E-Compatible Cited Facts)',
     description: 'Factual context retrieval from local or hosted E Knowledge packs',
     entrypoint: './dist/index.js',
@@ -271,7 +271,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/memory',
     organType: 'memory',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Memory (PostgreSQL FTS Claims)',
     description: 'Relational semantic claims with Full-Text Search and companion isolation',
     entrypoint: './dist/index.js',
@@ -323,7 +323,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/observation',
     organType: 'observation',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Observation (Screen Perception & Frame Ingest)',
     description: 'Screen capture frame ingest, SHA-256 deduplication, and visual grounding for Eyes/Vision',
     entrypoint: './dist/index.js',
@@ -341,7 +341,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/vision',
     organType: 'vision',
-    version: '1.0.1',
+    version: '1.0.2',
     displayName: 'Vision (Visual Perception & OCR)',
     description: 'Image inspection, cropping, and multi-pass OCR perception adapter',
     entrypoint: './dist/index.js',
@@ -388,7 +388,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/voice',
     organType: 'voice',
-    version: '1.0.2',
+    version: '1.0.3',
     displayName: 'Voice (VOICEVOX Speech Synthesis)',
     description: 'Queued speech synthesis and audio rendering lifecycle adapter',
     entrypoint: './dist/index.js',

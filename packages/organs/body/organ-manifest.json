@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/body",
   "organType": "body",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "displayName": "Body (Live2D & Avatar State)",
   "description": "Renderer-agnostic avatar expression and embodiment event adapter",
   "entrypoint": "./dist/index.js",

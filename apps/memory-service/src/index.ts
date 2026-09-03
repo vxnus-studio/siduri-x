@@ -20,7 +20,7 @@ export function createServer(memoryConfig?: { connectionString: string }): { app
   // MCP Server Setup
   // TODO: [MCP Tools Pending] Register tools like `store_claim` or `retrieve_context` using mcpServer.setRequestHandler.
   const mcpServer = new Server({
-      name: "siduri-y-memory-organ",
+      name: "siduri-x-memory-organ",
       version: "1.0.0"
     }, {
       capabilities: { tools: {} }

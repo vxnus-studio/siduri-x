@@ -28,7 +28,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
 
   async runMigrations(): Promise<void> {
     await this.pool.query(UP_MIGRATION);
-    // Keep databases created by the first Siduri-Y migration compatible with
+    // Keep databases created by the first Siduri-X migration compatible with
     // the richer provenance contract without requiring a destructive reset.
     await this.pool.query(`
       ALTER TABLE memory_claims

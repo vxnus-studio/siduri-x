@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/voice",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -22,7 +22,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vxnuslabs/siduri-y",
+    "url": "https://github.com/vxnus-studio/siduri-x",
     "directory": "packages/organs/voice"
   },
   "publishConfig": {

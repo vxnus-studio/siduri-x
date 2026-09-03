@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/memory",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -23,7 +23,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vxnuslabs/siduri-y",
+    "url": "https://github.com/vxnus-studio/siduri-x",
     "directory": "packages/organs/memory"
   },
   "publishConfig": {

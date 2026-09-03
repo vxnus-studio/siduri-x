@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/memory",
   "organType": "memory",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "displayName": "Memory (PostgreSQL FTS Claims)",
   "description": "Relational semantic claims with Full-Text Search and companion isolation",
   "entrypoint": "./dist/index.js",

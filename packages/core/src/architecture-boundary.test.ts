@@ -19,7 +19,7 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
     { dir: 'observation', name: '@siduri-x/observation', organType: 'observation', configKey: 'observation' },
   ];
 
-  it('package.json has zero dependencies on @siduri-y organ packages', () => {
+  it('package.json has zero dependencies on @siduri-x organ packages', () => {
     const pkg = JSON.parse(fs.readFileSync(corePackageJsonPath, 'utf8'));
     const allDeps = {
       ...(pkg.dependencies || {}),
@@ -34,7 +34,7 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
     expect(organDeps).toEqual([]);
   });
 
-  it('source files in packages/core have zero imports referencing @siduri-y organ packages', () => {
+  it('source files in packages/core have zero imports referencing @siduri-x organ packages', () => {
     const files = fs.readdirSync(coreSrcDir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
 
     const forbiddenImports: { file: string; match: string }[] = [];
