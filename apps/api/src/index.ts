@@ -5,7 +5,7 @@ import { createApp, AppInstance } from './app';
 import { SiduriRuntime } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
 import { PostgresMemoryOrgan } from '@siduri-x/memory';
-import { VoicevoxAdapter } from '@siduri-x/voice';
+import { VoiceAdapter } from '@siduri-x/voice';
 import { EKnowledgeAdapter } from '@siduri-x/knowledge';
 import { OpenRouterVisionAdapter } from '@siduri-x/vision';
 import { ActiveSelfCompiler } from '@siduri-x/behavior';
@@ -41,7 +41,7 @@ function isDisabled(config: any): boolean {
 function createVoice(config: any) {
   return isDisabled(config)
     ? undefined
-    : new VoicevoxAdapter({ baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.speakerId || 1 });
+    : new VoiceAdapter({ provider: config.provider || 'voicevox', baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.speakerId || 1 });
 }
 
 function createKnowledge(config: any) {

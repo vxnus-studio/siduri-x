@@ -1,21 +1,11 @@
 import { VoiceOrgan, AudioEvent, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult, validateExperienceEvent } from '@siduri-x/core';
+import { Synthesizer, EdgeTtsSynthesizer, VoicevoxSynthesizer, PiperSynthesizer, KokoroSynthesizer, RvcPostProcessor } from './synthesizers';
+import { RvcPostProcessorConfig } from './synthesizers/rvc';
 
-export interface RvcPostProcessorConfig {
-  enabled?: boolean;
-  serviceUrl?: string;
-  modelName?: string;
-  modelPath?: string;
-  indexPath?: string;
-  pitchShift?: number;
-  f0Method?: 'rmvpe' | 'pm' | 'harvest' | 'crepe';
-  indexRate?: number;
-  filterRadius?: number;
-  protect?: number;
-}
-
-export interface VoicevoxConfig {
-  baseUrl: string;
-  speakerId: number;
+export interface VoiceConfig {
+  provider: 'voicevox' | 'edge-tts' | 'kokoro' | 'piper' | 'none';
+  baseUrl?: string;
+  speakerId?: number;
   maxQueueDepth?: number;
   timeoutMs?: number;
   maxTextLength?: number;
@@ -23,59 +13,7 @@ export interface VoicevoxConfig {
   rvc?: RvcPostProcessorConfig;
 }
 
-export const DEFAULT_MAX_VOICE_BYTES = 10 * 1024 * 1024; // 10MB limit
-
-/**
- * Incrementally reads a response body stream, aborting immediately if bytes read exceed maxBytes.
- */
-export async function readBoundedResponseBody(response: Response, maxBytes: number = DEFAULT_MAX_VOICE_BYTES): Promise<Uint8Array> {
-  const contentLengthHeader = response?.headers?.get ? response.headers.get('content-length') : null;
-  if (contentLengthHeader) {
-    const declaredLength = parseInt(contentLengthHeader, 10);
-    if (!isNaN(declaredLength) && declaredLength > maxBytes) {
-      throw new Error(`Voice response Content-Length (${declaredLength} bytes) exceeds limit of ${maxBytes} bytes`);
-    }
-  }
-
-  // If response.body is a ReadableStream, stream chunks to enforce bound before allocating full buffer
-  if (response.body && typeof (response.body as any).getReader === 'function') {
-    const reader = (response.body as any).getReader();
-    const chunks: Uint8Array[] = [];
-    let receivedBytes = 0;
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          receivedBytes += value.byteLength;
-          if (receivedBytes > maxBytes) {
-            await reader.cancel();
-            throw new Error(`Voice response stream exceeded maximum allowed size of ${maxBytes} bytes`);
-          }
-          chunks.push(value);
-        }
-      }
-    } finally {
-      reader.releaseLock?.();
-    }
-
-    const merged = new Uint8Array(receivedBytes);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-    return merged;
-  }
-
-  // Fallback for mock/non-streaming fetch response
-  const buffer = await response.arrayBuffer();
-  if (buffer.byteLength > maxBytes) {
-    throw new Error(`Voice response body (${buffer.byteLength} bytes) exceeds maximum limit of ${maxBytes} bytes`);
-  }
-  return new Uint8Array(buffer);
-}
+const DEFAULT_MAX_VOICE_BYTES = 10 * 1024 * 1024; // 10MB limit
 
 interface SpeechJob {
   id: string;
@@ -85,106 +23,104 @@ interface SpeechJob {
   sequence: number;
 }
 
-export class VoicevoxAdapter implements VoiceOrgan, ExperienceAdapter {
+export class VoiceAdapter implements VoiceOrgan, ExperienceAdapter {
   readonly kind = 'voice' as const;
   private queue: SpeechJob[] = [];
   private sequenceCounter = 0;
   private currentJob: string | undefined;
   private isProcessing = false;
   private callbacks: ((event: AudioEvent) => void)[] = [];
+  
   private readonly maxQueueDepth: number;
   private readonly timeoutMs: number;
   private readonly maxTextLength: number;
   private readonly maxResponseBytes: number;
+  private synthesizer: Synthesizer | null = null;
 
-  constructor(private config: VoicevoxConfig) {
+  constructor(private config: VoiceConfig) {
     this.maxQueueDepth = config.maxQueueDepth ?? 50;
     this.timeoutMs = config.timeoutMs ?? 10_000;
     this.maxTextLength = config.maxTextLength ?? 4000;
     this.maxResponseBytes = config.maxResponseBytes ?? DEFAULT_MAX_VOICE_BYTES;
+    this.initSynthesizer();
+  }
+
+  private initSynthesizer() {
+    if (this.config.provider === 'none') {
+      this.synthesizer = null;
+      return;
+    }
+
+    let baseSynth: Synthesizer;
+    
+    switch (this.config.provider) {
+      case 'edge-tts':
+        baseSynth = new EdgeTtsSynthesizer();
+        break;
+      case 'piper':
+        baseSynth = new PiperSynthesizer();
+        break;
+      case 'kokoro':
+        baseSynth = new KokoroSynthesizer();
+        break;
+      case 'voicevox':
+      default:
+        baseSynth = new VoicevoxSynthesizer(
+          this.config.baseUrl || 'http://localhost:50021',
+          this.config.speakerId || 1,
+          this.timeoutMs,
+          this.maxResponseBytes
+        );
+        break;
+    }
+
+    // Wrap with RVC if enabled
+    if (this.config.rvc?.enabled) {
+      this.synthesizer = new RvcPostProcessor(
+        baseSynth,
+        this.config.rvc,
+        this.timeoutMs,
+        this.maxResponseBytes
+      );
+    } else {
+      this.synthesizer = baseSynth;
+    }
   }
 
   async handleEvent(event: ExperienceEvent): Promise<ExperienceAdapterResult> {
+    if (this.config.provider === 'none') {
+      return { accepted: false, eventId: event.eventId, lifecycle: 'FAILED', reason: 'PROVIDER_NONE' };
+    }
+
     const validation = validateExperienceEvent(event);
     if (!validation.valid) {
-      return {
-        accepted: false,
-        eventId: event?.eventId || '',
-        lifecycle: 'FAILED',
-        error: validation.error,
-        reason: 'INVALID_EVENT_ENVELOPE',
-      };
+      return { accepted: false, eventId: event?.eventId || '', lifecycle: 'FAILED', error: validation.error, reason: 'INVALID_EVENT_ENVELOPE' };
     }
 
     if (event.kind !== 'voice') {
-      return {
-        accepted: false,
-        eventId: event.eventId,
-        lifecycle: 'FAILED',
-        error: `Voice adapter received incompatible event kind: ${event.kind}`,
-        reason: 'INCOMPATIBLE_EVENT_KIND',
-      };
+      return { accepted: false, eventId: event.eventId, lifecycle: 'FAILED', reason: 'INCOMPATIBLE_EVENT_KIND' };
     }
 
     if (event.approval !== 'APPROVED') {
-      return {
-        accepted: false,
-        eventId: event.eventId,
-        lifecycle: 'FAILED',
-        error: 'Event is not APPROVED',
-        reason: 'APPROVAL_REQUIRED',
-      };
+      return { accepted: false, eventId: event.eventId, lifecycle: 'FAILED', reason: 'APPROVAL_REQUIRED' };
     }
 
     if (this.queue.length >= this.maxQueueDepth) {
-      return {
-        accepted: false,
-        eventId: event.eventId,
-        lifecycle: 'FAILED',
-        error: `Voice queue capacity exceeded (current depth: ${this.queue.length}, max: ${this.maxQueueDepth})`,
-        reason: 'QUEUE_CAPACITY_EXCEEDED',
-      };
+      return { accepted: false, eventId: event.eventId, lifecycle: 'FAILED', reason: 'QUEUE_CAPACITY_EXCEEDED' };
     }
 
     const text = (event.text ?? '').slice(0, this.maxTextLength);
     const language = event.language ?? 'ja';
     const speechId = this.enqueueSpeech(text, language, 1);
 
-    return {
-      accepted: true,
-      eventId: event.eventId,
-      lifecycle: 'STARTED',
-      metadata: {
-        speechId,
-        companionId: event.companionId,
-        correlationId: event.correlationId,
-      },
-    };
+    return { accepted: true, eventId: event.eventId, lifecycle: 'STARTED', metadata: { speechId } };
   }
 
   enqueueSpeech(text: string, language: string, priority: number = 0): string {
-    if (this.queue.length >= this.maxQueueDepth) {
-      throw new Error(`Voice queue capacity exceeded (current depth: ${this.queue.length}, max: ${this.maxQueueDepth})`);
-    }
-
     const boundedText = (text || '').slice(0, this.maxTextLength);
     const id = `job_${Math.random().toString(36).substr(2, 9)}`;
-    this.queue.push({
-      id,
-      text: boundedText,
-      language,
-      priority,
-      sequence: this.sequenceCounter++
-    });
-
-    // Sort: highest priority first, then lowest sequence
-    this.queue.sort((a, b) => {
-      if (a.priority !== b.priority) {
-        return b.priority - a.priority;
-      }
-      return a.sequence - b.sequence;
-    });
-
+    this.queue.push({ id, text: boundedText, language, priority, sequence: this.sequenceCounter++ });
+    this.queue.sort((a, b) => a.priority !== b.priority ? b.priority - a.priority : a.sequence - b.sequence);
     this.processQueue();
     return id;
   }
@@ -194,10 +130,7 @@ export class VoicevoxAdapter implements VoiceOrgan, ExperienceAdapter {
   }
 
   getQueueStatus(): { pending: number; current?: string } {
-    return {
-      pending: this.queue.length,
-      current: this.currentJob
-    };
+    return { pending: this.queue.length, current: this.currentJob };
   }
 
   private emit(event: AudioEvent) {
@@ -207,115 +140,23 @@ export class VoicevoxAdapter implements VoiceOrgan, ExperienceAdapter {
   }
 
   private async processQueue() {
-    if (this.isProcessing || this.queue.length === 0) return;
+    if (this.isProcessing || this.queue.length === 0 || !this.synthesizer) return;
     this.isProcessing = true;
 
     while (this.queue.length > 0) {
       const job = this.queue.shift()!;
       this.currentJob = job.id;
-
       this.emit({ type: 'STARTED', speechId: job.id, text: job.text, language: job.language });
 
       try {
-        const audioBuffer = await this.synthesize(job.text);
+        const audioBuffer = await this.synthesizer.synthesize(job.text);
         this.emit({ type: 'COMPLETED', speechId: job.id, text: job.text, language: job.language, audioBuffer });
       } catch (error) {
         this.emit({ type: 'FAILED', speechId: job.id, text: job.text, language: job.language });
       }
-
       this.currentJob = undefined;
     }
 
     this.isProcessing = false;
-  }
-
-  async synthesize(text: string): Promise<Uint8Array> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
-
-    try {
-      // 1. /audio_query
-      const queryUrl = new URL('/audio_query', this.config.baseUrl);
-      queryUrl.searchParams.set('text', text);
-      queryUrl.searchParams.set('speaker', this.config.speakerId.toString());
-
-      const queryResponse = await fetch(queryUrl.toString(), {
-        method: 'POST',
-        headers: { 'Accept': 'application/json' },
-        signal: controller.signal,
-      });
-
-      if (!queryResponse.ok) {
-        throw new Error(`Voicevox audio_query failed: ${queryResponse.statusText}`);
-      }
-
-      const queryJson = await queryResponse.json();
-
-      // 2. /synthesis
-      const synthUrl = new URL('/synthesis', this.config.baseUrl);
-      synthUrl.searchParams.set('speaker', this.config.speakerId.toString());
-
-      const synthResponse = await fetch(synthUrl.toString(), {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/wav',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(queryJson),
-        signal: controller.signal,
-      });
-
-      if (!synthResponse.ok) {
-        throw new Error(`Voicevox synthesis failed: ${synthResponse.statusText}`);
-      }
-
-      const rawWav = await readBoundedResponseBody(synthResponse, this.maxResponseBytes);
-
-      if (this.config.rvc?.enabled && (this.config.rvc?.serviceUrl || process.env.RVC_SERVICE_URL || this.config.rvc?.modelName || this.config.rvc?.modelPath)) {
-        return await this.applyRvc(rawWav);
-      }
-
-      return rawWav;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  async applyRvc(inputWav: Uint8Array): Promise<Uint8Array> {
-    const rvcConfig = this.config.rvc || {};
-    const serviceUrl = rvcConfig.serviceUrl || process.env.RVC_SERVICE_URL || 'http://localhost:50055';
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
-
-    try {
-      const formData = new FormData();
-      const blob = new Blob([inputWav.buffer as ArrayBuffer], { type: 'audio/wav' });
-      formData.append('audio', blob, 'input.wav');
-      if (rvcConfig.modelName) formData.append('model', rvcConfig.modelName);
-      if (rvcConfig.modelPath) formData.append('model_path', rvcConfig.modelPath);
-      if (rvcConfig.indexPath) formData.append('index_path', rvcConfig.indexPath);
-      formData.append('pitch_shift', String(rvcConfig.pitchShift ?? 0));
-      formData.append('f0_method', rvcConfig.f0Method ?? 'rmvpe');
-      formData.append('index_rate', String(rvcConfig.indexRate ?? 0.75));
-
-      const convertUrl = new URL('/convert', serviceUrl);
-      const res = await fetch(convertUrl.toString(), {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        console.warn(`[VoicevoxAdapter] RVC conversion failed (${res.status}): fallback to base audio.`);
-        return inputWav;
-      }
-
-      return await readBoundedResponseBody(res, this.maxResponseBytes);
-    } catch (e: any) {
-      console.warn(`[VoicevoxAdapter] RVC service error (${e.message}): fallback to base audio.`);
-      return inputWav;
-    } finally {
-      clearTimeout(timer);
-    }
   }
 }

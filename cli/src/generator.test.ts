@@ -58,7 +58,7 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
       version: '1.0.0',
       displayName: 'Voice (VOICEVOX Speech Synthesis)',
       entrypoint: './dist/index.js',
-      factory: 'VoicevoxAdapter',
+      factory: 'VoiceAdapter',
       configKey: 'voice',
       configSchema: { type: 'object', properties: { provider: { type: 'string' } } },
       environment: [{ name: 'VOICEVOX_URL', default: 'http://localhost:50021' }],

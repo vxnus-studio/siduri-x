@@ -372,7 +372,7 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@siduri-x/brain'");
       expect(files['src/index.js']).toContain("import { PostgresMemoryOrgan } from '@siduri-x/memory'");
       expect(files['src/index.js']).toContain("import { EKnowledgeAdapter } from '@siduri-x/knowledge'");
-      expect(files['src/index.js']).toContain("import { VoicevoxAdapter } from '@siduri-x/voice'");
+      expect(files['src/index.js']).toContain("import { VoiceAdapter } from '@siduri-x/voice'");
     });
   });
 });
