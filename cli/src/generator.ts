@@ -118,14 +118,6 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     dockerVolumes.push('  postgres_data:');
   }
 
-  if (isVoicevox) {
-    dockerServices.push([
-      '  voicevox:',
-      '    image: voicevox/voicevox_engine:cpu-latest',
-      '    ports:',
-      '      - "50021:50021"',
-    ].join('\n'));
-  }
 
   if (hasVoice && voiceConfig?.rvc?.enabled) {
     dockerServices.push([
@@ -552,16 +544,15 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '- **Environment**: Valid `.env` file (configured from `.env.example`)',
   ];
 
-  if (hasMemory || isVoicevox) {
+  if (hasMemory) {
     readmeLines.push(
       '- **Local Services (Optional)**: Docker (or standalone alternatives):',
     );
-    if (hasMemory) {
-      readmeLines.push('  - **PostgreSQL**: Required for memory claims & durable state (or use cloud Supabase/Neon)');
-    }
-    if (isVoicevox) {
-      readmeLines.push('  - **VOICEVOX**: Required for voice synthesis (or run the official desktop app from [voicevox.hiroshiba.jp](https://voicevox.hiroshiba.jp/))');
-    }
+    readmeLines.push('  - **PostgreSQL**: Required for memory claims & durable state (or use cloud Supabase/Neon)');
+  }
+
+  if (isVoicevox) {
+    readmeLines.push('- **VOICEVOX**: Note: The Voicevox engine executable will be securely auto-downloaded at runtime by Siduri if no local URL is provided.');
   }
 
   readmeLines.push(
