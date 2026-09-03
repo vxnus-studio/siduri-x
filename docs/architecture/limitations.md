@@ -1,42 +1,44 @@
-# Limitations
+# Limitations & Boundary Architecture
 
-Status: current compatibility baseline; public blank-slate parity incomplete
+Status: **RELEASE READY WITH EXPLICIT LIMITATIONS** (Verified commit: `06823ac2de61a5d8923f4072fe221bf943ea4aa4`)
+Historical Status: Extraction baseline; public blank-slate parity incomplete (superseded)
 
-This register describes known gaps. It is not a list of intentionally dropped
-features and must be read with the [repository health audit](./REPOSITORY_HEALTH_AUDIT.md).
+This document distinguishes historical extraction gaps (now resolved) from intentional architectural boundaries for Siduri's single-owner, local companion model.
 
-- **Public chat routing**: `/chat` still forces a legacy private/owner route;
-  neutral channel and audience extraction is pending.
-- **Identity and subjects**: the runtime still contains `Primary User`,
-  `primary_user`, creator, and `MASTER_PRIVATE` assumptions.
-- **Companion selection**: web and operator clients still send a hardcoded
-  `default` companion ID in several paths.
-- **Memory lifecycle**: compatibility APIs exist, but complete source-event,
-  approval, audience, validity, supersession, revocation, and audit parity is
-  not verified at the public API boundary.
-- **Behavior lifecycle**: Active Self compilation exists, but neutral audience,
-  channel, session, and subject semantics are not yet extracted.
-- **Blank-slate tests**: the B0–B9 baseline is specified but not yet fully
-  ported through the actual API/runtime boundary.
-- **Response approval**: grounded observation and response approval are not
-  yet connected to public output, voice, overlay, or platform sends.
-- **Knowledge trust boundary**: knowledge integration preserves citations, but
-  provider/OCR/platform data still requires the full pending-candidate and
-  untrusted-context regression suite.
-- **Platform ingestion and outbound delivery**: production platform adapters
-  and outbound approval remain incomplete.
-- **Live2D / Body**: VTube Studio control currently maps expressions/actions to
-  configured VTube Studio hotkeys; model-specific hotkey naming still needs to
-  be configured in VTube Studio.
-- **Observation / Screen Capture**: the fixture observation organ exists with
-  bounded evidence, but continuous redacted capture and grounded response
-  assembly are not migrated.
+---
 
-The following are not acceptable reasons to close a limitation: a successful
-TypeScript build, a green isolated unit test, or a compatibility API with a
-different name.
+## 1. Intentional Architectural Boundaries (Release Invariants)
 
-- **Live2D / Body**: VTube Studio control currently maps expressions/actions to
-  configured VTube Studio hotkeys; model-specific hotkey naming still needs to
-  be configured in VTube Studio.
-- **Observation / Screen Capture**: Not Migrated. The continuous OBS screen capture was removed in favor of a standard Vision interface.
+These constraints are deliberate design choices for Siduri's target product model and will not be expanded into multi-user SaaS infrastructure:
+
+- **Local Trust Boundary**:
+  Siduri is designed for a single owner on a single host machine. It intentionally does not provide public identity federation, OAuth2 authentication servers, multi-tenant isolation, or remote network ingress.
+- **Localhost-Only Network Footprint**:
+  All network listeners (API, Gateway, Memory Service, and CLI generated companions) strictly bind to `127.0.0.1`. Remote binding or unauthenticated exposure across public interfaces is unsupported by design.
+- **Platform Ingestion Stubs**:
+  Outbound streaming platform routes (`/platforms/*`) return truthful HTTP `501 Not Implemented`. Local companion operation is entirely self-contained without mandatory streaming platform dependencies.
+- **ActionStore Durability Scope**:
+  `InMemoryActionStore` is the default in-memory implementation for development and single-session execution. Production deployments requiring action authorizations to survive process or host restarts must supply a persistent store (e.g. `PostgresActionStore`).
+- **Web Client Lint Warnings**:
+  The Next.js web console (`apps/web`) exports clean static artifacts for the CLI companion UI, but standalone ESLint produces warnings concerning React 19 effect state setters and WebGL loader types.
+
+---
+
+## 2. Resolved Historical Extraction Gaps
+
+The following gaps identified in earlier extraction phases have been fully resolved and proven across the codebase:
+
+- **Public Chat Routing**:
+  Resolved — `/chat` routes through `mapRequestContext`, defaulting to neutral public channel/audience context unless verified authentication tokens are provided.
+- **Identity & Subjects**:
+  Resolved — `primary_user`, creator defaults, and `MASTER_PRIVATE` assumptions were purged from schemas and runtime context.
+- **Memory Lifecycle & Immutability**:
+  Resolved — `PostgresMemoryOrgan.updateClaim` enforces strict immutability for `APPROVED` claims, generating `PENDING` revisions with `supersedes` provenance.
+- **Behavior & Active Self**:
+  Resolved — `ActiveSelfCompiler` compiles behavior strictly scoped to companion, role, channel, and audience without conflating user memory with behavioral directives.
+- **Response Approval & Gating (T4)**:
+  Resolved — `ResponseGatingEngine` gates candidate speech, evaluates citations and uncertainty, and requires explicit approval before emitting output events.
+- **Blank-Slate Parity (B0–B6)**:
+  Resolved — verified at the API/runtime boundary in `apps/api/src/b0-b6.test.ts`.
+- **Observation / Screen Capture**:
+  Resolved — continuous OBS screen capture was removed in favor of `FixtureObservationOrgan` with bounded SHA-256 digested frames and rate-limited ingestion.

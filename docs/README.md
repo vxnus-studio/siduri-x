@@ -6,11 +6,15 @@ The documentation is organized into four distinct sections:
 
 ```
 docs/
-├── architecture/   # Core organ architecture, runtime design, and subsystem specifications
-├── contracts/      # Neutral context specs, memory state machine, safety gating, and event contracts
-├── extraction/     # Behavioral parity extraction track, roadmaps, and audit records
-└── archive/        # Historical phase records, milestone logs, and experimental handoffs
+├── RELEASE_STATUS.md # Canonical release status, verified commit, invariants, and reproducible commands
+├── architecture/     # Core organ architecture, runtime design, and subsystem specifications
+├── contracts/        # Neutral context specs, memory state machine, safety gating, and event contracts
+├── extraction/       # Behavioral parity extraction track, roadmaps, and audit records
+└── archive/          # Historical phase records, milestone logs, and experimental handoffs
 ```
+
+> **Current Release State**: See [**Canonical Release Status**](./RELEASE_STATUS.md) for current go/no-go status, verified SHA (`06823ac2de61a5d8923f4072fe221bf943ea4aa4`), and architecture invariants.
+
 
 ---
 
