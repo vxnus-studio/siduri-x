@@ -11,6 +11,8 @@ export type BodyState = 'idle' | 'speaking' | 'acting';
 export interface BodySnapshot {
   state: BodyState;
   currentExpression: string;
+  modelPath?: string;
+  modelUrl?: string;
   lastSpeechId: string | null;
   lastAction: string | null;
   lastText?: string;
@@ -20,6 +22,8 @@ export interface BodySnapshot {
 
 export interface NeutralBodyOrganConfig {
   initialExpression?: string;
+  modelPath?: string;
+  modelUrl?: string;
   [key: string]: unknown;
 }
 
@@ -29,6 +33,8 @@ export class NeutralBodyOrgan implements BodyOrgan, ExperienceAdapter {
   readonly kind = 'avatar' as const;
 
   public currentExpression: string = 'neutral';
+  public modelPath?: string;
+  public modelUrl?: string;
   public lastSpeechId: string | null = null;
   public lastAction: string | null = null;
   public lastText?: string;
@@ -40,6 +46,12 @@ export class NeutralBodyOrgan implements BodyOrgan, ExperienceAdapter {
   constructor(config: NeutralBodyOrganConfig = {}) {
     if (config.initialExpression) {
       this.currentExpression = config.initialExpression;
+    }
+    if (config.modelPath) {
+      this.modelPath = config.modelPath;
+    }
+    if (config.modelUrl) {
+      this.modelUrl = config.modelUrl;
     }
   }
 
@@ -71,6 +83,8 @@ export class NeutralBodyOrgan implements BodyOrgan, ExperienceAdapter {
     return {
       state: this.state,
       currentExpression: this.currentExpression,
+      modelPath: this.modelPath,
+      modelUrl: this.modelUrl,
       lastSpeechId: this.lastSpeechId,
       lastAction: this.lastAction,
       lastText: this.lastText,

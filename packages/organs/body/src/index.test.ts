@@ -17,8 +17,17 @@ describe('NeutralBodyOrgan', () => {
     expect(organ.lastSpeechId).toBeNull();
     expect(organ.lastAction).toBeNull();
 
-    const customOrgan = new NeutralBodyOrgan({ initialExpression: 'happy' });
+    const customOrgan = new NeutralBodyOrgan({
+      initialExpression: 'happy',
+      modelPath: './assets/body/custom/model.model3.json',
+      modelUrl: '/assets/body/custom/model.model3.json',
+    });
     expect(customOrgan.currentExpression).toBe('happy');
+    expect(customOrgan.modelPath).toBe('./assets/body/custom/model.model3.json');
+    expect(customOrgan.modelUrl).toBe('/assets/body/custom/model.model3.json');
+    const snapshot = customOrgan.getSnapshot();
+    expect(snapshot.modelPath).toBe('./assets/body/custom/model.model3.json');
+    expect(snapshot.modelUrl).toBe('/assets/body/custom/model.model3.json');
     customOrgan.cleanup();
   });
 

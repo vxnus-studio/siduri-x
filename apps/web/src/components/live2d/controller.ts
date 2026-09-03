@@ -6,7 +6,7 @@ import {
 } from './types';
 
 /**
- * Maps semantic expressions to Akaituno / standard Cubism expression filenames or identifiers.
+ * Maps semantic expressions to standard Cubism expression filenames or identifiers.
  */
 export function mapSemanticExpression(expression?: AvatarExpression | string): string {
   if (!expression) return 'neutral';

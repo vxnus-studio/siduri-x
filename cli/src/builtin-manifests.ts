@@ -31,7 +31,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/body',
     organType: 'body',
-    version: '1.0.1',
+    version: '1.0.3',
     displayName: 'Body (Live2D & Avatar State)',
     description: 'Renderer-agnostic avatar expression and embodiment event adapter',
     entrypoint: './dist/index.js',
@@ -48,6 +48,12 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
         initialExpression: {
           type: 'string',
           default: 'neutral'
+        },
+        modelPath: {
+          type: 'string'
+        },
+        modelUrl: {
+          type: 'string'
         }
       }
     },

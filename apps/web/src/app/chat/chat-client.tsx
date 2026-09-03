@@ -121,6 +121,7 @@ export default function ChatClient() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [activeAvatarEvent, setActiveAvatarEvent] = useState<ActiveAvatarEvent | null>(null);
+  const [avatarModelUrl, setAvatarModelUrl] = useState<string | undefined>(undefined);
   const messagesRef = useRef<HTMLDivElement>(null);
   const avatarTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -143,7 +144,33 @@ export default function ChatClient() {
     setActiveId(stored[0]?.id ?? null);
     setReady(true);
     fetchApi(`/health`)
-      .then(() => setStatus("online"))
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setStatus("online");
+          if (data.organs?.body?.modelUrl) {
+            setAvatarModelUrl(data.organs.body.modelUrl);
+          } else {
+            // Check discovered models from /api/models/body
+            fetchApi(`/api/models/body`)
+              .then(async (mRes) => {
+                if (mRes.ok) {
+                  const mData = await mRes.json().catch(() => ({}));
+                  const models: string[] = mData.models || [];
+                  const customModel = models.find((m) => m !== "default");
+                  if (customModel) {
+                    setAvatarModelUrl(`/assets/body/${customModel}/model.model3.json`);
+                  } else if (models.length > 0 && models[0] !== "default") {
+                    setAvatarModelUrl(`/assets/body/${models[0]}/model.model3.json`);
+                  }
+                }
+              })
+              .catch(() => {});
+          }
+        } else {
+          setStatus("online");
+        }
+      })
       .catch(() => setStatus("offline"));
   }, []);
 
@@ -499,6 +526,7 @@ export default function ChatClient() {
               {isPresenceOpen ? (
                 <div className="avatar-presence-area" data-testid="avatar-presence-area">
                   <AvatarCanvas
+                    modelUrl={avatarModelUrl}
                     expression={activeAvatarEvent?.expression || "neutral"}
                     action={activeAvatarEvent?.action || "idle"}
                     state={activeAvatarEvent?.state || "idle"}

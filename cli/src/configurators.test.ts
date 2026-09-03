@@ -258,14 +258,20 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.summary?.['Speaker ID']).toBe(2);
     });
 
-    test('Body configurator configures Live2D and expression', async () => {
+    test('Body configurator configures Live2D, custom model path, and expression', async () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ provider: 'live2d' })
-        .mockResolvedValueOnce({ initialExpression: 'happy' });
+        .mockResolvedValueOnce({
+          modelSource: './assets/body/sparkle/model.model3.json',
+          initialExpression: 'happy',
+        });
 
       const result = await configureBody({ companionName: 'Sparkle', manifest: bodyManifest });
       expect(result.config.provider).toBe('live2d');
+      expect(result.config.modelPath).toBe('./assets/body/sparkle/model.model3.json');
+      expect(result.config.modelUrl).toBe('/assets/body/sparkle/model.model3.json');
       expect(result.config.initialExpression).toBe('happy');
+      expect(result.summary?.['Model Path']).toBe('./assets/body/sparkle/model.model3.json');
     });
 
     test('Hands configurator configures MCP tool execution timeout', async () => {

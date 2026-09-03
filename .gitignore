@@ -37,3 +37,7 @@ dist/
 
 # local visual assets
 assets/
+
+# cli e2e test artifacts
+cli/temp-*/
+

@@ -59,6 +59,8 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
   } else if (manifest.organType === 'body') {
     config.provider = config.provider || 'live2d';
     config.initialExpression = config.initialExpression || 'neutral';
+    config.modelPath = config.modelPath || './assets/body/default/model.model3.json';
+    config.modelUrl = config.modelUrl || '/assets/body/default/model.model3.json';
   } else if (manifest.organType === 'hands') {
     config.defaultTimeoutMs = config.defaultTimeoutMs || 10000;
     config.providers = config.providers || [];
@@ -416,7 +418,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `  if (pathname === '/api/models/body' && req.method === 'GET') {`,
     `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
     `    try {`,
-    `      const bodyDir = path.join(rootDir, 'assets', 'body', 'model');`,
+    `      const bodyDir = path.join(rootDir, 'assets', 'body');`,
     `      const entries = await readdir(bodyDir, { withFileTypes: true }).catch(() => []);`,
     `      const models = entries.filter((e) => e.isDirectory()).map((e) => e.name);`,
     `      res.end(JSON.stringify({ models: models.length ? models : ['default'] }));`,
@@ -440,7 +442,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `  }`,
     '',
     `  // Static files & Next.js apps/web export routing`,
-    `  const normalizedPath = pathname.replace(/^[/]+|[/]+$/g, '');`,
+    `  const decodedPathname = decodeURIComponent(pathname);`,
+    `  const normalizedPath = decodedPathname.replace(/^[/]+|[/]+$/g, '');`,
     `  const candidatePaths = [`,
     `    path.join(rootDir, 'public', normalizedPath, 'index.html'),`,
     `    path.join(rootDir, 'public', normalizedPath + '.html'),`,
@@ -450,6 +453,13 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '',
     `  if (!normalizedPath) {`,
     `    candidatePaths.unshift(path.join(rootDir, 'public', 'index.html'));`,
+    `  }`,
+    '',
+    `  // Compatibility fallback for legacy /live2d/<modelName>/... -> ./assets/body/<modelName>/...`,
+    `  if (pathname.startsWith('/live2d/')) {`,
+    `    const relativeAssetPath = pathname.slice('/live2d/'.length);`,
+    `    candidatePaths.unshift(path.join(rootDir, 'assets', 'body', relativeAssetPath));`,
+    `    candidatePaths.unshift(path.join(rootDir, 'assets', 'body', 'model', relativeAssetPath));`,
     `  }`,
     '',
     `  for (const candidate of candidatePaths) {`,
@@ -575,11 +585,11 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const createAssetsDirs: string[] = [];
 
   if (hasBody) {
-    createAssetsDirs.push(`assets/body/model/${companionSlug}`);
+    createAssetsDirs.push(`assets/body/${companionSlug}`);
     readmeLines.push(
       '',
       '### Body & Avatar Models',
-      `Place your Live2D Cubism model assets into \`./assets/body/model/${companionSlug}/\`:`,
+      `Place your Live2D Cubism model assets into \`./assets/body/${companionSlug}/\`:`,
       '- `model.model3.json`',
       '- `model.moc3`',
       '- textures directory'

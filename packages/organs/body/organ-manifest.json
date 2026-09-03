@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/body",
   "organType": "body",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "displayName": "Body (Live2D & Avatar State)",
   "description": "Renderer-agnostic avatar expression and embodiment event adapter",
   "entrypoint": "./dist/index.js",
@@ -23,6 +23,14 @@
       "initialExpression": {
         "type": "string",
         "default": "neutral"
+      },
+      "modelPath": {
+        "type": "string",
+        "description": "Path to local Live2D Cubism model (.model3.json)"
+      },
+      "modelUrl": {
+        "type": "string",
+        "description": "Relative web or remote HTTP URL to Live2D Cubism model"
       }
     }
   },

@@ -23,6 +23,7 @@ export interface AvatarDockProps {
   isOpen: boolean;
   onToggle: () => void;
   activeEvent?: ActiveAvatarEvent | null;
+  modelUrl?: string;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ export default function AvatarDock({
   isOpen,
   onToggle,
   activeEvent,
+  modelUrl,
   className = "",
 }: AvatarDockProps) {
   const [rendererStatus, setRendererStatus] = useState<AvatarRendererStatus>("idle");
@@ -107,6 +109,7 @@ export default function AvatarDock({
       {/* Avatar WebGL Viewport Container */}
       <div className="relative flex-1 min-h-[200px] sm:min-h-[260px] flex flex-col bg-[#0b0b0e] overflow-hidden">
         <AvatarCanvas
+          modelUrl={modelUrl}
           expression={currentExpression}
           action={currentAction}
           state={currentState}

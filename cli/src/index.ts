@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '0.1.2';
+export const CLI_VERSION = '0.1.4';
 
 export const colors = {
   cyan: '\u001b[36m',
@@ -281,12 +281,12 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
       await mkdir(path.join(projectDir, dir), { recursive: true });
     }
   } else if (files.createAssetsBodyDir) {
-    await mkdir(path.join(projectDir, 'assets/body/model'), { recursive: true });
+    await mkdir(path.join(projectDir, 'assets/body'), { recursive: true });
   }
 
   printSuccess(`Generated standalone files at ${projectDir}`);
 
-  // 5. Install packages if not in dry-run
+  // 5. Install dependencies from registry
   try {
     await withTask('Installing dependencies (npm install)', async () => {
       await execFile('npm', ['install', '--no-audit', '--no-fund'], { cwd: projectDir });

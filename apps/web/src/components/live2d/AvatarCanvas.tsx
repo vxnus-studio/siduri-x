@@ -24,7 +24,7 @@ export interface AvatarCanvasProps {
 }
 
 export default function AvatarCanvas({
-  modelUrl = "/live2d/akaituno/akaituno.model3.json",
+  modelUrl,
   expression = "neutral",
   action = "idle",
   state = "idle",
@@ -77,6 +77,14 @@ export default function AvatarCanvas({
 
     async function initAvatar() {
       if (!canvasRef.current || !containerRef.current) return;
+
+      if (!modelUrl) {
+        setStatus("error");
+        setErrorMessage("No Live2D model configured. Place model in assets/body/<name>/");
+        onStatusChange?.("error", "No Live2D model URL specified");
+        return;
+      }
+
       setStatus("loading");
       onStatusChange?.("loading");
       setErrorMessage(null);
@@ -134,7 +142,7 @@ export default function AvatarCanvas({
         const msg = err?.message || "Failed to initialize Live2D avatar";
         console.warn("[AvatarCanvas] Initialization error:", err);
         setStatus("error");
-        setErrorMessage("Avatar unavailable in this browser.");
+        setErrorMessage("Avatar model unavailable or failed to load.");
         onStatusChange?.("error", msg);
       }
     }

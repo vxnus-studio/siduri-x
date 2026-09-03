@@ -21,24 +21,45 @@ export async function configureBody(
     };
   }
 
-  const { initialExpression } = await inquirer.prompt<{ initialExpression: string }>({
-    type: 'list',
-    name: 'initialExpression',
-    message: 'Initial avatar expression:',
-    choices: [
-      { name: 'Neutral', value: 'neutral' },
-      { name: 'Happy / Cheerful', value: 'happy' },
-      { name: 'Calm', value: 'calm' },
-    ],
-  });
+  const companionSlug = _context.companionName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
+
+  const { modelSource, initialExpression } = await inquirer.prompt<{
+    modelSource: string;
+    initialExpression: string;
+  }>([
+    {
+      type: 'input',
+      name: 'modelSource',
+      message: 'Live2D Model path / URL (.model3.json):',
+      default: `./assets/body/${companionSlug}/model.model3.json`,
+    },
+    {
+      type: 'list',
+      name: 'initialExpression',
+      message: 'Initial avatar expression:',
+      choices: [
+        { name: 'Neutral', value: 'neutral' },
+        { name: 'Happy / Cheerful', value: 'happy' },
+        { name: 'Calm', value: 'calm' },
+      ],
+      default: 'neutral',
+    },
+  ]);
+
+  const modelPath = modelSource.trim() || `./assets/body/${companionSlug}/model.model3.json`;
+  const isHttpOrAbsolute = modelPath.startsWith('http://') || modelPath.startsWith('https://') || modelPath.startsWith('/');
+  const webModelUrl = isHttpOrAbsolute ? modelPath : `/assets/body/${companionSlug}/model.model3.json`;
 
   return {
     config: {
       provider: 'live2d',
+      modelPath,
+      modelUrl: webModelUrl,
       initialExpression,
     },
     summary: {
       Provider: 'Live2D',
+      'Model Path': modelPath,
       Expression: initialExpression,
     },
   };

@@ -196,7 +196,7 @@ describe("Siduri Chat Presence and Preferences Mode Switch", () => {
     });
 
     test("H. Full-body projection calculation preserves model bounds and aspect ratio", () => {
-      // Bounds measured directly from Akaituno Live2D model geometry
+      // Bounds measured directly from standard Live2D model geometry
       const modelBounds = {
         minX: -0.389,
         maxX: 0.402,

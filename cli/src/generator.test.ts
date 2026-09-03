@@ -170,11 +170,11 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
 
     // Body & voice asset directories requested
     expect(files.createAssetsBodyDir).toBe(true);
-    expect(files.createAssetsDirs).toContain('assets/body/model/companion-full');
+    expect(files.createAssetsDirs).toContain('assets/body/companion-full');
     expect(files.createAssetsDirs).toContain('assets/voice/companion-full');
 
     // README mentions Live2D model assets & prerequisites
-    expect(files['README.md']).toContain('assets/body/model/companion-full');
+    expect(files['README.md']).toContain('assets/body/companion-full');
     expect(files['README.md']).toContain('assets/voice/companion-full');
     expect(files['README.md']).toContain('Prerequisites');
 
