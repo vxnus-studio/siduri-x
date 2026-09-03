@@ -41,7 +41,7 @@ All canonical Siduri-X organ and core packages are independently distributed:
 | **`@siduri-x/ear`** | `^1.0.2` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation |
 | **`@siduri-x/vision`** | `^1.0.2` | Visual observation, cropping, and multi-pass OCR perception adapter |
 | **`@siduri-x/body`** | `^1.0.4` | Renderer-agnostic avatar expression state machine and embodiment event adapter |
-| **`@siduri-x/voice`** | `^1.0.3` | Queued speech synthesis and TTS adapter (VOICEVOX) |
+| **`@siduri-x/voice`** | `^1.0.3` | Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and RVC post-processing |
 | **`@siduri-x/observation`** | `^1.0.2` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest |
 
 ---
@@ -53,11 +53,11 @@ Before setting up or running a Siduri companion instance, ensure you have:
 - **Node.js**: `v20.0.0` or higher (verify with `node -v`)
 - **LLM Credentials**: An API key for your chosen provider (e.g. `OPENROUTER_API_KEY`)
 - **Optional Local Services**:
-  - **Docker** (recommended for local PostgreSQL database and VOICEVOX speech synthesis):
+  - **Docker** (recommended for local PostgreSQL database):
     - Run `docker compose up -d` (or `npm run services:up` in generated instances) to launch preconfigured services.
   - **Non-Docker Alternatives**:
     - **PostgreSQL**: Cloud-managed instances (e.g. Supabase, Neon) or local Postgres installation.
-    - **VOICEVOX**: Standalone desktop application from [voicevox.hiroshiba.jp](https://voicevox.hiroshiba.jp/).
+  - **Voice Synthesis**: The Voicevox engine executable will be securely auto-downloaded at runtime by Siduri if no local URL is provided. Edge-TTS runs via cloud API, and RVC runs via a local headless microservice.
 
 ---
 
