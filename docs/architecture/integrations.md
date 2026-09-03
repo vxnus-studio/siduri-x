@@ -3,7 +3,7 @@
 Status: integration baseline; behavioral extraction incomplete
 
 - **OpenRouter**: Used for Brain and Vision.
-- **VOICEVOX**: Voice adapter connects to external Voicevox engine HTTP endpoints.
+- **Voice Synthesis**: Voice adapter connects to Edge-TTS cloud endpoints, or manages local engines (Voicevox, Piper, Kokoro) via HTTP/runtime.
 - **E Knowledge Packs**: `@siduri-x/knowledge` loads a validated local E pack
   and exposes its cited retrieval results through `KnowledgeOrgan`.
 

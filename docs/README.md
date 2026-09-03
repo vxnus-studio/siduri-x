@@ -31,7 +31,7 @@ Core specifications for the decoupled organ architecture and system components:
 - **[Configuration Guide](./architecture/configuration.md)** — Runtime and companion YAML/JSON configuration.
 - **[Development Guide](./architecture/development.md)** — Local development environment, building, and running.
 - **[Testing Strategy](./architecture/testing.md)** — Test suite layout and execution.
-- **[Subsystem Integrations](./architecture/integrations.md)** — External adapters (Voicevox, Live2D, OpenRouter).
+- **[Subsystem Integrations](./architecture/integrations.md)** — External adapters (Voice Synthesis, Live2D, OpenRouter).
 - **[Limitations & Boundaries](./architecture/limitations.md)** — System boundaries and non-goals.
 - **[Migration & V1 Roadmap](./architecture/migration.md)** — Transition from legacy multi-viewer streaming to 1-User Agent model.
 

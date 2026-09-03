@@ -123,7 +123,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   });
   app.get('/voice/health', (req, res) => {
     const hasVoice = Array.from(runtimes.values()).some((r) => Boolean(r.voice));
-    res.json({ provider: "voicevox", configured: hasVoice });
+    res.json({ provider: "siduri-voice", configured: hasVoice });
   });
   app.get('/obs/health', (req, res) => res.json({ connected: Boolean(observationOrgan) }));
   app.get('/platforms/status', (req, res) => res.status(501).json({ error: "Platforms subsystem not implemented in local runtime" }));

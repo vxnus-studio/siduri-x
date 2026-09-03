@@ -5,7 +5,7 @@
 * **Brain**: Implemented using OpenRouter and structured generation.
 * **Memory**: Implemented via PostgreSQL Adapter with TSVECTOR indexing and full isolation constraints.
 * **Behavior**: Implemented `ActiveSelfCompiler` preserving security constraints.
-* **Voice**: Implemented VOICEVOX Priority Queue logic.
+* **Voice**: Implemented Priority Queue logic with multi-TTS (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC support.
 * **Knowledge**: Implemented bounds-checked e-Teyvat integration.
 * **Vision**: Implemented OpenRouter vision adapter.
 * **Body**: Implemented Live2D/WebSocket adapter with optional VTube Studio API control.

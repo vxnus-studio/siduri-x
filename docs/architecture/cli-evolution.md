@@ -38,7 +38,7 @@ This document provides a side-by-side analysis of the **`@vxnus/siduri`** CLI ac
 - **Guided Knowledge Setup**:
   - Interactive search and inspection of E Knowledge Hub (`https://e.vxnus.xyz/api/v1/knowledge`) or local `.tar.gz` packs.
 - **Guided Voice, Behavior, Body**:
-  - Prompted for Live2D, VOICEVOX speaker IDs, and personality presets (`Calm`, `Cheerful`, etc.).
+  - Prompted for Live2D, TTS providers (Edge-TTS/VOICEVOX), RVC models, and personality presets (`Calm`, `Cheerful`, etc.).
 
 > **Verdict**: Excellent onboarding and configuration UX, but flawed runtime/packaging architecture (monolithic bundling, rigid dependencies).
 
@@ -80,7 +80,7 @@ The target state combines the **friendly, guided UX of 0.4/0.5** with the **clea
 │    • Brain:     [OpenRouter | Custom Endpoint] → Model ID → API Key Var│
 │    • Memory:    [Local Postgres | Supabase | Neon | Other]             │
 │    • Knowledge: [E-Hub Registry | Local Pack | Remote Provider]        │
-│    • Voice:     [VOICEVOX URL & Speaker ID]                            │
+│    • Voice:     [Edge-TTS/VOICEVOX/Piper, Speaker, RVC Model]          │
 │    • Behavior:  [Calm | Cheerful | Custom Directives]                  │
 │    • Body:      [Live2D model path / initial expression]               │
 │    • Hands:     [MCP Servers & Timeout settings]                       │

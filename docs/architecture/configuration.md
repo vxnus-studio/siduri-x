@@ -30,9 +30,13 @@ Each generated companion instance validates its configuration against a tailored
       "providers": []
     },
     "voice": {
-      "provider": "voicevox",
-      "speakerId": 1,
-      "baseUrl": "http://localhost:50021"
+      "provider": "edge-tts",
+      "speakerId": "en-US-AriaNeural",
+      "rvc": {
+        "enabled": true,
+        "modelName": "my-model",
+        "serviceUrl": "http://localhost:50055"
+      }
     },
     "body": {
       "provider": "live2d",

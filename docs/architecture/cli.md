@@ -41,7 +41,7 @@ npx @vxnus/siduri doctor [directory]
 
 Inspects the companion directory and runs:
 - **Environment Checks**: Validates required and optional environment variables per organ.
-- **Service Availability**: Validates reachability for external endpoints (e.g. VTS WebSocket, VOICEVOX).
+- **Service Availability**: Validates reachability for external endpoints (e.g. VTS WebSocket, RVC API).
 - **Database Connectivity**: Validates PostgreSQL connectivity if database-owning organs are active.
 - **Health Probes**: Executes organ-level health probes exposed by `@siduri-x/*` organs.
 
