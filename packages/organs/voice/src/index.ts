@@ -19,7 +19,62 @@ export interface VoicevoxConfig {
   maxQueueDepth?: number;
   timeoutMs?: number;
   maxTextLength?: number;
+  maxResponseBytes?: number;
   rvc?: RvcPostProcessorConfig;
+}
+
+export const DEFAULT_MAX_VOICE_BYTES = 10 * 1024 * 1024; // 10MB limit
+
+/**
+ * Incrementally reads a response body stream, aborting immediately if bytes read exceed maxBytes.
+ */
+export async function readBoundedResponseBody(response: Response, maxBytes: number = DEFAULT_MAX_VOICE_BYTES): Promise<Uint8Array> {
+  const contentLengthHeader = response?.headers?.get ? response.headers.get('content-length') : null;
+  if (contentLengthHeader) {
+    const declaredLength = parseInt(contentLengthHeader, 10);
+    if (!isNaN(declaredLength) && declaredLength > maxBytes) {
+      throw new Error(`Voice response Content-Length (${declaredLength} bytes) exceeds limit of ${maxBytes} bytes`);
+    }
+  }
+
+  // If response.body is a ReadableStream, stream chunks to enforce bound before allocating full buffer
+  if (response.body && typeof (response.body as any).getReader === 'function') {
+    const reader = (response.body as any).getReader();
+    const chunks: Uint8Array[] = [];
+    let receivedBytes = 0;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          receivedBytes += value.byteLength;
+          if (receivedBytes > maxBytes) {
+            await reader.cancel();
+            throw new Error(`Voice response stream exceeded maximum allowed size of ${maxBytes} bytes`);
+          }
+          chunks.push(value);
+        }
+      }
+    } finally {
+      reader.releaseLock?.();
+    }
+
+    const merged = new Uint8Array(receivedBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return merged;
+  }
+
+  // Fallback for mock/non-streaming fetch response
+  const buffer = await response.arrayBuffer();
+  if (buffer.byteLength > maxBytes) {
+    throw new Error(`Voice response body (${buffer.byteLength} bytes) exceeds maximum limit of ${maxBytes} bytes`);
+  }
+  return new Uint8Array(buffer);
 }
 
 interface SpeechJob {
@@ -40,11 +95,13 @@ export class VoicevoxAdapter implements VoiceOrgan, ExperienceAdapter {
   private readonly maxQueueDepth: number;
   private readonly timeoutMs: number;
   private readonly maxTextLength: number;
+  private readonly maxResponseBytes: number;
 
   constructor(private config: VoicevoxConfig) {
     this.maxQueueDepth = config.maxQueueDepth ?? 50;
     this.timeoutMs = config.timeoutMs ?? 10_000;
     this.maxTextLength = config.maxTextLength ?? 4000;
+    this.maxResponseBytes = config.maxResponseBytes ?? DEFAULT_MAX_VOICE_BYTES;
   }
 
   async handleEvent(event: ExperienceEvent): Promise<ExperienceAdapterResult> {
@@ -212,8 +269,7 @@ export class VoicevoxAdapter implements VoiceOrgan, ExperienceAdapter {
         throw new Error(`Voicevox synthesis failed: ${synthResponse.statusText}`);
       }
 
-      const buffer = await synthResponse.arrayBuffer();
-      const rawWav = new Uint8Array(buffer);
+      const rawWav = await readBoundedResponseBody(synthResponse, this.maxResponseBytes);
 
       if (this.config.rvc?.enabled && (this.config.rvc?.serviceUrl || process.env.RVC_SERVICE_URL || this.config.rvc?.modelName || this.config.rvc?.modelPath)) {
         return await this.applyRvc(rawWav);
@@ -254,8 +310,7 @@ export class VoicevoxAdapter implements VoiceOrgan, ExperienceAdapter {
         return inputWav;
       }
 
-      const convertedBuffer = await res.arrayBuffer();
-      return new Uint8Array(convertedBuffer);
+      return await readBoundedResponseBody(res, this.maxResponseBytes);
     } catch (e: any) {
       console.warn(`[VoicevoxAdapter] RVC service error (${e.message}): fallback to base audio.`);
       return inputWav;

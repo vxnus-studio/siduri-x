@@ -181,4 +181,67 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
     });
     expect((customOrgan as any).pool).toBeDefined();
   });
+
+  test('APPROVED claim is immutable: updateClaim creates PENDING replacement and preserves APPROVED original', async () => {
+    const mClient = {
+      query: jest.fn(),
+      release: jest.fn(),
+    };
+    (organ as any).pool.connect = jest.fn().mockResolvedValue(mClient);
+
+    // Mock initial SELECT FOR UPDATE returning APPROVED claim
+    mClient.query
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ // SELECT FOR UPDATE
+        rowCount: 1,
+        rows: [{
+          id: 'claim-app-1',
+          companion_id: 'test-id',
+          subject: 'owner',
+          predicate: 'hobby',
+          value: 'Reading',
+          status: 'APPROVED',
+          scope: 'OWNER',
+          evidence: [],
+          provenance: 'user_explicit',
+          source_event_id: 'evt-1',
+          claim_type: 'semantic',
+          authority: 'user_explicit',
+          user_confirmation: 'explicit',
+          sensitivity: 'private',
+          allowed_audiences: [],
+          confidence: 1,
+        }],
+      })
+      .mockResolvedValueOnce({ // INSERT replacement
+        rows: [{
+          id: 'claim-rev-2',
+          companion_id: 'test-id',
+          subject: 'owner',
+          predicate: 'hobby',
+          value: 'Archery',
+          status: 'PENDING',
+          scope: 'OWNER',
+          supersedes: 'claim-app-1',
+          replaces: 'claim-app-1',
+          evidence: [],
+        }],
+      })
+      .mockResolvedValueOnce({}) // INSERT history
+      .mockResolvedValueOnce({}); // COMMIT
+
+    const result = await organ.updateClaim('claim-app-1', {
+      value: 'Archery',
+    });
+
+    expect(result.id).toBe('claim-rev-2');
+    expect(result.status).toBe('PENDING');
+    expect(result.value).toBe('Archery');
+
+    // Verify INSERT query was called for replacement with status 'PENDING' and supersedes 'claim-app-1'
+    expect(mClient.query).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO memory_claims'),
+      expect.arrayContaining(['test-id', 'owner', 'hobby', 'Archery', 'PENDING', 'claim-app-1'])
+    );
+  });
 });

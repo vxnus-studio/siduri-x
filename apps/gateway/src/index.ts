@@ -26,7 +26,7 @@ export function createGateway(): import("express").Express {
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   const app = createGateway();
-  app.listen(PORT, () => {
-    console.log(`MCP Gateway running on port ${PORT}`);
+  app.listen(Number(PORT), '127.0.0.1', () => {
+    console.log(`MCP Gateway running on port ${PORT} (127.0.0.1)`);
   });
 }

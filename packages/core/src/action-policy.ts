@@ -182,7 +182,15 @@ export class ActionPolicyEngine {
       toolDef.requiresApproval ??
       (this.defaultRequireApprovalForHighRisk && (riskLevel === 'HIGH' || riskLevel === 'CRITICAL'));
 
-    if (requiresExplicitApproval && !this.approvedExecutions.has(executionId)) {
+    let isApproved = this.approvedExecutions.has(executionId);
+    if (!isApproved && typeof this.store.isActionApproved === 'function') {
+      isApproved = await this.store.isActionApproved(executionId);
+      if (isApproved) {
+        this.approvedExecutions.add(executionId);
+      }
+    }
+
+    if (requiresExplicitApproval && !isApproved) {
       const decision: ActionPolicyDecision = {
         allowed: false,
         reason: `Action "${action.toolName}" has risk level ${riskLevel} and requires explicit approval`,
@@ -237,8 +245,11 @@ export class ActionPolicyEngine {
     return { decision, capability };
   }
 
-  approveAction(options: ApproveActionOptions): boolean {
+  async approveAction(options: ApproveActionOptions): Promise<boolean> {
     this.approvedExecutions.add(options.executionId);
+    if (typeof this.store.saveApproval === 'function') {
+      await this.store.saveApproval(options.executionId, options.approverActorId, options.reason);
+    }
     return true;
   }
 

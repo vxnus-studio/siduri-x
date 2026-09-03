@@ -6,11 +6,13 @@ export interface OpenAICompatibleBrainConfig {
   apiKey: string;
   model: string;
   baseUrl: string;
+  timeoutMs?: number;
 }
 
 export interface OpenRouterBrainConfig {
   apiKey: string;
   model: string;
+  timeoutMs?: number;
 }
 
 const MemoryProposalSchema = z.object({
@@ -109,48 +111,69 @@ export class OpenAICompatibleBrain implements BrainOrgan {
       }
     ];
 
+    const overallTimeoutMs = this.config.timeoutMs ?? 30000;
+    const overallController = new AbortController();
+    const overallTimer = setTimeout(() => {
+      overallController.abort(new Error(`Brain provider exceeded overall wall-clock deadline of ${overallTimeoutMs}ms`));
+    }, overallTimeoutMs);
+
     let retries = 3;
-    while (retries > 0) {
-      try {
-        const response = await fetch(`${this.config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${this.config.apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: this.config.model,
-            messages,
-            tools,
-            tool_choice: { type: "function", function: { name: "submitResponsePlan" } }
-          })
-        });
+    let lastError: Error | undefined;
 
-        if (!response.ok) {
-          throw new Error(`OpenRouter API error: ${response.statusText}`);
+    try {
+      while (retries > 0) {
+        if (overallController.signal.aborted) {
+          throw new Error(`Brain request aborted: overall deadline of ${overallTimeoutMs}ms exceeded`);
         }
 
-        const data = await response.json();
-        const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-        
-        if (toolCall && toolCall.function.name === "submitResponsePlan") {
-          const rawArgs = JSON.parse(toolCall.function.arguments);
-          const parsed = ResponsePlanSchema.parse(rawArgs);
-          return parsed;
-        }
+        try {
+          const response = await fetch(`${this.config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${this.config.apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: this.config.model,
+              messages,
+              tools,
+              tool_choice: { type: "function", function: { name: "submitResponsePlan" } }
+            }),
+            signal: overallController.signal,
+          });
 
-        throw new Error("No valid tool call returned from OpenRouter");
-      } catch (e: any) {
-        retries--;
-        if (retries === 0) {
-          throw new Error("Failed to generate plan after retries: " + e.message);
+          if (!response.ok) {
+            throw new Error(`OpenRouter API error: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+          
+          if (toolCall && toolCall.function.name === "submitResponsePlan") {
+            const rawArgs = JSON.parse(toolCall.function.arguments);
+            const parsed = ResponsePlanSchema.parse(rawArgs);
+            return parsed;
+          }
+
+          throw new Error("No valid tool call returned from OpenRouter");
+        } catch (e: any) {
+          lastError = e;
+          if (overallController.signal.aborted) {
+            throw new Error(`Brain request timed out after overall deadline of ${overallTimeoutMs}ms: ${e.message}`);
+          }
+          retries--;
+          if (retries === 0) {
+            throw new Error("Failed to generate plan after retries: " + e.message);
+          }
+          // backoff respecting remaining deadline
+          await new Promise(r => setTimeout(r, 10));
         }
-        // backoff
-        await new Promise(r => setTimeout(r, 10)); // keep test fast
       }
-    }
 
-    throw new Error("Failed to generate plan after retries");
+      throw new Error(`Failed to generate plan after retries: ${lastError?.message || 'unknown error'}`);
+    } finally {
+      clearTimeout(overallTimer);
+    }
   }
 }
 

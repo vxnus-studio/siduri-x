@@ -502,34 +502,114 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
 
   async rejectDirective(id: string): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_directives SET status = 'REJECTED' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_directives WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Directive not found`);
+      }
+      if (res.rows[0].status !== 'PENDING') {
+        throw new Error(`Invalid transition: Directive is already ${res.rows[0].status}`);
+      }
+      await client.query(
+        `UPDATE memory_directives SET status = 'REJECTED' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async revokeDirective(id: string): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_directives SET status = 'REVOKED' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_directives WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Directive not found`);
+      }
+      if (res.rows[0].status !== 'ACTIVE') {
+        throw new Error(`Invalid transition: Only ACTIVE directives can be REVOKED (current: ${res.rows[0].status})`);
+      }
+      await client.query(
+        `UPDATE memory_directives SET status = 'REVOKED' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async disableDirective(id: string): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_directives SET status = 'DISABLED' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_directives WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Directive not found`);
+      }
+      if (res.rows[0].status !== 'ACTIVE') {
+        throw new Error(`Invalid transition: Only ACTIVE directives can be DISABLED (current: ${res.rows[0].status})`);
+      }
+      await client.query(
+        `UPDATE memory_directives SET status = 'DISABLED' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async expireDirective(id: string): Promise<void> {
     this.ensureInitialized();
-    await this.pool.query(
-      `UPDATE memory_directives SET status = 'EXPIRED' WHERE id = $1 AND companion_id = $2`,
-      [id, this.companionId]
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `SELECT id, status FROM memory_directives WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (res.rowCount === 0) {
+        throw new Error(`Directive not found`);
+      }
+      if (res.rows[0].status !== 'ACTIVE' && res.rows[0].status !== 'DISABLED') {
+        throw new Error(`Invalid transition: Only ACTIVE or DISABLED directives can be EXPIRED (current: ${res.rows[0].status})`);
+      }
+      await client.query(
+        `UPDATE memory_directives SET status = 'EXPIRED' WHERE id = $1 AND companion_id = $2`,
+        [id, this.companionId]
+      );
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async close(): Promise<void> {
@@ -635,6 +715,72 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       }
 
       const current = prev.rows[0];
+
+      // CRITICAL HARDENING INVARIANT:
+      // PENDING claims are editable in-place.
+      // APPROVED claims are immutable. Editing an APPROVED claim must not mutate it in-place.
+      // Instead, it must create a new PENDING replacement that references the original via `supersedes`.
+      // The original APPROVED claim remains intact until the new replacement is explicitly approved.
+      if (current.status === 'APPROVED') {
+        const replacementClaim = {
+          subject: updates.subject ?? current.subject,
+          predicate: updates.predicate ?? current.predicate,
+          value: updates.value ?? current.value,
+          scope: updates.scope ?? current.scope,
+          evidence: current.evidence || [],
+          provenance: current.provenance || 'claim_revision',
+          sourceEventId: current.source_event_id || null,
+          claimType: current.claim_type || 'semantic',
+          authority: current.authority || 'user_explicit',
+          userConfirmation: 'none' as const,
+          sensitivity: updates.sensitivity ?? current.sensitivity,
+          allowedAudiences: updates.allowedAudiences ?? (current.allowed_audiences || []),
+          confidence: updates.confidence ?? current.confidence,
+          validFrom: updates.validFrom ?? current.valid_from,
+          validUntil: updates.validUntil ?? current.valid_until,
+          supersedes: id,
+          replaces: id,
+        };
+
+        const result = await client.query(
+          `INSERT INTO memory_claims
+           (companion_id, subject, predicate, value, status, scope, evidence, provenance,
+            source_event_id, claim_type, authority, user_confirmation, sensitivity,
+            allowed_audiences, confidence, valid_from, valid_until, supersedes, replaces)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+           RETURNING *`,
+          [
+            this.companionId,
+            replacementClaim.subject,
+            replacementClaim.predicate,
+            replacementClaim.value,
+            'PENDING',
+            replacementClaim.scope,
+            JSON.stringify(replacementClaim.evidence),
+            replacementClaim.provenance,
+            replacementClaim.sourceEventId,
+            replacementClaim.claimType,
+            replacementClaim.authority,
+            replacementClaim.userConfirmation,
+            replacementClaim.sensitivity,
+            JSON.stringify(replacementClaim.allowedAudiences),
+            replacementClaim.confidence,
+            replacementClaim.validFrom || null,
+            replacementClaim.validUntil || null,
+            id,
+            id,
+          ]
+        );
+
+        await this.recordClaimHistoryWithClient(client, id, current.status, 'revision_proposed');
+        await client.query('COMMIT');
+        return this.mapClaim(result.rows[0]);
+      }
+
+      if (current.status !== 'PENDING') {
+        throw new Error(`Cannot update claim in status ${current.status}`);
+      }
+
       const newSubject = updates.subject ?? current.subject;
       const newPredicate = updates.predicate ?? current.predicate;
       const newValue = updates.value ?? current.value;

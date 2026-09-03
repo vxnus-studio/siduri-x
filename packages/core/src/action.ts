@@ -56,6 +56,8 @@ export interface ActionAuditEvent {
   decision?: ActionPolicyDecision;
   parametersHash?: string;
   resultHash?: string;
+  eventHash?: string;
+  previousEventHash?: string;
   timestamp: string;
   durationMs?: number;
   error?: string;

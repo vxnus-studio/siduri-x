@@ -254,4 +254,60 @@ describe('T6 Security & Operations Threat Model Suite', () => {
 
     expect(res.status).toBe(200);
   });
+
+  // Production vs Dev Route Isolation
+  describe('/dev/* Route Isolation Boundaries', () => {
+    test('/dev/* endpoints are not registered in production mode', async () => {
+      const savedEnv = process.env.NODE_ENV;
+      const savedDevMode = process.env.SIDURI_DEV_MODE;
+      process.env.NODE_ENV = 'production';
+      delete process.env.SIDURI_DEV_MODE;
+
+      try {
+        const prodApp = createApp(new Map([['companion-a', runtimeA]])).app;
+
+        const devEndpoints = [
+          '/dev/mock-response',
+          '/dev/approve-response',
+          '/dev/reject-response',
+          '/dev/mock-observation',
+          '/dev/memory/reset',
+        ];
+
+        for (const ep of devEndpoints) {
+          const res = await request(prodApp).post(ep).send({ companionId: 'companion-a' });
+          expect(res.status).toBe(404);
+        }
+      } finally {
+        process.env.NODE_ENV = savedEnv;
+        if (savedDevMode !== undefined) {
+          process.env.SIDURI_DEV_MODE = savedDevMode;
+        }
+      }
+    });
+
+    test('production mode ignores client-supplied request fields trying to enable dev routes', async () => {
+      const savedEnv = process.env.NODE_ENV;
+      delete process.env.SIDURI_DEV_MODE;
+      process.env.NODE_ENV = 'production';
+
+      try {
+        const prodApp = createApp(new Map([['companion-a', runtimeA]])).app;
+
+        const res = await request(prodApp)
+          .post('/dev/mock-response')
+          .send({
+            companionId: 'companion-a',
+            SIDURI_DEV_MODE: 'true',
+            devMode: true,
+            isDev: true,
+            environment: 'development',
+          });
+
+        expect(res.status).toBe(404);
+      } finally {
+        process.env.NODE_ENV = savedEnv;
+      }
+    });
+  });
 });

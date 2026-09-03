@@ -98,6 +98,29 @@ describe('OpenRouterBrain', () => {
     await expect(brain.generatePlan(mockContext)).rejects.toThrow("Failed to generate plan after retries");
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
+
+  test('overall wall-clock deadline aborts slow / hanging requests', async () => {
+    const fastTimeoutBrain = new OpenRouterBrain({
+      apiKey: 'test-key',
+      model: 'test-model',
+      timeoutMs: 50,
+    });
+
+    // Mock fetch that hangs until aborted
+    (global.fetch as jest.Mock).mockImplementation((_url, init) => {
+      return new Promise((_resolve, reject) => {
+        if (init?.signal) {
+          init.signal.addEventListener('abort', () => {
+            const err = new Error('The operation was aborted');
+            err.name = 'AbortError';
+            reject(err);
+          });
+        }
+      });
+    });
+
+    await expect(fastTimeoutBrain.generatePlan(mockContext)).rejects.toThrow(/deadline/i);
+  });
 });
 
 describe('OpenAICompatibleBrain', () => {

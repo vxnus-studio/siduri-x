@@ -102,22 +102,22 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
   });
 
   test('Directive lifecycle: disableDirective, expireDirective, revokeDirective update status', async () => {
-    poolQueryMock.mockResolvedValue({ rows: [] });
+    mClient.query.mockResolvedValue({ rowCount: 1, rows: [{ id: 'dir-1', status: 'ACTIVE' }] });
 
     await organ.disableDirective('dir-1');
-    expect(poolQueryMock).toHaveBeenCalledWith(
+    expect(mClient.query).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'DISABLED'"),
       ['dir-1', 'companion-a']
     );
 
     await organ.expireDirective('dir-1');
-    expect(poolQueryMock).toHaveBeenCalledWith(
+    expect(mClient.query).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'EXPIRED'"),
       ['dir-1', 'companion-a']
     );
 
     await organ.revokeDirective('dir-1');
-    expect(poolQueryMock).toHaveBeenCalledWith(
+    expect(mClient.query).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'REVOKED'"),
       ['dir-1', 'companion-a']
     );

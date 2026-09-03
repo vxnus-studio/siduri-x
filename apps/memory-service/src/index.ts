@@ -57,8 +57,8 @@ if (require.main === module) {
   const PORT = process.env.PORT || 3002;
   const { app, memory } = createServer();
   memory.initialize('default-companion').then(() => {
-    app.listen(PORT, () => {
-      console.log(`Memory Service (API + MCP) running on port ${PORT}`);
+    app.listen(Number(PORT), '127.0.0.1', () => {
+      console.log(`Memory Service (API + MCP) running on port ${PORT} (127.0.0.1)`);
     });
   }).catch(console.error);
 }

@@ -199,6 +199,28 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     expect(files['public/index.html']).toContain('Memory Console');
     expect(files['public/index.html']).toContain('Companion Chat');
   });
+
+  test('Generated runtime server template enforces loopback binding, safe health, and path containment', () => {
+    const files = generateInstanceFiles({
+      name: 'secure-companion',
+      selectedManifests: [MOCK_MANIFESTS.brain, MOCK_MANIFESTS.memory],
+    });
+
+    const srcIndexJs = files['src/index.js'];
+
+    // 1. Explicit loopback binding 127.0.0.1
+    expect(srcIndexJs).toContain("server.listen(Number(PORT), '127.0.0.1'");
+    expect(srcIndexJs).toContain("http://127.0.0.1:");
+
+    // 2. Minimal /health endpoint without config.organs or secrets
+    expect(srcIndexJs).toContain("pathname === '/health'");
+    expect(srcIndexJs).not.toContain('organs: config.organs');
+
+    // 3. Strict path traversal containment
+    expect(srcIndexJs).toContain('relative.startsWith(\'..\')');
+    expect(srcIndexJs).toContain('path.isAbsolute(relative)');
+    expect(srcIndexJs).toContain('decodeURIComponent');
+  });
 });
 
 

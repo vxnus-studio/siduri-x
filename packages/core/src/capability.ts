@@ -44,6 +44,10 @@ export interface ActionStore {
   updateExecution(record: PersistentExecutionRecord): Promise<void>;
   getExecution(executionId: string): Promise<PersistentExecutionRecord | undefined>;
   
+  // Durable approval persistence across process restarts
+  saveApproval(executionId: string, approverActorId: string, reason?: string): Promise<void>;
+  isActionApproved(executionId: string): Promise<boolean>;
+
   // Append-only tamper-evident audit log
   appendAudit(event: ActionAuditEvent): Promise<void>;
   getAuditLog(executionId?: string): Promise<ActionAuditEvent[]>;
@@ -51,6 +55,7 @@ export interface ActionStore {
 
 export class InMemoryActionStore implements ActionStore {
   private readonly executions = new Map<string, PersistentExecutionRecord>();
+  private readonly approvals = new Map<string, { approverActorId: string; reason?: string; approvedAt: string }>();
   private readonly auditLog: ActionAuditEvent[] = [];
   private lastAuditHash: string = '0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -71,7 +76,20 @@ export class InMemoryActionStore implements ActionStore {
     return rec ? { ...rec } : undefined;
   }
 
+  async saveApproval(executionId: string, approverActorId: string, reason?: string): Promise<void> {
+    this.approvals.set(executionId, {
+      approverActorId,
+      reason,
+      approvedAt: new Date().toISOString(),
+    });
+  }
+
+  async isActionApproved(executionId: string): Promise<boolean> {
+    return this.approvals.has(executionId);
+  }
+
   async appendAudit(event: ActionAuditEvent): Promise<void> {
+    const prevHash = this.lastAuditHash;
     // Tamper-evident hash chaining over all security-critical event fields
     const eventPayload = {
       executionId: event.executionId,
@@ -98,12 +116,14 @@ export class InMemoryActionStore implements ActionStore {
     const canonical = canonicalizeJson(eventPayload);
     const eventHash = crypto
       .createHash('sha256')
-      .update(`${this.lastAuditHash}:${canonical}`, 'utf8')
+      .update(`${prevHash}:${canonical}`, 'utf8')
       .digest('hex');
     this.lastAuditHash = eventHash;
 
     const recordWithHash: ActionAuditEvent = {
       ...event,
+      previousEventHash: prevHash,
+      eventHash,
       resultHash: event.resultHash || eventHash,
     };
     this.auditLog.push(recordWithHash);

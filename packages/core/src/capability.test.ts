@@ -207,7 +207,8 @@ describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
         timestamp: event1.timestamp,
       });
       const expectedHash1 = crypto.createHash('sha256').update(`${initialPrevHash}:${canonical1}`, 'utf8').digest('hex');
-      expect(event1.resultHash).toBe(expectedHash1);
+      expect(event1.eventHash).toBe(expectedHash1);
+      expect(event1.previousEventHash).toBe(initialPrevHash);
 
       const canonical2 = canonicalizeJson({
         executionId: event2.executionId,
@@ -232,7 +233,8 @@ describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
         timestamp: event2.timestamp,
       });
       const expectedHash2 = crypto.createHash('sha256').update(`${expectedHash1}:${canonical2}`, 'utf8').digest('hex');
-      expect(event2.resultHash).toBe(expectedHash2);
+      expect(event2.eventHash).toBe(expectedHash2);
+      expect(event2.previousEventHash).toBe(expectedHash1);
 
       // If an attacker altered event 1 retrospectively, the hash chain breaks for event 2
       const tamperedCanonical1 = canonicalizeJson({
@@ -243,6 +245,74 @@ describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
       const brokenHash2 = crypto.createHash('sha256').update(`${tamperedHash1}:${canonical2}`, 'utf8').digest('hex');
 
       expect(brokenHash2).not.toBe(event2.resultHash);
+    });
+  });
+
+  describe('Durable Action Approval Restart Semantics', () => {
+    it('preserves approved execution authorization across ActionPolicyEngine process restart', async () => {
+      const sharedStore = new InMemoryActionStore();
+
+      // Instance 1: Operator reviews and approves a HIGH risk action
+      const engine1 = new ActionPolicyEngine({
+        store: sharedStore,
+        secretKey,
+        defaultRiskLevel: 'HIGH',
+        defaultRequireApprovalForHighRisk: true,
+      });
+
+      engine1.registerToolDefinition({
+        name: 'database/cleanup',
+        providerId: 'db',
+        description: 'Cleanup DB',
+        inputSchema: {},
+        riskLevel: 'HIGH',
+        requiresApproval: true,
+      });
+
+      const highRiskAction = {
+        actionId: 'act-restart-1',
+        executionId: 'exec-restart-1',
+        toolName: 'db/database/cleanup',
+        parameters: { target: 'logs' },
+        context: sampleContext,
+      };
+
+      // 1. Initial evaluation without approval is rejected
+      const eval1 = await engine1.evaluateAction(highRiskAction);
+      expect(eval1.decision.allowed).toBe(false);
+      expect(eval1.decision.decisionCode).toBe('REJECTED_HIGH_RISK_UNAPPROVED');
+
+      // 2. Operator explicitly approves
+      await engine1.approveAction({
+        executionId: 'exec-restart-1',
+        approverActorId: 'operator-1',
+        reason: 'Scheduled maintenance',
+      });
+
+      // 3. Process restarts: new ActionPolicyEngine instance with empty in-memory set but shared durable store
+      const engine2 = new ActionPolicyEngine({
+        store: sharedStore,
+        secretKey,
+        defaultRiskLevel: 'HIGH',
+        defaultRequireApprovalForHighRisk: true,
+      });
+
+      engine2.registerToolDefinition({
+        name: 'database/cleanup',
+        providerId: 'db',
+        description: 'Cleanup DB',
+        inputSchema: {},
+        riskLevel: 'HIGH',
+        requiresApproval: true,
+      });
+
+      // 4. Evaluation after restart loads durable approval and successfully authorizes capability
+      const eval2 = await engine2.evaluateAction(highRiskAction);
+      expect(eval2.decision.allowed).toBe(true);
+      expect(eval2.decision.decisionCode).toBe('ALLOWED_POLICY');
+      expect(eval2.capability).toBeDefined();
+      expect(eval2.capability?.executionId).toBe('exec-restart-1');
+      expect(verifyCapabilitySignature(eval2.capability!, secretKey)).toBe(true);
     });
   });
 });
