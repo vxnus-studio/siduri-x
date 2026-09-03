@@ -72,13 +72,27 @@ export class InMemoryActionStore implements ActionStore {
   }
 
   async appendAudit(event: ActionAuditEvent): Promise<void> {
-    // Tamper-evident hash chaining: SHA-256(prevHash + ":" + canonicalEvent)
+    // Tamper-evident hash chaining over all security-critical event fields
     const eventPayload = {
       executionId: event.executionId,
       actionId: event.actionId,
       toolName: event.toolName,
+      providerId: event.providerId || null,
+      companionId: event.companionId,
+      actorId: event.actorId || null,
+      sessionId: event.sessionId || null,
+      channel: event.channel || null,
+      correlationId: event.correlationId || null,
+      riskLevel: event.riskLevel,
       lifecycle: event.lifecycle,
-      parametersHash: event.parametersHash,
+      decision: event.decision ? {
+        allowed: event.decision.allowed,
+        reason: event.decision.reason,
+        riskLevel: event.decision.riskLevel,
+        decisionCode: event.decision.decisionCode,
+      } : null,
+      parametersHash: event.parametersHash || null,
+      error: event.error || null,
       timestamp: event.timestamp,
     };
     const canonical = canonicalizeJson(eventPayload);

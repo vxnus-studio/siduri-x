@@ -114,10 +114,19 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   // STATUS / HEALTH ENDPOINTS
   app.get('/health', (req, res) => res.json({ status: "ok" }));
   app.get('/version', (req, res) => res.json({ name: "siduri-x-api", version: "0.2.0-x" }));
-  app.get('/ready', (req, res) => res.json({ status: "ready", dependencies: {} }));
-  app.get('/voice/health', (req, res) => res.json({ provider: "voicevox", healthy: true }));
-  app.get('/obs/health', (req, res) => res.json({ connected: true }));
-  app.get('/platforms/status', (req, res) => res.json({ platforms: {} }));
+  app.get('/ready', (req, res) => {
+    const isReady = runtimes.size > 0;
+    res.status(isReady ? 200 : 503).json({
+      status: isReady ? "ready" : "not_ready",
+      companionCount: runtimes.size,
+    });
+  });
+  app.get('/voice/health', (req, res) => {
+    const hasVoice = Array.from(runtimes.values()).some((r) => Boolean(r.voice));
+    res.json({ provider: "voicevox", configured: hasVoice });
+  });
+  app.get('/obs/health', (req, res) => res.json({ connected: Boolean(observationOrgan) }));
+  app.get('/platforms/status', (req, res) => res.status(501).json({ error: "Platforms subsystem not implemented in local runtime" }));
   app.get('/me', attachIdentity, (req, res) => {
     const identity = (req as any).identity as Identity;
     res.json({
@@ -133,12 +142,13 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const { id, message, history } = req.body;
     const identity = (req as any).identity as Identity;
 
-    // Call context mapper at the API boundary
+    // Call context mapper at the API boundary - server verified identity strictly overrides request body
     const mappingResult = mapRequestContext(
       {
         ...req.body,
         id: id || req.body.companionId,
-        role: req.body.role || identity?.role,
+        role: identity?.role || 'VIEWER',
+        authenticated: identity?.role === 'OWNER',
         generateCorrelationId: true,
       },
       {
@@ -228,7 +238,24 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   });
 
   // MEMORY MUTATIONS - PROPOSALS
-  app.post('/memory/proposals/update', requireRole(['OWNER', 'OPERATOR']), async (req, res) => res.json({ success: true }));
+  app.post('/memory/proposals/update', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
+    const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory || typeof runtime.memory.updateClaim !== 'function') {
+      return res.status(400).json({ error: "Memory organ does not support updating claims" });
+    }
+    try {
+      const claimId = req.body.id || req.body.claimId;
+      if (!claimId) {
+        return res.status(400).json({ error: "Missing required claim id" });
+      }
+      const updated = await runtime.memory.updateClaim(claimId, req.body.updates || req.body);
+      res.json({ success: true, claim: updated });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 
   app.post('/memory/proposals/approve', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
@@ -309,11 +336,24 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.post('/dev/memory/reset', requireRole(['OWNER']), async (req, res) => res.json({ reset: true }));
+  app.post('/dev/memory/reset', requireRole(['OWNER']), async (req, res) => {
+    const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.memory || typeof runtime.memory.resetMemory !== 'function') {
+      return res.status(400).json({ error: "Memory organ does not support reset" });
+    }
+    try {
+      await runtime.memory.resetMemory();
+      res.json({ reset: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 
   // MOCKS / DEV / EVIDENCE / PLATFORMS
-  app.get('/platforms/events', (req, res) => res.json({ events: [] }));
-  app.get('/platforms/actions', (req, res) => res.json({ actions: [] }));
+  app.get('/platforms/events', (req, res) => res.status(501).json({ error: "Platform events not supported in local runtime" }));
+  app.get('/platforms/actions', (req, res) => res.status(501).json({ error: "Platform actions not supported in local runtime" }));
   app.get('/evidence', (req, res) => res.json({ results: [] }));
   app.get('/observations', (req, res) => res.json({ observations: observationOrgan?.current() ?? [] }));
 
@@ -450,10 +490,10 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     res.status(202).json({ accepted: true, observation: result.observation });
   });
 
-  app.post('/platforms/actions/suggest', (req, res) => res.json({ suggested: true }));
-  app.post('/platforms/actions/approve', (req, res) => res.json({ approved: true }));
-  app.post('/platforms/actions/reject', (req, res) => res.json({ rejected: true }));
-  app.post('/platforms/actions/send', (req, res) => res.json({ sent: true }));
+  app.post('/platforms/actions/suggest', (req, res) => res.status(501).json({ error: "Platform actions not supported in local runtime" }));
+  app.post('/platforms/actions/approve', (req, res) => res.status(501).json({ error: "Platform actions not supported in local runtime" }));
+  app.post('/platforms/actions/reject', (req, res) => res.status(501).json({ error: "Platform actions not supported in local runtime" }));
+  app.post('/platforms/actions/send', (req, res) => res.status(501).json({ error: "Platform actions not supported in local runtime" }));
 
   return { app, runtimes, setObservationOrgan: (org: FixtureObservationOrgan) => { observationOrgan = org; } };
 }

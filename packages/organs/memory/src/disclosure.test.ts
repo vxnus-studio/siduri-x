@@ -63,8 +63,21 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
       audienceId: 'audience-private-a',
     });
 
-    expect(poolQueryMock.mock.calls[0][0]).toContain("sensitivity IN ('public', 'private', 'restricted')");
-    expect(poolQueryMock.mock.calls[0][1]).toContain(JSON.stringify(['audience-private-a']));
+    expect(poolQueryMock.mock.calls[0][0]).toContain("(valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW())");
+    expect(poolQueryMock.mock.calls[0][0]).toContain("confidence >= $");
+  });
+
+  test('Temporal validity and confidence thresholds are enforced in SQL parameters', async () => {
+    poolQueryMock.mockResolvedValueOnce({ rows: [] });
+
+    await organ.searchClaims('hello', {
+      channel: 'direct',
+      audienceId: 'audience-direct-a',
+      minConfidence: 0.8,
+    });
+
+    expect(poolQueryMock.mock.calls[0][0]).toContain("(valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW())");
+    expect(poolQueryMock.mock.calls[0][1]).toContain(0.8);
   });
 
   test('Lifecycle methods: markClaimSessionOnly, expireClaim, revokeClaim update status atomically', async () => {

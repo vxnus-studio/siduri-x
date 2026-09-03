@@ -80,13 +80,13 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
     await organ.searchClaims("Hello world WORLD! 123 @#$", "OWNER");
 
     expect(poolQueryMock).toHaveBeenCalledWith(
-      expect.stringMatching(/to_tsquery\('simple',\s*\$2\)/),
-      expect.arrayContaining(['test-id', '123:* | hello:* | world:*'])
+      expect.stringMatching(/to_tsquery\('simple',\s*\$3\)/),
+      expect.arrayContaining(['test-id', 0.5, '123:* | hello:* | world:*'])
     );
     
     // Check ordering uses ts_rank
     expect(poolQueryMock).toHaveBeenCalledWith(
-      expect.stringMatching(/ORDER BY ts_rank\(search_document,\s*to_tsquery\('simple',\s*\$2\)\)\s*DESC/),
+      expect.stringMatching(/ORDER BY ts_rank\(search_document,\s*to_tsquery\('simple',\s*\$3\)\)\s*DESC/),
       expect.anything()
     );
   });
@@ -96,14 +96,14 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
     await organ.searchClaims("甘雨 フリーナ", "PUBLIC");
 
     expect(poolQueryMock).toHaveBeenCalledWith(
-      expect.stringMatching(/to_tsquery\('simple',\s*\$2\)/),
-      expect.arrayContaining(['test-id', 'フリーナ:* | 甘雨:*'])
+      expect.stringMatching(/to_tsquery\('simple',\s*\$3\)/),
+      expect.arrayContaining(['test-id', 0.5, 'フリーナ:* | 甘雨:*'])
     );
   });
 
   test('enforces upper bound caps on getClaims and searchClaims limit parameter', async () => {
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
-    await organ.getClaims(5000); // requested 5000, should be capped to 1000
+    await organ.getClaims(5000); // should be capped to 1000
 
     expect(poolQueryMock).toHaveBeenCalledWith(
       expect.stringContaining('LIMIT $2'),
@@ -115,8 +115,8 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
     await organ.searchClaims("test", "PUBLIC", 500); // should be capped to 100
 
     expect(poolQueryMock).toHaveBeenCalledWith(
-      expect.stringContaining('LIMIT $3'),
-      ['test-id', 'test:*', 100]
+      expect.stringContaining('LIMIT $4'),
+      ['test-id', 0.5, 'test:*', 100]
     );
   });
 

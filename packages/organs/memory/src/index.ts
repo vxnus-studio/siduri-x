@@ -155,8 +155,19 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
     const sensitivity = isOptionObject ? scopeOrOptions.sensitivity : undefined;
     const effectiveLimit = isOptionObject ? (scopeOrOptions.limit ?? limit) : limit;
 
+    const minConfidence = isOptionObject && typeof scopeOrOptions.minConfidence === 'number'
+      ? scopeOrOptions.minConfidence
+      : 0.5;
+
     let sql = `SELECT * FROM memory_claims WHERE companion_id = $1 AND status = 'APPROVED'`;
     const params: any[] = [this.companionId];
+
+    // Enforce temporal validity: claim must be valid now (valid_from <= NOW or NULL, and valid_until >= NOW or NULL)
+    sql += ` AND (valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW())`;
+
+    // Enforce confidence threshold
+    sql += ` AND confidence >= $${params.length + 1}`;
+    params.push(minConfidence);
 
     if (isOptionObject) {
       if (channel === 'public' || (!channel && !audienceId)) {
@@ -604,6 +615,86 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       [event.id, this.companionId, event.sourceType, event.occurredAt, JSON.stringify(event.payload), event.schemaVersion || 1]
     );
     return event;
+  }
+
+  async updateClaim(
+    id: string,
+    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil' | 'allowedAudiences'>>
+  ): Promise<Claim> {
+    this.ensureInitialized();
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const prev = await client.query(
+        `SELECT * FROM memory_claims WHERE id = $1 AND companion_id = $2 FOR UPDATE`,
+        [id, this.companionId]
+      );
+      if (prev.rowCount === 0) {
+        throw new Error(`Claim not found`);
+      }
+
+      const current = prev.rows[0];
+      const newSubject = updates.subject ?? current.subject;
+      const newPredicate = updates.predicate ?? current.predicate;
+      const newValue = updates.value ?? current.value;
+      const newScope = updates.scope ?? current.scope;
+      const newSensitivity = updates.sensitivity ?? current.sensitivity;
+      const newConfidence = updates.confidence ?? current.confidence;
+      const newValidFrom = updates.validFrom ?? current.valid_from;
+      const newValidUntil = updates.validUntil ?? current.valid_until;
+      const newAudiences = updates.allowedAudiences !== undefined
+        ? JSON.stringify(updates.allowedAudiences)
+        : JSON.stringify(current.allowed_audiences || []);
+
+      const updateRes = await client.query(
+        `UPDATE memory_claims
+         SET subject = $3, predicate = $4, value = $5, scope = $6,
+             sensitivity = $7, confidence = $8, valid_from = $9, valid_until = $10,
+             allowed_audiences = $11::jsonb
+         WHERE id = $1 AND companion_id = $2
+         RETURNING *`,
+        [
+          id,
+          this.companionId,
+          newSubject,
+          newPredicate,
+          newValue,
+          newScope,
+          newSensitivity,
+          newConfidence,
+          newValidFrom || null,
+          newValidUntil || null,
+          newAudiences,
+        ]
+      );
+
+      await this.recordClaimHistoryWithClient(client, id, current.status, 'claim_updated');
+      await client.query('COMMIT');
+      return this.mapClaim(updateRes.rows[0]);
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async resetMemory(): Promise<void> {
+    this.ensureInitialized();
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`DELETE FROM memory_claims WHERE companion_id = $1`, [this.companionId]);
+      await client.query(`DELETE FROM memory_claim_history WHERE companion_id = $1`, [this.companionId]);
+      await client.query(`DELETE FROM memory_directives WHERE companion_id = $1`, [this.companionId]);
+      await client.query(`DELETE FROM memory_source_events WHERE companion_id = $1`, [this.companionId]);
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   async getSourceEvent(id: string): Promise<SourceEvent | undefined> {

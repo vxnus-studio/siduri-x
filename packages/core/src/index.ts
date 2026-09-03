@@ -143,6 +143,8 @@ export interface MemoryQueryOptions {
   audienceId?: string;
   sensitivity?: string;
   limit?: number;
+  minConfidence?: number;
+  now?: string | Date;
 }
 
 export interface MemoryOrgan {
@@ -165,6 +167,11 @@ export interface MemoryOrgan {
   disableDirective(id: string): Promise<void>;
   expireDirective?(id: string): Promise<void>;
   supersedeClaim?(id: string, replacement: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
+  updateClaim?(
+    id: string,
+    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil' | 'allowedAudiences'>>
+  ): Promise<Claim>;
+  resetMemory?(): Promise<void>;
   addSourceEvent?(event: SourceEvent): Promise<SourceEvent>;
   getSourceEvent?(id: string): Promise<SourceEvent | undefined>;
 }

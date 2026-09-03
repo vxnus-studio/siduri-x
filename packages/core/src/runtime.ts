@@ -187,17 +187,22 @@ export class SiduriRuntime {
         }
       : role;
 
+    const subsystemDiagnostics: Record<string, string> = {};
+
     const [knowledgeData, memoryData, activeDirectives] = await Promise.all([
       this.knowledge && shouldQueryKnowledge && typeof this.knowledge.search === 'function' ? this.knowledge.search(perceivedText).catch(e => {
         console.error("[SiduriRuntime] Knowledge search failed:", e.message);
+        subsystemDiagnostics['knowledge'] = `UNAVAILABLE: ${e.message}`;
         return [];
       }) : Promise.resolve([]),
       this.memory && typeof this.memory.searchClaims === 'function' ? this.memory.searchClaims(perceivedText, queryOptions, 5).catch(e => {
         console.error("[SiduriRuntime] Memory search failed:", e.message);
+        subsystemDiagnostics['memory_claims'] = `UNAVAILABLE: ${e.message}`;
         return [];
       }) : Promise.resolve([]),
       this.memory && typeof this.memory.getDirectives === 'function' ? this.memory.getDirectives().catch(e => {
         console.error("[SiduriRuntime] Memory directives failed:", e.message);
+        subsystemDiagnostics['memory_directives'] = `UNAVAILABLE: ${e.message}`;
         return [];
       }) : Promise.resolve([])
     ]);
@@ -233,6 +238,9 @@ export class SiduriRuntime {
     }
 
     let contextPrompt = "";
+    if (Object.keys(subsystemDiagnostics).length > 0) {
+      contextPrompt += "SUBSYSTEM STATUS (DEGRADED):\n" + Object.entries(subsystemDiagnostics).map(([k, v]) => `- [${k}] ${v}`).join("\n") + "\n";
+    }
     if (knowledgeData.length > 0) {
       contextPrompt += "KNOWLEDGE:\n" + knowledgeData.map(k => `- [revision:${k.revision} source:${k.provenance}] ${k.content}`).join("\n") + "\n";
     }
@@ -496,6 +504,7 @@ export class SiduriRuntime {
         action_results: actionResults,
         evidence_ids: gateEval.filteredEvidenceIds,
         citations: gateEval.filteredCitations,
+        subsystem_diagnostics: Object.keys(subsystemDiagnostics).length > 0 ? subsystemDiagnostics : undefined,
         events: experienceEvents.map(e => ({
           event_id: e.eventId,
           kind: e.kind,
