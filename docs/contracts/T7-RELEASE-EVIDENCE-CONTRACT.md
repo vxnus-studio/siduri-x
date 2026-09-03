@@ -77,8 +77,7 @@ boundary, not only direct organ calls:
 Each scenario needs positive and negative assertions, a correlation ID, and a
 record in the verification manifest.
 
-The reviewer procedure is in
-[`PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md`](./PHASE-0-NEUTRAL-MANUAL-WALKTHROUGH.md).
+The reviewer procedure was established during the neutral manual walkthrough phase.
 
 ## Forbidden release claims
 
@@ -113,14 +112,13 @@ R5 evidence: PASS
 R6 experience: PASS
 R7 security/operations: PASS
 R8 vertical slice: PASS
-Evidence manifest: docs/extraction/VERIFICATION_EVIDENCE_MANIFEST.md
+Evidence manifest: RELEASE_STATUS.md
 Known deviations: Non-blocking web client lint warnings; in-memory default ActionStore (persistence requires configuration)
 Reviewer: Antigravity Autonomous Hardening Auditor
 Date: 2026-09-03
 Decision: GO WITH LIMITATIONS
 ```
 
-The authoritative release status register is maintained in [`PUBLIC_RELEASE_READINESS.md`](./PUBLIC_RELEASE_READINESS.md);
-gate evidence belongs in [`VERIFICATION_EVIDENCE_MANIFEST.md`](./VERIFICATION_EVIDENCE_MANIFEST.md).
+The authoritative release status register is maintained in [`../RELEASE_STATUS.md`](../RELEASE_STATUS.md).
 The forbidden-default scan procedure and current classifications are in
 [`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).

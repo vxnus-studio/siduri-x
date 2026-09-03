@@ -8,9 +8,7 @@ The documentation is organized into four distinct sections:
 docs/
 ├── RELEASE_STATUS.md # Canonical release status, verified commit, invariants, and reproducible commands
 ├── architecture/     # Core organ architecture, runtime design, and subsystem specifications
-├── contracts/        # Neutral context specs, memory state machine, safety gating, and event contracts
-├── extraction/       # Behavioral parity extraction track, roadmaps, and audit records
-└── archive/          # Historical phase records, milestone logs, and experimental handoffs
+└── contracts/        # Neutral context specs, memory state machine, safety gating, and event contracts
 ```
 
 > **Current Release State**: See [**Canonical Release Status**](./RELEASE_STATUS.md) for current go/no-go status, verified SHA (`06823ac2de61a5d8923f4072fe221bf943ea4aa4`), and architecture invariants.
@@ -57,29 +55,4 @@ Type-safe interfaces, gating engine, memory state machines, and neutral security
 - **[Legacy Identifier Migration](./contracts/LEGACY_IDENTIFIER_MIGRATION.md)** — Guide on removing overloaded legacy identifiers.
 - **[Blank Slate Contract](./contracts/BLANK_SLATE_CONTRACT.md)** & **[Fixture Guide](./contracts/BLANK-SLATE-FIXTURE-GUIDE.md)** — Invariants for clean-slate initializations.
 - **[Forbidden Default Baseline](./contracts/FORBIDDEN-DEFAULT-SCAN-BASELINE.md)** — Safety baseline preventing default relationship assumptions.
-
----
-
-## 3. Extraction & Parity (`docs/extraction/`)
-Documentation tracking the behavioral extraction from the original Siduri reference into the clean organ architecture:
-
-- **[Repository Health Audit](./extraction/REPOSITORY_HEALTH_AUDIT.md)** — Health audit, parity metrics, and evidence state.
-- **[Behavior Extraction Boundary](./extraction/SIDURI_BEHAVIOR_EXTRACTION.md)** — Scope of extracted cognition behaviors.
-- **[Extraction Matrix](./extraction/SIDURI_EXTRACTION_MATRIX.md)** — Source-to-contract traceability matrix.
-- **[Extraction Readiness Board](./extraction/EXTRACTION-READINESS-BOARD.md)** — Implementation status and track dependencies.
-- **[Parity Roadmap](./extraction/SIDURI_PARITY_ROADMAP.md)** — Phase breakdown and completion criteria.
-- **[Verification Evidence Manifest](./extraction/VERIFICATION_EVIDENCE_MANIFEST.md)** — Test proof inventory.
-- **[Original Source Traceability](./extraction/ORIGINAL-SOURCE-TRACEABILITY.md)** — Mapping original test suite to neutral guarantees.
-- **[Public Release Readiness](./extraction/PUBLIC_RELEASE_READINESS.md)** — Go/No-go deployment checklist.
-- **[Extraction Track Map](./extraction/EXTRACTION_TRACK_MAP.md)** & **[Source Catalog](./extraction/EXTRACTION_SOURCE_CATALOG.md)** — Source catalog and track dependencies.
-- **[Open Extraction Decisions](./extraction/OPEN_EXTRACTION_DECISIONS.md)** — Policy decisions log.
-
----
-
-## 4. Archive (`docs/archive/`)
-Historical milestones, experimental records, and phased development handoffs:
-
-- `PHASE-0-*` through `PHASE-8-HANDOFF.md` — Milestone handoff notes.
-- `phase4-modularization.md` — Early modularization experiments.
-- `handoff.md` — Legacy compatibility handoff notes.
 
