@@ -69,3 +69,11 @@
 - **Severity**: Medium
 - **Description**: Audit hash chaining only covered a subset of event fields.
 - **Resolution**: Extended canonical SHA-256 hash chaining over all security-critical event fields (execution ID, actor, channel, correlation ID, risk level, lifecycle, decision, parameters hash, error, timestamp).
+
+---
+
+### SIDURI-AUDIT-010: PostgresMemoryOrgan Standalone Default ConnectionString Resolution
+- **Component**: `packages/organs/memory/src/index.ts`
+- **Severity**: Low
+- **Description**: `PostgresMemoryOrgan` constructor required explicit `connectionString` property in the config argument. When generated instances instantiated the organ with `config.organs.memory` without duplicating `DATABASE_URL` in `siduri.config.json`, the client pool failed to connect unless explicit connection strings were manually passed.
+- **Resolution**: Updated `PostgresMemoryOrgan` constructor to fall back gracefully to `process.env.DATABASE_URL` if `config.connectionString` is omitted, matching `probeMemoryHealth` and canonical CLI discovery conventions.

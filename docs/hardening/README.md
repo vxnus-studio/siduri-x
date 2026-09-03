@@ -33,3 +33,4 @@ The objective of this program is to ensure that Siduri-X functions in accordance
 | `SIDURI-AUDIT-007` | Core Runtime Degradation | HIGH | RESOLVED | `packages/core/src/runtime.ts` |
 | `SIDURI-AUDIT-008` | Knowledge SafeFetch | MEDIUM | RESOLVED | `packages/organs/knowledge/src/index.ts` |
 | `SIDURI-AUDIT-009` | Audit Trail Hashing | MEDIUM | RESOLVED | `packages/core/src/capability.ts` |
+| `SIDURI-AUDIT-010` | Standalone Memory DB URL Fallback | LOW | RESOLVED | `packages/organs/memory/src/index.ts` |

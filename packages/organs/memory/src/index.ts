@@ -16,10 +16,11 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
   private companionId: string | null = null;
   private readonly queryTimeoutMs: number;
 
-  constructor(config: PostgresMemoryConfig) {
+  constructor(config: Partial<PostgresMemoryConfig> = {}) {
     this.queryTimeoutMs = config.maxQueryTimeoutMillis ?? 5000;
+    const connectionString = config.connectionString || (typeof process !== 'undefined' && process.env ? process.env.DATABASE_URL : undefined);
     this.pool = new Pool({
-      connectionString: config.connectionString,
+      connectionString,
       max: config.maxConnections ?? 10,
       connectionTimeoutMillis: config.connectionTimeoutMillis ?? 3000,
       idleTimeoutMillis: config.idleTimeoutMillis ?? 10000,

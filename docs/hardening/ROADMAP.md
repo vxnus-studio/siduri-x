@@ -34,7 +34,13 @@
 
 ---
 
-## Phase 4: Verification & Handoff
-- [x] Monorepo clean build passing (`pnpm -r build`).
-- [x] Monorepo unit & integration test suites passing (`pnpm -r test`).
-- [x] Hardening documentation set created in `docs/hardening/`.
+## Phase 4: Release & Operational Validation
+- [x] Monorepo clean build passing across all 17 workspaces (`pnpm -r build`).
+- [x] Full unit, integration, and adversarial regression suites passing (`pnpm -r test`).
+- [x] Clean-machine standalone distribution & package artifact validation passing.
+- [x] Live PostgreSQL database migrations and checksum tracking validated (`siduri db push`).
+- [x] Memory lifecycle (propose, approve, reject, temporal filter, confidence filter, restart persistence) verified.
+- [x] Action execution idempotency, HMAC verification, replay defense, and concurrent reservation verified.
+- [x] Subsystem degradation diagnostics and network SSRF boundaries verified under failure injection.
+- [x] Hardening & verification documentation set updated in `docs/hardening/`.
+- [x] **Verdict: GO — Release baseline established.**
