@@ -258,6 +258,25 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.summary?.['Speaker ID']).toBe(2);
     });
 
+    test('Voice configurator configures RVC with Base TTS Engine', async () => {
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ provider: 'rvc' })
+        .mockResolvedValueOnce({
+          modelPath: './assets/voice/sparkle/sparkle.pth',
+          indexPath: './assets/voice/sparkle/sparkle.index',
+          pitchShift: '12',
+          f0Method: 'rmvpe',
+          baseTts: 'edge-tts',
+          serviceUrl: 'http://localhost:50055',
+        });
+
+      const result = await configureVoice({ companionName: 'Sparkle', manifest: voiceManifest });
+      expect(result.config.provider).toBe('edge-tts');
+      expect((result.config as any).rvc.enabled).toBe(true);
+      expect((result.config as any).rvc.pitchShift).toBe(12);
+      expect(result.summary?.['Base TTS']).toBe('edge-tts');
+    });
+
     test('Body configurator configures Live2D, custom model path, and expression', async () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ provider: 'live2d' })

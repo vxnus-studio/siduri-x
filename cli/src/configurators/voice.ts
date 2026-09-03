@@ -62,10 +62,15 @@ export async function configureVoice(
         default: 'rmvpe',
       },
       {
-        type: 'input',
-        name: 'baseUrl',
-        message: 'Base TTS Synthesis Engine URL (VOICEVOX):',
-        default: 'http://localhost:50021',
+        type: 'list',
+        name: 'baseTts',
+        message: 'Base TTS Engine for RVC (Generates initial audio):',
+        choices: [
+          { name: 'Edge-TTS (Cloud API, 0MB)', value: 'edge-tts' },
+          { name: 'Kokoro TTS (Local, ~80MB)', value: 'kokoro' },
+          { name: 'Piper TTS (Local, ~20MB)', value: 'piper' },
+        ],
+        default: 'edge-tts',
       },
       {
         type: 'input',
@@ -78,9 +83,7 @@ export async function configureVoice(
     const pitchShift = parseInt(rvcAnswers.pitchShift, 10) || 0;
 
     const config: Record<string, any> = {
-      provider: 'voicevox',
-      baseUrl: rvcAnswers.baseUrl.trim(),
-      speakerId: 1,
+      provider: rvcAnswers.baseTts,
       maxQueueDepth: 50,
       rvc: {
         enabled: true,
@@ -96,11 +99,11 @@ export async function configureVoice(
 
     const summary: Record<string, string | number> = {
       Provider: 'RVC (Custom Voice Model)',
+      'Base TTS': rvcAnswers.baseTts,
       'Model Path': rvcAnswers.modelPath.trim(),
       'Pitch Shift': pitchShift,
       'F0 Method': rvcAnswers.f0Method,
       'RVC Service': rvcAnswers.serviceUrl.trim(),
-      'Base TTS': rvcAnswers.baseUrl.trim(),
     };
 
     return {
