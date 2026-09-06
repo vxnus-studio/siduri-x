@@ -8,7 +8,7 @@ import {
   formatClaimReceipt,
   formatRuntimeEffect,
 } from "../../lib/memory-display";
-type View = "overview" | "memory" | "evidence" | "platforms" | "settings";
+type View = "overview" | "memory" | "evidence" | "settings";
 type Status = {
   label: string;
   value: string;
@@ -62,23 +62,6 @@ type BehavioralDirective = {
   valid_from?: string;
   valid_until?: string;
 };
-type PlatformEvent = {
-  event_id: string;
-  event_type: string;
-  occurred_at: string;
-  source: string;
-  privacy_class: string;
-  payload: { author_display_name: string; text: string; channel_id: string };
-};
-type PlatformAction = {
-  action_id: string;
-  platform: string;
-  target_id: string;
-  text: string;
-  status: string;
-  evidence_ids: string[];
-  created_at: string;
-};
 type EvidenceResult = {
   title: string;
   url: string;
@@ -127,23 +110,11 @@ export default function OperatorClient() {
     value: "Checking",
     tone: "warn",
   });
-  const [platforms, setPlatforms] = useState<
-    Record<
-      string,
-      {
-        configured: boolean;
-        receive_mode: string;
-        send_requires_approval: boolean;
-      }
-    >
-  >({});
   const [version, setVersion] = useState("");
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [items, setItems] = useState<MemoryItem[]>([]);
   const [directives, setDirectives] = useState<BehavioralDirective[]>([]);
-  const [events, setEvents] = useState<PlatformEvent[]>([]);
-  const [actions, setActions] = useState<PlatformAction[]>([]);
   const [evidenceResults, setEvidenceResults] = useState<EvidenceResult[]>([]);
   const [observations, setObservations] = useState<Observation[]>([]);
   const [me, setMe] = useState("{}");
@@ -153,11 +124,6 @@ export default function OperatorClient() {
     string | null
   >(null);
   const [busy, setBusy] = useState(false);
-
-  const pendingActions = useMemo(
-    () => actions.filter((item) => item.status === "proposed"),
-    [actions],
-  );
 
   async function loadStatuses(): Promise<void> {
     try {
@@ -221,12 +187,6 @@ export default function OperatorClient() {
     } catch {
       setObs({ label: "OBS capture", value: "Unavailable", tone: "bad" });
     }
-    try {
-      const data = await getJson("/platforms/status");
-      setPlatforms(data.platforms ?? {});
-    } catch {
-      setPlatforms({});
-    }
   }
   async function loadMemory(): Promise<void> {
     try {
@@ -252,19 +212,6 @@ export default function OperatorClient() {
       setDirectives([]);
     }
   }
-  async function loadPlatforms(): Promise<void> {
-    try {
-      const [eventData, actionData] = await Promise.all([
-        getJson("/platforms/events"),
-        getJson("/platforms/actions"),
-      ]);
-      setEvents(eventData.events ?? []);
-      setActions(actionData.actions ?? []);
-    } catch {
-      setEvents([]);
-      setActions([]);
-    }
-  }
   async function loadEvidence(): Promise<void> {
     try {
       const [evidenceData, observationData] = await Promise.all([
@@ -288,7 +235,6 @@ export default function OperatorClient() {
   useEffect(() => {
     void loadStatuses();
     void loadMemory();
-    void loadPlatforms();
     void loadEvidence();
     void loadMe();
   }, []);
@@ -349,34 +295,6 @@ export default function OperatorClient() {
     });
     await loadMemory();
   }
-  async function action(
-    path: string,
-    item: PlatformAction,
-    text?: string,
-  ): Promise<void> {
-    await postAction(path, {
-      action_id: item.action_id,
-      ...(text === undefined ? {} : { text }),
-    });
-    await loadPlatforms();
-  }
-  async function suggestReply(): Promise<void> {
-    const newest = events.at(-1);
-    if (!newest) {
-      setMessage("No platform event is available");
-      return;
-    }
-    try {
-      await postAction("/platforms/actions/suggest", {
-        event_id: newest.event_id,
-        language: "en",
-      });
-      setMessage("Reply suggestion queued");
-    } catch (error) {
-      setMessage(String(error));
-    }
-    await loadPlatforms();
-  }
   async function createObservation(): Promise<void> {
     await postAction("/dev/mock-observation");
     await loadEvidence();
@@ -417,7 +335,6 @@ export default function OperatorClient() {
               "overview",
               "memory",
               "evidence",
-              "platforms",
               "settings",
             ] as View[]
           ).map((item) => (
@@ -453,7 +370,6 @@ export default function OperatorClient() {
               onClick={() => {
                 void loadStatuses();
                 void loadMemory();
-                void loadPlatforms();
                 void loadEvidence();
               }}
               aria-label="Refresh dashboard"
@@ -468,9 +384,7 @@ export default function OperatorClient() {
             health={health}
             voice={voice}
             obs={obs}
-            platforms={platforms}
             proposals={proposals}
-            actions={pendingActions}
             responseJson={responseJson}
             pendingCorrelationId={pendingCorrelationId}
             busy={busy}
@@ -498,15 +412,6 @@ export default function OperatorClient() {
             onRefresh={loadEvidence}
           />
         )}
-        {view === "platforms" && (
-          <PlatformsView
-            events={events}
-            actions={actions}
-            onRefresh={loadPlatforms}
-            onSuggest={suggestReply}
-            onAction={action}
-          />
-        )}
         {view === "settings" && (
           <SettingsView onResetMemory={resetMemory} disabled={busy} />
         )}
@@ -527,144 +432,19 @@ function StatusCard({ status }: { status: Status }) {
     </article>
   );
 }
-function Overview({
-  health,
-  voice,
-  obs,
-  platforms,
-  proposals,
-  actions,
-  responseJson,
-  pendingCorrelationId,
-  busy,
-  onTrigger,
-  onObserve,
-  onApprove,
-  onNavigate,
+function PanelHeader({
+  title,
+  action,
+  onClick,
 }: {
-  health: Status;
-  voice: Status;
-  obs: Status;
-  platforms: Record<string, { configured: boolean }>;
-  proposals: Proposal[];
-  actions: PlatformAction[];
-  responseJson: unknown;
-  pendingCorrelationId: string | null;
-  busy: boolean;
-  onTrigger: () => Promise<void>;
-  onObserve: () => Promise<void>;
-  onApprove: () => Promise<void>;
-  onNavigate: (view: View) => void;
+  title: string;
+  action?: string;
+  onClick?: () => void;
 }) {
-  const platformCount = Object.values(platforms).filter(
-    (item) => item.configured,
-  ).length;
   return (
-    <div className="console-view">
-      <div className="status-grid">
-        <StatusCard status={health} />
-        <StatusCard status={voice} />
-        <StatusCard status={obs} />
-        <StatusCard
-          status={{
-            label: "Platforms",
-            value: platformCount
-              ? `${platformCount} configured`
-              : "Not connected",
-            detail: "Outbound approval required",
-            tone: platformCount ? "good" : "warn",
-          }}
-        />
-      </div>
-      <div className="console-columns">
-        <section className="console-panel approval-panel">
-          <PanelHeader
-            title="Response gate"
-            action="Review policy"
-            onClick={() => onNavigate("settings")}
-          />
-          <div className="gate-row">
-            <span
-              className={`gate-icon ${pendingCorrelationId ? "pending" : "ready"}`}
-            >
-              {pendingCorrelationId ? "!" : "✓"}
-            </span>
-            <div>
-              <strong>
-                {pendingCorrelationId
-                  ? "Grounded response awaiting approval"
-                  : "No response awaiting approval"}
-              </strong>
-              <p>
-                {pendingCorrelationId
-                  ? "Public output is held until you approve it."
-                  : "Local mock responses remain private."}
-              </p>
-            </div>
-          </div>
-          <div className="button-row">
-            <button onClick={() => void onTrigger()} disabled={busy}>
-              Trigger mock response
-            </button>
-            <button
-              className="soft-button"
-              onClick={() => void onObserve()}
-              disabled={busy}
-            >
-              Observe and respond
-            </button>
-            {pendingCorrelationId && (
-              <button
-                className="approve-button"
-                onClick={() => void onApprove()}
-              >
-                Approve response
-              </button>
-            )}
-          </div>
-          {responseJson !== null && (
-            <details className="technical-details">
-              <summary>Technical details</summary>
-              <pre>{JSON.stringify(responseJson, null, 2)}</pre>
-            </details>
-          )}
-        </section>
-        <section className="console-panel queue-panel">
-          <PanelHeader
-            title="Needs attention"
-            action="View memory"
-            onClick={() => onNavigate("memory")}
-          />
-          <QueueRow
-            label="Memory proposals"
-            count={proposals.length}
-            tone={proposals.length ? "warn" : "quiet"}
-          />
-          <QueueRow
-            label="Outbound actions"
-            count={actions.length}
-            tone={actions.length ? "warn" : "quiet"}
-          />
-          <QueueRow label="Platform events" count={0} tone="quiet" />
-        </section>
-      </div>
-      <section className="console-panel quick-panel">
-        <PanelHeader title="Quick actions" />
-        <div className="quick-actions">
-          <button onClick={() => onNavigate("memory")}>
-            Review memory <span>→</span>
-          </button>
-          <button onClick={() => onNavigate("evidence")}>
-            Inspect evidence <span>→</span>
-          </button>
-          <button onClick={() => onNavigate("platforms")}>
-            Platform inbox <span>→</span>
-          </button>
-          <button onClick={() => onNavigate("settings")}>
-            Identity & Directives <span>→</span>
-          </button>
-        </div>
-      </section>
+    <div className="panel-header">
+      <h2>{title}</h2>
+      {action && <button onClick={onClick}>{action} →</button>}
     </div>
   );
 }
@@ -681,22 +461,6 @@ function QueueRow({
     <div className="queue-row">
       <span>{label}</span>
       <b className={`queue-count ${tone}`}>{count}</b>
-    </div>
-  );
-}
-function PanelHeader({
-  title,
-  action,
-  onClick,
-}: {
-  title: string;
-  action?: string;
-  onClick?: () => void;
-}) {
-  return (
-    <div className="panel-header">
-      <h2>{title}</h2>
-      {action && <button onClick={onClick}>{action} →</button>}
     </div>
   );
 }
@@ -1151,188 +915,119 @@ function EvidenceView({
   );
 }
 
-function PlatformsView({
-  events,
-  actions,
-  onRefresh,
-  onSuggest,
-  onAction,
+function Overview({
+  health,
+  voice,
+  obs,
+  proposals,
+  responseJson,
+  pendingCorrelationId,
+  busy,
+  onTrigger,
+  onObserve,
+  onApprove,
+  onNavigate,
 }: {
-  events: PlatformEvent[];
-  actions: PlatformAction[];
-  onRefresh: () => Promise<void>;
-  onSuggest: () => Promise<void>;
-  onAction: (
-    path: string,
-    item: PlatformAction,
-    text?: string,
-  ) => Promise<void>;
+  health: Status;
+  voice: Status;
+  obs: Status;
+  proposals: Proposal[];
+  responseJson: unknown;
+  pendingCorrelationId: string | null;
+  busy: boolean;
+  onTrigger: () => Promise<void>;
+  onObserve: () => Promise<void>;
+  onApprove: () => Promise<void>;
+  onNavigate: (view: View) => void;
 }) {
   return (
     <div className="console-view">
-      <div className="view-intro">
-        <div>
-          <p className="console-eyebrow">PUBLIC BOUNDARY</p>
-          <h2>Untrusted input stays in the inbox.</h2>
-          <p>Replies never leave Siduri without an explicit approval record.</p>
-        </div>
-        <div className="button-row">
-          <button onClick={() => void onRefresh()}>Refresh inbox</button>
-          <button className="soft-button" onClick={() => void onSuggest()}>
-            Suggest newest reply
+      <div className="status-grid">
+        <StatusCard status={health} />
+        <StatusCard status={voice} />
+        <StatusCard status={obs} />
+      </div>
+      <div className="console-columns">
+        <section className="console-panel approval-panel">
+          <PanelHeader
+            title="Response gate"
+            action="Review policy"
+            onClick={() => onNavigate("settings")}
+          />
+          <div className="gate-row">
+            <span
+              className={`gate-icon ${pendingCorrelationId ? "pending" : "ready"}`}
+            >
+              {pendingCorrelationId ? "!" : "✓"}
+            </span>
+            <div>
+              <strong>
+                {pendingCorrelationId
+                  ? "Grounded response awaiting approval"
+                  : "No response awaiting approval"}
+              </strong>
+              <p>
+                {pendingCorrelationId
+                  ? "Public output is held until you approve it."
+                  : "Local mock responses remain private."}
+              </p>
+            </div>
+          </div>
+          <div className="button-row">
+            <button onClick={() => void onTrigger()} disabled={busy}>
+              Trigger mock response
+            </button>
+            <button
+              className="soft-button"
+              onClick={() => void onObserve()}
+              disabled={busy}
+            >
+              Observe and respond
+            </button>
+            {pendingCorrelationId && (
+              <button
+                className="approve-button"
+                onClick={() => void onApprove()}
+              >
+                Approve response
+              </button>
+            )}
+          </div>
+          {responseJson !== null && (
+            <details className="technical-details">
+              <summary>Technical details</summary>
+              <pre>{JSON.stringify(responseJson, null, 2)}</pre>
+            </details>
+          )}
+        </section>
+        <section className="console-panel queue-panel">
+          <PanelHeader
+            title="Needs attention"
+            action="View memory"
+            onClick={() => onNavigate("memory")}
+          />
+          <QueueRow
+            label="Memory proposals"
+            count={proposals.length}
+            tone={proposals.length ? "warn" : "quiet"}
+          />
+        </section>
+      </div>
+      <section className="console-panel quick-panel">
+        <PanelHeader title="Quick actions" />
+        <div className="quick-actions">
+          <button onClick={() => onNavigate("memory")}>
+            Review memory <span>→</span>
+          </button>
+          <button onClick={() => onNavigate("evidence")}>
+            Inspect evidence <span>→</span>
+          </button>
+          <button onClick={() => onNavigate("settings")}>
+            Identity & Directives <span>→</span>
           </button>
         </div>
-      </div>
-      <section className="console-panel table-panel">
-        <div className="table-toolbar">
-          <strong>Inbound events</strong>
-          <span>{events.length} retained</span>
-        </div>
-        {events.length ? (
-          <div className="data-table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Message</th>
-                  <th>Platform</th>
-                  <th>Author</th>
-                  <th>Received</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events
-                  .slice()
-                  .reverse()
-                  .map((item) => (
-                    <tr key={item.event_id}>
-                      <td>
-                        <span className="event-text">{item.payload.text}</span>
-                        <details className="row-details">
-                          <summary>{shortId(item.event_id)}</summary>
-                          <pre>{JSON.stringify(item, null, 2)}</pre>
-                        </details>
-                      </td>
-                      <td>
-                        <span className="tag">{item.source}</span>
-                      </td>
-                      <td>{item.payload.author_display_name}</td>
-                      <td>{formatDate(item.occurred_at)}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState
-            title="Inbox is empty"
-            detail="Approved provider workers will place public events here."
-          />
-        )}
-      </section>
-      <section className="console-panel table-panel">
-        <div className="table-toolbar">
-          <strong>Outbound approval queue</strong>
-          <span>
-            {actions.filter((item) => item.status === "proposed").length}{" "}
-            awaiting review
-          </span>
-        </div>
-        {actions.length ? (
-          <div className="data-table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Reply</th>
-                  <th>Target</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {actions.map((item) => (
-                  <ActionRow
-                    key={item.action_id}
-                    item={item}
-                    onAction={onAction}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState
-            title="No outbound actions"
-            detail="Suggested replies will appear here before sending."
-          />
-        )}
       </section>
     </div>
-  );
-}
-function ActionRow({
-  item,
-  onAction,
-}: {
-  item: PlatformAction;
-  onAction: (
-    path: string,
-    item: PlatformAction,
-    text?: string,
-  ) => Promise<void>;
-}) {
-  const [text, setText] = useState(item.text);
-  return (
-    <tr>
-      <td>
-        <textarea
-          className="table-editor"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          aria-label={`Platform action ${item.action_id}`}
-        />
-        <details className="row-details">
-          <summary>{shortId(item.action_id)}</summary>
-          <pre>{JSON.stringify(item, null, 2)}</pre>
-        </details>
-      </td>
-      <td>
-        {item.platform}
-        <small>{item.target_id}</small>
-      </td>
-      <td>
-        <span className={`tag status-${item.status}`}>{item.status}</span>
-      </td>
-      <td>
-        <div className="table-actions">
-          {item.status === "proposed" && (
-            <>
-              <button
-                className="tiny-button approve-button"
-                onClick={() =>
-                  void onAction("/platforms/actions/approve", item, text)
-                }
-              >
-                Approve
-              </button>
-              <button
-                className="tiny-button danger-button"
-                onClick={() => void onAction("/platforms/actions/reject", item)}
-              >
-                Reject
-              </button>
-            </>
-          )}
-          {item.status === "approved" && (
-            <button
-              className="tiny-button"
-              onClick={() => void onAction("/platforms/actions/send", item)}
-            >
-              Send
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
   );
 }
 
