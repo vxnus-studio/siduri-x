@@ -28,7 +28,7 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
     await organ.initialize('companion-a');
   });
 
-  test('Public request query includes public sensitivity / scope filter and companion isolation', async () => {
+  test('Public request query maintains companion isolation without restrictive audience gating', async () => {
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
 
     await organ.searchClaims('hello', {
@@ -38,12 +38,11 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
 
     expect(poolQueryMock).toHaveBeenCalledWith(
       expect.stringContaining('WHERE companion_id = $1 AND status = \'APPROVED\''),
-      expect.arrayContaining(['companion-a', JSON.stringify(['audience-public'])])
+      expect.arrayContaining(['companion-a'])
     );
-    expect(poolQueryMock.mock.calls[0][0]).toContain("(sensitivity = 'public' OR scope = 'PUBLIC')");
   });
 
-  test('Direct request query allows public and direct sensitivity', async () => {
+  test('Direct request query allows memory retrieval in single-owner mode', async () => {
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
 
     await organ.searchClaims('hello', {
@@ -51,8 +50,7 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
       audienceId: 'audience-direct-a',
     });
 
-    expect(poolQueryMock.mock.calls[0][0]).toContain("sensitivity IN ('public', 'private')");
-    expect(poolQueryMock.mock.calls[0][1]).toContain(JSON.stringify(['audience-direct-a']));
+    expect(poolQueryMock.mock.calls[0][0]).toContain("WHERE companion_id = $1 AND status = 'APPROVED'");
   });
 
   test('Private request query allows restricted private claims for explicit private audience', async () => {

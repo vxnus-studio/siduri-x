@@ -170,45 +170,11 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
     sql += ` AND confidence >= $${params.length + 1}`;
     params.push(minConfidence);
 
-    if (isOptionObject) {
-      if (channel === 'public' || (!channel && !audienceId)) {
-        // Public channel: only records marked public sensitivity and public-safe audience
-        sql += ` AND (sensitivity = 'public' OR scope = 'PUBLIC')`;
-        if (audienceId) {
-          sql += ` AND (allowed_audiences @> $${params.length + 1} OR allowed_audiences = '[]'::jsonb)`;
-          params.push(JSON.stringify([audienceId]));
-        }
-      } else if (channel === 'direct') {
-        // Direct channel: public + direct audience records
-        sql += ` AND (sensitivity IN ('public', 'private') OR scope IN ('PUBLIC', 'VIEWER'))`;
-        if (audienceId) {
-          sql += ` AND (allowed_audiences @> $${params.length + 1} OR allowed_audiences = '[]'::jsonb)`;
-          params.push(JSON.stringify([audienceId]));
-        }
-      } else if (channel === 'private') {
-        // Private channel: public + direct + private restricted records
-        sql += ` AND (sensitivity IN ('public', 'private', 'restricted') OR scope IN ('PUBLIC', 'VIEWER', 'OWNER'))`;
-        if (audienceId) {
-          sql += ` AND (allowed_audiences @> $${params.length + 1} OR allowed_audiences = '[]'::jsonb)`;
-          params.push(JSON.stringify([audienceId]));
-        }
-      } else if (channel === 'operator') {
-        // Operator channel: explicit operator audience
-        if (audienceId) {
-          sql += ` AND (allowed_audiences @> $${params.length + 1} OR allowed_audiences = '[]'::jsonb)`;
-          params.push(JSON.stringify([audienceId]));
-        }
-      }
-      if (sensitivity) {
-        sql += ` AND sensitivity = $${params.length + 1}`;
-        params.push(sensitivity);
-      }
-    } else {
-      // Legacy MemoryScope fallback
-      const safeScope = ['OWNER', 'VIEWER', 'OPERATOR', 'PUBLIC'].includes(scopeOrOptions)
-        ? scopeOrOptions
-        : 'PUBLIC';
-      sql += ` AND (scope = 'PUBLIC' OR scope = '${safeScope}')`;
+    // In single-owner local architecture, all approved memories for the companion are accessible.
+    // Legacy audience/channel filters are no longer restrictive.
+    if (isOptionObject && sensitivity) {
+      sql += ` AND sensitivity = $${params.length + 1}`;
+      params.push(sensitivity);
     }
 
     const safeLimit = Math.min(Math.max(1, effectiveLimit || 10), 100);

@@ -29,13 +29,13 @@ These constraints are deliberate design choices for Siduri's target product mode
 The following gaps identified in earlier extraction phases have been fully resolved and proven across the codebase:
 
 - **Public Chat Routing**:
-  Resolved — `/chat` routes through `mapRequestContext`, defaulting to neutral public channel/audience context unless verified authentication tokens are provided.
+  Resolved — `/chat` routes through `mapRequestContext`, defaulting to neutral public context or local owner access.
 - **Identity & Subjects**:
   Resolved — `primary_user`, creator defaults, and `MASTER_PRIVATE` assumptions were purged from schemas and runtime context.
 - **Memory Lifecycle & Immutability**:
   Resolved — `PostgresMemoryOrgan.updateClaim` enforces strict immutability for `APPROVED` claims, generating `PENDING` revisions with `supersedes` provenance.
-- **Behavior & Active Self**:
-  Resolved — `ActiveSelfCompiler` compiles behavior strictly scoped to companion, role, channel, and audience without conflating user memory with behavioral directives.
+- **Single-Owner Memory & Behavior Access**:
+  Resolved — Memory claims and Active Self behavioral directives are accessible to the owner on the local machine without audience/channel segregation or artificial token walls. Companion isolation (`companionId`) remains strictly enforced.
 - **Response Approval & Gating (T4)**:
   Resolved — `ResponseGatingEngine` gates candidate speech, evaluates citations and uncertainty, and requires explicit approval before emitting output events.
 - **Blank-Slate Parity (B0–B6)**:

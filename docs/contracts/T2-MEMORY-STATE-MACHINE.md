@@ -96,21 +96,18 @@ pending claim. A memory decision does not authorize public output.
 
 ## Current retrieval predicate
 
-Every current-memory query must apply these filters in order:
+Every current-memory query applies:
 
 ```text
 companion_id == request.companionId
-AND lifecycle in current_states_for_record_kind
-AND validity includes now
-AND channel policy permits the record
-AND audience intersection is non-empty
-AND sensitivity policy permits the record
-ORDER BY bounded relevance and recency
+AND status == 'APPROVED'
+AND validity includes now (valid_from <= NOW and valid_until >= NOW)
+AND confidence >= minConfidence
+ORDER BY relevance (ts_rank) and recency
 ```
 
-The request's authorization role is evaluated for capability, approval, or
-inspection operations. It is not substituted for `subject`, `channel`, or
-`audience`, and it cannot bypass disclosure policy.
+In single-owner local operation, all approved memories belonging to the companion instance are accessible to the owner without artificial audience/channel gating. Companion isolation (`companionId`), status (`APPROVED`), and temporal validity are strictly enforced.
+
 
 ## Invariants for implementation
 

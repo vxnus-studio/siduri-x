@@ -6,30 +6,26 @@ memory reference, while Siduri-Y provides a public, blank-slate runtime that
 instantiates companions dynamically from configuration without copying the
 original project's personal identity or relationship defaults.
 
-## Status: compatibility baseline; public blank-slate parity incomplete
+## Status: Standalone Single-Owner Architecture
 
-The API loads `siduri.config.json` and creates a `CompanionRuntime`. The runtime orchestrates interactions between the user and the organs:
+The API loads `siduri.config.json` and creates a `SiduriRuntime`. Siduri operates as a local-first, single-owner companion running on the user's host machine. The runtime orchestrates interactions between the user and the organs:
 - **Brain**: Handles LLM intelligence and structured response generation.
 - **Memory**: Stores long-term claims and behaviors, strictly scoped by `companionId`.
 - **Behavior**: Compiles dynamic persona rules into system prompts.
 - **Voice**: Enqueues and synthesizes TTS audio.
-- **Knowledge**: Loads an E-compatible pack/provider and preserves citations
-  and revision metadata for the Brain.
+- **Knowledge**: Loads an E-compatible pack/provider and preserves citations and revision metadata for the Brain.
 - **Vision**: Analyzes images.
-- **Body**: Controls overlay lifecycle and optional VTube Studio expressions/actions.
+- **Body**: Controls avatar expressions and embodiment events.
+- **Hands**: Executes authorized tools via Model Context Protocol (MCP).
+- **Ear**: Handles sensory audio and text input ingestion.
 
 ## Execution Flow
-1. API receives `/boot` with a config.
-2. `CompanionRuntime` is instantiated.
-3. A caller selects a channel and audience, then sends a message via `/chat`.
-4. Runtime validates the actor, channel, audience, and bounded history.
-5. Runtime retrieves only permitted contextual `Memory` and `Knowledge`.
-6. Runtime resolves approved `Behavior` injections for that context.
-7. `Brain` generates a validated `ResponsePlan` (speech + pending proposals).
-8. Memory and response approval boundaries are applied independently.
-9. `Voice` enqueues speech only when the response policy permits output.
+1. API boots the configured companion into runtime.
+2. User chats with the companion via `/chat` (running locally on `127.0.0.1`).
+3. Runtime validates actor context and bounded history.
+4. Runtime retrieves contextual `Memory` and `Knowledge` for the companion.
+5. Runtime compiles active `Behavior` directives into the prompt.
+6. `Brain` generates a validated `ResponsePlan` (speech + memory proposals + optional actions).
+7. Memory and response approval boundaries are evaluated.
+8. Output adapters (`Voice`, `Body`) emit experience events to the user.
 
-The current implementation is not yet at this target flow: `/chat` still
-forces a legacy private/owner route and the runtime still contains personal
-subject/audience defaults. See
-[`REPOSITORY_HEALTH_AUDIT.md`](./REPOSITORY_HEALTH_AUDIT.md).

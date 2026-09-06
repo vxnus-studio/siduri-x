@@ -1,19 +1,14 @@
 # Organs
 
-## Status: organ integration baseline; behavioral extraction incomplete
-- **Brain (`@siduri-x/brain`)**: Implements a provider-neutral
-  `OpenAICompatibleBrain`; OpenRouter is supported as a preset endpoint. Uses
-  `fetch` and OpenAI-style tool calling to enforce the `ResponsePlan` schema.
-- **Voice (`@siduri-x/voice`)**: Implements `VoiceAdapter` (with Edge-TTS, Kokoro, Piper, VOICEVOX base TTS support and RVC middleware). Retains the `SpeechQueue` semantics for handling text-to-speech.
-- **Memory (`@siduri-x/memory`)**: Implements the Postgres compatibility
-  adapter. Schema isolation is guaranteed by `companionId`; neutral audience,
-  subject, and complete lifecycle parity remain pending.
-- **Knowledge (`@siduri-x/knowledge`)**: Implements `ETeyvatKnowledgeAdapter`.
-- **Vision (`@siduri-x/vision`)**: Implements `OpenRouterVisionAdapter`. Exposes a simple `analyze(image)` interface, completely dropping the continuous OBS screen capture.
-- **Behavior (`@siduri-x/behavior`)**: Implements the Active Self
-  compatibility adapter; neutral context and complete scope parity remain
-  pending.
+## Canonical Organ Ecosystem (`@siduri-x/*`)
+- **Brain (`@siduri-x/brain`)**: Implements provider-neutral LLM reasoning (`OpenAICompatibleBrain`, `OpenRouterBrain`). Enforces the `ResponsePlan` schema with internal monologue, structured memory proposals, and action intents.
+- **Memory (`@siduri-x/memory`)**: Native PostgreSQL-backed memory organ. Manages claims, directives, and source events with immutable approved updates (`supersedes` link), confidence thresholds, and companion isolation (`companionId`). In single-owner local operation, all approved companion memories are accessible to the owner.
+- **Behavior (`@siduri-x/behavior`)**: Implements `ActiveSelfCompiler`. Compiles active behavior directives into system prompt injections.
+- **Hands (`@siduri-x/hands`)**: Tool execution and Model Context Protocol (MCP) organ. Enforces cryptographic `AuthorizationCapability` checks verified by `ActionPolicyEngine`.
+- **Ear (`@siduri-x/ear`)**: Multi-modal sensory input ingestion organ for audio and text.
+- **Vision (`@siduri-x/vision`)**: Visual observation and OCR perception adapter.
+- **Voice (`@siduri-x/voice`)**: Speech synthesis queue adapter supporting Edge-TTS, Piper, and VOICEVOX with optional RVC post-processing.
+- **Body (`@siduri-x/body`)**: Renderer-agnostic avatar expression state machine and embodiment event adapter.
+- **Knowledge (`@siduri-x/knowledge`)**: Pack and provider loader for factual knowledge with citation contracts.
+- **Observation (`@siduri-x/observation`)**: Fixture and screen observation organ with frame deduplication and OCR reading ingestion.
 
-## Status: Integrated at adapter level; parity gates remain
-- **Body (`@siduri-x/body`)**: Broadcasts overlay lifecycle events and can connect
-  to VTube Studio's local plugin API for expression and hotkey actions.

@@ -1,14 +1,16 @@
 # API
 
-Status: API compatibility baseline; neutral channel extraction incomplete
+Status: Single-owner local companion API
 
-The API is a single deployable Express process (`apps/api`).
-- `POST /boot`: Loads a companion into memory.
-- `POST /chat`: Sends a message to a specific companion.
+The API is a single deployable Express process (`apps/api`) strictly bound to `127.0.0.1`:
+- `POST /boot`: Loads a companion configuration into the runtime.
+- `POST /chat`: Sends a chat message to a specific companion.
+- `GET /memory` / `GET /memory/claims`: Lists memory claims for the companion.
+- `POST /memory/proposals/approve`: Approves a pending memory claim.
+- `POST /memory/proposals/reject`: Rejects a memory claim.
+- `GET /memory/behavioral`: Lists behavioral directives.
+- `POST /memory/behavioral/approve`: Approves a behavioral directive.
+- `GET /health` / `GET /ready`: Health check endpoints.
 
-The current `/chat` route still has a legacy private/owner routing assumption.
-Its target contract requires explicit actor, channel, and audience context.
-See [`NEUTRAL_CONTRACT_DECISIONS.md`](./NEUTRAL_CONTRACT_DECISIONS.md).
+The companion runs locally on the owner's machine. Authentication defaults to single-owner access, and all memories for the booted companion are accessible without audience segregation.
 
-The concrete neutral request and rejection envelopes are in
-[`T1-API-CONTRACT-EXAMPLES.md`](./T1-API-CONTRACT-EXAMPLES.md).

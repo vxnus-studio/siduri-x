@@ -47,7 +47,7 @@ describe('ActiveSelfCompiler', () => {
     expect(result).toContain('Valid safe instruction');
   });
 
-  test('filters by scope', async () => {
+  test('includes all active directives in single-owner mode', async () => {
     const context: BehaviorContext = {
       activeRole: 'VIEWER',
       directives: [
@@ -58,7 +58,7 @@ describe('ActiveSelfCompiler', () => {
     };
 
     const result = await compiler.compile(context);
-    expect(result).not.toContain('Only for owner');
+    expect(result).toContain('Only for owner');
     expect(result).toContain('For anyone');
     expect(result).toContain('For viewer');
   });

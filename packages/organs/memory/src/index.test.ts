@@ -168,7 +168,8 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
     poolQueryMock.mockClear();
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
     await organ.searchClaims('Captain', 'VIEWER');
-    expect(poolQueryMock.mock.calls[0][0]).toContain("scope = 'PUBLIC' OR scope = 'VIEWER'");
+    expect(poolQueryMock.mock.calls[0][0]).toContain("status = 'APPROVED'");
+    expect(poolQueryMock.mock.calls[0][0]).not.toContain("scope = 'PUBLIC'");
   });
 
   test('configures bounded connection pool with acquisition timeouts', () => {

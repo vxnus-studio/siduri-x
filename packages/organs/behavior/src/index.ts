@@ -67,23 +67,7 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
         continue;
       }
 
-      // Audience & Role Scope matching
-      if (d.allowedAudiences && d.allowedAudiences.length > 0) {
-        if (audienceId && !d.allowedAudiences.includes(audienceId) && !d.allowedAudiences.includes('audience-public')) {
-          excludedIds.push(d.id);
-          diagnostics[d.id] = 'audience_mismatch';
-          continue;
-        }
-      }
-
-      if (d.scopeMatcher && d.scopeMatcher.length > 0) {
-        if (!d.scopeMatcher.includes(activeRole)) {
-          excludedIds.push(d.id);
-          diagnostics[d.id] = 'role_scope_mismatch';
-          continue;
-        }
-      }
-
+      // In single-owner local companion architecture, active directives apply without multi-user audience or role boundaries.
       activeDirectives.push(d);
     }
 
