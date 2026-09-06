@@ -10,6 +10,7 @@ export * from './ear-types';
 export * from './capability';
 export * from './teaching';
 export * from './runtime';
+export * from './chat-contract';
 
 import { ActionIntent } from './action';
 import { EarIngestOptions } from './ear-types';

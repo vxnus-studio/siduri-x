@@ -178,10 +178,10 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     expect(files['README.md']).toContain('assets/voice/companion-full');
     expect(files['README.md']).toContain('Prerequisites');
 
-    // Docker compose generated for memory & voice
+    // Docker compose generated for memory (voicevox is auto-downloaded at runtime)
     expect(files['docker-compose.yml']).toBeDefined();
     expect(files['docker-compose.yml']).toContain('postgres:15');
-    expect(files['docker-compose.yml']).toContain('voicevox/voicevox_engine');
+    expect(files['README.md']).toContain('Voicevox engine executable will be securely auto-downloaded');
     expect(pkg.scripts['services:up']).toBe('docker compose up -d');
     expect(pkg.scripts['services:down']).toBe('docker compose down');
   });

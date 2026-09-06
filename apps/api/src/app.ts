@@ -1,6 +1,6 @@
 import express, { Express } from 'express';
 import cors from 'cors';
-import { SiduriRuntime } from './runtime';
+import { SiduriRuntime, dispatchCompanionChat } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
 import { PostgresMemoryOrgan } from '@siduri-x/memory';
 import { VoiceAdapter } from '@siduri-x/voice';
@@ -168,15 +168,13 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
 
     try {
-      // Map authorization role to legacy memory scope for backwards-compatible runtime call
-      const legacyScope =
-        mappingResult.context!.actor.authorizationRole === 'administrator'
-          ? 'OWNER'
-          : mappingResult.context!.actor.authorizationRole === 'operator'
-          ? 'OPERATOR'
-          : 'VIEWER';
-
-      const response = await runtime.handleUserMessage(message, legacyScope, history);
+      const response = await dispatchCompanionChat(runtime, {
+        id: companionId,
+        companionId,
+        message,
+        context: mappingResult.context,
+        history,
+      });
       res.json(response);
     } catch (e: any) {
       res.status(500).json({ error: e.message });

@@ -446,15 +446,24 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
         });
         const data = await res.json();
         
-        appendMessage('companion', '${instanceName}', data.reply || data.text || '(No response)');
+        const replyText =
+          data.response?.subtitle_en ||
+          data.response?.subtitle_ja ||
+          data.reply ||
+          data.text ||
+          '(No response)';
+
+        appendMessage('companion', '${instanceName}', replyText);
         
-        if (data.expression) {
-          document.getElementById('expression-tag').textContent = 'State: ' + data.expression;
+        const expression = data.expression || data.metadata?.events?.find(e => e.kind === 'avatar')?.expression;
+        if (expression) {
+          document.getElementById('expression-tag').textContent = 'State: ' + expression;
         }
 
-        if (data.audioUrl) {
-          const audio = new Audio(data.audioUrl);
-          audio.play().catch(e => console.warn('Audio autoplay blocked:', e));
+        const audio = data.response?.audio_url || data.audioUrl;
+        if (audio) {
+          const audioEl = new Audio(audio);
+          audioEl.play().catch(e => console.warn('Audio autoplay blocked:', e));
         }
       } catch (err) {
         appendMessage('companion', '${instanceName}', '⚠️ Error connecting to companion: ' + err.message);
