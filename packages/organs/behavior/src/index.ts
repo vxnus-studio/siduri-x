@@ -1,5 +1,7 @@
 import { BehaviorOrgan, BehaviorContext, BehaviorDirective, ActiveSelfProjection } from '@siduri-x/core';
 import { scanDirective } from './safety-scanner';
+export { scanDirective, normalizeText, DEFAULT_SAFETY_PATTERNS } from './safety-scanner';
+export type { ScanResult, SafetyPatternConfig } from './safety-scanner';
 
 export class ActiveSelfCompiler implements BehaviorOrgan {
   

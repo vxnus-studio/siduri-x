@@ -27,7 +27,7 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
     { name: '@siduri-x/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: 'siduri-x-brain-1.0.3.tgz' },
     { name: '@siduri-x/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: 'siduri-x-memory-1.0.3.tgz' },
     { name: '@siduri-x/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: 'siduri-x-knowledge-1.0.2.tgz' },
-    { name: '@siduri-x/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: 'siduri-x-behavior-1.0.3.tgz' },
+    { name: '@siduri-x/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: 'siduri-x-behavior-1.0.4.tgz' },
     { name: '@siduri-x/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: 'siduri-x-ear-1.0.2.tgz' },
     { name: '@siduri-x/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: 'siduri-x-vision-1.0.2.tgz' },
     { name: '@siduri-x/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: 'siduri-x-hands-1.0.2.tgz' },

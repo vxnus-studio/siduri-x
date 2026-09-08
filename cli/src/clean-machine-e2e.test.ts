@@ -16,7 +16,7 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
     { filter: '@siduri-x/brain', tarName: 'siduri-x-brain-1.0.3.tgz', isOrgan: true },
     { filter: '@siduri-x/memory', tarName: 'siduri-x-memory-1.0.3.tgz', isOrgan: true },
     { filter: '@siduri-x/knowledge', tarName: 'siduri-x-knowledge-1.0.2.tgz', isOrgan: true },
-    { filter: '@siduri-x/behavior', tarName: 'siduri-x-behavior-1.0.3.tgz', isOrgan: true },
+    { filter: '@siduri-x/behavior', tarName: 'siduri-x-behavior-1.0.4.tgz', isOrgan: true },
     { filter: '@siduri-x/ear', tarName: 'siduri-x-ear-1.0.2.tgz', isOrgan: true },
     { filter: '@siduri-x/vision', tarName: 'siduri-x-vision-1.0.2.tgz', isOrgan: true },
     { filter: '@siduri-x/hands', tarName: 'siduri-x-hands-1.0.2.tgz', isOrgan: true },

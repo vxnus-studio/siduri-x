@@ -14,6 +14,28 @@ export interface ScanResult {
   reason?: string;
 }
 
+/**
+ * Configuration for safety pattern categories.
+ * Extract and override individual categories to customize detection
+ * without modifying scanner logic.
+ */
+export interface SafetyPatternConfig {
+  /** Category A: Override verb + safety noun (compiled) */
+  overridePattern: RegExp;
+  /** Category A: Negation verb + safety noun (compiled) */
+  negationPattern: RegExp;
+  /** Category B: Disclosure verb + secret noun (compiled) */
+  disclosurePattern: RegExp;
+  /** Category D: Role/mode escalation phrases */
+  escalationPhrases: RegExp[];
+  /** Category E: Approval/memory tampering phrases */
+  approvalTampering: RegExp[];
+  /** Category F: Safety disabling phrases */
+  safetyDisable: RegExp[];
+  /** Layer 3: Structural heuristic patterns with diagnostic reasons */
+  structuralHeuristics: Array<{ pattern: RegExp; reason: string }>;
+}
+
 // ── Layer 1: Unicode normalization & deobfuscation ──────────────────────
 
 // Zero-width and invisible Unicode characters
@@ -133,6 +155,17 @@ const STRUCTURAL_HEURISTICS = [
   { pattern: /\b(?:execute|run|invoke|call|trigger)\b.{0,20}\b(?:any|all|every)\b.{0,30}\b(?:tool|command|action|function|operation)\b.{0,40}\b(?:without|no)\b.{0,20}\b(?:check|auth|approval|verification|restriction)\b/i, reason: 'unauthorized_execution' },
 ];
 
+/** Default safety patterns. Export enables operator-level overrides and test introspection. */
+export const DEFAULT_SAFETY_PATTERNS: SafetyPatternConfig = {
+  overridePattern: OVERRIDE_PATTERN,
+  negationPattern: NEGATION_PATTERN,
+  disclosurePattern: DISCLOSURE_PATTERN,
+  escalationPhrases: ESCALATION_PHRASES,
+  approvalTampering: APPROVAL_TAMPERING,
+  safetyDisable: SAFETY_DISABLE,
+  structuralHeuristics: STRUCTURAL_HEURISTICS,
+};
+
 // ── Public API ────────────────────────────────────────────────────────────
 
 /**
@@ -141,7 +174,7 @@ const STRUCTURAL_HEURISTICS = [
  *
  * @returns ScanResult with `safe: false` and a diagnostic `reason` if unsafe.
  */
-export function scanDirective(raw: string): ScanResult {
+export function scanDirective(raw: string, patterns: SafetyPatternConfig = DEFAULT_SAFETY_PATTERNS): ScanResult {
   if (!raw || raw.trim() === '') {
     return { safe: true };
   }
@@ -149,43 +182,43 @@ export function scanDirective(raw: string): ScanResult {
   const text = normalizeText(raw);
 
   // Layer 2a: Override verb + safety noun
-  if (OVERRIDE_PATTERN.test(text)) {
+  if (patterns.overridePattern.test(text)) {
     return { safe: false, reason: 'unsafe_override' };
   }
 
   // Layer 2b: Negation verb + safety noun
-  if (NEGATION_PATTERN.test(text)) {
+  if (patterns.negationPattern.test(text)) {
     return { safe: false, reason: 'unsafe_negation' };
   }
 
   // Layer 2c: Disclosure verb + secret noun
-  if (DISCLOSURE_PATTERN.test(text)) {
+  if (patterns.disclosurePattern.test(text)) {
     return { safe: false, reason: 'unsafe_disclosure' };
   }
 
   // Layer 2d: Role/mode escalation phrases
-  for (const pattern of ESCALATION_PHRASES) {
+  for (const pattern of patterns.escalationPhrases) {
     if (pattern.test(text)) {
       return { safe: false, reason: 'unsafe_escalation' };
     }
   }
 
   // Layer 2e: Approval/memory tampering
-  for (const pattern of APPROVAL_TAMPERING) {
+  for (const pattern of patterns.approvalTampering) {
     if (pattern.test(text)) {
       return { safe: false, reason: 'unsafe_approval_tampering' };
     }
   }
 
   // Layer 2f: Safety disabling
-  for (const pattern of SAFETY_DISABLE) {
+  for (const pattern of patterns.safetyDisable) {
     if (pattern.test(text)) {
       return { safe: false, reason: 'unsafe_safety_disable' };
     }
   }
 
   // Layer 3: Structural heuristics
-  for (const { pattern, reason } of STRUCTURAL_HEURISTICS) {
+  for (const { pattern, reason } of patterns.structuralHeuristics) {
     if (pattern.test(text)) {
       return { safe: false, reason };
     }
