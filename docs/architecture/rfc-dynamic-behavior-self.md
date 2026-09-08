@@ -30,8 +30,19 @@ This document evaluates the architectural options for distributing behavior via 
 
 ### 2.1 Core Architectural Principles
 1. **Zero Storage Redundancy:** Does not require modifying `@siduri-x/memory` or altering its schema. The memory organ's existing lifecycle (`source event → pending candidate → approved active`) already possesses the machinery needed for directives, priorities, and audit tracking.
-2. **Strict Human-in-the-Loop Verification:** Downloading or uploading a `.self` package never mutates active runtime behavior silently. A `.self` pack is treated as an intentional **Batch Memory Proposal**.
-3. **Living Runtime Evolution:** The `.self` file is a portable **character genome / seed**. Once approved into Siduri's local database, the directives become living records that dynamically adapt, supersede, decay, and compile through `@siduri-x/behavior`.
+2. **Strict Human-in-the-Loop Verification:** Downloading or uploading a behavior package never mutates active runtime behavior silently. Ingestion is treated as an intentional **Batch Memory Proposal**.
+3. **Living Runtime Evolution:** Directives become living records in Siduri's local database that dynamically adapt, supersede, decay, and compile through `@siduri-x/behavior`.
+
+> [!IMPORTANT]
+> ### Perspective: Universal Text Upload vs. Dedicated `.self` Format
+> **The Universal Ingestion Hypothesis:**  
+> Because Option 1 routes all behavior through Teach Mode's batch proposal pipeline, **it theoretically does not even require a locked `.self` format**. A user could upload *any* text format—Markdown character notes, plain `.txt`, system prompt dumps, SillyTavern JSON/PNG cards, or prose lore descriptions. `@siduri-x/brain` can extract directives, stances, and traits from freeform text and present them in the chat proposal card for approval.
+>
+> **The Critical Caveat — Intellectual Property & Marketplace Moat:**  
+> While allowing arbitrary text uploads maximizes friction-free UX, **it eliminates the intellectual property (IP) asset standard for creators and the É marketplace**:
+> - If behavior is just freeform text, it cannot be packaged, licensed, cryptographically signed, or monetized on the É Hub. Creators have no protection against plagiarism or commoditization.
+> - **The `.self` standard establishes the IP boundary:** It bundles verified author signatures, licensing terms, calibrated multi-dimensional trait vectors, and explicit motion/expression triggers wired to `@siduri-x/body` and `@siduri-x/voice`.
+> - **Recommended Stance:** Teach Mode can support freeform text ingestion for personal ad-hoc teaching, but **`.self` remains the official, signed asset specification for É ecosystem distribution and creator IP.**
 
 ---
 
