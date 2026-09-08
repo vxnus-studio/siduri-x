@@ -265,7 +265,7 @@ export default function ChatClient() {
       const data = await postJson<ChatResponse | { error: string }>(`/chat`, {
         id: "default", // hardcoded default companion for now
         message: content,
-        role: "VIEWER",
+        role: "OWNER",
         history: conversation.messages.slice(-20).map((item) => ({
           role: item.role,
           content: item.content,

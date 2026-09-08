@@ -31,7 +31,7 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
     expect(res.status).toBe(200);
     expect(fakeRuntime.handleUserMessage).toHaveBeenCalledWith(
       'Hello neutral world',
-      'VIEWER',
+      'OWNER',
       []
     );
   });

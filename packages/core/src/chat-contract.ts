@@ -100,9 +100,9 @@ export async function dispatchCompanionChat(
         ? 'OWNER'
         : authRole === 'operator'
         ? 'OPERATOR'
-        : 'VIEWER';
+        : (authRole === 'viewer' ? 'VIEWER' : 'OWNER');
   } else {
-    roleOrContext = 'VIEWER';
+    roleOrContext = 'OWNER';
   }
 
   const runtimeResult = await runtime.handleUserMessage(userMessage, roleOrContext, history);

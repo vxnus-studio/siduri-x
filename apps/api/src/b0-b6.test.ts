@@ -87,7 +87,7 @@ describe('T0 B0 & B6 Runtime Proof Suite', () => {
       expect(mockBrain.generatePlan).toHaveBeenCalledWith(
         expect.objectContaining({
           contextPrompt: '',
-          recipient: 'VIEWER',
+          recipient: 'OWNER',
         })
       );
     });
