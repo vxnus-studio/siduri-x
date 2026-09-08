@@ -498,7 +498,6 @@ export class SiduriRuntime {
       },
       metadata: {
         language: plan.language,
-        internal_monologue: plan.internalMonologue,
         proposals: createdMemoryProposals,
         memory_proposals: memoryProposalReceipts,
         action_results: actionResults,

@@ -35,7 +35,6 @@ export interface ChatResponsePlan {
 
 export interface ChatResponseMetadata {
   language?: string;
-  internal_monologue?: string;
   proposals?: Claim[];
   memory_proposals?: Array<{
     proposal_id: string;
@@ -134,6 +133,8 @@ export async function dispatchCompanionChat(
   const metadata: ChatResponseMetadata = {
     ...(runtimeResult?.metadata || {}),
   };
+  delete (metadata as any).internal_monologue;
+  delete (metadata as any).internalMonologue;
 
   return {
     status: runtimeResult?.status || 'APPROVED',

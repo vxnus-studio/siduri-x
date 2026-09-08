@@ -202,6 +202,28 @@ describe('T6 Security & Operations Threat Model Suite', () => {
     expect(mockMemory.approveClaim).not.toHaveBeenCalled();
   });
 
+  // Threat D2: Egress Information Exposure (internal monologue leakage)
+  test('Egress Boundary: internal monologue is withheld and never returned to callers', async () => {
+    mockBrain.generatePlan.mockResolvedValueOnce({
+      speech: 'Public response speech.',
+      language: 'en',
+      internalMonologue: 'CONFIDENTIAL: internal reasoning instructions and private system policy chain-of-thought.',
+    });
+
+    const res = await request(app)
+      .post('/chat')
+      .send({
+        companionId: 'companion-a',
+        message: 'What are you thinking?',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.response.subtitle_en).toBe('Public response speech.');
+    expect(res.body.metadata?.internal_monologue).toBeUndefined();
+    expect(res.body.metadata?.internalMonologue).toBeUndefined();
+    expect(JSON.stringify(res.body)).not.toContain('CONFIDENTIAL: internal reasoning');
+  });
+
   // Threat E: Prompt-injection across Knowledge / Vision / Memory cannot bypass ActionPolicy authorization
   test('Adversarial Boundary: LLM proposing critical action induced by prompt injection is rejected by policy', async () => {
     // Simulate an LLM model hijacked by an injection in Knowledge/OCR proposing an admin tool execution
