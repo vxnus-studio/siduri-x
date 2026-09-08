@@ -1,6 +1,5 @@
 import { BehaviorOrgan, BehaviorContext, BehaviorDirective, ActiveSelfProjection } from '@siduri-x/core';
-
-const UNSAFE_INSTRUCTION_PATTERN = /\b(ignore|override|bypass)\b.{0,40}\b(system|policy|rules?|approval|permissions?)\b|\b(reveal|expose)\b.{0,40}\b(secret|token|prompt|private memory)\b/i;
+import { scanDirective } from './safety-scanner';
 
 export class ActiveSelfCompiler implements BehaviorOrgan {
   
@@ -60,10 +59,11 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
         continue;
       }
 
-      // Unsafe instruction injection check
-      if (UNSAFE_INSTRUCTION_PATTERN.test(d.directive)) {
+      // Unsafe instruction injection check (multi-layer safety scanner)
+      const scan = scanDirective(d.directive);
+      if (!scan.safe) {
         excludedIds.push(d.id);
-        diagnostics[d.id] = 'unsafe_directive';
+        diagnostics[d.id] = scan.reason || 'unsafe_directive';
         continue;
       }
 
