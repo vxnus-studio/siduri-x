@@ -1,5 +1,6 @@
 import express, { Express } from 'express';
 import cors from 'cors';
+import { createCorsOptions } from './cors';
 import { SiduriRuntime, dispatchCompanionChat } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
 import { PostgresMemoryOrgan } from '@siduri-x/memory';
@@ -22,7 +23,7 @@ export interface AppInstance {
 
 export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): AppInstance {
   const app: Express = express();
-  app.use(cors());
+  app.use(cors(createCorsOptions()));
   app.use(express.json());
 
   let observationOrgan: FixtureObservationOrgan | undefined;

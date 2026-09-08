@@ -6,7 +6,20 @@ import { PostgresMemoryOrgan } from '@siduri-x/memory';
 
 export function createServer(memoryConfig?: { connectionString: string }): { app: import("express").Express, memory: any, mcpServer: any } {
   const app = express();
-  app.use(cors());
+  const allowedOrigins = new Set([
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean) : []),
+  ]);
+  app.use(cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+      return cb(null, false);
+    },
+    credentials: true,
+  }));
   app.use(express.json());
 
   // Memory instance for this service

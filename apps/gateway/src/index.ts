@@ -5,7 +5,20 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 
 export function createGateway(): import("express").Express {
   const app = express();
-  app.use(cors());
+  const allowedOrigins = new Set([
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean) : []),
+  ]);
+  app.use(cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+      return cb(null, false);
+    },
+    credentials: true,
+  }));
   app.use(express.json());
 
   app.post('/chat', async (req, res) => {

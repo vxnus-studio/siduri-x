@@ -387,4 +387,58 @@ describe('T6 Security & Operations Threat Model Suite', () => {
       }
     });
   });
+
+  // Network & CORS Origin Boundary Enforcement (T6 Contract)
+  describe('CORS and Origin Boundary Enforcement', () => {
+    test('allows requests from localhost:3000 and returns proper CORS header', async () => {
+      const res = await request(app)
+        .get('/health')
+        .set('Origin', 'http://localhost:3000');
+      expect(res.status).toBe(200);
+      expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+    });
+
+    test('allows requests from 127.0.0.1:3000 and returns proper CORS header', async () => {
+      const res = await request(app)
+        .get('/health')
+        .set('Origin', 'http://127.0.0.1:3000');
+      expect(res.status).toBe(200);
+      expect(res.headers['access-control-allow-origin']).toBe('http://127.0.0.1:3000');
+    });
+
+    test('denies CORS headers to unauthorized external origin (e.g. malicious site)', async () => {
+      const res = await request(app)
+        .get('/health')
+        .set('Origin', 'https://malicious-cross-origin.com');
+      expect(res.status).toBe(200);
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    });
+
+    test('preflight OPTIONS request from unauthorized origin does not receive allow headers', async () => {
+      const res = await request(app)
+        .options('/chat')
+        .set('Origin', 'https://attacker.site')
+        .set('Access-Control-Request-Method', 'POST');
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    });
+
+    test('honors explicitly configured ALLOWED_ORIGINS environment variable', async () => {
+      const savedOrigins = process.env.ALLOWED_ORIGINS;
+      process.env.ALLOWED_ORIGINS = 'https://custom-portal.example.com';
+      try {
+        const customApp = createApp(new Map([['companion-a', runtimeA]])).app;
+        const res = await request(customApp)
+          .get('/health')
+          .set('Origin', 'https://custom-portal.example.com');
+        expect(res.status).toBe(200);
+        expect(res.headers['access-control-allow-origin']).toBe('https://custom-portal.example.com');
+      } finally {
+        if (savedOrigins !== undefined) {
+          process.env.ALLOWED_ORIGINS = savedOrigins;
+        } else {
+          delete process.env.ALLOWED_ORIGINS;
+        }
+      }
+    });
+  });
 });
