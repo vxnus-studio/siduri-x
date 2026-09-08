@@ -1,9 +1,13 @@
 # RFC: Dynamic Behavior Delivery & The `.self` Asset Specification
 
-> **Status:** Draft / Proposed  
+> **Status:** On Hold (Pending Ingestion Experiments)  
 > **Target Organs:** `@siduri-x/behavior`, `@siduri-x/memory`, `@siduri-x/brain`, `apps/web`, `cli`  
 > **External Ecosystem:** É (`@vxnus/e*`) Asset Marketplace Protocol  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
+
+> [!WARNING]
+> **Status Note: ON HOLD**  
+> This RFC is currently on hold. We will first test and validate the exact mechanics of ingesting behavior into Siduri (via Teach Mode, batch memory proposals, and direct chat interactions). The formal definition, schema, and packaging format of `.self` will be finalized later once empirical testing confirms the most effective ingestion pathway.
 
 ---
 
