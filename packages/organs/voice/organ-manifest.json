@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/voice",
   "organType": "voice",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "displayName": "Voice Synthesis (Edge-TTS, Piper, VOICEVOX)",
   "description": "Queued speech synthesis and audio rendering lifecycle adapter",
   "entrypoint": "./dist/index.js",

@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/behavior',
     organType: 'behavior',
-    version: '1.0.3',
+    version: '1.0.5',
     displayName: 'Behavior (Active Self Directives)',
     description: 'Atomic directive state machine and personality projection compiler',
     entrypoint: './dist/index.js',
@@ -388,7 +388,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/voice',
     organType: 'voice',
-    version: '1.0.4',
+    version: '1.0.5',
     displayName: 'Voice (VOICEVOX Speech Synthesis)',
     description: 'Queued speech synthesis and audio rendering lifecycle adapter',
     entrypoint: './dist/index.js',
