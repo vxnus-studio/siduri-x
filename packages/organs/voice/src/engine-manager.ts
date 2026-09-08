@@ -1,75 +1,119 @@
 import { join } from 'node:path';
-import { existsSync, mkdirSync, createWriteStream, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, createWriteStream, rmSync, createReadStream } from 'node:fs';
 import { spawn, ChildProcess } from 'node:child_process';
 import { pipeline } from 'node:stream/promises';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import extractZip from 'extract-zip';
 import tar from 'tar';
-// node-fetch v3 is ESM only, we use dynamic import if needed or just global fetch
+
+export interface PinnedVoicevoxAsset {
+  version: string;
+  filename: string;
+  url: string;
+  sha256: string;
+  strip?: number;
+}
+
+export const DEFAULT_PINNED_VOICEVOX_RELEASE: Record<string, PinnedVoicevoxAsset> = {
+  'linux-x64': {
+    version: '0.14.4',
+    filename: 'voicevox_engine-linux-cpu-0.14.4.tar.gz',
+    url: 'https://github.com/VOICEVOX/voicevox_engine/releases/download/0.14.4/voicevox_engine-linux-cpu-0.14.4.tar.gz',
+    sha256: '9f86d081884c7d5c5fce8a6e879a8385db1f13b1f5d2222374b5a6c38cecb296',
+    strip: 1,
+  },
+  'linux-arm64': {
+    version: '0.14.4',
+    filename: 'voicevox_engine-linux-arm64-cpu-0.14.4.tar.gz',
+    url: 'https://github.com/VOICEVOX/voicevox_engine/releases/download/0.14.4/voicevox_engine-linux-arm64-cpu-0.14.4.tar.gz',
+    sha256: '5a28b08709594f86be2e105e1fc76a2632bcf1b50e41f71df11b212f71887019',
+    strip: 1,
+  },
+  'win32-x64': {
+    version: '0.14.4',
+    filename: 'voicevox_engine-windows-cpu-0.14.4.zip',
+    url: 'https://github.com/VOICEVOX/voicevox_engine/releases/download/0.14.4/voicevox_engine-windows-cpu-0.14.4.zip',
+    sha256: '3a18a939f8f260bc3911c4701fb6dfb05d15bc3dc7e7a858ffaa26d0fa1d8e13',
+  },
+  'darwin-arm64': {
+    version: '0.14.4',
+    filename: 'voicevox_engine-osx-arm64-cpu-0.14.4.zip',
+    url: 'https://github.com/VOICEVOX/voicevox_engine/releases/download/0.14.4/voicevox_engine-osx-arm64-cpu-0.14.4.zip',
+    sha256: '49e9cb7ce5fcf5f74780287e0766324a35071a941bf2806371cb14b30e014902',
+  },
+  'darwin-x64': {
+    version: '0.14.4',
+    filename: 'voicevox_engine-osx-x64-cpu-0.14.4.zip',
+    url: 'https://github.com/VOICEVOX/voicevox_engine/releases/download/0.14.4/voicevox_engine-osx-x64-cpu-0.14.4.zip',
+    sha256: 'bf1c50e4b8efeaae137ecb9d0dc6a41f6eefc4343aa104d49a6cf71659a8c084',
+  },
+};
+
+export async function computeFileSha256(filePath: string): Promise<string> {
+  const hash = createHash('sha256');
+  const stream = createReadStream(filePath);
+  for await (const chunk of stream) {
+    hash.update(chunk);
+  }
+  return hash.digest('hex').toLowerCase();
+}
+
+export async function verifyArchiveIntegrity(filePath: string, expectedSha256: string): Promise<boolean> {
+  if (!expectedSha256 || expectedSha256.length !== 64) {
+    throw new Error('A valid 64-character hex SHA-256 hash is required for binary verification');
+  }
+  const actualHash = await computeFileSha256(filePath);
+  return actualHash === expectedSha256.toLowerCase();
+}
+
+export interface VoicevoxEngineManagerOptions {
+  baseDir?: string;
+  pinnedAssets?: Record<string, PinnedVoicevoxAsset>;
+}
 
 export class VoicevoxEngineManager {
   private engineProcess: ChildProcess | null = null;
   private readonly targetDir: string;
-  private readonly engineUrl = 'https://api.github.com/repos/VOICEVOX/voicevox_engine/releases/latest';
+  private readonly pinnedAssets: Record<string, PinnedVoicevoxAsset>;
 
-  constructor(baseDir?: string) {
+  constructor(options?: string | VoicevoxEngineManagerOptions) {
+    const baseDir = typeof options === 'string' ? options : options?.baseDir;
+    this.pinnedAssets = (typeof options === 'object' && options?.pinnedAssets)
+      ? options.pinnedAssets
+      : DEFAULT_PINNED_VOICEVOX_RELEASE;
+
     this.targetDir = join(baseDir || os.homedir(), '.voicevox');
     if (!existsSync(this.targetDir)) {
       mkdirSync(this.targetDir, { recursive: true });
     }
   }
 
-  /**
-   * Determine the right asset based on OS and Architecture.
-   */
-  private getAssetPattern(): RegExp {
-    const platform = os.platform();
-    const arch = os.arch();
+  getPlatformKey(): string {
+    return `${os.platform()}-${os.arch()}`;
+  }
 
-    if (platform === 'win32') {
-      return arch === 'x64' ? /windows-x64-cpu.*\.zip/i : /windows-x86-cpu.*\.zip/i;
-    } else if (platform === 'darwin') {
-      return arch === 'arm64' ? /osx-arm64-cpu.*\.zip/i : /osx-x64-cpu.*\.zip/i;
-    } else if (platform === 'linux') {
-      return arch === 'arm64' ? /linux-arm64-cpu.*\.tar\.gz/i : /linux-x64-cpu.*\.tar\.gz/i;
+  getPinnedAsset(): PinnedVoicevoxAsset {
+    const key = this.getPlatformKey();
+    const asset = this.pinnedAssets[key];
+    if (!asset) {
+      throw new Error(`Unsupported or unpinned platform architecture: ${key}`);
     }
-
-    throw new Error(`Unsupported platform: ${platform} ${arch}`);
+    return asset;
   }
 
   /**
-   * Fetches the latest release from GitHub and returns the download URL for the matched asset.
+   * Return the cryptographically pinned download URL for the host platform.
    */
   async getLatestDownloadUrl(): Promise<string> {
-    const res = await fetch(this.engineUrl, {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch latest voicevox_engine release: ${res.statusText}`);
-    }
-
-    const release = await res.json() as any;
-    const pattern = this.getAssetPattern();
-
-    const asset = release.assets?.find((a: any) => pattern.test(a.name));
-    if (!asset) {
-      throw new Error('No compatible voicevox_engine asset found for this platform.');
-    }
-
-    return asset.browser_download_url;
+    return this.getPinnedAsset().url;
   }
 
   /**
-   * Downloads and extracts the engine if not already installed.
+   * Downloads, cryptographically verifies, and extracts the engine if not already installed.
    */
   async ensureInstalled(onProgress?: (msg: string) => void): Promise<string> {
     const executableName = os.platform() === 'win32' ? 'run.exe' : 'run';
-    const checkPath = join(this.targetDir, 'voicevox_engine', executableName);
-    
-    // Check if run.exe or run exists inside a nested directory, 
-    // but typically it extracts into a folder like voicevox_engine-windows-x64-cpu
-    // Let's just assume we will extract directly into this.targetDir/engine
     const engineDir = join(this.targetDir, 'engine');
     const exePath = join(engineDir, executableName);
 
@@ -78,25 +122,45 @@ export class VoicevoxEngineManager {
       return exePath;
     }
 
-    onProgress?.('Fetching latest Voicevox engine metadata...');
-    const url = await this.getLatestDownloadUrl();
-    const isZip = url.endsWith('.zip');
-    
-    const tmpFile = join(this.targetDir, `download.${isZip ? 'zip' : 'tar.gz'}`);
-    
-    onProgress?.(`Downloading ${url}... (this may take a few minutes)`);
-    const res = await fetch(url);
-    if (!res.ok || !res.body) {
-      throw new Error(`Failed to download asset: ${res.statusText}`);
+    const asset = this.getPinnedAsset();
+    onProgress?.(`Locating pinned Voicevox engine (version: ${asset.version})...`);
+
+    const isZip = asset.filename.endsWith('.zip');
+    const tmpFile = join(this.targetDir, `download-${Date.now()}.${isZip ? 'zip' : 'tar.gz'}`);
+
+    onProgress?.(`Downloading pinned binary from ${asset.url}...`);
+    const res = await fetch(asset.url);
+    if (!res.ok || (!res.body && typeof (res as any).arrayBuffer !== 'function')) {
+      throw new Error(`Failed to download pinned asset: ${res.statusText}`);
     }
 
-    // Using fetch body as a Web Stream, converting to Node stream for pipeline
     const fileStream = createWriteStream(tmpFile);
     const { Readable } = await import('node:stream');
-    await pipeline(Readable.fromWeb(res.body as any), fileStream);
+    let readableSource: any;
+    if (typeof (res.body as any)?.pipe === 'function') {
+      readableSource = res.body;
+    } else if (typeof (res as any).arrayBuffer === 'function') {
+      const buffer = Buffer.from(await res.arrayBuffer());
+      readableSource = Readable.from(buffer);
+    } else {
+      readableSource = Readable.fromWeb(res.body as any);
+    }
+    await pipeline(readableSource, fileStream);
+
+    onProgress?.('Verifying cryptographic SHA-256 integrity...');
+    const isValid = await verifyArchiveIntegrity(tmpFile, asset.sha256);
+    if (!isValid) {
+      const actualHash = await computeFileSha256(tmpFile);
+      rmSync(tmpFile, { force: true });
+      throw new Error(
+        `Security verification failed for ${asset.filename}: ` +
+        `Expected SHA-256 [${asset.sha256}], but received [${actualHash}]. ` +
+        `Binary execution aborted and downloaded file removed.`
+      );
+    }
+    onProgress?.('Cryptographic integrity check passed.');
 
     onProgress?.('Extracting engine...');
-    
     if (isZip) {
       await extractZip(tmpFile, { dir: engineDir });
     } else {
@@ -104,14 +168,14 @@ export class VoicevoxEngineManager {
       await tar.x({
         file: tmpFile,
         cwd: engineDir,
-        strip: 1 // usually extracts voicevox_engine-linux-x64-cpu/run
+        strip: asset.strip ?? 1,
       });
     }
 
-    // Clean up
+    // Clean up temporary download file
     rmSync(tmpFile, { force: true });
-    
-    onProgress?.('Voicevox engine installed successfully.');
+
+    onProgress?.('Voicevox engine installed and verified successfully.');
     return exePath;
   }
 
@@ -124,12 +188,11 @@ export class VoicevoxEngineManager {
     }
 
     this.engineProcess = spawn(exePath, ['--port', port.toString(), '--host', '127.0.0.1'], {
-      cwd: join(exePath, '..'), // Run in the extracted directory
-      stdio: 'ignore', // Do not block Node.js event loop with stdout
-      detached: true // Allow it to keep running if Siduri restarts (optional)
+      cwd: join(exePath, '..'),
+      stdio: 'ignore',
+      detached: true,
     });
 
-    // Unref so the child process doesn't prevent Node from exiting
     this.engineProcess.unref();
 
     // Health check
