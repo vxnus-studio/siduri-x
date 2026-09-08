@@ -1,5 +1,19 @@
 # Siduri (Siduri-X)
 
+> [!CAUTION]
+> ### 🛑 IMPORTANT DISCLAIMER: NOT AN END-TO-END (E2E) INSTANCE — DEVELOPMENT ONLY
+>
+> **Do NOT clone this repository to create or run a Siduri companion instance!**
+>
+> - **For Developing Only:** This repository (`siduri-x`) is a core development monorepo intended **strictly for developing, testing, and maintaining** the `@siduri-x/*` packages, architectural contracts, and developer tooling.
+> - **Not an E2E Application:** This repository is **not** an end-to-end (E2E), ready-to-run companion application. Attempting to clone and run directly from this codebase is unsupported and will not provide a clean, stable companion instance.
+> - **Clean Instances Come from the Siduri CLI:** Clean, standalone, isolated companion instances **must be generated using the official Siduri CLI**:
+>   ```bash
+>   npx @vxnus/siduri create <companion-name>
+>   ```
+>   The CLI dynamically resolves organ manifests and scaffolds an isolated, production-grade companion project with only the specific organs and configurations you require.
+> - **Issues and Pull Requests (PRs) are Open:** Even though this repo is for development rather than end-user companion instances, **Issues and Pull Requests (PRs) are open**! Contributions, bug reports, and RFC discussions are warmly welcomed.
+
 > [!WARNING]
 > **Experimental & Active Development Notice:**
 > Siduri-X is in an **active, experimental, and fast-evolving phase**. APIs, schemas, configurations, and organ protocols are subject to breaking changes. While core boundary contracts and clean-machine distribution are verified, current builds should be considered **unstable/untested in live production environments**. Use at your own discretion, inspect generated code directly, and report any architectural issues.
@@ -13,6 +27,10 @@ Siduri is an intelligent AI companion framework designed with **persistent, auth
 Unlike standard conversational agents that lose context when a session ends or a context window fills up, Siduri is built around a robust memory foundation. She learns, remembers, and adapts over time, treating her memory as a central source of truth for identity, relationships, and learned behaviors.
 
 Our goal is simple: **Siduri should be as easy to install or run anywhere as a single command** — no matter the platform, no matter the setup.
+
+> *“She answered, ‘Gilgamesh, where are you hurrying to? You will never find that life for which you are looking. When the gods created man they allotted to him death, but life they retained in their own keeping. As for you, Gilgamesh, fill your belly with good things; day and night, night and day, dance and be merry, feast and rejoice. Let your clothes be fresh, bathe yourself in water, cherish the little child that holds your hand, and make your wife happy in your embrace; for this too is the lot of man.’”*
+>
+> — *The Epic of Gilgamesh* (source: John R. Bawden's *Ancient Civilizations*)
 
 ---
 
@@ -55,14 +73,17 @@ Before setting up or running a Siduri companion instance, ensure you have:
 - **LLM Credentials**: An API key for your chosen provider (e.g. `OPENROUTER_API_KEY`)
 - **Optional Local Services**:
   - **Docker** (recommended for local PostgreSQL database):
-    - Run `docker compose up -d` (or `npm run services:up` in generated instances) to launch preconfigured services.
+    - Run `npm run services:up` (or `docker compose up -d`) inside your generated companion folder to launch preconfigured services.
   - **Non-Docker Alternatives**:
     - **PostgreSQL**: Cloud-managed instances (e.g. Supabase, Neon) or local Postgres installation.
   - **Voice Synthesis**: The Voicevox engine executable will be securely auto-downloaded at runtime by Siduri if no local URL is provided. Edge-TTS runs via cloud API, and RVC runs via a local headless microservice.
 
 ---
 
-## Standalone Instance CLI (`@vxnus/siduri`)
+## Creating a Companion Instance (`@vxnus/siduri`)
+
+> [!NOTE]
+> To run a companion, **do not clone this monorepo**. Run the command below in any clean workspace directory to scaffold an isolated, standalone instance.
 
 ### 1. Create a Standalone Companion
 
@@ -115,6 +136,38 @@ npm run doctor
 ```bash
 npm start
 ```
+
+---
+
+## Monorepo Development (Siduri-X Core)
+
+This repository is reserved strictly for developing, testing, and building the `@siduri-x/*` packages and tooling. If you are contributing to Siduri-X:
+
+```bash
+# Clone the development monorepo
+git clone https://github.com/vxnus-studio/siduri-x.git
+cd siduri-x
+
+# Install dependencies across all packages
+npm install
+
+# Build all packages via Turborepo
+npm run build
+
+# Run all test suites
+npm test
+
+# Verify release invariants & package integrity
+npm run release:check
+```
+
+### Contributing
+
+**Issues and Pull Requests (PRs) are open!**
+
+Contributions to the Siduri engine, organ packages, and developer tooling are actively encouraged:
+- **Found a bug or have a suggestion?** Feel free to open an **Issue**.
+- **Want to contribute code or fixes?** **Pull requests (PRs)** are open and welcome. Please make sure that tests pass (`npm test`) and release checks succeed (`npm run release:check`) before opening a PR.
 
 ---
 
