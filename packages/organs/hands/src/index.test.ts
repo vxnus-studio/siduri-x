@@ -199,7 +199,7 @@ describe('DefaultHandsOrgan Adversarial Remediation Suite', () => {
                 required: ['id', 'role'],
                 properties: {
                   id: { type: 'number' },
-                  role: { type: 'string', enum: ['admin', 'operator', 'viewer'] },
+                  role: { type: 'string', enum: ['admin', 'operator', 'owner'] },
                 },
               },
               tags: {
@@ -250,7 +250,7 @@ describe('DefaultHandsOrgan Adversarial Remediation Suite', () => {
         actionId: 'act-arr-1',
         toolName: 'update_user',
         parameters: {
-          user: { id: 100, role: 'viewer' },
+          user: { id: 100, role: 'owner' },
           tags: [
             { tagId: 1 },
             { tagId: 'invalid-tag-id' }, // index 1 is invalid

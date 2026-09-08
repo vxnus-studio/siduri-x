@@ -176,4 +176,45 @@ describe('ActionPolicyEngine Boundary', () => {
     expect(log?.parametersHash).toBeDefined();
     expect(log?.resultHash).toBeDefined();
   });
+
+  it('supports single-owner role parity between owner and administrator', async () => {
+    const ownerTool: ToolDefinition = {
+      name: 'builtin/owner_tool',
+      description: 'Owner only tool',
+      inputSchema: {},
+      riskLevel: 'LOW',
+      allowedRoles: ['owner'],
+    };
+    engine.registerToolDefinition(ownerTool);
+
+    // Context with authorizationRole: 'administrator'
+    const adminContext: RequestContext = {
+      ...sampleContext,
+      actor: {
+        ...sampleContext.actor,
+        authorizationRole: 'administrator',
+      },
+    };
+    const actionWithAdmin: ActionIntent = {
+      actionId: 'act-owner-admin',
+      toolName: 'builtin/owner_tool',
+      parameters: {},
+      context: adminContext,
+    };
+
+    const res = await engine.evaluateAction(actionWithAdmin);
+    expect(res.decision.allowed).toBe(true);
+    expect(res.capability).toBeDefined();
+
+    // Context with authorizationRole: 'operator' (non-owner) is rejected
+    const operatorAction: ActionIntent = {
+      actionId: 'act-owner-op',
+      toolName: 'builtin/owner_tool',
+      parameters: {},
+      context: sampleContext, // has authorizationRole: 'operator'
+    };
+    const resOp = await engine.evaluateAction(operatorAction);
+    expect(resOp.decision.allowed).toBe(false);
+    expect(resOp.decision.decisionCode).toBe('REJECTED_UNAUTHORIZED');
+  });
 });

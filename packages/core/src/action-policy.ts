@@ -127,10 +127,18 @@ export class ActionPolicyEngine {
       return { decision };
     }
 
-    // Role check if tool restricts roles
+    // Role check if tool restricts roles (supports administrator/owner role parity)
     if (toolDef.allowedRoles && toolDef.allowedRoles.length > 0) {
       const actorRole = effectiveContext.actor.authorizationRole;
-      if (!toolDef.allowedRoles.includes(actorRole)) {
+      const normalizedActorRoles = new Set<string>([actorRole.toLowerCase()]);
+      if (actorRole === 'administrator' || (actorRole as string) === 'owner') {
+        normalizedActorRoles.add('administrator');
+        normalizedActorRoles.add('owner');
+        normalizedActorRoles.add('admin');
+      }
+
+      const isAuthorizedRole = toolDef.allowedRoles.some((r) => normalizedActorRoles.has(r.toLowerCase()));
+      if (!isAuthorizedRole) {
         const decision: ActionPolicyDecision = {
           allowed: false,
           reason: `Actor role "${actorRole}" is not authorized to execute tool "${action.toolName}"`,
