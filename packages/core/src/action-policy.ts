@@ -14,6 +14,7 @@ import {
   computeParametersHash,
   canonicalizeJson,
   signCapabilityPayload,
+  getOrGenerateLocalActionPolicySecret,
 } from './capability';
 
 export interface ActionPolicyRule {
@@ -54,14 +55,7 @@ export class ActionPolicyEngine {
     this.defaultRequireApprovalForHighRisk = options.defaultRequireApprovalForHighRisk ?? true;
     this.store = options.store ?? new InMemoryActionStore();
 
-    const envSecret = typeof process !== 'undefined' && process.env ? process.env.ACTION_POLICY_SECRET : undefined;
-    const providedSecret = options.secretKey || envSecret;
-
-    if (!providedSecret && typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
-      throw new Error('FATAL: ACTION_POLICY_SECRET is required in production environment');
-    }
-
-    this.secretKey = providedSecret ?? 'siduri_y_action_policy_secret';
+    this.secretKey = getOrGenerateLocalActionPolicySecret(options.secretKey);
   }
 
   registerToolDefinition(tool: ToolDefinition): void {

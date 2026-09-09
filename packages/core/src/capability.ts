@@ -4,6 +4,32 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const crypto = require('crypto');
 
+let cachedEphemeralSecret: string | null = null;
+
+/**
+ * Resolves the action policy secret key.
+ * In production (NODE_ENV=production), ACTION_POLICY_SECRET is required.
+ * In local/development environments, if no secret is provided via environment
+ * or options, generates an ephemeral cryptographically strong secret per-process,
+ * avoiding shared hardcoded fallback secrets.
+ */
+export function getOrGenerateLocalActionPolicySecret(provided?: string): string {
+  if (provided) {
+    return provided;
+  }
+  const envSecret = typeof process !== 'undefined' && process.env ? process.env.ACTION_POLICY_SECRET : undefined;
+  if (envSecret) {
+    return envSecret;
+  }
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
+    throw new Error('FATAL: ACTION_POLICY_SECRET is required in production environment');
+  }
+  if (!cachedEphemeralSecret) {
+    cachedEphemeralSecret = crypto.randomBytes(32).toString('hex');
+  }
+  return cachedEphemeralSecret!;
+}
+
 import { ActionRiskLevel, ActionLifecycleState, ActionAuditEvent, ActionPolicyDecision } from './action';
 
 export interface AuthorizationCapability {
@@ -156,22 +182,24 @@ export function computeParametersHash(params: unknown): string {
 
 export function signCapabilityPayload(
   payload: Record<string, unknown>,
-  secretKey: string = 'siduri_y_action_policy_secret'
+  secretKey?: string
 ): string {
+  const resolvedKey = getOrGenerateLocalActionPolicySecret(secretKey);
   const canonicalStr = canonicalizeJson(payload);
-  return crypto.createHmac('sha256', secretKey).update(canonicalStr, 'utf8').digest('hex');
+  return crypto.createHmac('sha256', resolvedKey).update(canonicalStr, 'utf8').digest('hex');
 }
 
 export function verifyCapabilitySignature(
   capability: AuthorizationCapability,
-  secretKey: string = 'siduri_y_action_policy_secret'
+  secretKey?: string
 ): boolean {
   if (!capability || capability.allowed !== true || typeof capability.signature !== 'string') {
     return false;
   }
+  const resolvedKey = getOrGenerateLocalActionPolicySecret(secretKey);
   const { signature, allowed, ...rest } = capability;
   const canonicalStr = canonicalizeJson(rest);
-  const expectedSigHex = crypto.createHmac('sha256', secretKey).update(canonicalStr, 'utf8').digest('hex');
+  const expectedSigHex = crypto.createHmac('sha256', resolvedKey).update(canonicalStr, 'utf8').digest('hex');
 
   // Constant-time comparison to prevent timing attacks
   try {

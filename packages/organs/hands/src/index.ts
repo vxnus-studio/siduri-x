@@ -10,6 +10,7 @@ import {
   InMemoryActionStore,
   verifyCapabilitySignature,
   computeParametersHash,
+  getOrGenerateLocalActionPolicySecret,
 } from '@siduri-x/core';
 import { validateInputSchema } from './schema-validator';
 
@@ -45,14 +46,7 @@ export class DefaultHandsOrgan implements HandsOrgan {
     this.defaultTimeoutMs = config.defaultTimeoutMs ?? 10_000;
     this.store = config.store ?? new InMemoryActionStore();
 
-    const envSecret = typeof process !== 'undefined' && process.env ? process.env.ACTION_POLICY_SECRET : undefined;
-    const providedSecret = config.secretKey || envSecret;
-
-    if (!providedSecret && typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
-      throw new Error('FATAL: ACTION_POLICY_SECRET is required in production environment');
-    }
-
-    this.secretKey = providedSecret ?? 'siduri_y_action_policy_secret';
+    this.secretKey = getOrGenerateLocalActionPolicySecret(config.secretKey);
 
     if (config.providers) {
       for (const provider of config.providers) {

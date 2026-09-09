@@ -8,6 +8,7 @@ export * from './action';
 export * from './action-policy';
 export * from './ear-types';
 export * from './capability';
+export * from './sqlite-action-store';
 export * from './teaching';
 export * from './runtime';
 export * from './chat-contract';

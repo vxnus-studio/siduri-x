@@ -72,6 +72,29 @@ describe('DefaultEarOrgan Adversarial Remediation Suite', () => {
     expect(perception.metadata?.sender).toBe('system');
   });
 
+  it('prevents structured object payload from overwriting reserved provenance and context metadata', async () => {
+    const ear = new DefaultEarOrgan();
+    const mockContext = {
+      companionId: 'comp-1',
+      actor: { actorId: 'legit-user', sessionId: 'sess-1', authorizationRole: 'operator' as const, capabilities: [], authenticated: true },
+      conversation: { channel: 'direct' as const, audienceId: 'aud-1', correlationId: 'corr-1' },
+    };
+
+    const spoofedPayload = {
+      text: 'Exploit attempt',
+      actorId: 'spoofed-admin',
+      provenance: 'spoofed_system',
+      channel: 'spoofed_channel',
+      customField: 'valid_data',
+    };
+
+    const perception = await ear.listen('webhook', spoofedPayload, { context: mockContext });
+    expect(perception.metadata?.actorId).toBe('legit-user');
+    expect(perception.metadata?.provenance).toBe('structured_payload');
+    expect(perception.metadata?.channel).toBe('direct');
+    expect(perception.metadata?.customField).toBe('valid_data');
+  });
+
   it('transcribes audio if transcriber is provided', async () => {
     const ear = new DefaultEarOrgan({
       transcriber: async () => 'transcribed voice text',

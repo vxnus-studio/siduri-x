@@ -199,6 +199,15 @@ export class DefaultEarOrgan implements EarOrgan {
         );
       }
 
+      // Filter out reserved system keys from incoming payload to prevent metadata pollution/spoofing
+      const reservedKeys = new Set(['source', 'channel', 'actorId', 'sessionId', 'correlationId', 'provenance', 'byteSize']);
+      const sanitizedPayload: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(obj)) {
+        if (!reservedKeys.has(key)) {
+          sanitizedPayload[key] = val;
+        }
+      }
+
       return {
         id,
         source,
@@ -207,13 +216,13 @@ export class DefaultEarOrgan implements EarOrgan {
         modality: 'object',
         rawConfidence: 1.0,
         metadata: {
+          ...sanitizedPayload,
           source,
           channel: context?.conversation.channel,
           actorId: context?.actor.actorId,
           sessionId: context?.actor.sessionId,
           correlationId: context?.conversation.correlationId,
           provenance: 'structured_payload',
-          ...obj,
         },
       };
     }
