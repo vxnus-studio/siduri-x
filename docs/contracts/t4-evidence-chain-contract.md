@@ -143,6 +143,6 @@ companion, correlation ID, bounded source/evidence IDs, and timestamps.
 | Runtime | B5, B8, and B9 cross API/runtime/output boundaries |
 
 The contract is complete only when these tests use the neutral fixture rules in
-[`BLANK-SLATE-FIXTURE-GUIDE.md`](./BLANK-SLATE-FIXTURE-GUIDE.md) and their
+[`BLANK-SLATE-FIXTURE-GUIDE.md`](./blank-slate-fixture-guide.md) and their
 results are recorded in
 [`VERIFICATION_EVIDENCE_MANIFEST.md`](./VERIFICATION_EVIDENCE_MANIFEST.md).

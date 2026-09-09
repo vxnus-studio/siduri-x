@@ -9,7 +9,7 @@ personal subject or audience as a shortcut. It supplements
 with state transitions and retrieval predicates.
 
 The concrete request/claim retrieval outcomes are in
-[`T2-MEMORY-DISCLOSURE-MATRIX.md`](./T2-MEMORY-DISCLOSURE-MATRIX.md).
+[`T2-MEMORY-DISCLOSURE-MATRIX.md`](./t2-memory-disclosure-matrix.md).
 
 ## Separate record kinds
 

@@ -8,7 +8,7 @@ Siduri-Y a blank slate. User memory is not companion identity, and a transport
 role is not a relationship.
 
 Section-level input and exclusion rules are in
-[`T3-PROMPT-SECTION-MATRIX.md`](./T3-PROMPT-SECTION-MATRIX.md).
+[`T3-PROMPT-SECTION-MATRIX.md`](./t3-prompt-section-matrix.md).
 
 ## Three projections
 
@@ -171,6 +171,6 @@ partially mutate conversation state.
 | Runtime boundary | B0, B5, B6, and B8 pass through API/runtime context |
 
 The contract is complete only when these tests use the neutral fixture rules
-from [`BLANK-SLATE-FIXTURE-GUIDE.md`](./BLANK-SLATE-FIXTURE-GUIDE.md) and their
+from [`BLANK-SLATE-FIXTURE-GUIDE.md`](./blank-slate-fixture-guide.md) and their
 results are recorded in
 [`VERIFICATION_EVIDENCE_MANIFEST.md`](./VERIFICATION_EVIDENCE_MANIFEST.md).

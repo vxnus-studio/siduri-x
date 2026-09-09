@@ -48,7 +48,7 @@ passed to an API, runtime, or organ adapter:
 ```
 
 The envelope is illustrative, not a runtime schema. The runtime contract is
-defined by [`T1-NEUTRAL-CONTEXT-SPEC.md`](./T1-NEUTRAL-CONTEXT-SPEC.md).
+defined by [`T1-NEUTRAL-CONTEXT-SPEC.md`](./t1-neutral-context-spec.md).
 
 ## Identifier rules
 

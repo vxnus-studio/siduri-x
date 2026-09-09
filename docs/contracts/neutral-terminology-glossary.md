@@ -74,8 +74,8 @@ default                    -> development bootstrap only, never public discovery
 ```
 
 The full identifier mapping and scan policy are in
-[`LEGACY_IDENTIFIER_MIGRATION.md`](./LEGACY_IDENTIFIER_MIGRATION.md) and
-[`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).
+[`LEGACY_IDENTIFIER_MIGRATION.md`](./legacy-identifier-migration.md) and
+[`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./forbidden-default-scan-baseline.md).
 
 ## Review questions
 

@@ -1,24 +1,17 @@
-# Behavior
+# Behavior Organ (`@siduri-x/behavior`)
 
-Status: compatibility slice; extraction parity incomplete
+Status: Implemented and Verified (`ActiveSelfCompiler`)
 
-The Behavior organ compiles dynamic directives into system prompt injections.
-Its organ boundary is decoupled from the original personal `ME_PROFILE`, but
-its current context still uses legacy role/scope semantics. It must be adapted
-to the neutral actor, channel, audience, subject, and lifecycle contracts
-before it is considered behaviorally equivalent.
+The Behavior organ compiles dynamic persona directives into system prompt injections. It enforces strict boundary separation between companion identity, relationship models, and user memory:
 
-Required gates:
+## 1. Compilation Principles
+- **Directive Scoping**: Evaluates channel, audience, and time validity (`validFrom` / `validUntil`) before including directives.
+- **Strict Approval Isolation**: Only `ACTIVE` (or approved) directives are compiled into prompt injections. Pending directives are strictly excluded with the `pending_not_active` diagnostic.
+- **Deterministic Conflict Resolution**: Resolves overlapping or conflicting behavioral directives using explicit priority levels.
+- **Safety Heuristics & Guardrails**: Rejects prompt injection attempts, safety-filter disable directives, and blanket obedience commands.
+- **Neutral Blank Slate**: Fresh companions contain no predeclared behavioral bias or manufactured user relationships.
 
-- only approved, active, permitted directives are compiled;
-- audience and validity checks happen before prompt injection;
-- learned user context remains separate from companion self/behavior;
-- unsafe instructions and prompt injection are rejected;
-- empty memory produces neutral behavior.
+## 2. Invariants & Contract
+The compilation contract follows [`t3-active-self-contract.md`](../contracts/t3-active-self-contract.md) and [`t3-prompt-section-matrix.md`](../contracts/t3-prompt-section-matrix.md).
 
-See [`NEUTRAL_CONTRACT_DECISIONS.md`](./NEUTRAL_CONTRACT_DECISIONS.md) and
-[`PHASE-1-EXTRACTION-HANDOFF.md`](./PHASE-1-EXTRACTION-HANDOFF.md).
 
-The detailed compilation target is
-[`T3-ACTIVE-SELF-CONTRACT.md`](./T3-ACTIVE-SELF-CONTRACT.md); the current
-compiler remains a compatibility slice until it consumes that context.

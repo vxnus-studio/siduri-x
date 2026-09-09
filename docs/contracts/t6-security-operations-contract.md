@@ -145,6 +145,6 @@ exposing private memory.
 | Operations | Runbook scenarios are executable in a production-like environment |
 
 The contract is complete only when tests use neutral fixtures from
-[`BLANK-SLATE-FIXTURE-GUIDE.md`](./BLANK-SLATE-FIXTURE-GUIDE.md), results are
+[`BLANK-SLATE-FIXTURE-GUIDE.md`](./blank-slate-fixture-guide.md), results are
 recorded in [`VERIFICATION_EVIDENCE_MANIFEST.md`](./VERIFICATION_EVIDENCE_MANIFEST.md),
 and the release checklist reflects the actual evidence.

@@ -19,9 +19,9 @@ In the Sumerian cosmological architecture of Siduri:
 
 ### The Static vs. Dynamic Tension
 While 3D/2D models and voice weights are largely static assets, **companion behavior is inherently dynamic**:
-- Behavior in Siduri is governed by **Behavioral Directives** subject to temporal validity (`validFrom` / `validUntil`), lifecycle states (`PENDING`, `ACTIVE`, `SUPERSEDED`, `REVOKED`), channel/audience scoping, conflict resolution, and the [T3 Active Self Contract](../contracts/T3-ACTIVE-SELF-CONTRACT.md).
+- Behavior in Siduri is governed by **Behavioral Directives** subject to temporal validity (`validFrom` / `validUntil`), lifecycle states (`PENDING`, `ACTIVE`, `SUPERSEDED`, `REVOKED`), channel/audience scoping, conflict resolution, and the [T3 Active Self Contract](../contracts/t3-active-self-contract.md).
 - A naive, static JSON dump cannot represent evolving demeanor, mood decay, or conversational learning without freezing the companion or bypassing safety gates.
-- Direct delivery into active prompt memory risks unauthorized prompt injection and violates the [Blank Slate Contract](../contracts/BLANK_SLATE_CONTRACT.md).
+- Direct delivery into active prompt memory risks unauthorized prompt injection and violates the [Blank Slate Contract](../contracts/blank-slate-contract.md).
 
 This document evaluates the architectural options for distributing behavior via a portable asset format—tentatively named **`.self`**—and establishes the recommended delivery workflow.
 
@@ -157,7 +157,7 @@ Behavior is delivered as an immutable markdown/text snippet:
 - **Format:** Raw `.md` or `.txt` containing system prompt instructions.
 - **Execution:** Directly prepended or appended to system prompts without parsing.
 - **Pros:** Trivial to implement.
-- **Cons:** Violates the [T3 Active Self Contract](../contracts/T3-ACTIVE-SELF-CONTRACT.md) and [Blank Slate Contract](../contracts/BLANK_SLATE_CONTRACT.md). Highly vulnerable to prompt injection; cannot support fine-grained conflict resolution, temporal decay, or selective operator overrides.
+- **Cons:** Violates the [T3 Active Self Contract](../contracts/t3-active-self-contract.md) and [Blank Slate Contract](../contracts/blank-slate-contract.md). Highly vulnerable to prompt injection; cannot support fine-grained conflict resolution, temporal decay, or selective operator overrides.
 
 ---
 

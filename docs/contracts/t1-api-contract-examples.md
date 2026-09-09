@@ -214,5 +214,5 @@ silent fallback.
 - two companion IDs remain isolated under identical actor/session inputs.
 
 These examples complement the formal shapes in
-[`T1-NEUTRAL-CONTEXT-SPEC.md`](./T1-NEUTRAL-CONTEXT-SPEC.md) and the file-level
-plan in [`T1-IMPLEMENTATION-PLAN.md`](./T1-IMPLEMENTATION-PLAN.md).
+[`T1-NEUTRAL-CONTEXT-SPEC.md`](./t1-neutral-context-spec.md) and the file-level
+plan in [`T1-IMPLEMENTATION-PLAN.md`](./t1-neutral-context-spec.md).

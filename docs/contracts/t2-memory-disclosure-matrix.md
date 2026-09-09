@@ -4,7 +4,7 @@ Status: policy target; runtime retrieval has not yet proven this matrix
 
 This matrix defines which memory records may be returned for each neutral
 request context. It complements the lifecycle rules in
-[`T2-MEMORY-STATE-MACHINE.md`](./T2-MEMORY-STATE-MACHINE.md). Disclosure is a
+[`T2-MEMORY-STATE-MACHINE.md`](./t2-memory-state-machine.md). Disclosure is a
 policy decision; authentication and approval capabilities do not bypass it.
 
 ## Request dimensions

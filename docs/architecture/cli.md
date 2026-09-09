@@ -16,7 +16,7 @@ npx @vxnus/siduri create [directory]
 1. **Dynamic Manifest Discovery**: Rather than relying on hardcoded organs, the CLI discovers installed or workspace `@siduri-x/*` packages and inspects their `organ-manifest.json`.
 2. **Cognition Authority**: Brain is required for cognition planning. All other organs (`memory`, `hands`, `voice`, `body`, `behavior`, `ear`, `vision`, `knowledge`, `observation`) can be freely selected or omitted.
 3. **No Monolithic Bundling**: Scaffolds a clean project containing only the selected organ dependencies and standard Node.js ESM imports.
-4. **Blank-Slate Neutrality**: The CLI generates purely neutral configuration without embedding predeclared personas or private memories (per [`BLANK_SLATE_CONTRACT.md`](../contracts/BLANK_SLATE_CONTRACT.md)).
+4. **Blank-Slate Neutrality**: The CLI generates purely neutral configuration without embedding predeclared personas or private memories (per [`BLANK_SLATE_CONTRACT.md`](../contracts/blank-slate-contract.md)).
 
 ### Generated Output Structure:
 

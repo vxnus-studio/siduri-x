@@ -110,14 +110,17 @@ Contributions, bug reports, and RFC discussions are warmly welcomed!
 
 ---
 
-## Documentation & Conceptual Architecture
+## Documentation & Architecture
 
-Explore the concepts behind Siduri:
-- [Persistent Memory](docs/concepts/memory.md)
-- [Modular Design](docs/concepts/modular-design.md)
-- [The Truth Gate](docs/concepts/the-anchor.md)
-- [CLI Reference](docs/architecture/cli.md)
-- [Organ Contracts](docs/architecture/organs.md)
+Explore the architecture and specifications behind Siduri:
+- [Documentation Hub](docs/README.md)
+- [The Truth Gate & Anchor Architecture](docs/architecture/truth-gate.md)
+- [Persistent Memory Subsystem](docs/architecture/memory.md)
+- [Siduri Organ Architecture](docs/architecture/siduri-organ-architecture.md)
+- [CLI Reference & Diagnostics](docs/architecture/cli.md)
+- [Canonical Release Status](docs/release-status.md)
+- [Safety & Verification Contracts](docs/contracts/t7-release-evidence-contract.md)
+
 
 ---
 

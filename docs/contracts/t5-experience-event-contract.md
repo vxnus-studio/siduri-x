@@ -145,5 +145,5 @@ original personal Siduri deployment.
 | Runtime | One approved response path drives all output adapters |
 
 These tests must use the neutral fixture policy in
-[`BLANK-SLATE-FIXTURE-GUIDE.md`](./BLANK-SLATE-FIXTURE-GUIDE.md) and record
+[`BLANK-SLATE-FIXTURE-GUIDE.md`](./blank-slate-fixture-guide.md) and record
 results in [`VERIFICATION_EVIDENCE_MANIFEST.md`](./VERIFICATION_EVIDENCE_MANIFEST.md).

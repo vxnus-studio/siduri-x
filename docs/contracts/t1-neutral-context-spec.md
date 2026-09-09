@@ -8,7 +8,7 @@ compatibility mapper. It does not authorize changing later memory, prompt, or
 UI behavior before the boundary is implemented.
 
 Concrete HTTP examples are in
-[`T1-API-CONTRACT-EXAMPLES.md`](./T1-API-CONTRACT-EXAMPLES.md).
+[`T1-API-CONTRACT-EXAMPLES.md`](./t1-api-contract-examples.md).
 
 ## Context model
 

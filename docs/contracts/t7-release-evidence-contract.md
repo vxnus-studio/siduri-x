@@ -119,6 +119,6 @@ Date: 2026-09-03
 Decision: GO WITH LIMITATIONS
 ```
 
-The authoritative release status register is maintained in [`../RELEASE_STATUS.md`](../RELEASE_STATUS.md).
+The authoritative release status register is maintained in [`../RELEASE_STATUS.md`](../release-status.md).
 The forbidden-default scan procedure and current classifications are in
-[`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./FORBIDDEN-DEFAULT-SCAN-BASELINE.md).
+[`FORBIDDEN-DEFAULT-SCAN-BASELINE.md`](./forbidden-default-scan-baseline.md).

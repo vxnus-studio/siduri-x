@@ -51,7 +51,7 @@ Each generated companion instance validates its configuration against a tailored
 ## Key Configuration Principles
 
 1. **Blank-Slate Identity**:
-   Configuration defines the companion's operational capabilities, not a predeclared persona, back-story, or private user relationship (per [`BLANK_SLATE_CONTRACT.md`](../contracts/BLANK_SLATE_CONTRACT.md)).
+   Configuration defines the companion's operational capabilities, not a predeclared persona, back-story, or private user relationship (per [`BLANK_SLATE_CONTRACT.md`](../contracts/blank-slate-contract.md)).
 2. **Organ Subtrees**:
    Active organ configurations are isolated within the `organs` dictionary keyed by their organ type or configuration key. Unused organs are omitted from the configuration rather than stubbed with disabled placeholders.
 3. **Secret Separation & Production Enforcement**:

@@ -4,7 +4,7 @@ Status: prompt target; current Brain/Behavior adapters do not yet prove the full
 
 This matrix specifies what may enter each provider prompt section and what must
 be rejected. It operationalizes the trust ordering in
-[`T3-ACTIVE-SELF-CONTRACT.md`](./T3-ACTIVE-SELF-CONTRACT.md) without importing
+[`T3-ACTIVE-SELF-CONTRACT.md`](./t3-active-self-contract.md) without importing
 personal identity or relationship defaults.
 
 ## Section contract
