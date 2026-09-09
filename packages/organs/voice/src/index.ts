@@ -6,6 +6,11 @@ export interface VoiceConfig {
   provider: 'voicevox' | 'edge-tts' | 'kokoro' | 'piper' | 'none';
   baseUrl?: string;
   speakerId?: number;
+  voice?: string;
+  model?: string;
+  speed?: number;
+  lengthScale?: number;
+  cliBinary?: string;
   maxQueueDepth?: number;
   timeoutMs?: number;
   maxTextLength?: number;
@@ -55,13 +60,28 @@ export class VoiceAdapter implements VoiceOrgan, ExperienceAdapter {
     
     switch (this.config.provider) {
       case 'edge-tts':
-        baseSynth = new EdgeTtsSynthesizer();
+        baseSynth = new EdgeTtsSynthesizer(this.config.voice || 'ja-JP-NanamiNeural');
         break;
       case 'piper':
-        baseSynth = new PiperSynthesizer();
+        baseSynth = new PiperSynthesizer({
+          baseUrl: this.config.baseUrl,
+          model: this.config.model,
+          speakerId: this.config.speakerId,
+          lengthScale: this.config.lengthScale,
+          timeoutMs: this.timeoutMs,
+          maxResponseBytes: this.maxResponseBytes,
+          cliBinary: this.config.cliBinary,
+        });
         break;
       case 'kokoro':
-        baseSynth = new KokoroSynthesizer();
+        baseSynth = new KokoroSynthesizer({
+          baseUrl: this.config.baseUrl,
+          voice: this.config.voice,
+          speed: this.config.speed,
+          timeoutMs: this.timeoutMs,
+          maxResponseBytes: this.maxResponseBytes,
+          cliBinary: this.config.cliBinary,
+        });
         break;
       case 'voicevox':
       default:
