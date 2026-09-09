@@ -7,12 +7,18 @@ export interface OpenAICompatibleBrainConfig {
   model: string;
   baseUrl: string;
   timeoutMs?: number;
+  maxRetries?: number;
+  initialBackoffMs?: number;
+  maxBackoffMs?: number;
 }
 
 export interface OpenRouterBrainConfig {
   apiKey: string;
   model: string;
   timeoutMs?: number;
+  maxRetries?: number;
+  initialBackoffMs?: number;
+  maxBackoffMs?: number;
 }
 
 const MemoryProposalSchema = z.object({
@@ -117,14 +123,21 @@ export class OpenAICompatibleBrain implements BrainOrgan {
       overallController.abort(new Error(`Brain provider exceeded overall wall-clock deadline of ${overallTimeoutMs}ms`));
     }, overallTimeoutMs);
 
-    let retries = 3;
+    const maxRetries = Math.max(1, this.config.maxRetries ?? 3);
+    const baseBackoffMs = this.config.initialBackoffMs ?? 100;
+    const maxBackoffMs = this.config.maxBackoffMs ?? 2000;
+
+    let attempt = 0;
     let lastError: Error | undefined;
 
     try {
-      while (retries > 0) {
+      while (attempt < maxRetries) {
         if (overallController.signal.aborted) {
           throw new Error(`Brain request aborted: overall deadline of ${overallTimeoutMs}ms exceeded`);
         }
+
+        attempt++;
+        let retryAfterSec: number | undefined;
 
         try {
           const response = await fetch(`${this.config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
@@ -143,6 +156,20 @@ export class OpenAICompatibleBrain implements BrainOrgan {
           });
 
           if (!response.ok) {
+            const status = response.status;
+            const retryHeader = response.headers?.get ? response.headers.get('retry-after') : undefined;
+            if (retryHeader) {
+              const parsedSec = parseInt(retryHeader, 10);
+              if (!isNaN(parsedSec) && parsedSec > 0) {
+                retryAfterSec = parsedSec;
+              }
+            }
+
+            // Client authentication, forbidden, and bad request errors are fatal and should not be retried
+            if (status === 400 || status === 401 || status === 403 || status === 404) {
+              throw new Error(`Fatal upstream API error (${status}): ${response.statusText}`);
+            }
+
             throw new Error(`OpenRouter API error: ${response.statusText}`);
           }
 
@@ -161,12 +188,27 @@ export class OpenAICompatibleBrain implements BrainOrgan {
           if (overallController.signal.aborted) {
             throw new Error(`Brain request timed out after overall deadline of ${overallTimeoutMs}ms: ${e.message}`);
           }
-          retries--;
-          if (retries === 0) {
+          // Do not retry on non-retryable fatal client errors
+          if (e.message && e.message.startsWith('Fatal upstream API error')) {
+            throw e;
+          }
+
+          if (attempt >= maxRetries) {
             throw new Error("Failed to generate plan after retries: " + e.message);
           }
-          // backoff respecting remaining deadline
-          await new Promise(r => setTimeout(r, 10));
+
+          // Compute exponential backoff with jitter, or respect Retry-After header
+          let delayMs: number;
+          if (retryAfterSec !== undefined) {
+            delayMs = Math.min(retryAfterSec * 1000, maxBackoffMs);
+          } else {
+            const expBackoff = Math.min(baseBackoffMs * Math.pow(2, attempt - 1), maxBackoffMs);
+            // Full jitter between 0.5x and 1.5x
+            const jitter = 0.5 + Math.random();
+            delayMs = Math.min(Math.round(expBackoff * jitter), maxBackoffMs);
+          }
+
+          await new Promise((r) => setTimeout(r, delayMs));
         }
       }
 

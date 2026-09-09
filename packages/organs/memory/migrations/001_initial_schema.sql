@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS memory_claims (
   supersedes UUID,
   replaces UUID,
   search_document TSVECTOR GENERATED ALWAYS AS (
-    to_tsvector('english', subject || ' ' || predicate || ' ' || value)
+    to_tsvector('simple', subject || ' ' || predicate || ' ' || value)
   ) STORED
 );
 

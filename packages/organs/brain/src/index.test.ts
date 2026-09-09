@@ -79,6 +79,8 @@ describe('OpenRouterBrain', () => {
   });
 
   test('malformed model response triggers retry and fails after 3 attempts', async () => {
+    // Use low backoff for fast testing
+    const fastBrain = new OpenRouterBrain({ ...config, initialBackoffMs: 1, maxBackoffMs: 2 });
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -95,8 +97,19 @@ describe('OpenRouterBrain', () => {
       })
     });
 
-    await expect(brain.generatePlan(mockContext)).rejects.toThrow("Failed to generate plan after retries");
+    await expect(fastBrain.generatePlan(mockContext)).rejects.toThrow("Failed to generate plan after retries");
     expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  test('fatal upstream HTTP status (e.g. 401 unauthorized) aborts immediately without retries', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+    });
+
+    await expect(brain.generatePlan(mockContext)).rejects.toThrow("Fatal upstream API error (401)");
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
   test('overall wall-clock deadline aborts slow / hanging requests', async () => {
