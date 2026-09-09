@@ -95,8 +95,8 @@ export interface BrainOrgan {
 }
 
 
-// Memory Isolation (Legacy compatibility scope)
-export type MemoryScope = 'OWNER' | 'VIEWER' | 'OPERATOR' | 'PUBLIC' | 'COMPANION' | string;
+// Single-owner local companion memory scope
+export type MemoryScope = 'COMPANION' | 'OWNER' | 'OPERATOR' | 'VIEWER' | 'PUBLIC' | string;
 
 export interface Claim {
   id: string;
