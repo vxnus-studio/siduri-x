@@ -13,8 +13,20 @@ export * from './sqlite-action-store';
 export * from './teaching';
 export * from './runtime';
 export * from './chat-contract';
+export * from './input-normalizer';
+export * from './intent-classifier';
+export * from './context-retriever';
+export * from './prompt-compiler';
+export * from './cognition-planner';
+export * from './memory-settler';
+export * from './action-executor';
+export * from './experience-emitter';
+export * from './response-envelope';
+export * from './session-history';
 
+import { EvidenceRecord } from './evidence';
 import { ActionIntent } from './action';
+import { RequestContext } from './context';
 import { EarIngestOptions } from './ear-types';
 import {
   ClaimType,
@@ -206,6 +218,7 @@ export interface KnowledgeItem {
   provenance: string;
   revision: string;
   citations: KnowledgeCitation[];
+  evidenceRecord?: EvidenceRecord;
 }
 
 export interface KnowledgeCitation {
@@ -233,6 +246,10 @@ export interface EarPerception {
 export interface EarOrgan {
   listen(source: string, payload: unknown, options?: EarIngestOptions): Promise<EarPerception>;
   transcribeAudio?(audio: Uint8Array): Promise<string>;
+  classifyIntent?(
+    text: string,
+    context?: RequestContext
+  ): Promise<Record<string, unknown>> | Record<string, unknown>;
 }
 
 // Body
