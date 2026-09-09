@@ -7,7 +7,7 @@ export default function HomePage() {
       <header className="home-nav">
         <div className="home-container home-nav-inner flex items-center justify-between py-4">
           <Link href="/" className="brand-link flex items-center gap-2" aria-label="Siduri Home">
-            <span className="siduri-glyph text-[var(--siduri-ember)]">✦</span>
+            <img src="/logo-circle.svg" alt="Siduri-X Logo" className="w-6 h-6 rounded-full shrink-0" width={24} height={24} />
             <span className="font-bold tracking-widest text-sm">SIDURI-X</span>
           </Link>
 
@@ -166,7 +166,7 @@ export default function HomePage() {
       <footer className="py-14 border-t border-[var(--siduri-border-subtle)] bg-[#0e0e12]">
         <div className="home-container flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <span className="siduri-glyph w-6 h-6 text-xs text-[var(--siduri-ember)]">✦</span>
+            <img src="/logo-circle.svg" alt="Siduri-X Logo" className="w-5 h-5 rounded-full shrink-0" width={20} height={20} />
             <span className="font-bold tracking-widest text-xs text-[var(--siduri-text-primary)]">
               SIDURI-X
             </span>

@@ -6,7 +6,11 @@ export const metadata: Metadata = {
   description:
     "Siduri — a local-first companion with explicit memory, grounded knowledge, and optional presence.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
 };
 
