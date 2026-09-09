@@ -52,3 +52,99 @@ export async function postAction(path: string, body?: any): Promise<void> {
     throw new Error(text);
   }
 }
+
+export interface StreamChatHandlers {
+  onStaged?: (data: { response_id?: string; correlation_id?: string; status?: string }) => void;
+  onChunk?: (chunk: { utteranceId: string; index: number; deltaText: string; isComplete: boolean; visemes?: any[]; expression?: string; action?: string; interrupted?: boolean }) => void;
+  onAvatar?: (event: { event_id: string; expression?: string; action?: string; durationMs?: number }) => void;
+  onDone?: (fullResponse: any) => void;
+  onInterrupted?: (data: { reason?: string }) => void;
+  onError?: (error: any) => void;
+}
+
+export async function postStream(
+  path: string,
+  body: any,
+  handlers: StreamChatHandlers,
+  signal?: AbortSignal
+): Promise<void> {
+  const response = await fetchApi(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => response.statusText);
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+
+  if (!response.body) {
+    throw new Error("ReadableStream not supported in response");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      let currentEvent = "message";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        if (trimmed.startsWith("event:")) {
+          currentEvent = trimmed.slice(6).trim();
+        } else if (trimmed.startsWith("data:")) {
+          const rawData = trimmed.slice(5).trim();
+          try {
+            const data = JSON.parse(rawData);
+            switch (currentEvent) {
+              case "staged":
+                handlers.onStaged?.(data);
+                break;
+              case "chunk":
+                handlers.onChunk?.(data);
+                break;
+              case "avatar":
+                handlers.onAvatar?.(data);
+                break;
+              case "done":
+                handlers.onDone?.(data);
+                break;
+              case "interrupted":
+                handlers.onInterrupted?.(data);
+                break;
+              case "error":
+                handlers.onError?.(new Error(data.error || "Stream error"));
+                break;
+            }
+          } catch {
+            // Ignore non-JSON lines
+          }
+        }
+      }
+    }
+  } catch (err: any) {
+    if (signal?.aborted) {
+      handlers.onInterrupted?.({ reason: signal.reason });
+    } else {
+      handlers.onError?.(err);
+      throw err;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+export async function interruptChat(companionId: string = "default", reason: string = "user_barge_in"): Promise<void> {
+  await postJson("/chat/interrupt", { companionId, reason }).catch(() => {});
+}

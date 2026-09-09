@@ -133,30 +133,24 @@ CORE ORGANS
 
 7. MOUTH
    Responsibility:
-   - Communicate Siduri's decisions to users/environment
-   - Text output
-   - Speech output
-   - Chat output
-   - Other communication channels
+   - Communicate Siduri's cognitive decisions to the web interface
+   - Format cognitive utterances for the web presentation medium
+   - Generate phonetic viseme cues for Live2D avatar lip-sync
+   - Synthesize SSML with emotion-sensitive prosody modulation
+   - Real-time token streaming and channel delivery
+   - Barge-in and interruption handling
 
    Principle:
-   - Chat is Mouth, not Brain.
-   - Web chat is a communication interface.
-   - CLI is a communication interface.
-   - Discord/Telegram/etc. can be communication interfaces.
-   - Mouth receives a decision/output from Brain and handles the medium.
+   - Presentation is Mouth, not Brain.
+   - Web UI is a presentation channel receiving formatted output from Mouth.
+   - Mouth receives pure cognitive decisions from Brain and handles formatting and delivery for the web medium.
 
    Example:
-   Brain → Mouth → Chat UI
-
-   IMPORTANT:
-   Brain should not fundamentally care whether it is talking through:
-   - Web
-   - CLI
-   - Voice
-   - Discord
-   - Telegram
-   - another interface
+   Brain → Staged Response → Mouth → Web UI / Channels
+                               │
+                         ┌─────┴──────┐
+                         ↓            ↓
+                     VoiceOrgan  Live2D Visemes
 
 
 8. HANDS

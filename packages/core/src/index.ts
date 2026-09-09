@@ -308,5 +308,8 @@ export interface HealthProbeResult {
 
 export type HealthProbeFn = (context: HealthProbeContext) => Promise<HealthProbeResult> | HealthProbeResult;
 
+// Mouth (Communication & Output Delivery)
+export * from './mouth-types';
+
 
 

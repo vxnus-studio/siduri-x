@@ -11,4 +11,5 @@
 - **Body (`@siduri-x/body`)**: Renderer-agnostic avatar expression state machine and embodiment event adapter.
 - **Knowledge (`@siduri-x/knowledge`)**: Pack and provider loader for factual knowledge with citation contracts.
 - **Observation (`@siduri-x/observation`)**: Fixture and screen observation organ with frame deduplication and OCR reading ingestion.
+- **Mouth (`@siduri-x/mouth`)**: Output communication and presentation decoupling organ. Adapts cognitive utterances for the web medium with real-time SSE token streaming, Live2D viseme cues (`mouthOpenY`, `mouthForm`), SSML emotional prosody formatting, barge-in interruption handling, Voice coordination, and channel sinks (`BufferedMouthChannel`, `EventEmitterMouthChannel`).
 

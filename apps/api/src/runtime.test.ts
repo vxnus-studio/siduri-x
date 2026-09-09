@@ -1,6 +1,7 @@
-import { SiduriRuntime } from './runtime';
+import { SiduriRuntime, dispatchCompanionChat } from './runtime';
 import { DefaultHandsOrgan } from '@siduri-x/hands';
 import { DefaultEarOrgan } from '@siduri-x/ear';
+import { DefaultMouthOrgan } from '@siduri-x/mouth';
 import { ActionPolicyEngine, RequestContext } from '@siduri-x/core';
 
 describe('Siduri Runtime Orchestration', () => {
@@ -280,5 +281,58 @@ describe('Siduri Runtime Orchestration', () => {
     await expect(runtime.handleUserMessage(oversizedMsg, 'OWNER')).rejects.toThrow(
       /Ear text input exceeds maximum allowed length/
     );
+  });
+
+  test('Decoupled Output Delivery: Brain decisions are delivered and formatted through MouthOrgan', async () => {
+    let deliveredOutput: any = null;
+    const mouth = new DefaultMouthOrgan({
+      channels: [
+        {
+          id: 'test-web-channel',
+          name: 'Web Channel',
+          medium: 'web',
+          deliver: async (out) => {
+            deliveredOutput = out;
+          },
+        },
+      ],
+    });
+
+    const mockBrain = {
+      generatePlan: async () => ({
+        speech: '**Hello** from Siduri!',
+        language: 'en',
+      }),
+    };
+
+    const mockMemory = {
+      initialize: async () => {},
+      searchClaims: async () => [],
+      getDirectives: async () => [],
+    };
+
+    const runtime = new SiduriRuntime(
+      'companion-mouth-test',
+      { name: 'MouthCompanion' } as any,
+      {
+        brain: mockBrain as any,
+        memory: mockMemory as any,
+        mouth,
+      }
+    );
+    await runtime.initialize();
+
+    const response = await dispatchCompanionChat(runtime, {
+      message: 'Hi there',
+      role: 'OWNER',
+      medium: 'web',
+    });
+
+    expect(response.delivery).toBeDefined();
+    expect(response.delivery?.medium).toBe('web');
+    expect(response.delivery?.displayText).toBe('**Hello** from Siduri!');
+    expect(deliveredOutput).toBeDefined();
+    expect(deliveredOutput.medium).toBe('web');
+    expect(deliveredOutput.displayText).toBe('**Hello** from Siduri!');
   });
 });

@@ -126,4 +126,57 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
     expect(res.body.error.code).toBe('FORBIDDEN_CONTEXT');
     expect(fakeRuntime.handleUserMessage).not.toHaveBeenCalled();
   });
+
+  test('streams response chunks via POST /chat/stream', async () => {
+    fakeRuntime.mouth = {
+      stream: async function* () {
+        yield { utteranceId: 'utt-1', index: 1, deltaText: 'Hello', isComplete: false, medium: 'web' };
+        yield { utteranceId: 'utt-1', index: 2, deltaText: ' world', isComplete: false, medium: 'web' };
+        yield { utteranceId: 'utt-1', index: 3, deltaText: '', isComplete: true, medium: 'web' };
+      },
+    };
+
+    const res = await request(app)
+      .post('/chat/stream')
+      .send({
+        id: 'companion-a',
+        message: 'Stream me',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/event-stream');
+    expect(res.text).toContain('event: staged');
+    expect(res.text).toContain('event: chunk');
+    expect(res.text).toContain('event: done');
+  });
+
+  test('handles barge-in interruption via POST /chat/interrupt', async () => {
+    fakeRuntime.interruptMouth = jest.fn();
+
+    const res = await request(app)
+      .post('/chat/interrupt')
+      .send({
+        companionId: 'companion-a',
+        reason: 'user_stop',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.interrupted).toBe(true);
+    expect(fakeRuntime.interruptMouth).toHaveBeenCalledWith('user_stop');
+  });
+
+  test('handles mouth interruption via POST /mouth/interrupt', async () => {
+    fakeRuntime.interruptMouth = jest.fn();
+
+    const res = await request(app)
+      .post('/mouth/interrupt')
+      .send({
+        companionId: 'companion-a',
+        reason: 'user_barge_in',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.interrupted).toBe(true);
+    expect(fakeRuntime.interruptMouth).toHaveBeenCalledWith('user_barge_in');
+  });
 });

@@ -459,5 +459,33 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     ],
     database: null,
     healthCheck: null
+  },
+  {
+    name: '@siduri-x/mouth',
+    organType: 'mouth',
+    version: '1.0.0',
+    displayName: 'Mouth (Communication & UI Delivery)',
+    description: 'Decoupled output delivery organ formatting cognitive decisions for web interfaces',
+    entrypoint: './dist/index.js',
+    factory: 'DefaultMouthOrgan',
+    configKey: 'mouth',
+    configSchema: {
+      type: 'object',
+      properties: {
+        defaultMedium: {
+          type: 'string',
+          enum: ['web'],
+          default: 'web'
+        },
+        maxTextLength: {
+          type: 'number',
+          default: 8000
+        }
+      }
+    },
+    environment: [],
+    services: [],
+    database: null,
+    healthCheck: null
   }
 ];

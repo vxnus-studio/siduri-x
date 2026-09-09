@@ -15,6 +15,7 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
       : m.organType === 'hands' ? '🛠️'
       : m.organType === 'vision' ? '👁️'
       : m.organType === 'behavior' ? '⚡'
+      : m.organType === 'mouth' ? '👄'
       : '📦';
     return `<span class="badge">${icon} ${m.displayName.split(' ')[0]}</span>`;
   }).join(' ');

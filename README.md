@@ -53,6 +53,7 @@ All canonical Siduri-X organ and core packages are independently distributed:
 | **`@siduri-x/body`** | `^1.0.4` | Renderer-agnostic avatar expression state machine and embodiment event adapter |
 | **`@siduri-x/voice`** | `^1.0.3` | Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and RVC post-processing |
 | **`@siduri-x/observation`** | `^1.0.2` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest |
+| **`@siduri-x/mouth`** | `^1.0.0` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks |
 
 ---
 

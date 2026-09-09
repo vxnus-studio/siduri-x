@@ -3,6 +3,7 @@ import { Message, Claim } from './index';
 import { ActionExecutionResult } from './action';
 import { ResponseCitation } from './evidence';
 import { SiduriRuntime } from './runtime';
+import { MouthMedium, FormattedMouthOutput } from './mouth-types';
 
 export interface ChatRequest {
   id?: string;
@@ -11,6 +12,8 @@ export interface ChatRequest {
   role?: 'OWNER' | 'VIEWER' | 'OPERATOR' | string;
   context?: RequestContext;
   history?: Message[];
+  medium?: MouthMedium;
+  signal?: AbortSignal;
   [key: string]: any;
 }
 
@@ -70,6 +73,8 @@ export interface ChatResponse {
   correlation_id?: string;
   response: ChatResponsePlan;
   metadata?: ChatResponseMetadata;
+  // Delivery from Mouth organ separating UI presentation from speech and text delivery
+  delivery?: FormattedMouthOutput;
   // Backward compatibility fields for legacy clients or audio retrieval
   reply?: string;
   text?: string;
@@ -104,29 +109,46 @@ export async function dispatchCompanionChat(
     roleOrContext = 'OWNER';
   }
 
-  const runtimeResult = await runtime.handleUserMessage(userMessage, roleOrContext, history);
+  const runtimeResult = (payload.medium || payload.signal)
+    ? await runtime.handleUserMessage(
+        userMessage,
+        roleOrContext,
+        history,
+        payload.medium,
+        payload.signal
+      )
+    : await runtime.handleUserMessage(userMessage, roleOrContext, history);
+
+  const delivery: FormattedMouthOutput | undefined = runtimeResult?.delivery;
 
   // Normalize response plan
-  const speech = runtimeResult?.response?.subtitle_ja || runtimeResult?.response?.subtitle_en || '';
-  const audioUrl = runtimeResult?.response?.audio_url;
+  const speech =
+    delivery?.displayText ||
+    delivery?.text ||
+    runtimeResult?.response?.subtitle_ja ||
+    runtimeResult?.response?.subtitle_en ||
+    '';
+  const audioUrl = delivery?.audioUrl || runtimeResult?.response?.audio_url;
 
-  // Extract avatar expression if any event was generated
-  let expression = 'neutral';
-  const events = runtimeResult?.metadata?.events || [];
-  const avatarEvent = events.find(
-    (e: any) => e.kind === 'avatar' || e.kind === 'body'
-  );
-  if (avatarEvent && avatarEvent.expression) {
-    expression = avatarEvent.expression;
+  // Extract avatar expression if any event was generated or provided by Mouth delivery
+  let expression = delivery?.expression || 'neutral';
+  if (expression === 'neutral') {
+    const events = runtimeResult?.metadata?.events || [];
+    const avatarEvent = events.find(
+      (e: any) => e.kind === 'avatar' || e.kind === 'body'
+    );
+    if (avatarEvent && avatarEvent.expression) {
+      expression = avatarEvent.expression;
+    }
   }
 
   // Ensure both spoken_ja and subtitle_en are accessible alongside speech_id and evidence_ids
   const responsePlan: ChatResponsePlan = {
     speech_id: runtimeResult?.response?.speech_id,
     audio_url: audioUrl,
-    subtitle_ja: runtimeResult?.response?.subtitle_ja ?? speech,
-    subtitle_en: runtimeResult?.response?.subtitle_en ?? speech,
-    spoken_ja: runtimeResult?.response?.spoken_ja ?? runtimeResult?.response?.subtitle_ja ?? speech,
+    subtitle_ja: delivery?.subtitles?.ja ?? runtimeResult?.response?.subtitle_ja ?? speech,
+    subtitle_en: delivery?.subtitles?.en ?? runtimeResult?.response?.subtitle_en ?? speech,
+    spoken_ja: delivery?.subtitles?.spoken ?? runtimeResult?.response?.spoken_ja ?? runtimeResult?.response?.subtitle_ja ?? speech,
     evidence_ids: runtimeResult?.metadata?.evidence_ids ?? runtimeResult?.response?.evidence_ids ?? [],
   };
 
@@ -141,6 +163,7 @@ export async function dispatchCompanionChat(
     response_id: runtimeResult?.response_id,
     correlation_id: runtimeResult?.correlation_id,
     response: responsePlan,
+    delivery,
     metadata,
     // Convenience fields for legacy/simple consumers
     reply: speech,

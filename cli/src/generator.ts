@@ -71,6 +71,9 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
   } else if (manifest.organType === 'vision') {
     config.provider = config.provider || 'openrouter';
     config.model = config.model || 'gpt-4-vision';
+  } else if (manifest.organType === 'mouth') {
+    config.defaultMedium = 'web';
+    config.maxTextLength = config.maxTextLength || 8000;
   }
 
   return config;
@@ -85,6 +88,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const hasMemory = manifests.some((m) => m.organType === 'memory');
   const hasVoice = manifests.some((m) => m.organType === 'voice');
   const hasBody = manifests.some((m) => m.organType === 'body');
+  const hasMouth = manifests.some((m) => m.organType === 'mouth');
 
   const voiceConfig = options.organConfigs?.voice || options.organConfigs?.['@siduri-x/voice'];
   const isVoicevox = hasVoice && (!voiceConfig || voiceConfig.provider === 'voicevox');
@@ -254,6 +258,10 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     organMapEntries.push(`  ${varName},`);
   }
 
+  if (hasMouth && hasVoice) {
+    instantiationLines.push(`if (typeof mouth?.setVoiceOrgan === 'function') mouth.setVoiceOrgan(voice);`);
+  }
+
   const selectedDisplayNames = manifests.map((m) => m.displayName.split(' ')[0] || m.organType).join(', ');
 
   const srcIndexJs = [
@@ -407,6 +415,122 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `        res.end(JSON.stringify({ error: err.message }));`,
     `      }`,
     `    });`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Real-time SSE streaming (Mouth transport)`,
+    `  if ((pathname === '/chat/stream' || pathname === '/api/chat/stream') && req.method === 'POST') {`,
+    `    let body = '';`,
+    `    req.on('data', (chunk) => { body += chunk; });`,
+    `    req.on('end', async () => {`,
+    `      res.writeHead(200, {`,
+    `        'Content-Type': 'text/event-stream',`,
+    `        'Cache-Control': 'no-cache, no-transform',`,
+    `        'Connection': 'keep-alive',`,
+    `      });`,
+    `      const abortController = new AbortController();`,
+    `      const onClose = () => {`,
+    `        abortController.abort('client_disconnect');`,
+    `        if (typeof runtime.interruptMouth === 'function') {`,
+    `          runtime.interruptMouth('client_disconnect');`,
+    `        }`,
+    `      };`,
+    `      req.on('close', onClose);`,
+    '',
+    `      try {`,
+    `        const payload = JSON.parse(body || '{}');`,
+    `        const response = await dispatchCompanionChat(runtime, {`,
+    `          id: config.id,`,
+    `          companionId: config.id,`,
+    `          message: payload.message || payload.text || '',`,
+    `          role: payload.role || 'OWNER',`,
+    `          history: Array.isArray(payload.history) ? payload.history : [],`,
+    `          medium: 'web',`,
+    `          signal: abortController.signal,`,
+    `        });`,
+    '',
+    `        res.write(\`event: staged\\ndata: \${JSON.stringify({ response_id: response.response_id, correlation_id: response.correlation_id, status: response.status })}\\n\\n\`);`,
+    '',
+    `        const avatarEvent = response.metadata?.events?.find(`,
+    `          (e) => (e.kind === 'avatar' || e.kind === 'body') && (e.approval === 'APPROVED' || !e.approval)`,
+    `        );`,
+    `        if (avatarEvent) {`,
+    `          res.write(\`event: avatar\\ndata: \${JSON.stringify(avatarEvent)}\\n\\n\`);`,
+    `        }`,
+    '',
+    `        const speechText = response.delivery?.text || response.response?.subtitle_en || response.response?.spoken_ja || '';`,
+    `        const utterance = {`,
+    `          utteranceId: response.response_id || 'utt-stream',`,
+    `          companionId: config.id,`,
+    `          responseId: response.response_id,`,
+    `          correlationId: response.correlation_id,`,
+    `          text: speechText,`,
+    `          medium: 'web',`,
+    `          expression: avatarEvent?.expression,`,
+    `          action: avatarEvent?.action,`,
+    `          signal: abortController.signal,`,
+    `        };`,
+    '',
+    `        if (runtime.mouth && typeof runtime.mouth.stream === 'function') {`,
+    `          for await (const chunk of runtime.mouth.stream(utterance)) {`,
+    `            if (abortController.signal.aborted) {`,
+    `              res.write(\`event: chunk\\ndata: \${JSON.stringify({ ...chunk, interrupted: true })}\\n\\n\`);`,
+    `              break;`,
+    `            }`,
+    `            res.write(\`event: chunk\\ndata: \${JSON.stringify(chunk)}\\n\\n\`);`,
+    `          }`,
+    `        } else {`,
+    `          res.write(\`event: chunk\\ndata: \${JSON.stringify({ utteranceId: utterance.utteranceId, index: 1, deltaText: speechText, isComplete: true, medium: 'web' })}\\n\\n\`);`,
+    `        }`,
+    '',
+    `        res.write(\`event: done\\ndata: \${JSON.stringify(response)}\\n\\n\`);`,
+    `        res.end();`,
+    `      } catch (err) {`,
+    `        if (abortController.signal.aborted) {`,
+    `          res.write(\`event: interrupted\\ndata: \${JSON.stringify({ reason: abortController.signal.reason })}\\n\\n\`);`,
+    `        } else {`,
+    `          res.write(\`event: error\\ndata: \${JSON.stringify({ error: err.message })}\\n\\n\`);`,
+    `        }`,
+    `        res.end();`,
+    `      } finally {`,
+    `        req.removeListener('close', onClose);`,
+    `      }`,
+    `    });`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Barge-in interruption`,
+    `  if ((pathname === '/chat/interrupt' || pathname === '/mouth/interrupt' || pathname === '/api/chat/interrupt') && req.method === 'POST') {`,
+    `    let body = '';`,
+    `    req.on('data', (chunk) => { body += chunk; });`,
+    `    req.on('end', () => {`,
+    `      try {`,
+    `        const payload = JSON.parse(body || '{}');`,
+    `        const reason = payload.reason || 'user_barge_in';`,
+    `        if (typeof runtime.interruptMouth === 'function') {`,
+    `          runtime.interruptMouth(reason);`,
+    `        }`,
+    `        res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `        res.end(JSON.stringify({ success: true, interrupted: true, reason }));`,
+    `      } catch (e) {`,
+    `        res.writeHead(500, { 'Content-Type': 'application/json' });`,
+    `        res.end(JSON.stringify({ error: e.message }));`,
+    `      }`,
+    `    });`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Mouth channels & health`,
+    `  if ((pathname === '/mouth/health' || pathname === '/api/mouth/health') && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({ provider: 'siduri-mouth', configured: Boolean(runtime.mouth) }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  if ((pathname === '/mouth/channels' || pathname === '/api/mouth/channels') && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    const channels = typeof runtime.mouth?.getRegisteredChannels === 'function' ? runtime.mouth.getRegisteredChannels() : [];`,
+    `    res.end(JSON.stringify({ channels }));`,
     `    return;`,
     `  }`,
     '',

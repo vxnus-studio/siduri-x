@@ -17,6 +17,7 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
     { dir: 'body', name: '@siduri-x/body', organType: 'body', configKey: 'body' },
     { dir: 'voice', name: '@siduri-x/voice', organType: 'voice', configKey: 'voice' },
     { dir: 'observation', name: '@siduri-x/observation', organType: 'observation', configKey: 'observation' },
+    { dir: 'mouth', name: '@siduri-x/mouth', organType: 'mouth', configKey: 'mouth' },
   ];
 
   it('package.json has zero dependencies on @siduri-x organ packages', () => {

@@ -7,6 +7,7 @@ import {
   ActionExecutionResult,
 } from './index';
 import { MemoryProposalReceipt } from './memory-settler';
+import { FormattedMouthOutput } from './mouth-types';
 
 export interface AssembleResponseEnvelopeParams {
   stagedPlan: StagedResponsePlan;
@@ -20,6 +21,7 @@ export interface AssembleResponseEnvelopeParams {
   filteredCitations?: ResponseCitation[];
   subsystemDiagnostics: Record<string, string>;
   experienceEvents: ExperienceEvent[];
+  mouthDelivery?: FormattedMouthOutput;
 }
 
 /**
@@ -67,6 +69,7 @@ export function assembleResponseEnvelope(
     filteredCitations,
     subsystemDiagnostics,
     experienceEvents,
+    mouthDelivery,
   } = params;
 
   return {
@@ -75,10 +78,11 @@ export function assembleResponseEnvelope(
     correlation_id: stagedPlan.correlationId,
     response: {
       speech_id: speechId,
-      audio_url: speechId ? `/voice/stream?id=${speechId}` : undefined,
-      subtitle_ja: speech,
-      subtitle_en: speech,
+      audio_url: mouthDelivery?.audioUrl ?? (speechId ? `/voice/stream?id=${speechId}` : undefined),
+      subtitle_ja: mouthDelivery?.subtitles?.ja ?? speech,
+      subtitle_en: mouthDelivery?.subtitles?.en ?? speech,
     },
+    delivery: mouthDelivery,
     metadata: {
       language,
       proposals: createdMemoryProposals,

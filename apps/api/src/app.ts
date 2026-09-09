@@ -12,6 +12,7 @@ import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
 import { FixtureObservationOrgan } from '@siduri-x/observation';
 import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@siduri-x/hands';
 import { DefaultEarOrgan, EarOrganConfig } from '@siduri-x/ear';
+import { DefaultMouthOrgan, DefaultMouthOrganConfig } from '@siduri-x/mouth';
 import { attachIdentity, requireRole, Identity } from './auth';
 import { mapRequestContext } from './context-mapper';
 
@@ -41,6 +42,7 @@ export interface AppBootCompanionConfig {
   body?: Live2DAdapterConfig;
   hands?: DefaultHandsOrganConfig;
   ear?: EarOrganConfig;
+  mouth?: DefaultMouthOrganConfig;
   [key: string]: unknown;
 }
 
@@ -122,6 +124,12 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       : new DefaultEarOrgan(config);
   }
 
+  function createMouth(config?: DefaultMouthOrganConfig & { provider?: string }, voice?: any) {
+    return isDisabled(config)
+      ? new DefaultMouthOrgan({ voice })
+      : new DefaultMouthOrgan({ ...config, voice });
+  }
+
   app.post('/boot', requireRole(['OWNER']), async (req, res) => {
     try {
       const { id, config } = req.body;
@@ -138,6 +146,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       const body = createBody(config.body);
       const hands = createHands(config.hands);
       const ear = createEar(config.ear);
+      const mouth = createMouth(config.mouth, voice);
 
       const runtime = new SiduriRuntime(id, config, {
         brain,
@@ -149,6 +158,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         body,
         hands,
         ear,
+        mouth,
         observation: observationOrgan,
       });
       await runtime.initialize();
@@ -178,6 +188,18 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   app.get('/obs/health', (req, res) => {
     const connected = Boolean(observationOrgan) || Array.from(runtimes.values()).some((r) => Boolean(r.observation));
     res.json({ connected });
+  });
+  app.get('/mouth/health', (req, res) => {
+    const hasMouth = Array.from(runtimes.values()).some((r) => Boolean(r.mouth));
+    res.json({ provider: "siduri-mouth", configured: hasMouth });
+  });
+  app.get('/mouth/channels', (req, res) => {
+    const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime || !runtime.mouth || typeof runtime.mouth.getRegisteredChannels !== 'function') {
+      return res.json({ channels: [] });
+    }
+    res.json({ channels: runtime.mouth.getRegisteredChannels() });
   });
   app.get('/me', attachIdentity, (req, res) => {
     const identity = (req as any).identity as Identity;
@@ -234,11 +256,153 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         message,
         context: mappingResult.context,
         history,
+        ...(req.body?.medium ? { medium: req.body.medium } : {}),
       });
       res.json(response);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
+  });
+
+  // REAL-TIME SSE STREAMING (Mouth transport)
+  app.post('/chat/stream', attachIdentity, async (req, res) => {
+    const { id, message, history } = req.body;
+    const identity = (req as any).identity as Identity;
+
+    const effectiveRole = req.body?.role === 'VIEWER' || req.body?.context?.actor?.authorizationRole === 'viewer'
+      ? 'VIEWER'
+      : (identity?.role === 'OPERATOR' ? 'OPERATOR' : 'OWNER');
+    const isOwner = effectiveRole === 'OWNER';
+
+    const mappingResult = mapRequestContext(
+      {
+        ...req.body,
+        id: id || req.body.companionId,
+        role: effectiveRole,
+        authenticated: isOwner,
+        generateCorrelationId: true,
+      },
+      {
+        endpointPolicy: 'public',
+        defaultPublicAudience: 'audience-public',
+      }
+    );
+
+    if (!mappingResult.accepted) {
+      return res.status(400).json({
+        accepted: false,
+        error: mappingResult.error,
+      });
+    }
+
+    const companionId = mappingResult.context!.companionId;
+    const runtime = runtimes.get(companionId);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    const abortController = new AbortController();
+    const onClose = () => {
+      abortController.abort('client_disconnect');
+      if (typeof runtime.interruptMouth === 'function') {
+        runtime.interruptMouth('client_disconnect');
+      }
+    };
+    req.on('close', onClose);
+
+    try {
+      const response = await dispatchCompanionChat(runtime, {
+        id: companionId,
+        companionId,
+        message,
+        context: mappingResult.context,
+        history,
+        medium: 'web',
+        signal: abortController.signal,
+      });
+
+      res.write(`event: staged\ndata: ${JSON.stringify({ response_id: response.response_id, correlation_id: response.correlation_id, status: response.status })}\n\n`);
+
+      const avatarEvent = response.metadata?.events?.find(
+        (e: any) => (e.kind === 'avatar' || e.kind === 'body') && (e.approval === 'APPROVED' || !e.approval)
+      );
+      if (avatarEvent) {
+        res.write(`event: avatar\ndata: ${JSON.stringify(avatarEvent)}\n\n`);
+      }
+
+      const speechText = response.delivery?.text || response.response?.subtitle_en || response.response?.spoken_ja || '';
+      const utterance = {
+        utteranceId: response.response_id || 'utt-stream',
+        companionId,
+        responseId: response.response_id,
+        correlationId: response.correlation_id,
+        text: speechText,
+        medium: 'web' as const,
+        expression: avatarEvent?.expression,
+        action: avatarEvent?.action,
+        signal: abortController.signal,
+      };
+
+      if (runtime.mouth && typeof runtime.mouth.stream === 'function') {
+        for await (const chunk of runtime.mouth.stream(utterance)) {
+          if (abortController.signal.aborted) {
+            res.write(`event: chunk\ndata: ${JSON.stringify({ ...chunk, interrupted: true })}\n\n`);
+            break;
+          }
+          res.write(`event: chunk\ndata: ${JSON.stringify(chunk)}\n\n`);
+        }
+      } else {
+        res.write(`event: chunk\ndata: ${JSON.stringify({ utteranceId: utterance.utteranceId, index: 1, deltaText: speechText, isComplete: true, medium: 'web' })}\n\n`);
+      }
+
+      res.write(`event: done\ndata: ${JSON.stringify(response)}\n\n`);
+      res.end();
+    } catch (e: any) {
+      if (abortController.signal.aborted) {
+        res.write(`event: interrupted\ndata: ${JSON.stringify({ reason: abortController.signal.reason })}\n\n`);
+      } else {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: e.message })}\n\n`);
+      }
+      res.end();
+    } finally {
+      req.removeListener('close', onClose);
+    }
+  });
+
+  // INTERRUPTION / BARGE-IN
+  app.post('/chat/interrupt', attachIdentity, (req, res) => {
+    const companionId = req.body?.companionId || req.body?.id || Array.from(runtimes.keys())[0];
+    const runtime = companionId ? runtimes.get(companionId) : undefined;
+    const reason = req.body?.reason || 'user_barge_in';
+
+    if (runtime) {
+      runtime.interruptMouth(reason);
+      return res.json({ success: true, interrupted: true, companionId, reason });
+    }
+
+    for (const r of runtimes.values()) {
+      r.interruptMouth(reason);
+    }
+    return res.json({ success: true, interrupted: true, reason });
+  });
+
+  app.post('/mouth/interrupt', attachIdentity, (req, res) => {
+    const companionId = req.body?.companionId || req.body?.id || Array.from(runtimes.keys())[0];
+    const runtime = companionId ? runtimes.get(companionId) : undefined;
+    const reason = req.body?.reason || 'user_barge_in';
+
+    if (runtime) {
+      runtime.interruptMouth(reason);
+      return res.json({ success: true, interrupted: true, companionId, reason });
+    }
+
+    for (const r of runtimes.values()) {
+      r.interruptMouth(reason);
+    }
+    return res.json({ success: true, interrupted: true, reason });
   });
 
   // MEMORY GETTERS

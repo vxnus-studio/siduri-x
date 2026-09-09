@@ -12,7 +12,7 @@ import {
   type AvatarExpression,
   type AvatarAction,
 } from "../../components/live2d";
-import { postJson, fetchApi } from "../../lib/api";
+import { postJson, fetchApi, postStream, interruptChat } from "../../lib/api";
 
 type MemoryProposalData = {
   proposal_id: string;
@@ -124,6 +124,7 @@ export default function ChatClient() {
   const [avatarModelUrl, setAvatarModelUrl] = useState<string | undefined>(undefined);
   const messagesRef = useRef<HTMLDivElement>(null);
   const avatarTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.id === activeId) ?? null,
@@ -134,6 +135,9 @@ export default function ChatClient() {
     return () => {
       if (avatarTimerRef.current) {
         clearTimeout(avatarTimerRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort("unmounted");
       }
     };
   }, []);
@@ -224,13 +228,30 @@ export default function ChatClient() {
     }
   }
 
+  function interruptCurrentChat(): void {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort("user_stop");
+      abortControllerRef.current = null;
+    }
+    interruptChat("default", "user_stop");
+    setBusy(false);
+    setStatus("online");
+  }
+
   async function submit(event: FormEvent): Promise<void> {
     event.preventDefault();
     const content = message.trim();
-    if (!content || busy) return;
+    if (!content) return;
     if (/\[[^\]]+\]/.test(content)) {
       setStatus("replace the blanks first");
       return;
+    }
+
+    // Barge-in: if currently generating/streaming, cancel existing request
+    if (busy && abortControllerRef.current) {
+      abortControllerRef.current.abort("user_barge_in");
+      abortControllerRef.current = null;
+      interruptChat("default", "user_barge_in");
     }
 
     let conversation = activeConversation;
@@ -246,101 +267,174 @@ export default function ChatClient() {
       content,
       createdAt: Date.now(),
     };
-    const nextMessages = [...conversation.messages, userMessage];
+
+    const assistantId = newId();
+    const assistantPlaceholder: ChatMessage = {
+      id: assistantId,
+      role: "assistant",
+      content: "",
+      createdAt: Date.now(),
+    };
+
+    const nextMessages = [...conversation.messages, userMessage, assistantPlaceholder];
     const title =
       conversation.messages.length === 0
         ? content.slice(0, 42)
         : conversation.title;
+
     updateConversation(conversation.id, (current) => ({
       ...current,
       title,
       messages: nextMessages,
       updatedAt: Date.now(),
     }));
+
     setMessage("");
     setBusy(true);
-    setStatus("thinking");
+    setStatus("streaming");
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     try {
-      const data = await postJson<ChatResponse | { error: string }>(`/chat`, {
-        id: "default", // hardcoded default companion for now
-        message: content,
-        role: "OWNER",
-        history: conversation.messages.slice(-20).map((item) => ({
-          role: item.role,
-          content: item.content,
-        })),
-      });
-      if ("error" in data) throw new Error(data.error);
-      const plan = data.response;
-      const proposals = data.metadata?.memory_proposals;
-      const behavioralProposals = data.metadata?.behavioral_proposals;
-      const assistant: ChatMessage = {
-        id: newId(),
-        role: "assistant",
-        content: plan.subtitle_en,
-        spokenJa: plan.spoken_ja,
-        evidenceIds: plan.evidence_ids,
-        memoryProposals: proposals,
-        behavioralProposals,
-        createdAt: Date.now(),
-      };
-      updateConversation(conversation.id, (current) => ({
-        ...current,
-        messages: [...current.messages, assistant],
-        updatedAt: Date.now(),
-      }));
+      await postStream(
+        `/chat/stream`,
+        {
+          id: "default",
+          message: content,
+          role: "OWNER",
+          medium: "web",
+          history: conversation.messages.slice(-20).map((item) => ({
+            role: item.role,
+            content: item.content,
+          })),
+        },
+        {
+          onAvatar: (latest) => {
+            const speechId = (latest as any).speech_id;
+            if (avatarTimerRef.current) {
+              clearTimeout(avatarTimerRef.current);
+            }
 
-      // Process approved avatar events if present
-      const avatarEvents = data.metadata?.events?.filter(
-        (e) => e.kind === "avatar" && (e.approval === "APPROVED" || !e.approval),
+            setActiveAvatarEvent({
+              eventId: latest.event_id,
+              expression: (latest.expression as AvatarExpression) || "neutral",
+              action: (latest.action as AvatarAction) || "talk",
+              state: "speaking",
+              speechId,
+              durationMs: latest.durationMs,
+            });
+
+            const duration = latest.durationMs || 4500;
+            avatarTimerRef.current = setTimeout(() => {
+              setActiveAvatarEvent((current) =>
+                current
+                  ? {
+                      ...current,
+                      state: "idle",
+                      action: "idle",
+                    }
+                  : null,
+              );
+            }, duration);
+          },
+          onChunk: (chunk) => {
+            if (chunk.deltaText) {
+              updateConversation(conversation.id, (current) => ({
+                ...current,
+                messages: current.messages.map((msg) =>
+                  msg.id === assistantId
+                    ? { ...msg, content: msg.content + chunk.deltaText }
+                    : msg,
+                ),
+              }));
+            }
+            if (chunk.expression || chunk.action) {
+              setActiveAvatarEvent((current) =>
+                current
+                  ? {
+                      ...current,
+                      expression: (chunk.expression as AvatarExpression) || current.expression,
+                      action: (chunk.action as AvatarAction) || current.action,
+                    }
+                  : null,
+              );
+            }
+          },
+          onDone: (data) => {
+            const plan = data.response || {};
+            const proposals = data.metadata?.memory_proposals;
+            const behavioralProposals = data.metadata?.behavioral_proposals;
+
+            updateConversation(conversation.id, (current) => ({
+              ...current,
+              messages: current.messages.map((msg) =>
+                msg.id === assistantId
+                  ? {
+                      ...msg,
+                      content: msg.content || plan.subtitle_en || "",
+                      spokenJa: plan.spoken_ja,
+                      evidenceIds: plan.evidence_ids,
+                      memoryProposals: proposals,
+                      behavioralProposals,
+                    }
+                  : msg,
+              ),
+              updatedAt: Date.now(),
+            }));
+            setStatus("online");
+          },
+          onInterrupted: () => {
+            updateConversation(conversation.id, (current) => ({
+              ...current,
+              messages: current.messages.map((msg) =>
+                msg.id === assistantId
+                  ? {
+                      ...msg,
+                      content: msg.content ? `${msg.content} [interrupted]` : "[interrupted]",
+                    }
+                  : msg,
+              ),
+              updatedAt: Date.now(),
+            }));
+            setStatus("online");
+          },
+          onError: (err) => {
+            updateConversation(conversation.id, (current) => ({
+              ...current,
+              messages: current.messages.map((msg) =>
+                msg.id === assistantId
+                  ? {
+                      ...msg,
+                      content: `I couldn’t reach the orchestrator. ${String(err)}`,
+                    }
+                  : msg,
+              ),
+              updatedAt: Date.now(),
+            }));
+            setStatus("offline");
+          },
+        },
+        abortController.signal,
       );
-      if (avatarEvents && avatarEvents.length > 0) {
-        const latest = avatarEvents[avatarEvents.length - 1];
-        const speechId = data.response?.speech_id;
-
-        if (avatarTimerRef.current) {
-          clearTimeout(avatarTimerRef.current);
-        }
-
-        setActiveAvatarEvent({
-          eventId: latest.event_id,
-          expression: (latest.expression as AvatarExpression) || "neutral",
-          action: (latest.action as AvatarAction) || "talk",
-          state: "speaking",
-          speechId,
-          durationMs: latest.durationMs,
-        });
-
-        const duration = latest.durationMs || 4500;
-        avatarTimerRef.current = setTimeout(() => {
-          setActiveAvatarEvent((current) =>
-            current
-              ? {
-                  ...current,
-                  state: "idle",
-                  action: "idle",
-                }
-              : null,
-          );
-        }, duration);
-      }
-
-      setStatus("online");
     } catch (error) {
-      const assistant: ChatMessage = {
-        id: newId(),
-        role: "assistant",
-        content: `I couldn’t reach the orchestrator. ${String(error)}`,
-        createdAt: Date.now(),
-      };
-      updateConversation(conversation.id, (current) => ({
-        ...current,
-        messages: [...current.messages, assistant],
-        updatedAt: Date.now(),
-      }));
-      setStatus("offline");
+      if (!abortController.signal.aborted) {
+        updateConversation(conversation.id, (current) => ({
+          ...current,
+          messages: current.messages.map((msg) =>
+            msg.id === assistantId
+              ? {
+                  ...msg,
+                  content: `I couldn’t reach the orchestrator. ${String(error)}`,
+                }
+              : msg,
+          ),
+          updatedAt: Date.now(),
+        }));
+        setStatus("offline");
+      }
     } finally {
+      abortControllerRef.current = null;
       setBusy(false);
     }
   }
@@ -699,7 +793,6 @@ export default function ChatClient() {
                 rows={1}
                 maxLength={4000}
                 aria-label="Message Siduri"
-                disabled={busy}
               />
               <div className="composer-bottom">
                 <span>
@@ -708,13 +801,24 @@ export default function ChatClient() {
                     ? `${evidenceCount} evidence link${evidenceCount === 1 ? "" : "s"}`
                     : "No evidence attached"}
                 </span>
-                <button
-                  type="submit"
-                  disabled={busy || !message.trim()}
-                  aria-label="Send message"
-                >
-                  {busy ? "" : "↑"}
-                </button>
+                {busy && !message.trim() ? (
+                  <button
+                    type="button"
+                    onClick={interruptCurrentChat}
+                    aria-label="Stop generation"
+                    title="Stop generation"
+                  >
+                    ■
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={!message.trim()}
+                    aria-label="Send message"
+                  >
+                    ↑
+                  </button>
+                )}
               </div>
             </form>
           </section>

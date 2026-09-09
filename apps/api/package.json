@@ -20,6 +20,7 @@
     "@siduri-x/observation": "workspace:*",
     "@siduri-x/vision": "workspace:*",
     "@siduri-x/voice": "workspace:*",
+    "@siduri-x/mouth": "workspace:*",
     "cors": "^2.8.5",
 
     "dotenv": "^16.3.1",

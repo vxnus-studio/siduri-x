@@ -10,6 +10,7 @@ import { configureBehavior } from './behavior';
 import { configureVision } from './vision';
 import { configureEar } from './ear';
 import { configureObservation } from './observation';
+import { configureMouth } from './mouth';
 
 export * from './types';
 export * from './brain';
@@ -22,6 +23,7 @@ export * from './behavior';
 export * from './vision';
 export * from './ear';
 export * from './observation';
+export * from './mouth';
 
 export interface ConfigureOrganOptions {
   brainOptions?: BrainConfiguratorOptions;
@@ -60,6 +62,8 @@ export async function configureOrgan(
       return configureEar(ctx);
     case 'observation':
       return configureObservation(ctx);
+    case 'mouth':
+      return configureMouth(ctx);
     default:
       return {
         config: ctx.existingConfig || {},

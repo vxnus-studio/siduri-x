@@ -26,6 +26,12 @@ import {
   StagedResponsePlan,
   ResponseGateEvaluation,
   EvidenceRecord,
+  MouthOrgan,
+  MouthUtterance,
+  MouthMedium,
+  FormattedMouthOutput,
+  MouthStreamChunk,
+  MouthChannel,
 } from './index';
 import { normalizeUserInput } from './input-normalizer';
 import { classifyInputIntentAsync } from './intent-classifier';
@@ -53,6 +59,7 @@ export interface SiduriRuntimeConfig {
   hands?: OrganConfig | Record<string, unknown>;
   ear?: OrganConfig | Record<string, unknown>;
   observation?: OrganConfig | Record<string, unknown>;
+  mouth?: OrganConfig | Record<string, unknown>;
   actionPolicy?: Record<string, unknown>;
   [key: string]: unknown;
 }
@@ -68,6 +75,7 @@ export interface RuntimeOrgans {
   hands?: HandsOrgan;
   ear?: EarOrgan;
   observation?: ObservationOrgan;
+  mouth?: MouthOrgan;
   actionPolicy?: ActionPolicyEngine;
 }
 
@@ -78,7 +86,9 @@ export interface CompanionPerception {
   roleOrContext?: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string;
   context?: RequestContext;
   history?: Message[];
+  medium?: MouthMedium;
   metadata?: Record<string, unknown>;
+  signal?: AbortSignal;
 }
 
 /**
@@ -99,6 +109,7 @@ export class SiduriRuntime {
   public hands?: HandsOrgan;
   public ear?: EarOrgan;
   public observation?: ObservationOrgan;
+  public mouth?: MouthOrgan;
   public gating: ResponseGatingEngine;
   public actionPolicy: ActionPolicyEngine;
   public dispatcher: ExperienceDispatcher;
@@ -126,6 +137,7 @@ export class SiduriRuntime {
     this.hands = organs.hands;
     this.ear = organs.ear;
     this.observation = organs.observation;
+    this.mouth = organs.mouth;
     this.gating = new ResponseGatingEngine();
     this.actionPolicy = organs.actionPolicy || new ActionPolicyEngine();
     this.dispatcher = new ExperienceDispatcher();
@@ -135,6 +147,9 @@ export class SiduriRuntime {
     }
     if (this.body && typeof (this.body as any).handleEvent === 'function') {
       this.dispatcher.registerAdapter(this.body as any as ExperienceAdapter);
+    }
+    if (this.mouth && typeof (this.mouth as any).handleEvent === 'function') {
+      this.dispatcher.registerAdapter(this.mouth as any as ExperienceAdapter);
     }
   }
 
@@ -439,7 +454,42 @@ export class SiduriRuntime {
       body: this.body,
     });
 
-    // 10. Assemble and return response envelope
+    // 10. Deliver utterance via Mouth organ (UI / Output Channel Decoupling)
+    let mouthDelivery: FormattedMouthOutput | undefined;
+    if (this.mouth && typeof this.mouth.speak === 'function') {
+      try {
+        const avatarEvent = experienceEmission.experienceEvents.find(
+          (e) => e.kind === 'avatar'
+        );
+        mouthDelivery = await this.mouth.speak({
+          utteranceId: stagedPlan.responseId,
+          companionId: this.id,
+          responseId: stagedPlan.responseId,
+          correlationId: stagedPlan.correlationId,
+          text: plan.speech,
+          language: plan.language || 'ja',
+          subtitleJa: plan.speech,
+          subtitleEn: plan.speech,
+          spokenJa: plan.speech,
+          expression: avatarEvent?.expression,
+          medium: perception.medium,
+          signal: perception.signal,
+          audioUrl: experienceEmission.speechId
+            ? `/voice/stream?id=${experienceEmission.speechId}`
+            : undefined,
+          metadata: {
+            subsystemDiagnostics: contextRetrieval.subsystemDiagnostics,
+            internalMonologue: plan.internalMonologue,
+          },
+          citations: gateEval.filteredCitations,
+          evidenceIds: gateEval.filteredEvidenceIds,
+        });
+      } catch (e: any) {
+        console.error('[SiduriRuntime] Mouth delivery failed:', e?.message || e);
+      }
+    }
+
+    // 11. Assemble and return response envelope
     return assembleResponseEnvelope({
       stagedPlan,
       speech: plan.speech,
@@ -452,7 +502,58 @@ export class SiduriRuntime {
       filteredCitations: gateEval.filteredCitations,
       subsystemDiagnostics: contextRetrieval.subsystemDiagnostics,
       experienceEvents: experienceEmission.experienceEvents,
+      mouthDelivery,
     });
+  }
+
+  // --- Mouth Facades ---
+
+  async speakMouth(utterance: MouthUtterance): Promise<FormattedMouthOutput | undefined> {
+    if (!this.mouth || typeof this.mouth.speak !== 'function') return undefined;
+    return this.mouth.speak(utterance);
+  }
+
+  formatMouth(utterance: MouthUtterance, medium?: MouthMedium): FormattedMouthOutput | undefined {
+    if (!this.mouth || typeof this.mouth.format !== 'function') return undefined;
+    return this.mouth.format(utterance, medium);
+  }
+
+  registerMouthChannel(channel: MouthChannel): void {
+    if (this.mouth && typeof this.mouth.registerChannel === 'function') {
+      this.mouth.registerChannel(channel);
+    }
+  }
+
+  unregisterMouthChannel(channelId: string): void {
+    if (this.mouth && typeof this.mouth.unregisterChannel === 'function') {
+      this.mouth.unregisterChannel(channelId);
+    }
+  }
+
+  async broadcastMouth(utterance: MouthUtterance): Promise<FormattedMouthOutput[]> {
+    if (!this.mouth || typeof this.mouth.broadcast !== 'function') return [];
+    return this.mouth.broadcast(utterance);
+  }
+
+  interruptMouth(reason?: string): void {
+    if (this.mouth && typeof this.mouth.interrupt === 'function') {
+      this.mouth.interrupt(reason);
+    }
+  }
+
+  streamMouth(utterance: MouthUtterance): AsyncIterable<MouthStreamChunk> {
+    if (!this.mouth || typeof this.mouth.stream !== 'function') {
+      return (async function* () {
+        yield {
+          utteranceId: utterance.utteranceId,
+          index: 0,
+          deltaText: utterance.text,
+          isComplete: true,
+          medium: 'web',
+        };
+      })();
+    }
+    return this.mouth.stream(utterance);
   }
 
   // --- Backward-Compatible Chat Adapter ---
@@ -461,12 +562,16 @@ export class SiduriRuntime {
     message: string,
     roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string = 'OWNER',
     history: Message[] = [],
+    medium?: MouthMedium,
+    signal?: AbortSignal,
   ): Promise<any> {
     return this.processPerception({
       source: 'text_chat',
       text: message,
       roleOrContext,
       history,
+      medium,
+      signal,
     });
   }
 }
