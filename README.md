@@ -1,27 +1,5 @@
 # Siduri (Siduri-X)
 
-> [!CAUTION]
-> ### 🛑 IMPORTANT DISCLAIMER: NOT AN END-TO-END (E2E) INSTANCE — DEVELOPMENT ONLY
->
-> **Do NOT clone this repository to create or run a Siduri companion instance!**
->
-> - **For Developing Only:** This repository (`siduri-x`) is a core development monorepo intended **strictly for developing, testing, and maintaining** the `@siduri-x/*` packages, architectural contracts, and developer tooling.
-> - **Not an E2E Application:** This repository is **not** an end-to-end (E2E), ready-to-run companion application. Attempting to clone and run directly from this codebase is unsupported and will not provide a clean, stable companion instance.
-> - **Clean Instances Come from the Siduri CLI:** Clean, standalone, isolated companion instances **must be generated using the official Siduri CLI**:
->   ```bash
->   npx @vxnus/siduri create <companion-name>
->   ```
->   The CLI dynamically resolves organ manifests and scaffolds an isolated, production-grade companion project with only the specific organs and configurations you require.
-> - **Issues and Pull Requests (PRs) are Open:** Even though this repo is for development rather than end-user companion instances, **Issues and Pull Requests (PRs) are open**! Contributions, bug reports, and RFC discussions are warmly welcomed.
-
-> [!WARNING]
-> **Experimental & Active Development Notice:**
-> Siduri-X is in an **active, experimental, and fast-evolving phase**. APIs, schemas, configurations, and organ protocols are subject to breaking changes. While core boundary contracts and clean-machine distribution are verified, current builds should be considered **unstable/untested in live production environments**. Use at your own discretion, inspect generated code directly, and report any architectural issues.
-
-> [!IMPORTANT]
-> **Siduri-X Architecture Migration:**
-> Siduri-Y has been unified into **Siduri-X**. This repository is the canonical TypeScript monorepo implementation of the Siduri architecture, combining the core conceptual framework with the clean-machine, manifest-driven standalone instance distribution system under the **`@siduri-x/*`** package ecosystem.
-
 Siduri is an intelligent AI companion framework designed with **persistent, authoritative memory**, atomic behavioral gating, and modular capability organs.
 
 Unlike standard conversational agents that lose context when a session ends or a context window fills up, Siduri is built around a robust memory foundation. She learns, remembers, and adapts over time, treating her memory as a central source of truth for identity, relationships, and learned behaviors.
@@ -31,6 +9,19 @@ Our goal is simple: **Siduri should be as easy to install or run anywhere as a s
 > *“She answered, ‘Gilgamesh, where are you hurrying to? You will never find that life for which you are looking. When the gods created man they allotted to him death, but life they retained in their own keeping. As for you, Gilgamesh, fill your belly with good things; day and night, night and day, dance and be merry, feast and rejoice. Let your clothes be fresh, bathe yourself in water, cherish the little child that holds your hand, and make your wife happy in your embrace; for this too is the lot of man.’”*
 >
 > — *The Epic of Gilgamesh* (source: John R. Bawden's *Ancient Civilizations*)
+
+---
+
+> [!NOTE]
+> **Getting Started & Repository Guide**
+>
+> - **Looking to run your own companion?** You don't need to clone this repository! The quickest way to get started is with the official CLI:
+>   ```bash
+>   npx @vxnus/siduri create my-companion
+>   ```
+>   The CLI guides you through an interactive setup and scaffolds a clean, standalone companion instance with only the organs and configurations you choose.
+> - **About this repository:** This repository (`siduri-x`) houses the monorepo for the core engine, architectural contracts, and `@siduri-x/*` packages.
+> - **Status:** Siduri is currently in an active, experimental development phase. APIs and configurations are evolving, and we are grateful for your feedback, suggestions, and contributions!
 
 ---
 
@@ -82,8 +73,7 @@ Before setting up or running a Siduri companion instance, ensure you have:
 
 ## Creating a Companion Instance (`@vxnus/siduri`)
 
-> [!NOTE]
-> To run a companion, **do not clone this monorepo**. Run the command below in any clean workspace directory to scaffold an isolated, standalone instance.
+To create and run your own standalone companion, you can scaffold an instance anywhere on your machine using the CLI:
 
 ### 1. Create a Standalone Companion
 
@@ -115,7 +105,7 @@ npm run services:up       # Optional: Start local Docker containers (PostgreSQL 
 
 ### 3. Apply Database Migrations (`siduri db push`)
 
-Executes SQL migrations with SHA-256 checksum validation exclusively for database-owning organs (`@siduri-x/memory`):
+Executes SQL migrations with SHA-256 checksum validation for database-owning organs (such as `@siduri-x/memory`):
 
 ```bash
 npx @vxnus/siduri db push
@@ -139,9 +129,9 @@ npm start
 
 ---
 
-## Monorepo Development (Siduri-X Core)
+## Monorepo Development
 
-This repository is reserved strictly for developing, testing, and building the `@siduri-x/*` packages and tooling. If you are contributing to Siduri-X:
+If you would like to contribute to Siduri's core packages, runtime engine, or developer tooling, you can set up the monorepo locally:
 
 ```bash
 # Clone the development monorepo
@@ -163,11 +153,11 @@ npm run release:check
 
 ### Contributing
 
-**Issues and Pull Requests (PRs) are open!**
+Contributions, bug reports, and RFC discussions are warmly welcomed!
 
-Contributions to the Siduri engine, organ packages, and developer tooling are actively encouraged:
-- **Found a bug or have a suggestion?** Feel free to open an **Issue**.
-- **Want to contribute code or fixes?** **Pull requests (PRs)** are open and welcome. Please make sure that tests pass (`npm test`) and release checks succeed (`npm run release:check`) before opening a PR.
+- **Found a bug or have a suggestion?** Feel free to open an [Issue](https://github.com/vxnus-studio/siduri-x/issues).
+- **Want to contribute code or fixes?** Pull requests (PRs) are open and appreciated. Please make sure that tests pass (`npm test`) and release checks succeed (`npm run release:check`) before opening a PR.
+- **Questions or RFCs?** Discussions and architecture questions are always welcome.
 
 ---
 
