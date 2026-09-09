@@ -1,3 +1,5 @@
+import { MemoryProposal, BehaviorProposal } from './proposals';
+
 export type EvidenceOrigin = 'knowledge' | 'observation' | 'ocr' | 'platform' | 'conversation';
 export type EvidenceTrust = 'configured' | 'provider' | 'untrusted';
 export type EvidenceSensitivity = 'public' | 'private' | 'restricted';
@@ -61,8 +63,8 @@ export interface StagedResponsePlan {
   status: ResponseApprovalStatus;
   createdAt: string;
   expiresAt?: string;
-  memoryProposals?: any[];
-  behaviorProposals?: any[];
+  memoryProposals?: MemoryProposal[];
+  behaviorProposals?: BehaviorProposal[];
   internalMonologue?: string;
 }
 

@@ -1,15 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Express } from 'express';
-import { createApp, AppInstance } from './app';
+import { createApp, AppInstance, AppBrainConfig, AppBehaviorConfig } from './app';
 import { SiduriRuntime } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
 import { PostgresMemoryOrgan } from '@siduri-x/memory';
-import { VoiceAdapter } from '@siduri-x/voice';
-import { EKnowledgeAdapter } from '@siduri-x/knowledge';
-import { OpenRouterVisionAdapter } from '@siduri-x/vision';
+import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
+import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/knowledge';
+import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
 import { ActiveSelfCompiler } from '@siduri-x/behavior';
-import { Live2DAdapter } from '@siduri-x/body';
+import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
 import { FixtureObservationOrgan } from '@siduri-x/observation';
 
 export { createApp, AppInstance };
@@ -20,49 +20,58 @@ const instance: AppInstance = createApp(runtimes);
 export const app: Express = instance.app;
 export default app;
 
-function createBrain(config: any) {
-  const provider = config.provider || 'openrouter';
+function createBrain(config?: AppBrainConfig) {
+  const provider = config?.provider || 'openrouter';
   const defaultKeyEnv = provider === 'openai-compatible' ? 'OPENAI_COMPATIBLE_API_KEY' : 'OPENROUTER_API_KEY';
-  const apiKey = config.apiKey || process.env[config.apiKeyEnv || defaultKeyEnv] || '';
+  const apiKey = config?.apiKey || process.env[config?.apiKeyEnv || defaultKeyEnv] || '';
   if (provider === 'openai-compatible') {
     return new OpenAICompatibleBrain({
       apiKey,
-      model: config.model || 'local-model',
-      baseUrl: config.baseUrl || 'http://127.0.0.1:1234/v1',
+      model: config?.model || 'local-model',
+      baseUrl: config?.baseUrl || 'http://127.0.0.1:1234/v1',
     });
   }
-  return new OpenRouterBrain({ apiKey, model: config.model || 'gpt-4o-mini' });
+  return new OpenRouterBrain({ apiKey, model: config?.model || 'gpt-4o-mini' });
 }
 
-function isDisabled(config: any): boolean {
+function isDisabled(config?: { provider?: string }): boolean {
   return !config || config.provider === 'none';
 }
 
-function createVoice(config: any) {
+function createVoice(config?: VoiceConfig) {
   return isDisabled(config)
     ? undefined
-    : new VoiceAdapter({ provider: config.provider || 'voicevox', baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.speakerId || 1 });
+    : new VoiceAdapter({
+        provider: (config?.provider as any) || 'voicevox',
+        baseUrl: config?.baseUrl || process.env.VOICEVOX_URL || 'http://localhost:50021',
+        speakerId: config?.speakerId || 1,
+        ...config,
+      });
 }
 
-function createKnowledge(config: any) {
+function createKnowledge(config?: EKnowledgeConfig) {
   if (isDisabled(config)) return undefined;
-  if (!config?.packPath && !config?.registryUrl && !config?.baseUrl && !config?.hubUrl) {
+  if (!config?.packPath && !config?.registryUrl && !config?.baseUrl) {
     return undefined;
   }
-  return new EKnowledgeAdapter(config);
+  return new EKnowledgeAdapter(config || {});
 }
 
-function createVision(config: any) {
+function createVision(config?: OpenRouterVisionConfig & { provider?: string }) {
   return isDisabled(config)
     ? undefined
-    : new OpenRouterVisionAdapter({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.model || 'gpt-4-vision' });
+    : new OpenRouterVisionAdapter({
+        apiKey: config?.apiKey || process.env.OPENROUTER_API_KEY || '',
+        model: config?.model || 'gpt-4-vision',
+        ...config,
+      });
 }
 
-function createBehavior(config: any) {
+function createBehavior(config?: AppBehaviorConfig) {
   return isDisabled(config) ? undefined : new ActiveSelfCompiler();
 }
 
-function createBody(config: any) {
+function createBody(config?: Live2DAdapterConfig & { provider?: string }) {
   return isDisabled(config)
     ? undefined
     : new Live2DAdapter(config);

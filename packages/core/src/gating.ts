@@ -1,4 +1,5 @@
 import { RequestContext } from './context';
+import { MemoryProposal, BehaviorProposal } from './proposals';
 import {
   EvidenceRecord,
   StagedResponsePlan,
@@ -13,8 +14,8 @@ export interface StageResponseOptions {
   candidateSpeech: string;
   candidateLanguage: string;
   internalMonologue?: string;
-  memoryProposals?: any[];
-  behaviorProposals?: any[];
+  memoryProposals?: MemoryProposal[];
+  behaviorProposals?: BehaviorProposal[];
   evidenceRecords?: EvidenceRecord[];
   citations?: ResponseCitation[];
   requiresApproval?: boolean;

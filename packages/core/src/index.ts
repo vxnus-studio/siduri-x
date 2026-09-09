@@ -1,5 +1,6 @@
 // Export neutral context types and validator
 export * from './context';
+export * from './proposals';
 export * from './evidence';
 export * from './gating';
 export * from './experience';
@@ -15,11 +16,19 @@ export * from './chat-contract';
 
 import { ActionIntent } from './action';
 import { EarIngestOptions } from './ear-types';
+import {
+  ClaimType,
+  ClaimAuthority,
+  ClaimStatus,
+  SourceEvent,
+  MemoryProposal,
+  BehaviorProposal,
+} from './proposals';
 
 // Config
 export interface OrganConfig {
   provider: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface CompanionConfig {
@@ -46,40 +55,6 @@ export interface BrainContext {
   contextPrompt: string;
   recentMessages: Message[];
   recipient?: MemoryScope;
-}
-
-export type ClaimType = 'semantic' | 'preference' | 'episodic' | 'relationship';
-export type ClaimAuthority = 'user_explicit' | 'user_correction' | 'import' | 'repeated_dialogue' | 'inference' | 'observation';
-export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SESSION_ONLY' | 'EXPIRED' | 'SUPERSEDED' | 'REVOKED';
-
-export interface SourceEvent {
-  id: string;
-  sourceType: string;
-  occurredAt: string;
-  payload: Record<string, unknown>;
-  schemaVersion?: number;
-}
-
-export interface MemoryProposal {
-  subject: string;
-  predicate: string;
-  value: string;
-  content?: string;
-  provenance?: string;
-  claimType?: ClaimType;
-  sensitivity?: string;
-  allowedAudiences?: string[];
-  sourceEventId?: string;
-}
-
-export interface BehaviorProposal {
-  directive: string;
-  priority: number;
-  subject?: string;
-  predicate?: string;
-  value?: string;
-  memoryClass?: 'identity' | 'relationship' | 'behavioral' | 'semantic' | 'episodic';
-  sourceEventId?: string;
 }
 
 export interface ResponsePlan {

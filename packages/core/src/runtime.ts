@@ -29,23 +29,24 @@ import {
   ExperienceEvent,
   ExperienceAdapter,
   HardenedEarPerception,
+  OrganConfig,
 } from './index';
 import { extractDeterministicTeaching } from './teaching';
 
 export interface SiduriRuntimeConfig {
   name: string;
-  brain?: any;
-  voice?: any;
-  memory?: any;
-  knowledge?: any;
-  behavior?: any;
-  body?: any;
-  vision?: any;
-  hands?: any;
-  ear?: any;
-  observation?: any;
-  actionPolicy?: any;
-  [key: string]: any;
+  brain?: OrganConfig | Record<string, unknown>;
+  voice?: OrganConfig | Record<string, unknown>;
+  memory?: OrganConfig | Record<string, unknown>;
+  knowledge?: OrganConfig | Record<string, unknown>;
+  behavior?: OrganConfig | Record<string, unknown>;
+  body?: OrganConfig | Record<string, unknown>;
+  vision?: OrganConfig | Record<string, unknown>;
+  hands?: OrganConfig | Record<string, unknown>;
+  ear?: OrganConfig | Record<string, unknown>;
+  observation?: OrganConfig | Record<string, unknown>;
+  actionPolicy?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface RuntimeOrgans {

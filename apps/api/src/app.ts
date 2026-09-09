@@ -4,16 +4,45 @@ import { createCorsOptions } from './cors';
 import { SiduriRuntime, dispatchCompanionChat } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
 import { PostgresMemoryOrgan } from '@siduri-x/memory';
-import { VoiceAdapter } from '@siduri-x/voice';
-import { EKnowledgeAdapter } from '@siduri-x/knowledge';
-import { OpenRouterVisionAdapter } from '@siduri-x/vision';
+import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
+import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/knowledge';
+import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
 import { ActiveSelfCompiler } from '@siduri-x/behavior';
-import { Live2DAdapter } from '@siduri-x/body';
+import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
 import { FixtureObservationOrgan } from '@siduri-x/observation';
-import { DefaultHandsOrgan } from '@siduri-x/hands';
-import { DefaultEarOrgan } from '@siduri-x/ear';
+import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@siduri-x/hands';
+import { DefaultEarOrgan, EarOrganConfig } from '@siduri-x/ear';
 import { attachIdentity, requireRole, Identity } from './auth';
 import { mapRequestContext } from './context-mapper';
+
+export interface AppBrainConfig {
+  provider?: 'openrouter' | 'openai-compatible' | string;
+  model?: string;
+  apiKey?: string;
+  apiKeyEnv?: string;
+  baseUrl?: string;
+  timeoutMs?: number;
+  [key: string]: unknown;
+}
+
+export interface AppBehaviorConfig {
+  provider?: 'active_self' | 'none' | string;
+  preset?: string;
+  [key: string]: unknown;
+}
+
+export interface AppBootCompanionConfig {
+  name: string;
+  brain?: AppBrainConfig;
+  voice?: VoiceConfig;
+  knowledge?: EKnowledgeConfig;
+  vision?: OpenRouterVisionConfig;
+  behavior?: AppBehaviorConfig;
+  body?: Live2DAdapterConfig;
+  hands?: DefaultHandsOrganConfig;
+  ear?: EarOrganConfig;
+  [key: string]: unknown;
+}
 
 export interface AppInstance {
   app: Express;
@@ -28,57 +57,66 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
 
   let observationOrgan: FixtureObservationOrgan | undefined;
 
-  function createBrain(config: any) {
-    const provider = config.provider || 'openrouter';
+  function createBrain(config?: AppBrainConfig) {
+    const provider = config?.provider || 'openrouter';
     const defaultKeyEnv = provider === 'openai-compatible' ? 'OPENAI_COMPATIBLE_API_KEY' : 'OPENROUTER_API_KEY';
-    const apiKey = config.apiKey || process.env[config.apiKeyEnv || defaultKeyEnv] || '';
+    const apiKey = config?.apiKey || process.env[config?.apiKeyEnv || defaultKeyEnv] || '';
     if (provider === 'openai-compatible') {
       return new OpenAICompatibleBrain({
         apiKey,
-        model: config.model || 'local-model',
-        baseUrl: config.baseUrl || 'http://127.0.0.1:1234/v1',
+        model: config?.model || 'local-model',
+        baseUrl: config?.baseUrl || 'http://127.0.0.1:1234/v1',
       });
     }
-    return new OpenRouterBrain({ apiKey, model: config.model || 'gpt-4o-mini' });
+    return new OpenRouterBrain({ apiKey, model: config?.model || 'gpt-4o-mini' });
   }
 
-  function isDisabled(config: any): boolean {
+  function isDisabled(config?: { provider?: string }): boolean {
     return !config || config.provider === 'none';
   }
 
-  function createVoice(config: any) {
+  function createVoice(config?: VoiceConfig) {
     return isDisabled(config)
       ? undefined
-      : new VoiceAdapter({ provider: config.provider || 'voicevox', baseUrl: process.env.VOICEVOX_URL || 'http://localhost:50021', speakerId: config.speakerId || 1 });
+      : new VoiceAdapter({
+          provider: (config?.provider as any) || 'voicevox',
+          baseUrl: config?.baseUrl || process.env.VOICEVOX_URL || 'http://localhost:50021',
+          speakerId: config?.speakerId || 1,
+          ...config,
+        });
   }
 
-  function createKnowledge(config: any) {
-    return isDisabled(config) ? undefined : new EKnowledgeAdapter(config);
+  function createKnowledge(config?: EKnowledgeConfig) {
+    return isDisabled(config) ? undefined : new EKnowledgeAdapter(config || {});
   }
 
-  function createVision(config: any) {
+  function createVision(config?: OpenRouterVisionConfig & { provider?: string }) {
     return isDisabled(config)
       ? undefined
-      : new OpenRouterVisionAdapter({ apiKey: process.env.OPENROUTER_API_KEY || '', model: config.model || 'gpt-4-vision' });
+      : new OpenRouterVisionAdapter({
+          apiKey: config?.apiKey || process.env.OPENROUTER_API_KEY || '',
+          model: config?.model || 'gpt-4-vision',
+          ...config,
+        });
   }
 
-  function createBehavior(config: any) {
+  function createBehavior(config?: AppBehaviorConfig) {
     return isDisabled(config) ? undefined : new ActiveSelfCompiler();
   }
 
-  function createBody(config: any) {
+  function createBody(config?: Live2DAdapterConfig & { provider?: string }) {
     return isDisabled(config)
       ? undefined
       : new Live2DAdapter(config);
   }
 
-  function createHands(config: any) {
+  function createHands(config?: DefaultHandsOrganConfig & { provider?: string }) {
     return isDisabled(config)
       ? new DefaultHandsOrgan()
       : new DefaultHandsOrgan(config);
   }
 
-  function createEar(config: any) {
+  function createEar(config?: EarOrganConfig & { provider?: string }) {
     return isDisabled(config)
       ? new DefaultEarOrgan()
       : new DefaultEarOrgan(config);
