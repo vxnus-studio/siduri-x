@@ -3,6 +3,7 @@
 > **Context & References:**  
 > - Foundational Article: [The Character Card Was Never the Character](https://vxnus.xyz/article/persistent-personality-format-ai-companions) (Kur Zagin, VXNUS)  
 > - Architectural Specification: [RFC: Dynamic Behavior Delivery & The `.self` Asset Specification](./rfc-dynamic-behavior-self.md)  
+> - Architectural Specification: [RFC: The Life Database Specification & User Data Sovereignty](./rfc-life-database.md)  
 > - Behavioral Contract: [T3 Active Self Contract](../contracts/t3-active-self-contract.md)  
 > - Verification & Gating: [The Truth Gate & Anchor Architecture](./truth-gate.md)
 
@@ -138,3 +139,24 @@ $$\text{Storage Format} \neq \text{Inference Format}$$
    At runtime, `@siduri-x/behavior` compiles only the relevant slice: the immutable anchor, current relational stance, channel-specific active directives, and dialogue exemplars.
 
 By refusing to collapse identity, behavior, preference, and memory into a single flat document, Siduri ensures that companions remain faithful to who they are, clear about what they know, and grounded in their relationship with the user.
+
+---
+
+## 5. The Extended Conclusion: From Relational Memory to the Sovereign "Life Database"
+
+Upon stress-testing the cognitive spectrum against real-world user data (e.g., *“I have Furina as a character in Genshin, and I favorite her”*), our thought exercise arrives at **another crucial conclusion**:
+
+Disentangling memory is not merely about avoiding persona drift inside the companion—it reveals a fundamental architectural boundary between **Companion Memory** and **The Life Database**:
+
+1. **The Core Realization:**  
+   - **Companion Memory (`@siduri-x/memory`)** is inherently *subjective, relational, and organic*. It represents how the companion experiences, remembers, and perceives interactions with the human counterpart (impressions, shared history, inside jokes, promises).
+   - However, concrete user facts—such as account rosters, game inventories, financial expenses, schedules, and objective tastes—are **not** companion memories. They belong to the **user's sovereign reality**.
+2. **The Risk of Conflation:**  
+   When deterministic user state is forced into semantic vector memory, the system inevitably succumbs to mathematical and factual drift (e.g. hallucinating expense sums or misremembering owned assets).
+3. **The Architectural Resolution:**  
+   Rather than multiplying organs or splitting databases arbitrarily, this separation establishes the **Life Database** as an external, user-owned, structured substrate:
+   - The Life Database remains local, encrypted, and owned by the user across model swaps.
+   - The companion's existing organs interface with it deterministically: reading/reasoning via knowledge & query tools, and mutating via audited tool contracts in `@siduri-x/hands`.
+
+For the formal schema taxonomy, domain models, and organ interaction workflows, see the dedicated architectural specification:  
+👉 **[RFC: The Life Database Specification & User Data Sovereignty](./rfc-life-database.md)**
