@@ -1,0 +1,172 @@
+---
+// LifeDatabaseSection.astro - 1:1 migration from Next.js LifeDatabaseSection.tsx
+---
+<section
+  id="life-database"
+  class="py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] bg-[#0a0a0d] relative"
+>
+  <span id="life-db" class="sr-only"></span>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    {/* Section Header */}
+    <div class="text-center max-w-3xl mx-auto mb-20">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[10px] font-mono tracking-widest uppercase mb-4">
+        03 · Architectural Proposal (RFC)
+      </div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-5">
+        Conceptual Split: Memory vs. Sovereign Life DB
+      </h2>
+      <p class="text-base sm:text-lg text-[var(--siduri-ember-light)] font-serif italic mb-4">
+        &ldquo;Your companion's memories are not your reality database.&rdquo;
+      </p>
+      <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] font-sans leading-relaxed font-light">
+        A working architectural hypothesis from our RFC discussions: when an AI
+        treats game inventories, financial expenses, and schedules as fuzzy vector
+        embeddings, it inevitably hallucinates numbers. We propose decoupling
+        subjective conversational impressions from the user's sovereign, structured records.
+      </p>
+    </div>
+
+    {/* Side-by-Side Architectural Contrast */}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+      {/* Companion Memory Card */}
+      <div class="p-8 rounded-2xl border border-[var(--siduri-border-subtle)] bg-[#101015] flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-4 mb-6 border-b border-[var(--siduri-border-subtle)]">
+            <span class="text-xs font-mono font-semibold text-[var(--siduri-ember)] uppercase tracking-wider">
+              Companion Memory (@siduri-x/memory)
+            </span>
+            <span class="text-[10px] font-mono text-[var(--siduri-text-dim)]">
+              Subjective &amp; Relational
+            </span>
+          </div>
+
+          <h3 class="text-xl font-serif-title text-[var(--siduri-text-primary)] mb-3">
+            How She Experiences You
+          </h3>
+          <p class="text-xs sm:text-sm text-[var(--siduri-text-secondary)] leading-relaxed mb-6">
+            Organic, emotional, and narrative. Represents the companion's
+            impressions, shared humor, mutual trust, and communication
+            nuances developed over time.
+          </p>
+
+          <ul class="space-y-3 text-xs font-mono text-[var(--siduri-text-secondary)]">
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--siduri-ember)] font-bold">↳</span>
+              <span>Inside jokes &amp; shared conversational history</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--siduri-ember)] font-bold">↳</span>
+              <span>Formality and emotional vulnerability stances</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--siduri-ember)] font-bold">↳</span>
+              <span>Subjective impressions (&ldquo;User seemed tired after the deploy&rdquo;)</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--siduri-ember)] font-bold">↳</span>
+              <span>Tied to the companion's living instance</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-[var(--siduri-border-subtle)] text-[11px] font-mono text-[var(--siduri-text-muted)]">
+          Substrate: PostgreSQL with cryptographic claim revisions
+        </div>
+      </div>
+
+      {/* Sovereign Life Database Card */}
+      <div class="p-8 rounded-2xl border border-[var(--siduri-border-ember)] bg-[#121217] flex flex-col justify-between shadow-xl">
+        <div>
+          <div class="flex items-center justify-between pb-4 mb-6 border-b border-[var(--siduri-border-subtle)]">
+            <span class="text-xs font-mono font-semibold text-[var(--siduri-online)] uppercase tracking-wider">
+              Life Database (User Sovereign Substrate)
+            </span>
+            <span class="text-[10px] font-mono text-[var(--siduri-text-dim)]">
+              Objective &amp; Factual
+            </span>
+          </div>
+
+          <h3 class="text-xl font-serif-title text-[var(--siduri-text-primary)] mb-3">
+            What Actually Exists in Your Life
+          </h3>
+          <p class="text-xs sm:text-sm text-[var(--siduri-text-secondary)] leading-relaxed mb-6">
+            Deterministic, typed, and structured. Represents the real records
+            of your daily life that Siduri is granted permission to reason
+            over through audited tool contracts in{" "}
+            <code class="text-[var(--siduri-ember-light)] font-mono">
+              @siduri-x/hands
+            </code>
+            .
+          </p>
+
+          <ul class="space-y-3 text-xs font-mono text-[var(--siduri-text-secondary)]">
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--siduri-online)] font-bold">✓</span>
+              <span>
+                <strong class="text-[var(--siduri-text-primary)]">Inventories &amp; Rosters:</strong> Game accounts (e.g. Genshin/Star Rail), hardware assets
+              </span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--siduri-online)] font-bold">✓</span>
+              <span>
+                <strong class="text-[var(--siduri-text-primary)]">Finances &amp; Ledgers:</strong> Real transactions, expense limits, budget headroom
+              </span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--siduri-online)] font-bold">✓</span>
+              <span>
+                <strong class="text-[var(--siduri-text-primary)]">Schedules &amp; Deadlines:</strong> Time commitments, routines, sleep windows
+              </span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--siduri-online)] font-bold">✓</span>
+              <span>
+                <strong class="text-[var(--siduri-text-primary)]">Model-Agnostic:</strong> Persists unchanged if you swap LLMs or reset the companion
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-[var(--siduri-border-subtle)] text-[11px] font-mono text-[var(--siduri-online)]">
+          Substrate: Local SQLite/PostgreSQL owned entirely by you
+        </div>
+      </div>
+    </div>
+
+    {/* Concrete Example Walkthrough */}
+    <div class="p-6 sm:p-8 rounded-2xl border border-[var(--siduri-border-subtle)] bg-[#0d0d12]">
+      <div class="text-xs font-mono text-[var(--siduri-ember)] uppercase tracking-wider mb-2">
+        Real Scenario in Action
+      </div>
+      <div class="text-base font-serif-title text-[var(--siduri-text-primary)] mb-4">
+        &ldquo;Can I afford to pull on the current character banner?&rdquo;
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+        <div class="p-4 rounded-xl bg-[#14141b] border border-[var(--siduri-border-subtle)]">
+          <div class="text-[var(--siduri-text-muted)] mb-1">01 · READ LIFE DB</div>
+          <p class="text-[var(--siduri-text-secondary)] font-sans">
+            Brain queries the local Life Database for this month's expenses,
+            budget balance, and current in-game pity/currency.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#14141b] border border-[var(--siduri-border-subtle)]">
+          <div class="text-[var(--siduri-text-muted)] mb-1">02 · EXACT ARITHMETIC</div>
+          <p class="text-[var(--siduri-text-secondary)] font-sans">
+            No LLM fuzzy guessing. Hands organ performs deterministic
+            calculation: exactly $45 headroom remaining.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#14141b] border border-[var(--siduri-border-subtle)]">
+          <div class="text-[var(--siduri-text-muted)] mb-1">03 · GROUNDED RESPONSE</div>
+          <p class="text-[var(--siduri-text-secondary)] font-sans">
+            Siduri responds in her authentic voice, advising caution based on
+            concrete facts while citing exact ledger records.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

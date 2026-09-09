@@ -9,3 +9,5 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@vxnus/e-knowledge@0.1.4'
   - '@vxnus/e@0.1.4'
+  - '@astrojs/markdown-satteri@0.4.1'
+  - astro@7.3.2

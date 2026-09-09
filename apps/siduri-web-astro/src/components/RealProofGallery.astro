@@ -1,0 +1,224 @@
+---
+// RealProofGallery.astro - 1:1 migration from Next.js RealProofGallery.tsx
+interface ProofItem {
+  id: string;
+  title: string;
+  category: string;
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+  caption: string;
+  details: string[];
+}
+
+const PROOFS: ProofItem[] = [
+  {
+    id: "memory-proposals",
+    title: "Authoritative Memory Proposals",
+    category: "CHAT RUNTIME",
+    src: "/screenshots/features/chat-authoritative-memory-proposals.png",
+    width: 1400,
+    height: 875,
+    alt: "Siduri Chat showing structured memory proposals committed in real time",
+    caption:
+      "Siduri committing structured preference and episodic memory proposals in real-time with APPROVED receipts and citation links.",
+    details: [
+      "Staged candidate claims appear under assistant dialogue",
+      "Cryptographic receipts linked directly to source conversational events",
+      "Explicit user approval updates long-term PostgreSQL memory",
+    ],
+  },
+  {
+    id: "operator-console",
+    title: "Web Operator Console (/operator)",
+    category: "OPERATOR CONSOLE",
+    src: "/screenshots/features/operator-memory-claims-and-directives.png",
+    width: 1400,
+    height: 875,
+    alt: "Operator Console displaying active behavioral directives and claims",
+    caption:
+      "The local Operator Console inspecting active behavioral directives (stream_behavior, relationship_address) and structured semantic claims with one-click revocation.",
+    details: [
+      "Audit active and pending directives in one central HUD",
+      "Instant revoke and disable controls for full data sovereignty",
+      "No hidden prompt injection or silent persona degradation",
+    ],
+  },
+  {
+    id: "avatar-embodiment",
+    title: "Live2D Cubism Embodiment",
+    category: "BODY ORGAN",
+    src: "/screenshots/avatar/live2d-hooded-avatar-embodiment.jpeg",
+    width: 1200,
+    height: 800,
+    alt: "Full-body Live2D character embodiment running in the chat interface",
+    caption:
+      "Renderer-agnostic Live2D avatar embodiment rendering smoothly on a WebGL canvas with presence status tracking and lip-sync synchronization.",
+    details: [
+      "Real-time expression state machine linked to Brain emotion vectors",
+      "Natural eye contact tracking and idle breathing physics",
+      "Decoupled from runtime: swap avatar models with zero engine changes",
+    ],
+  },
+  {
+    id: "knowledge-citations",
+    title: "Grounded Knowledge Citations",
+    category: "KNOWLEDGE ORGAN",
+    src: "/screenshots/features/chat-knowledge-citations.png",
+    width: 1400,
+    height: 875,
+    alt: "Siduri answering factual inquiries with structured evidence badges",
+    caption:
+      "Factual inquiries answered with verifiable evidence badges (e.g. '4 evidence links') ensuring domain facts never masquerade as personal memories.",
+    details: [
+      "Cited evidence bounds for transparent provenance",
+      "Dual Japanese/English subtitle streams",
+      "Isolated from autobiographical memory to prevent persona drift",
+    ],
+  },
+];
+
+const initialProof = PROOFS[0];
+---
+<section class="py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] bg-[#09090c]" id="gallery">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    {/* Section Header */}
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[10px] font-mono tracking-widest uppercase mb-4">
+        05 · Lab Notes &amp; Snapshots
+      </div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-5">
+        Development Snapshots &amp; Lab Notes
+      </h2>
+      <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] font-sans leading-relaxed font-light">
+        Working captures from our local experimental testbed. These snapshots illustrate
+        how Live2D presence, structured memory proposals, operator directive auditing,
+        and cited knowledge retrieval operate in our active prototype.
+      </p>
+    </div>
+
+    {/* Proof Tabs */}
+    <div class="flex flex-wrap justify-center gap-2 mb-8" id="proof-tabs">
+      {PROOFS.map((proof, idx) => (
+        <button
+          type="button"
+          data-proof-id={proof.id}
+          class={`proof-tab-btn px-4 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer ${
+            idx === 0
+              ? "bg-[var(--siduri-ember)] text-[#161214] font-semibold shadow-md"
+              : "bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] border border-[var(--siduri-border-subtle)] hover:text-[var(--siduri-text-primary)]"
+          }`}
+        >
+          {proof.title}
+        </button>
+      ))}
+    </div>
+
+    {/* Proof Display Frame */}
+    <div class="rounded-2xl border border-[var(--siduri-border-ember)] bg-[#111116] p-4 sm:p-6 shadow-2xl overflow-hidden">
+      {/* Window Header */}
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-[var(--siduri-border-subtle)] text-[11px] font-mono text-[var(--siduri-text-muted)]">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#3d3a44]"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-[#3d3a44]"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-[#3d3a44]"></span>
+          <span id="proof-category-tag" class="ml-2 text-[var(--siduri-ember-light)]">
+            {initialProof.category}
+          </span>
+        </div>
+        <span id="proof-header-title">{initialProof.title}</span>
+      </div>
+
+      {/* Screenshot Image */}
+      <div class="relative aspect-[16/10] w-full rounded-xl overflow-hidden border border-[var(--siduri-border-subtle)] bg-[#08080a] mb-5">
+        <img
+          id="proof-main-image"
+          src={initialProof.src}
+          alt={initialProof.alt}
+          width={initialProof.width}
+          height={initialProof.height}
+          loading="eager"
+          decoding="async"
+          class="w-full h-full object-contain"
+        />
+      </div>
+
+      {/* Caption and Technical Points */}
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 pt-2">
+        <div class="md:col-span-6">
+          <p id="proof-caption" class="text-xs sm:text-sm text-[var(--siduri-text-primary)] leading-relaxed font-sans font-light">
+            {initialProof.caption}
+          </p>
+        </div>
+        <div class="md:col-span-6">
+          <ul id="proof-details-list" class="space-y-2 text-xs font-mono text-[var(--siduri-text-secondary)]">
+            {initialProof.details.map((point) => (
+              <li class="flex items-start gap-2">
+                <span class="text-[var(--siduri-online)]">✓</span>
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ PROOFS }}>
+  let activeProofId = "memory-proposals";
+
+  const tabBtns = document.querySelectorAll(".proof-tab-btn");
+  const catTag = document.getElementById("proof-category-tag");
+  const headerTitle = document.getElementById("proof-header-title");
+  const mainImage = document.getElementById("proof-main-image");
+  const captionEl = document.getElementById("proof-caption");
+  const detailsList = document.getElementById("proof-details-list");
+
+  function renderProof() {
+    const cur = PROOFS.find((p) => p.id === activeProofId) || PROOFS[0];
+
+    if (catTag) catTag.textContent = cur.category;
+    if (headerTitle) headerTitle.textContent = cur.title;
+    if (mainImage) {
+      mainImage.src = cur.src;
+      mainImage.alt = cur.alt;
+      mainImage.width = cur.width;
+      mainImage.height = cur.height;
+    }
+    if (captionEl) captionEl.textContent = cur.caption;
+
+    if (detailsList) {
+      detailsList.innerHTML = cur.details
+        .map(
+          (point) => `
+          <li class="flex items-start gap-2">
+            <span class="text-[var(--siduri-online)]">✓</span>
+            <span>${point}</span>
+          </li>
+        `
+        )
+        .join("");
+    }
+
+    tabBtns.forEach((btn) => {
+      const pid = btn.getAttribute("data-proof-id");
+      if (pid === activeProofId) {
+        btn.className = "proof-tab-btn px-4 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer bg-[var(--siduri-ember)] text-[#161214] font-semibold shadow-md";
+      } else {
+        btn.className = "proof-tab-btn px-4 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] border border-[var(--siduri-border-subtle)] hover:text-[var(--siduri-text-primary)]";
+      }
+    });
+  }
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const pid = btn.getAttribute("data-proof-id");
+      if (pid) {
+        activeProofId = pid;
+        renderProof();
+      }
+    });
+  });
+</script>

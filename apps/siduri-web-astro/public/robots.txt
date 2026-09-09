@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://siduri.vxnus.xyz/sitemap.xml
+Sitemap: https://siduri.vxnus.xyz/sitemap-index.xml

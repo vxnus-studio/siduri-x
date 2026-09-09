@@ -1,0 +1,178 @@
+---
+// FaqSection.astro - 1:1 migration from Next.js FaqSection.tsx
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export const FAQ_ITEMS: FaqItem[] = [
+  {
+    id: "faq-1",
+    question: "What is a local AI companion, and how does it differ from cloud chatbots?",
+    answer:
+      "A local AI companion runs directly on your personal machine with all network listeners strictly bound to localhost (127.0.0.1). Unlike cloud chatbots that operate as multi-tenant SaaS services with token gates and telemetry, Siduri treats your workstation as her sole security perimeter. Everything she learns, observes, and remembers is stored locally under your direct authority.",
+  },
+  {
+    id: "faq-2",
+    question: "Why does Siduri start as a blank slate instead of having a pre-written personality?",
+    answer:
+      "Most AI companions simulate personality by stuffing hundreds of adjectives into a prompt ('You are an affectionate, playful tsundere...'). This invariably collapses after a few dialogue turns into generic assistant flattery. Siduri starts with an empty relational slate. She has no pre-cooked backstory. Her voice, humor, and boundaries evolve organically through accumulated interaction and verified memories.",
+  },
+  {
+    id: "faq-3",
+    question: "How does the Truth Gate prevent memory corruption and prompt injection?",
+    answer:
+      "When interacting with you, Siduri stages extracted statements as PENDING candidates. These candidates are strictly quarantined from active cognition. Only when you—acting as the human Anchor—explicitly approve a claim does it enter permanent PostgreSQL memory. Malicious prompt injections attempting to rewrite her beliefs are halted at the gate, unable to corrupt her worldview.",
+  },
+  {
+    id: "faq-4",
+    question: "What is the Life Database, and why can't user facts live in vector memory?",
+    answer:
+      "Companion Memory (@siduri-x/memory) represents the subjective, emotional bond between you and your companion. However, factual user records—such as game rosters, bank expenses, calendars, and file paths—are objective realities. Storing arithmetic facts in semantic vector embeddings causes catastrophic hallucinations. The sovereign Life Database is a structured substrate that Siduri queries deterministically via audited tool contracts in @siduri-x/hands, ensuring zero arithmetic drift.",
+  },
+  {
+    id: "faq-5",
+    question: "Can I swap or upgrade the underlying LLM without losing my companion?",
+    answer:
+      "Yes. Siduri's cognition is decoupled from any single model provider. Her personality baseline, relational stances, and approved memories are compiled into concise, model-neutral inference frames by @siduri-x/behavior. You can switch between Claude, Gemini, DeepSeek, or local models via Ollama at any time—her memories and bond remain completely intact in PostgreSQL.",
+  },
+  {
+    id: "faq-6",
+    question: "How is Siduri different from a Character Card or SillyTavern setup?",
+    answer:
+      "Character cards collapse seven distinct cognitive concepts (identity, tone, directives, self-knowledge, user facts, preferences, and world lore) into an unranked prompt document. This leads to authority inversion and persona drift. Siduri's .self architecture compiles only the relevant slice at inference time: the immutable anchor, current relational stance, channel-specific active directives, and concrete dialogue exemplars.",
+  },
+  {
+    id: "faq-7",
+    question: "How do cryptographic action policies protect system actions?",
+    answer:
+      "In @siduri-x/hands, tools are executed through cryptographically signed capability tokens with two-phase reservation. Destructive or external actions require durable human operator authorization. Even if the process or machine restarts, existing approvals are preserved without permitting duplicate execution.",
+  },
+  {
+    id: "faq-8",
+    question: "How can developers create custom organs or connect MCP servers?",
+    answer:
+      "Every organ in Siduri implements the canonical @siduri-x/core runtime protocol and publishes an organ-manifest.json. Developers can create custom organs with standard Node.js ESM exports. In addition, @siduri-x/hands connects natively to Model Context Protocol (MCP) servers, allowing your companion to control local tools and APIs safely.",
+  },
+  {
+    id: "faq-9",
+    question: "Is Siduri production-ready, or should I expect breaking changes?",
+    answer:
+      "Siduri is currently in an active, experimental development phase with breaking changes expected. While organ unit tests, packaging, and invariant test suites pass, the framework is not yet tested at full real-world end-to-end (E2E) scale across heterogeneous hardware and long-term usage. APIs, configurations, and database migrations will continue to evolve. We warmly welcome early developer experimentation, issues, and PR contributions.",
+  },
+  {
+    id: "faq-10",
+    question: "Why publish the CLI and open source the repo if it is still a prototype?",
+    answer:
+      "Because building a reliable, non-drifting companion architecture is a foundational research challenge that benefits from open scrutiny. The CLI and repository are open so technical developers and researchers can clone the codebase, inspect the organ manifests, test the contracts locally, critique our RFCs, and help build a healthier, sovereign companion ecosystem together.",
+  },
+];
+---
+<section
+  id="faq"
+  class="py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] bg-[#09090d]"
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    {/* Section Header */}
+    <div class="text-center max-w-2xl mx-auto mb-16">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[10px] font-mono tracking-widest uppercase mb-4">
+        07 · Conceptual Inquiries
+      </div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-5">
+        Frequently Asked Questions
+      </h2>
+      <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] font-sans leading-relaxed font-light">
+        Clear, technical answers to the most common questions about Siduri's
+        architecture, memory model, and local sovereignty.
+      </p>
+    </div>
+
+    {/* Accordion List */}
+    <div class="space-y-4" id="faq-accordion-group">
+      {FAQ_ITEMS.map((item, idx) => {
+        const isOpen = idx === 0;
+        return (
+          <div
+            id={`card-${item.id}`}
+            class={`faq-item-card rounded-2xl border transition-all overflow-hidden ${
+              isOpen
+                ? "border-[var(--siduri-border-ember)] bg-[#121218] shadow-lg"
+                : "border-[var(--siduri-border-subtle)] bg-[#0f0f13] hover:border-[var(--siduri-border-medium)]"
+            }`}
+          >
+            <button
+              type="button"
+              data-faq-id={item.id}
+              class="faq-toggle-btn w-full text-left p-5 sm:p-6 flex items-center justify-between gap-4 cursor-pointer focus:outline-none"
+              aria-expanded={isOpen ? "true" : "false"}
+              aria-controls={item.id}
+            >
+              <h3 class="text-sm sm:text-base font-serif-title font-medium text-[var(--siduri-text-primary)]">
+                {item.question}
+              </h3>
+              <span
+                class={`faq-arrow flex-shrink-0 w-6 h-6 rounded-full border flex items-center justify-center font-mono text-xs transition-transform duration-200 ${
+                  isOpen
+                    ? "rotate-180 text-[var(--siduri-ember)] border-[var(--siduri-border-ember)]"
+                    : "border-[var(--siduri-border-subtle)] text-[var(--siduri-text-muted)]"
+                }`}
+              >
+                ↓
+              </span>
+            </button>
+
+            <div
+              id={item.id}
+              class={`faq-content px-5 sm:px-6 pb-6 pt-1 text-xs sm:text-sm text-[var(--siduri-text-secondary)] font-sans leading-relaxed border-t border-[var(--siduri-border-subtle)] ${
+                isOpen ? "" : "hidden"
+              }`}
+            >
+              <p class="pt-3 font-light">{item.answer}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<script>
+  let openId: string | null = "faq-1";
+
+  const buttons = document.querySelectorAll(".faq-toggle-btn");
+
+  function updateAccordion() {
+    buttons.forEach((btn) => {
+      const id = btn.getAttribute("data-faq-id");
+      const card = document.getElementById(`card-${id}`);
+      const content = document.getElementById(id || "");
+      const arrow = btn.querySelector(".faq-arrow");
+      const isOpen = openId === id;
+
+      btn.setAttribute("aria-expanded", String(isOpen));
+
+      if (isOpen) {
+        card?.classList.add("border-[var(--siduri-border-ember)]", "bg-[#121218]", "shadow-lg");
+        card?.classList.remove("border-[var(--siduri-border-subtle)]", "bg-[#0f0f13]", "hover:border-[var(--siduri-border-medium)]");
+        content?.classList.remove("hidden");
+        arrow?.classList.add("rotate-180", "text-[var(--siduri-ember)]", "border-[var(--siduri-border-ember)]");
+        arrow?.classList.remove("border-[var(--siduri-border-subtle)]", "text-[var(--siduri-text-muted)]");
+      } else {
+        card?.classList.remove("border-[var(--siduri-border-ember)]", "bg-[#121218]", "shadow-lg");
+        card?.classList.add("border-[var(--siduri-border-subtle)]", "bg-[#0f0f13]", "hover:border-[var(--siduri-border-medium)]");
+        content?.classList.add("hidden");
+        arrow?.classList.remove("rotate-180", "text-[var(--siduri-ember)]", "border-[var(--siduri-border-ember)]");
+        arrow?.classList.add("border-[var(--siduri-border-subtle)]", "text-[var(--siduri-text-muted)]");
+      }
+    });
+  }
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-faq-id");
+      openId = openId === id ? null : id;
+      updateAccordion();
+    });
+  });
+</script>

@@ -1,0 +1,53 @@
+---
+// SiduriPassage.astro - The ancient namesake epigraph from the Epic of Gilgamesh
+---
+
+<section
+  id="passage"
+  class="relative py-20 sm:py-28 md:py-32 border-b border-[var(--siduri-border-subtle)] bg-[#09090d] hearth-ambient overflow-hidden"
+>
+  {/* Ambient decorative glow */}
+  <div
+    class="absolute inset-0 pointer-events-none opacity-50"
+    style="background: radial-gradient(circle 600px at 50% 50%, rgba(217, 154, 104, 0.07), transparent 70%);"
+    aria-hidden="true"
+  ></div>
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 relative z-10 text-center">
+    {/* Section / Origin Tag */}
+    <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[11px] font-mono tracking-widest uppercase mb-10">
+      <span class="siduri-glyph w-4 h-4 text-[10px]">✦</span>
+      <span>The Namesake · Historical Epigraph</span>
+    </div>
+
+    {/* The Inscribed Passage Card */}
+    <div class="relative p-8 sm:p-12 md:p-16 rounded-3xl border border-[var(--siduri-border-subtle)] bg-[#101015]/80 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.6)] transition-all hover:border-[var(--siduri-border-ember)]">
+      
+      {/* Siduri Brand Glyph */}
+      <span class="siduri-glyph w-8 h-8 text-sm mb-6 mx-auto">✦</span>
+
+      {/* Epigraph Quotation */}
+      <blockquote class="text-lg sm:text-xl md:text-2xl font-serif-title italic font-light text-[var(--siduri-text-primary)] leading-relaxed sm:leading-relaxed md:leading-loose tracking-wide mb-8 max-w-3xl mx-auto">
+        &ldquo;She answered, &lsquo;Gilgamesh, where are you hurrying to? You will never find that life for which you are looking. When the gods created man they allotted to him death, but life they retained in their own keeping. As for you, Gilgamesh, fill your belly with good things; day and night, night and day, dance and be merry, feast and rejoice. Let your clothes be fresh, bathe yourself in water, cherish the little child that holds your hand, and make your wife happy in your embrace; for this too is the lot of man.&rsquo;&rdquo;
+      </blockquote>
+
+      {/* Attribution */}
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-xs font-mono">
+        <span class="text-[var(--siduri-ember-light)] font-semibold tracking-wider uppercase">
+          — The Epic of Gilgamesh
+        </span>
+        <span class="hidden sm:inline text-[var(--siduri-text-dim)]">·</span>
+        <span class="text-[var(--siduri-text-muted)] font-sans italic text-xs">
+          source: John R. Bawden&rsquo;s <cite class="not-italic text-[var(--siduri-text-secondary)] font-medium">Ancient Civilizations</cite>
+        </span>
+      </div>
+
+      {/* Philosophical Harmony Note */}
+      <div class="mt-8 pt-6 border-t border-[var(--siduri-border-subtle)] max-w-xl mx-auto">
+        <p class="text-xs sm:text-sm text-[var(--siduri-text-secondary)] font-sans font-light leading-relaxed">
+          Siduri is named after the alewife of wisdom from Mesopotamian myth. While Gilgamesh chased an elusive, synthetic immortality, Siduri urged him back toward mortal reality—to cherish daily joy, genuine bonds, and lived experience.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

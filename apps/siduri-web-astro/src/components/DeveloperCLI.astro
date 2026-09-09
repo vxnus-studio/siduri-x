@@ -1,0 +1,276 @@
+---
+// DeveloperCLI.astro - 1:1 migration from Next.js DeveloperCLI.tsx
+interface CliCommand {
+  id: "clone" | "create" | "db" | "doctor";
+  name: string;
+  command: string;
+  purpose: string;
+  outputSnippet: string;
+}
+
+const CLI_COMMANDS: CliCommand[] = [
+  {
+    id: "clone",
+    name: "git clone repo",
+    command: "git clone https://github.com/vxnus-studio/siduri-x.git",
+    purpose:
+      "Clones the core monorepo for inspection, local testing, organ contract audits, and community development.",
+    outputSnippet: `Cloning into 'siduri-x'...
+remote: Enumerating objects: 384, done.
+remote: Counting objects: 100% (384/384), done.
+remote: Compressing objects: 100% (210/210), done.
+Receiving objects: 100% (384/384), 2.45 MiB | 8.12 MiB/s, done.
+
+Next steps for technical developers:
+  cd siduri-x
+  pnpm install
+  npm test
+  # Inspect packages/core, packages/organs/*, and docs/architecture/`,
+  },
+  {
+    id: "create",
+    name: "siduri create (testbed)",
+    command: "npx @vxnus/siduri create test-companion",
+    purpose:
+      "Interactive prototype wizard. Dynamically discovers organ manifests and scaffolds an isolated test instance for local experimentation.",
+    outputSnippet: `? Companion name: test-companion
+? Select LLM reasoning provider: OpenRouter (Claude / DeepSeek / Gemini)
+? Select sensory and physical organs:
+  ❯ ◉ Brain (Reasoning & proposals)
+    ◉ Memory (PostgreSQL Truth Gate)
+    ◉ Hands (Cryptographic tool execution)
+    ◉ Body (Live2D Cubism embodiment)
+    ◉ Voice (Speech synthesis)
+
+✔ Generated testbed companion in ./test-companion
+✔ Composed siduri.schema.json from active organ manifests
+✔ Created docker-compose.yml for local testing services
+
+Next steps:
+  cd test-companion
+  npx @vxnus/siduri db push
+  npm start`,
+  },
+  {
+    id: "db",
+    name: "siduri db push",
+    command: "npx @vxnus/siduri db push",
+    purpose:
+      "Executes SQL migrations with SHA-256 checksum integrity verification exclusively for configured database organs (such as @siduri-x/memory).",
+    outputSnippet: `[siduri] Inspecting database-owning organs...
+[siduri:memory] Checking migration ledger in public.schema_migrations...
+[siduri:memory] Applying 001_initial_memory_schema.sql (sha256:4b91f08a)... ✔
+[siduri:memory] Applying 002_truth_gate_revision_history.sql (sha256:7c10da2e)... ✔
+[siduri:memory] Database schema is up to date. (2 migrations verified)`,
+  },
+  {
+    id: "doctor",
+    name: "siduri doctor",
+    command: "npx @vxnus/siduri doctor",
+    purpose:
+      "Probes active configuration, validates required and optional environment variables, checks database connectivity, and executes organ health assertions.",
+    outputSnippet: `[siduri doctor] Running companion diagnostics...
+  ✔ Node.js version (v20.18.0 >= v20.0.0)
+  ✔ Brain provider credentials (OPENROUTER_API_KEY detected)
+  ✔ Database connection (PostgreSQL 16 on 127.0.0.1:5432)
+  ✔ Action policy secret (ACTION_POLICY_SECRET configured)
+  ✔ Organ manifests validated (5 active organs healthy)
+
+All health probes passed. Companion is ready for launch.`,
+  },
+];
+
+const initialCmd = CLI_COMMANDS.find((c) => c.id === "create") || CLI_COMMANDS[0];
+---
+<section
+  id="cli"
+  class="py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] bg-[#0c0c10]"
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    {/* Section Header */}
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[10px] font-mono tracking-widest uppercase mb-4">
+        06 · Developer Testbed &amp; Inspection
+      </div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-5">
+        Ready to Test, Inspect &amp; Benchmark
+      </h2>
+      <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] font-sans leading-relaxed font-light">
+        The CLI and repository are open to let technical developers inspect
+        the architecture, scaffold local testbeds, and benchmark the organ manifests.
+        Being open does not mean it is a finished consumer appliance—it is an
+        invitation for engineers to clone the code, test the boundaries, and help grow
+        the community.
+      </p>
+    </div>
+
+    {/* Command Selector Tabs */}
+    <div class="flex flex-wrap justify-center gap-2 mb-8" id="cli-tabs">
+      {CLI_COMMANDS.map((cmd) => {
+        const isSelected = cmd.id === initialCmd.id;
+        return (
+          <button
+            type="button"
+            data-cmd-id={cmd.id}
+            class={`cli-tab-btn px-4 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer ${
+              isSelected
+                ? "bg-[var(--siduri-ember)] text-[#161214] font-semibold shadow-md"
+                : "bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] border border-[var(--siduri-border-subtle)] hover:text-[var(--siduri-text-primary)]"
+            }`}
+          >
+            {cmd.name}
+          </button>
+        );
+      })}
+    </div>
+
+    {/* Terminal Simulation Frame */}
+    <div class="rounded-2xl border border-[var(--siduri-border-medium)] bg-[#0e0e14] shadow-2xl overflow-hidden mb-12">
+      {/* Terminal Window Bar */}
+      <div class="flex items-center justify-between px-4 py-3 bg-[#13131a] border-b border-[var(--siduri-border-subtle)] text-xs font-mono">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-red-500/60"></span>
+          <span class="w-3 h-3 rounded-full bg-amber-500/60"></span>
+          <span class="w-3 h-3 rounded-full bg-emerald-500/60"></span>
+          <span class="ml-3 text-[var(--siduri-text-muted)]">
+            bash — 80×24
+          </span>
+        </div>
+
+        <button
+          id="cli-copy-btn"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] hover:text-[var(--siduri-text-primary)] border border-[var(--siduri-border-subtle)] text-[11px] font-mono cursor-pointer transition-colors"
+        >
+          Copy Command
+        </button>
+      </div>
+
+      {/* Command Prompt */}
+      <div class="p-4 sm:p-6 font-mono text-xs sm:text-sm bg-[#09090d]">
+        <div class="flex items-center gap-2 text-[var(--siduri-ember-light)] mb-4 select-none">
+          <span class="text-[var(--siduri-online)]">user@local</span>
+          <span class="text-[var(--siduri-text-muted)]">:</span>
+          <span class="text-blue-400">~/workspace</span>
+          <span class="text-[var(--siduri-text-muted)]">$</span>
+          <span id="cli-command-text" class="text-[var(--siduri-text-primary)] font-semibold select-text">
+            {initialCmd.command}
+          </span>
+        </div>
+
+        {/* Terminal Output */}
+        <pre
+          id="cli-output-pre"
+          class="text-[var(--siduri-text-secondary)] font-mono text-xs sm:text-xs leading-relaxed overflow-x-auto whitespace-pre p-2 bg-[#0c0c11] rounded-lg border border-[var(--siduri-border-subtle)]"
+        >{initialCmd.outputSnippet}</pre>
+      </div>
+
+      {/* Purpose Explanation Footer */}
+      <div class="px-5 py-4 bg-[#111117] border-t border-[var(--siduri-border-subtle)] text-xs text-[var(--siduri-text-secondary)]">
+        <strong class="text-[var(--siduri-ember)] font-mono mr-2">
+          Behavior:
+        </strong>
+        <span id="cli-purpose-text">{initialCmd.purpose}</span>
+      </div>
+    </div>
+
+    {/* Clean Generated Structure Walkthrough */}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-8 rounded-2xl border border-[var(--siduri-border-subtle)] bg-[#0f0f14]">
+      <div>
+        <div class="text-xs font-mono text-[var(--siduri-ember)] uppercase tracking-wider mb-2">
+          Clean Scaffolding
+        </div>
+        <h3 class="text-2xl font-serif-title text-[var(--siduri-text-primary)] mb-4">
+          What The CLI Generates
+        </h3>
+        <p class="text-xs sm:text-sm text-[var(--siduri-text-secondary)] leading-relaxed mb-4">
+          Your standalone companion is a native Node.js project. No heavy
+          monorepo overhead. Only the organ dependencies you explicitly
+          selected are installed.
+        </p>
+        <ul class="space-y-2 text-xs font-mono text-[var(--siduri-text-muted)]">
+          <li class="flex items-center gap-2">
+            <span class="text-[var(--siduri-online)]">✓</span>
+            <span>Explicit ESM bootstrapping in <code>src/index.js</code></span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="text-[var(--siduri-online)]">✓</span>
+            <span>Typed configuration in <code>siduri.config.json</code></span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="text-[var(--siduri-online)]">✓</span>
+            <span>Optional local Docker services for PostgreSQL</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="p-5 rounded-xl bg-[#0a0a0d] border border-[var(--siduri-border-subtle)] font-mono text-xs text-[var(--siduri-text-secondary)] leading-relaxed">
+        <div class="text-[var(--siduri-ember-light)] mb-2 font-bold">
+          my-companion/
+        </div>
+        <div class="pl-3 space-y-1">
+          <div>├── package.json &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[var(--siduri-text-dim)]"># Selected @siduri-x/* organs</span></div>
+          <div>├── siduri.config.json &nbsp;<span class="text-[var(--siduri-text-dim)]"># Composed configurations</span></div>
+          <div>├── siduri.schema.json &nbsp;<span class="text-[var(--siduri-text-dim)]"># Dynamically built JSON schema</span></div>
+          <div>├── .env.example &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[var(--siduri-text-dim)]"># Only variables needed</span></div>
+          <div>├── docker-compose.yml &nbsp;<span class="text-[var(--siduri-text-dim)]"># Optional local PostgreSQL</span></div>
+          <div>└── src/</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;└── index.js &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[var(--siduri-text-dim)]"># Direct runtime bootstrap</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ CLI_COMMANDS }}>
+  let activeCmdId = "create";
+
+  const tabBtns = document.querySelectorAll(".cli-tab-btn");
+  const copyBtn = document.getElementById("cli-copy-btn");
+  const cmdTextEl = document.getElementById("cli-command-text");
+  const outputPreEl = document.getElementById("cli-output-pre");
+  const purposeEl = document.getElementById("cli-purpose-text");
+
+  function renderCmd() {
+    const cur = CLI_COMMANDS.find((c) => c.id === activeCmdId) || CLI_COMMANDS[0];
+
+    if (cmdTextEl) cmdTextEl.textContent = cur.command;
+    if (outputPreEl) outputPreEl.textContent = cur.outputSnippet;
+    if (purposeEl) purposeEl.textContent = cur.purpose;
+
+    tabBtns.forEach((btn) => {
+      const cid = btn.getAttribute("data-cmd-id");
+      if (cid === activeCmdId) {
+        btn.className = "cli-tab-btn px-4 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer bg-[var(--siduri-ember)] text-[#161214] font-semibold shadow-md";
+      } else {
+        btn.className = "cli-tab-btn px-4 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] border border-[var(--siduri-border-subtle)] hover:text-[var(--siduri-text-primary)]";
+      }
+    });
+  }
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const cid = btn.getAttribute("data-cmd-id");
+      if (cid) {
+        activeCmdId = cid;
+        renderCmd();
+      }
+    });
+  });
+
+  copyBtn?.addEventListener("click", async () => {
+    const cur = CLI_COMMANDS.find((c) => c.id === activeCmdId) || CLI_COMMANDS[0];
+    try {
+      await navigator.clipboard.writeText(cur.command);
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => {
+        copyBtn.textContent = "Copy Command";
+      }, 2000);
+    } catch {
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => {
+        copyBtn.textContent = "Copy Command";
+      }, 2000);
+    }
+  });
+</script>

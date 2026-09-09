@@ -1,0 +1,268 @@
+---
+// Navbar.astro - 1:1 migration from Next.js Navbar.tsx
+---
+<header class="sticky top-0 z-50 backdrop-blur-md bg-[#0b0b0e]/85 border-b border-[var(--siduri-border-subtle)]">
+  <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+    {/* Brand Mark */}
+    <a
+      href="/"
+      class="flex items-center gap-2.5 text-[var(--siduri-ember)] font-bold tracking-widest text-xs uppercase hover:text-[var(--siduri-ember-highlight)] transition-colors shrink-0"
+      aria-label="Siduri Home"
+    >
+      <span class="siduri-glyph w-6 h-6 text-xs text-[var(--siduri-ember)] font-serif">
+        ✦
+      </span>
+      <span class="font-semibold text-sm tracking-[0.2em] text-[var(--siduri-text-primary)]">
+        SIDURI<span class="text-[var(--siduri-ember)]">-X</span>
+      </span>
+    </a>
+
+    {/* Desktop Navigation Links */}
+    <nav
+      class="hidden md:flex items-center gap-4 lg:gap-5 xl:gap-6 2xl:gap-8 text-xs font-mono tracking-wider text-[var(--siduri-text-secondary)] uppercase"
+      aria-label="Main Navigation"
+    >
+      <a
+        href="#passage"
+        class="hover:text-[var(--siduri-ember-light)] transition-colors whitespace-nowrap shrink-0"
+      >
+        Passage
+      </a>
+      <a
+        href="#what-is-siduri"
+        class="hover:text-[var(--siduri-ember-light)] transition-colors whitespace-nowrap shrink-0"
+      >
+        Thesis
+      </a>
+      <a
+        href="#truth-gate"
+        class="hover:text-[var(--siduri-ember-light)] transition-colors whitespace-nowrap shrink-0"
+      >
+        <span>Truth Gate</span><span class="hidden xl:inline"> Flow</span>
+      </a>
+      <a
+        href="#life-database"
+        class="hover:text-[var(--siduri-ember-light)] transition-colors whitespace-nowrap shrink-0"
+      >
+        <span>Life DB</span><span class="hidden xl:inline"> RFC</span>
+      </a>
+      <a
+        href="#organs"
+        class="hover:text-[var(--siduri-ember-light)] transition-colors whitespace-nowrap shrink-0"
+      >
+        <span>Organs</span><span class="hidden xl:inline"> (WIP)</span>
+      </a>
+      <a
+        href="#cli"
+        class="hover:text-[var(--siduri-ember-light)] transition-colors whitespace-nowrap shrink-0"
+      >
+        <span class="hidden xl:inline">Inspect </span><span>CLI</span>
+      </a>
+      <a
+        href="#faq"
+        class="hover:text-[var(--siduri-ember-light)] transition-colors whitespace-nowrap shrink-0"
+      >
+        FAQ
+      </a>
+      <a
+        href="#roadmap"
+        class="hover:text-[var(--siduri-ember-light)] transition-colors whitespace-nowrap shrink-0"
+      >
+        Evolution
+      </a>
+    </nav>
+
+    {/* Action Controls & External Badges */}
+    <div class="hidden lg:flex items-center gap-2.5 xl:gap-3 shrink-0">
+      {/* GitHub Star Button */}
+      <a
+        href="https://github.com/vxnus-studio/siduri-x"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] hover:text-[var(--siduri-text-primary)] hover:border-[var(--siduri-border-ember)] text-xs font-mono transition-all shrink-0"
+        aria-label="Star siduri-x on GitHub"
+      >
+        <svg
+          class="w-3.5 h-3.5 fill-current text-[var(--siduri-ember)]"
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+        >
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+        <span>Star</span>
+      </a>
+
+      {/* Prototype npm Badge */}
+      <a
+        href="https://www.npmjs.com/package/@vxnus/siduri"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-950/20 text-[11px] font-mono text-amber-300 hover:border-amber-500/50 transition-all shrink-0"
+        title="Experimental CLI package on npm"
+      >
+        <span class="text-amber-400 text-xs">●</span>
+        <span>v0.1.7 (Testing)</span>
+      </a>
+
+      {/* Clone & Test pill */}
+      <a
+        href="https://github.com/vxnus-studio/siduri-x"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-text-primary)] hover:bg-[var(--siduri-tint-med)] text-xs font-mono transition-all shrink-0"
+        title="Inspect source on GitHub"
+      >
+        <span class="text-[var(--siduri-ember)]">$</span>
+        <span>Clone &amp; Inspect</span>
+      </a>
+    </div>
+
+    {/* Mobile Hamburger Toggle */}
+    <div class="flex md:hidden items-center gap-2 shrink-0">
+      <button
+        id="navbar-toggle"
+        class="p-2 rounded-lg border border-[var(--siduri-border-subtle)] text-[var(--siduri-text-secondary)] hover:text-[var(--siduri-text-primary)] cursor-pointer"
+        aria-label="Toggle navigation menu"
+        aria-expanded="false"
+      >
+        <svg
+          id="hamburger-icon-open"
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          ></path>
+        </svg>
+        <svg
+          id="hamburger-icon-close"
+          class="w-5 h-5 hidden"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  {/* Mobile Drawer */}
+  <div
+    id="mobile-drawer"
+    class="hidden md:hidden border-b border-[var(--siduri-border-subtle)] bg-[#0b0b0e] px-4 py-5 space-y-4"
+  >
+    <div class="flex flex-col gap-3 text-xs font-mono uppercase tracking-wider text-[var(--siduri-text-secondary)]">
+      <a
+        href="#passage"
+        class="mobile-nav-link py-1.5 hover:text-[var(--siduri-ember)]"
+      >
+        Passage
+      </a>
+      <a
+        href="#what-is-siduri"
+        class="mobile-nav-link py-1.5 hover:text-[var(--siduri-ember)]"
+      >
+        Philosophy
+      </a>
+      <a
+        href="#truth-gate"
+        class="mobile-nav-link py-1.5 hover:text-[var(--siduri-ember)]"
+      >
+        Truth Gate
+      </a>
+      <a
+        href="#life-database"
+        class="mobile-nav-link py-1.5 hover:text-[var(--siduri-ember)]"
+      >
+        Life Database
+      </a>
+      <a
+        href="#organs"
+        class="mobile-nav-link py-1.5 hover:text-[var(--siduri-ember)]"
+      >
+        10 Organs
+      </a>
+      <a
+        href="#cli"
+        class="mobile-nav-link py-1.5 hover:text-[var(--siduri-ember)]"
+      >
+        CLI &amp; Quickstart
+      </a>
+      <a
+        href="#faq"
+        class="mobile-nav-link py-1.5 hover:text-[var(--siduri-ember)]"
+      >
+        FAQ
+      </a>
+      <a
+        href="#roadmap"
+        class="mobile-nav-link py-1.5 hover:text-[var(--siduri-ember)]"
+      >
+        Roadmap
+      </a>
+    </div>
+
+    <div class="pt-3 border-t border-[var(--siduri-border-subtle)] flex flex-wrap gap-2">
+      <a
+        href="https://github.com/vxnus-studio/siduri-x"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex-1 text-center py-2 px-3 rounded-lg border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-xs font-mono text-[var(--siduri-text-primary)]"
+      >
+        GitHub Repo
+      </a>
+      <a
+        href="https://www.npmjs.com/package/@vxnus/siduri"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex-1 text-center py-2 px-3 rounded-lg border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-xs font-mono text-[var(--siduri-text-primary)]"
+      >
+        npm Package
+      </a>
+    </div>
+  </div>
+</header>
+
+<script>
+  const toggleBtn = document.getElementById('navbar-toggle');
+  const mobileDrawer = document.getElementById('mobile-drawer');
+  const iconOpen = document.getElementById('hamburger-icon-open');
+  const iconClose = document.getElementById('hamburger-icon-close');
+  const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+
+  function setOpen(open: boolean) {
+    if (!toggleBtn || !mobileDrawer || !iconOpen || !iconClose) return;
+    toggleBtn.setAttribute('aria-expanded', String(open));
+    if (open) {
+      mobileDrawer.classList.remove('hidden');
+      iconOpen.classList.add('hidden');
+      iconClose.classList.remove('hidden');
+    } else {
+      mobileDrawer.classList.add('hidden');
+      iconOpen.classList.remove('hidden');
+      iconClose.classList.add('hidden');
+    }
+  }
+
+  toggleBtn?.addEventListener('click', () => {
+    const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+    setOpen(!isExpanded);
+  });
+
+  mobileLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      setOpen(false);
+    });
+  });
+</script>

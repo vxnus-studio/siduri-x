@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import CommunityFooter from '../components/CommunityFooter.astro';
+---
+
+<Layout
+  title="404 — Page Not Found | Siduri-X"
+  description="This coordinate does not exist within the Siduri-X local security perimeter."
+  canonical="https://siduri.vxnus.xyz/404"
+  noindex={true}
+>
+  <div class="min-h-screen flex flex-col bg-[#0b0b0e] text-[#eee8df] font-sans antialiased">
+    <Navbar />
+    <main class="flex-1 flex flex-col items-center justify-center text-center px-4 py-32 hearth-ambient">
+      <div class="max-w-md mx-auto">
+        <span class="siduri-glyph w-12 h-12 text-xl mb-6 mx-auto">✦</span>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-950/20 text-amber-300 text-[10px] font-mono tracking-widest uppercase mb-6">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          Error 404 · Unknown Coordinate
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-serif-title text-[var(--siduri-text-primary)] mb-4">
+          Signal Not Found
+        </h1>
+        <p class="text-sm text-[var(--siduri-text-secondary)] font-sans leading-relaxed mb-8 font-light">
+          The requested path does not exist within the Siduri local perimeter. All cognitive routes remain bound to the root coordinate.
+        </p>
+        <a
+          href="/"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--siduri-ember)] text-[#161214] font-sans font-semibold text-sm hover:bg-[var(--siduri-ember-highlight)] transition-all shadow-[0_4px_20px_rgba(217,154,104,0.22)]"
+        >
+          Return to Overview
+        </a>
+      </div>
+    </main>
+    <CommunityFooter />
+  </div>
+</Layout>

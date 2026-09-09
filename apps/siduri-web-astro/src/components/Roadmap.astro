@@ -1,0 +1,181 @@
+---
+// Roadmap.astro - 1:1 migration from Next.js Roadmap.tsx
+---
+<section
+  id="roadmap"
+  class="py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] bg-[#0b0b0e]"
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    {/* Section Header */}
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[10px] font-mono tracking-widest uppercase mb-4">
+        08 · Project Roadmap
+      </div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-5">
+        The Living Horizon
+      </h2>
+      <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] font-sans leading-relaxed font-light mb-6">
+        Siduri is in active, disciplined open-source development. We clearly
+        separate what is verified today from our upcoming architectural milestones.
+      </p>
+
+      <div class="inline-flex items-start gap-2.5 p-3 sm:px-4 sm:py-2.5 rounded-xl border border-amber-500/30 bg-amber-950/20 text-left text-xs font-sans text-amber-200/90 max-w-2xl mx-auto">
+        <span class="font-mono text-amber-400 select-none">⚠</span>
+        <span>
+          <strong class="font-mono text-amber-300 uppercase tracking-wide">Notice:</strong> Siduri is currently in an experimental development phase with breaking changes expected. While organ unit tests and packaging invariants pass, the system is <strong>untested at real-world end-to-end (E2E) scale</strong> across diverse physical hardware.
+        </span>
+      </div>
+    </div>
+
+    {/* Two Column Milestone Grid */}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Available Now */}
+      <div class="p-8 rounded-2xl border border-[var(--siduri-border-ember)] bg-[#101015] shadow-xl">
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-[var(--siduri-border-subtle)]">
+          <span class="text-xs font-mono font-bold text-[var(--siduri-online)] uppercase tracking-wider">
+            ● Progressing Baseline (Ready to Test)
+          </span>
+          <span class="text-[10px] font-mono text-[var(--siduri-text-dim)]">
+            Experimental Scaffold
+          </span>
+        </div>
+
+        <ul class="space-y-4 text-xs sm:text-sm text-[var(--siduri-text-secondary)]">
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-online)] font-bold mt-0.5">✓</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                10 Canonical Organs Distributed
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Independently published @siduri-x/* packages with zero-bundling ESM resolution.
+              </span>
+            </div>
+          </li>
+
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-online)] font-bold mt-0.5">✓</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                Interactive CLI Generator (@vxnus/siduri)
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Dynamic organ manifest discovery, PostgreSQL migrations (db push), and doctor health probes.
+              </span>
+            </div>
+          </li>
+
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-online)] font-bold mt-0.5">✓</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                PostgreSQL Memory Truth Gate
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Staged PENDING proposals, explicit human approvals, and tamper-evident SHA-256 revision history.
+              </span>
+            </div>
+          </li>
+
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-online)] font-bold mt-0.5">✓</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                Embodiment &amp; Voice Synthesis
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Live2D Cubism WebGL avatar state machine with queued Edge-TTS / Piper / VOICEVOX speech.
+              </span>
+            </div>
+          </li>
+
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-online)] font-bold mt-0.5">✓</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                Operator Web Console (/operator)
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Active behavioral directive audit, claim inspection, and response gating management.
+              </span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      {/* Coming Soon */}
+      <div class="p-8 rounded-2xl border border-[var(--siduri-border-subtle)] bg-[#0e0e13]">
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-[var(--siduri-border-subtle)]">
+          <span class="text-xs font-mono font-bold text-[var(--siduri-ember)] uppercase tracking-wider">
+            ✦ Coming Soon (Next Milestones)
+          </span>
+          <span class="text-[10px] font-mono text-[var(--siduri-text-dim)]">
+            Active Architecture RFCs
+          </span>
+        </div>
+
+        <ul class="space-y-4 text-xs sm:text-sm text-[var(--siduri-text-secondary)]">
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-ember)] font-bold mt-0.5">↳</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                Native Life Database Connectors
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Structured adapters for game account rosters (Genshin, Star Rail), local expense ledgers, and Obsidian vaults.
+              </span>
+            </div>
+          </li>
+
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-ember)] font-bold mt-0.5">↳</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                Distributed Multi-Machine Topology
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Run GPU-heavy Vision and Voice organs on a local homelab workstation while running Brain on a laptop.
+              </span>
+            </div>
+          </li>
+
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-ember)] font-bold mt-0.5">↳</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                Dynamic .self Asset Package Importer
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Exportable character ethos bundles containing trait bounds, guardrails, and few-shot dialogue exemplars.
+              </span>
+            </div>
+          </li>
+
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-ember)] font-bold mt-0.5">↳</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                Community Organ Registry
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Directory for third-party organ plugins and verified Model Context Protocol (MCP) tool integrations.
+              </span>
+            </div>
+          </li>
+
+          <li class="flex items-start gap-3">
+            <span class="text-[var(--siduri-ember)] font-bold mt-0.5">↳</span>
+            <div>
+              <strong class="text-[var(--siduri-text-primary)] block font-medium">
+                Local RVC Voice Cloning Pipeline
+              </strong>
+              <span class="text-xs text-[var(--siduri-text-muted)] font-light">
+                Integrated post-processing converter for training and inferencing custom acoustic models locally.
+              </span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

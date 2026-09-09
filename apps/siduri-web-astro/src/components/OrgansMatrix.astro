@@ -1,0 +1,363 @@
+---
+// OrgansMatrix.astro - 1:1 migration from Next.js OrgansMatrix.tsx
+interface Organ {
+  id: string;
+  name: string;
+  category: "THINK" | "REMEMBER" | "ACT" | "EMBODY";
+  pkg: string;
+  version: string;
+  tagline: string;
+  description: string;
+  keyCapability: string;
+}
+
+const ORGANS: Organ[] = [
+  // THINK
+  {
+    id: "brain",
+    name: "Brain",
+    category: "THINK",
+    pkg: "@siduri-x/brain",
+    version: "^1.0.2",
+    tagline: "Provider-neutral LLM reasoning & response planning",
+    description:
+      "Orchestrates model cognition across local or remote providers (OpenRouter, Anthropic, Gemini, Ollama) with global wall-clock deadline bounding and private internal monologues.",
+    keyCapability: "Cognitive planning, proposal generation, and stance adaptation",
+  },
+  {
+    id: "behavior",
+    name: "Behavior",
+    category: "THINK",
+    pkg: "@siduri-x/behavior",
+    version: "^1.0.2",
+    tagline: "Atomic directive state machine & .self compiler",
+    description:
+      "Compiles channel-specific rules, relational stance sliders (formality, trust), and dialogue exemplars into concise inference frames without token bloat or rule contradiction.",
+    keyCapability: "Dynamic active-self compilation & channel policy gating",
+  },
+
+  // REMEMBER
+  {
+    id: "memory",
+    name: "Memory",
+    category: "REMEMBER",
+    pkg: "@siduri-x/memory",
+    version: "^1.0.2",
+    tagline: "PostgreSQL-backed authoritative semantic storage",
+    description:
+      "Enforces the Truth Gate lifecycle. Claims are proposed as PENDING and promoted to immutable APPROVED records with SHA-256 revision history and SQL migration push.",
+    keyCapability: "Immutable semantic & episodic claims with full provenance",
+  },
+  {
+    id: "knowledge",
+    name: "Knowledge",
+    category: "REMEMBER",
+    pkg: "@siduri-x/knowledge",
+    version: "^1.0.2",
+    tagline: "Verifiable E-compatible domain knowledge packs",
+    description:
+      "Retrieves external domain facts and documentation with cited evidence badges, ensuring third-party lore never masquerades as autobiographical companion memory.",
+    keyCapability: "Evidence citation bounds and verified domain retrieval",
+  },
+
+  // ACT
+  {
+    id: "hands",
+    name: "Hands",
+    category: "ACT",
+    pkg: "@siduri-x/hands",
+    version: "^1.0.2",
+    tagline: "Tool execution & cryptographic action capability tokens",
+    description:
+      "Executes system and external tools through signed capability tokens and confirmation boundaries. Connects natively to Model Context Protocol (MCP) servers.",
+    keyCapability: "ActionPolicyEngine, durable approvals, and MCP tool client",
+  },
+  {
+    id: "core",
+    name: "Core",
+    category: "ACT",
+    pkg: "@siduri-x/core",
+    version: "^1.0.2",
+    tagline: "Central event bus, contracts & response gating engine",
+    description:
+      "Defines the organ contracts, lifecycle events, and ResponseGatingEngine that prevents unverified candidate speech from emitting across sensitive channels.",
+    keyCapability: "Organ registry, event orchestration, and response admissibility",
+  },
+
+  // EMBODY & PERCEIVE
+  {
+    id: "body",
+    name: "Body",
+    category: "EMBODY",
+    pkg: "@siduri-x/body",
+    version: "^1.0.4",
+    tagline: "Renderer-agnostic Live2D Cubism avatar embodiment",
+    description:
+      "Translates emotional state transitions and speech timing into Live2D expressions, head tilt physics, eye contact tracking, and tactile presence states.",
+    keyCapability: "WebGL Live2D Cubism state machine & presence dock",
+  },
+  {
+    id: "voice",
+    name: "Voice",
+    category: "EMBODY",
+    pkg: "@siduri-x/voice",
+    version: "^1.0.3",
+    tagline: "Multi-engine queued speech synthesis & RVC audio",
+    description:
+      "Provides local and low-latency auditory expression using Edge-TTS, Piper, or VOICEVOX, with optional Retrieval-based Voice Conversion (RVC) post-processing.",
+    keyCapability: "Queued audio playback with bounded streaming byte ceilings",
+  },
+  {
+    id: "vision",
+    name: "Vision",
+    category: "EMBODY",
+    pkg: "@siduri-x/vision",
+    version: "^1.0.2",
+    tagline: "Optical observation, cropping & multi-pass OCR",
+    description:
+      "Processes visual inputs, screen regions, and image evidence with multi-pass OCR perception and sensitivity boundary checks.",
+    keyCapability: "Visual perception adapter and OCR text extraction",
+  },
+  {
+    id: "ear",
+    name: "Ear",
+    category: "EMBODY",
+    pkg: "@siduri-x/ear",
+    version: "^1.0.2",
+    tagline: "Acoustic sensory ingestion & MIME bounds verification",
+    description:
+      "Ingests ambient audio streams and user voice input with strict MIME type validation and audio transcription pipelines.",
+    keyCapability: "Audio buffer ingestion and transcription streaming",
+  },
+  {
+    id: "observation",
+    name: "Observation",
+    category: "EMBODY",
+    pkg: "@siduri-x/observation",
+    version: "^1.0.2",
+    tagline: "SHA-256 frame deduplication & real-time evidence extraction",
+    description:
+      "Deduplicates sensory event frames using cryptographic hashes, preventing repetitive context pollution during real-time screen and state monitoring.",
+    keyCapability: "Rate-limited sensory sampling & digested evidence chains",
+  },
+];
+
+const initialOrgan = ORGANS[0];
+const TABS = ["ALL", "THINK", "REMEMBER", "ACT", "EMBODY"] as const;
+---
+<section
+  id="organs"
+  class="py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] bg-[#0b0b0f]"
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    {/* Section Header */}
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[10px] font-mono tracking-widest uppercase mb-4">
+        04 · Progressing Topology (Work in Progress)
+      </div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-5">
+        The Decoupled Organ Topology
+      </h2>
+      <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] font-sans leading-relaxed font-light">
+        An evolving 10-organ modular architecture. Rather than an opaque monolith,
+        each faculty—thinking, remembering, acting, perceiving, and embodying—is
+        factored into an independent, inspectable package currently under active iteration.
+      </p>
+    </div>
+
+    {/* Cognitive Faculty Selector Tabs */}
+    <div class="flex flex-wrap justify-center gap-2 mb-10" id="organ-category-tabs">
+      {TABS.map((tab, idx) => (
+        <button
+          type="button"
+          data-category={tab}
+          class={`organ-tab-btn px-4 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer ${
+            idx === 0
+              ? "bg-[var(--siduri-ember)] text-[#151214] font-semibold shadow-md"
+              : "bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] border border-[var(--siduri-border-subtle)] hover:text-[var(--siduri-text-primary)]"
+          }`}
+        >
+          {tab === "ALL" ? "All Organs (11)" : tab}
+        </button>
+      ))}
+    </div>
+
+    {/* Organ Grid & Detail Inspector */}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Organ List Chips */}
+      <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-3" id="organ-chips-container">
+        {ORGANS.map((organ) => {
+          const isSelected = organ.id === initialOrgan.id;
+          return (
+            <button
+              type="button"
+              data-organ-id={organ.id}
+              data-organ-category={organ.category}
+              class={`organ-chip p-4 rounded-xl text-left transition-all border cursor-pointer ${
+                isSelected
+                  ? "border-[var(--siduri-border-ember-bright)] bg-[var(--siduri-tint-med)] shadow-lg"
+                  : "border-[var(--siduri-border-subtle)] bg-[#101015] hover:border-[var(--siduri-border-medium)] hover:bg-[#15151c]"
+              }`}
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-mono text-xs font-bold text-[var(--siduri-text-primary)]">
+                  {organ.name}
+                </span>
+                <span class="text-[10px] font-mono text-[var(--siduri-ember)] bg-[var(--siduri-tint-low)] px-1.5 py-0.5 rounded border border-[var(--siduri-border-ember)]">
+                  {organ.category}
+                </span>
+              </div>
+              <div class="text-[11px] font-mono text-[var(--siduri-text-muted)] truncate mb-1">
+                {organ.pkg}
+              </div>
+              <div class="text-xs text-[var(--siduri-text-secondary)] line-clamp-2 leading-snug">
+                {organ.tagline}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Detailed Organ Inspector */}
+      <div class="lg:col-span-6 p-7 rounded-2xl border border-[var(--siduri-border-ember)] bg-[#121217] shadow-2xl relative">
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-[var(--siduri-border-subtle)]">
+          <div>
+            <span class="text-[10px] font-mono uppercase tracking-widest text-[var(--siduri-ember)] block mb-1">
+              Organ Manifest Inspector
+            </span>
+            <h3 id="inspector-organ-name" class="text-2xl font-serif-title text-[var(--siduri-text-primary)]">
+              {initialOrgan.name} Organ
+            </h3>
+          </div>
+          <span
+            id="inspector-organ-version"
+            class="text-xs font-mono text-[var(--siduri-online)] bg-emerald-950/30 border border-emerald-500/30 px-2.5 py-1 rounded-full"
+          >
+            {initialOrgan.version}
+          </span>
+        </div>
+
+        <div class="space-y-5 text-xs">
+          <div>
+            <label class="text-[10px] font-mono uppercase text-[var(--siduri-text-muted)] block mb-1">
+              Package Distribution
+            </label>
+            <div
+              id="inspector-organ-pkg"
+              class="p-2.5 rounded-lg bg-[#0d0d11] border border-[var(--siduri-border-subtle)] font-mono text-[var(--siduri-ember-light)]"
+            >
+              {initialOrgan.pkg}
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-mono uppercase text-[var(--siduri-text-muted)] block mb-1">
+              Runtime Purpose
+            </label>
+            <p
+              id="inspector-organ-desc"
+              class="text-sm text-[var(--siduri-text-secondary)] leading-relaxed font-sans"
+            >
+              {initialOrgan.description}
+            </p>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-mono uppercase text-[var(--siduri-text-muted)] block mb-1">
+              Core Invariant &amp; Capability
+            </label>
+            <div
+              id="inspector-organ-capability"
+              class="p-3 rounded-lg bg-[var(--siduri-tint-low)] border border-[var(--siduri-border-ember)] text-[var(--siduri-text-primary)] font-mono text-xs"
+            >
+              ✦ {initialOrgan.keyCapability}
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[var(--siduri-border-subtle)] flex items-center justify-between text-[11px] font-mono text-[var(--siduri-text-muted)]">
+            <span>Zero Monolithic Bundling</span>
+            <span>Standard Node.js ESM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ ORGANS }}>
+  let selectedOrganId = "brain";
+  let activeTab = "ALL";
+
+  const tabBtns = document.querySelectorAll(".organ-tab-btn");
+  const chipBtns = document.querySelectorAll(".organ-chip");
+  const nameEl = document.getElementById("inspector-organ-name");
+  const versionEl = document.getElementById("inspector-organ-version");
+  const pkgEl = document.getElementById("inspector-organ-pkg");
+  const descEl = document.getElementById("inspector-organ-desc");
+  const capEl = document.getElementById("inspector-organ-capability");
+
+  function renderView() {
+    const cur = ORGANS.find((o) => o.id === selectedOrganId) || ORGANS[0];
+
+    // Update inspector
+    if (nameEl) nameEl.textContent = `${cur.name} Organ`;
+    if (versionEl) versionEl.textContent = cur.version;
+    if (pkgEl) pkgEl.textContent = cur.pkg;
+    if (descEl) descEl.textContent = cur.description;
+    if (capEl) capEl.textContent = `✦ ${cur.keyCapability}`;
+
+    // Update tabs
+    tabBtns.forEach((btn) => {
+      const cat = btn.getAttribute("data-category");
+      if (cat === activeTab) {
+        btn.className = "organ-tab-btn px-4 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer bg-[var(--siduri-ember)] text-[#151214] font-semibold shadow-md";
+      } else {
+        btn.className = "organ-tab-btn px-4 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] border border-[var(--siduri-border-subtle)] hover:text-[var(--siduri-text-primary)]";
+      }
+    });
+
+    // Update chips visibility and active state
+    chipBtns.forEach((chip) => {
+      const chipCat = chip.getAttribute("data-organ-category");
+      const chipId = chip.getAttribute("data-organ-id");
+
+      const visible = activeTab === "ALL" || chipCat === activeTab;
+      if (visible) {
+        chip.classList.remove("hidden");
+      } else {
+        chip.classList.add("hidden");
+      }
+
+      if (chipId === selectedOrganId) {
+        chip.className = `organ-chip p-4 rounded-xl text-left transition-all border cursor-pointer border-[var(--siduri-border-ember-bright)] bg-[var(--siduri-tint-med)] shadow-lg ${visible ? '' : 'hidden'}`;
+      } else {
+        chip.className = `organ-chip p-4 rounded-xl text-left transition-all border cursor-pointer border-[var(--siduri-border-subtle)] bg-[#101015] hover:border-[var(--siduri-border-medium)] hover:bg-[#15151c] ${visible ? '' : 'hidden'}`;
+      }
+    });
+  }
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const cat = btn.getAttribute("data-category");
+      if (cat) {
+        activeTab = cat;
+        // If current organ is not in selected tab, switch to first matching
+        const matching = activeTab === "ALL" ? ORGANS : ORGANS.filter((o) => o.category === activeTab);
+        if (!matching.some((o) => o.id === selectedOrganId) && matching.length > 0) {
+          selectedOrganId = matching[0].id;
+        }
+        renderView();
+      }
+    });
+  });
+
+  chipBtns.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const id = chip.getAttribute("data-organ-id");
+      if (id) {
+        selectedOrganId = id;
+        renderView();
+      }
+    });
+  });
+</script>

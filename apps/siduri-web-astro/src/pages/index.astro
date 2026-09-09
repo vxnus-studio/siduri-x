@@ -1,0 +1,35 @@
+---
+// index.astro - 1:1 migration of Next.js Home page
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import SiduriPassage from '../components/SiduriPassage.astro';
+import WhatIsSiduri from '../components/WhatIsSiduri.astro';
+import TruthGateDemo from '../components/TruthGateDemo.astro';
+import LifeDatabaseSection from '../components/LifeDatabaseSection.astro';
+import OrgansMatrix from '../components/OrgansMatrix.astro';
+import RealProofGallery from '../components/RealProofGallery.astro';
+import DeveloperCLI from '../components/DeveloperCLI.astro';
+import FaqSection from '../components/FaqSection.astro';
+import Roadmap from '../components/Roadmap.astro';
+import CommunityFooter from '../components/CommunityFooter.astro';
+---
+
+<Layout>
+  <div class="min-h-screen flex flex-col bg-[#0b0b0e] text-[#eee8df] font-sans antialiased selection:bg-[#d99a68]/30 selection:text-[#f4c28d]">
+    <Navbar />
+    <main class="flex-1 flex flex-col">
+      <Hero />
+      <SiduriPassage />
+      <WhatIsSiduri />
+      <TruthGateDemo />
+      <LifeDatabaseSection />
+      <OrgansMatrix />
+      <RealProofGallery />
+      <DeveloperCLI />
+      <FaqSection />
+      <Roadmap />
+    </main>
+    <CommunityFooter />
+  </div>
+</Layout>

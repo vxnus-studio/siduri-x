@@ -1,0 +1,299 @@
+---
+// CommunityFooter.astro - 1:1 migration from Next.js CommunityFooter.tsx
+---
+<footer class="bg-[#08080a] border-t border-[var(--siduri-border-subtle)] text-[var(--siduri-text-secondary)]">
+  {/* High-Impact Community & Architecture Call to Action */}
+  <div class="py-20 md:py-28 max-w-4xl mx-auto px-4 sm:px-6 text-center border-b border-[var(--siduri-border-subtle)]">
+    <span class="siduri-glyph w-10 h-10 text-lg mb-6 mx-auto">✦</span>
+    <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-5">
+      Clone the repo. Test the code.
+      <br />
+      <span class="text-[var(--siduri-ember-light)] italic font-light">
+        Help shape the architecture.
+      </span>
+    </h2>
+    <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] max-w-2xl mx-auto mb-8 font-sans font-light">
+      Siduri is an evolving, open-source architectural exploration. The CLI and
+      repository are open to <strong>inspect, benchmark, and test</strong>.
+      We are actively looking for technical developers, researchers, and systems
+      thinkers to clone the codebase, stress-test the organ boundaries, and grow our
+      community together.
+    </p>
+
+    {/* Copyable Git Clone CTA */}
+    <div class="inline-flex items-center gap-3 p-2 rounded-xl bg-[#111117] border border-[var(--siduri-border-ember)] max-w-lg w-full justify-between shadow-2xl mb-8">
+      <div class="flex items-center gap-2 px-2 font-mono text-xs text-[var(--siduri-text-primary)] truncate">
+        <span class="text-[var(--siduri-ember)] font-bold">$</span>
+        <span class="truncate">git clone https://github.com/vxnus-studio/siduri-x.git</span>
+      </div>
+      <button
+        id="footer-copy-btn"
+        type="button"
+        class="flex-shrink-0 px-3 py-1.5 rounded-lg bg-[var(--siduri-ember)] text-[#151214] font-mono text-xs font-semibold hover:bg-[var(--siduri-ember-highlight)] transition-all cursor-pointer"
+        aria-label="Copy clone command"
+      >
+        Copy
+      </button>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-4 text-xs font-mono">
+      <a
+        href="https://github.com/vxnus-studio/siduri-x"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-primary)] hover:border-[var(--siduri-border-ember)] transition-all"
+      >
+        <svg
+          class="w-4 h-4 fill-current text-[var(--siduri-ember)]"
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+        >
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+        <span>Star on GitHub</span>
+      </a>
+
+      <a
+        href="https://github.com/vxnus-studio/siduri-x/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] hover:text-[var(--siduri-text-primary)] hover:border-[var(--siduri-border-medium)] transition-all"
+      >
+        <span>Open an Issue</span>
+      </a>
+
+      <a
+        href="https://github.com/vxnus-studio/siduri-x/pulls"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] hover:text-[var(--siduri-text-primary)] hover:border-[var(--siduri-border-medium)] transition-all"
+      >
+        <span>Contribute a PR</span>
+      </a>
+    </div>
+  </div>
+
+  {/* Structured Ecosystem Links */}
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-14">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12 text-xs">
+      <div>
+        <div class="font-mono text-[var(--siduri-text-primary)] uppercase tracking-wider font-semibold mb-3">
+          Open Source
+        </div>
+        <ul class="space-y-2.5 font-sans text-[var(--siduri-text-muted)]">
+          <li>
+            <a
+              href="https://github.com/vxnus-studio/siduri-x"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              GitHub Monorepo
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/vxnus-studio/siduri-x/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              Issue Tracker
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/vxnus-studio/siduri-x/pulls"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              Pull Requests
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/vxnus-studio/siduri-x/blob/main/LICENSE"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              Apache 2.0 License
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="font-mono text-[var(--siduri-text-primary)] uppercase tracking-wider font-semibold mb-3">
+          Packages
+        </div>
+        <ul class="space-y-2.5 font-mono text-[var(--siduri-text-muted)] text-[11px]">
+          <li>
+            <a
+              href="https://www.npmjs.com/package/@vxnus/siduri"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              @vxnus/siduri (CLI)
+            </a>
+          </li>
+          <li>
+            <span class="text-[var(--siduri-text-dim)]">@siduri-x/core</span>
+          </li>
+          <li>
+            <span class="text-[var(--siduri-text-dim)]">@siduri-x/brain</span>
+          </li>
+          <li>
+            <span class="text-[var(--siduri-text-dim)]">@siduri-x/memory</span>
+          </li>
+          <li>
+            <span class="text-[var(--siduri-text-dim)]">@siduri-x/hands</span>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="font-mono text-[var(--siduri-text-primary)] uppercase tracking-wider font-semibold mb-3">
+          Architecture &amp; RFCs
+        </div>
+        <ul class="space-y-2.5 font-sans text-[var(--siduri-text-muted)]">
+          <li>
+            <a
+              href="https://github.com/vxnus-studio/siduri-x/blob/main/docs/architecture/truth-gate.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              The Truth Gate
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/vxnus-studio/siduri-x/blob/main/docs/architecture/rfc-life-database.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              RFC: The Life Database
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/vxnus-studio/siduri-x/blob/main/docs/contracts/blank-slate-contract.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              Blank Slate Contract
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/vxnus-studio/siduri-x/blob/main/docs/architecture/siduri-organ-architecture.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              Organ Architecture
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="font-mono text-[var(--siduri-text-primary)] uppercase tracking-wider font-semibold mb-3">
+          Ecosystem &amp; Studio
+        </div>
+        <ul class="space-y-2.5 font-sans text-[var(--siduri-text-muted)]">
+          <li>
+            <a
+              href="https://vxnus.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              VXNUS Studio
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://krzgn.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              Kur Zagin
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://vxnus.xyz/article/persistent-personality-format-ai-companions"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--siduri-ember-light)] transition-colors"
+            >
+              Character Card Essay
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    {/* Bottom Bar */}
+    <div class="pt-8 border-t border-[var(--siduri-border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+      <div class="flex items-center gap-3">
+        <span class="siduri-glyph w-5 h-5 text-xs">✦</span>
+        <span class="font-mono text-[var(--siduri-text-primary)] font-semibold tracking-wider">
+          SIDURI-X
+        </span>
+        <span class="text-[var(--siduri-text-dim)]">·</span>
+        <span class="text-[var(--siduri-text-muted)]">
+          Crafted by{" "}
+          <a
+            href="https://krzgn.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[var(--siduri-ember-light)] hover:underline"
+          >
+            Kur Zagin
+          </a>{" "}
+          at{" "}
+          <a
+            href="https://vxnus.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[var(--siduri-text-primary)] hover:underline"
+          >
+            VXNUS
+          </a>
+        </span>
+      </div>
+
+      <div class="text-[var(--siduri-text-dim)] font-mono text-[11px]">
+        Licensed under Apache-2.0 · Localhost 127.0.0.1 Perimeter
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const footerCopyBtn = document.getElementById('footer-copy-btn');
+  const cloneCmd = 'git clone https://github.com/vxnus-studio/siduri-x.git';
+
+  footerCopyBtn?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(cloneCmd);
+      footerCopyBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        footerCopyBtn.textContent = 'Copy';
+      }, 2000);
+    } catch {
+      footerCopyBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        footerCopyBtn.textContent = 'Copy';
+      }, 2000);
+    }
+  });
+</script>

@@ -1,0 +1,161 @@
+---
+// WhatIsSiduri.astro - 1:1 migration from Next.js WhatIsSiduri.tsx
+---
+<section
+  id="what-is-siduri"
+  class="py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] bg-[#0c0c10]"
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6">
+    {/* Section Header */}
+    <div class="text-center max-w-3xl mx-auto mb-20">
+      <p class="text-xs font-mono uppercase tracking-widest text-[var(--siduri-ember)] mb-3">
+        01 · Conceptual Inquiry &amp; Theses
+      </p>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-6">
+        Rethinking AI Companions
+        <br />
+        <span class="italic text-[var(--siduri-ember-light)] font-light">
+          from first principles.
+        </span>
+      </h2>
+      <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] font-sans leading-relaxed font-light">
+        We started Siduri not to produce another generic chatbot, but to
+        explore three open architectural questions: How can an AI companion
+        truly learn over time without persona drift? How can memory remain
+        trustworthy? And how can a user's real-world data remain sovereign?
+      </p>
+    </div>
+
+    {/* 3 Conceptual Pillars */}
+    <div class="space-y-16">
+      {/* Pillar 01 */}
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center p-8 sm:p-10 rounded-2xl border border-[var(--siduri-border-subtle)] bg-[#101015] transition-all hover:border-[var(--siduri-border-ember)]">
+        <div class="md:col-span-4 flex flex-col justify-center">
+          <span class="text-xs font-mono text-[var(--siduri-ember)] uppercase tracking-wider mb-2">
+            Thesis 01 · In Progress
+          </span>
+          <h3 class="text-2xl font-serif-title font-normal text-[var(--siduri-text-primary)] leading-snug">
+            Identity is Grown,
+            <br />
+            <span class="text-[var(--siduri-text-secondary)]">
+              Not Pre-Scripted.
+            </span>
+          </h3>
+        </div>
+
+        <div class="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs sm:text-sm">
+          <div class="p-5 rounded-xl border border-red-500/20 bg-red-950/10 text-[var(--siduri-text-secondary)]">
+            <div class="font-mono text-red-400 font-semibold text-xs mb-2">
+              ✕ Conventional AI Companions
+            </div>
+            <p class="leading-relaxed">
+              They arrive with a canned, frozen personality prompt. They
+              flatter you with synthetic sycophancy, but after ten dialogue
+              turns, the persona inevitably dissolves into corporate assistant
+              monotony.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-text-primary)]">
+            <div class="font-mono text-[var(--siduri-ember-highlight)] font-semibold text-xs mb-2">
+              ✦ Siduri Blank Slate
+            </div>
+            <p class="leading-relaxed">
+              Every Siduri starts with an empty relational slate. She has no
+              pre-baked backstory or relationship assumptions. She forms her
+              voice, inside jokes, and boundaries entirely through the genuine
+              shared history she accumulates with you.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pillar 02 */}
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center p-8 sm:p-10 rounded-2xl border border-[var(--siduri-border-subtle)] bg-[#101015] transition-all hover:border-[var(--siduri-border-ember)]">
+        <div class="md:col-span-4 flex flex-col justify-center">
+          <span class="text-xs font-mono text-[var(--siduri-ember)] uppercase tracking-wider mb-2">
+            Thesis 02 · In Progress
+          </span>
+          <h3 class="text-2xl font-serif-title font-normal text-[var(--siduri-text-primary)] leading-snug">
+            Memory is Audited,
+            <br />
+            <span class="text-[var(--siduri-text-secondary)]">
+              Never Blindly Assumed.
+            </span>
+          </h3>
+        </div>
+
+        <div class="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs sm:text-sm">
+          <div class="p-5 rounded-xl border border-red-500/20 bg-red-950/10 text-[var(--siduri-text-secondary)]">
+            <div class="font-mono text-red-400 font-semibold text-xs mb-2">
+              ✕ Conventional AI Memory
+            </div>
+            <p class="leading-relaxed">
+              Every word you utter is blindly converted into vector embeddings.
+              Transient jokes, passing remarks, and adversarial prompt injections
+              are permanently swallowed into belief, causing rapid persona
+              corruption.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-text-primary)]">
+            <div class="font-mono text-[var(--siduri-online)] font-semibold text-xs mb-2">
+              ✦ The Truth Gate
+            </div>
+            <p class="leading-relaxed">
+              Observations and claimed preferences are staged as{" "}
+              <code class="text-[var(--siduri-warning)] font-mono">
+                PENDING
+              </code>
+              . You are the Anchor: only memories you explicitly confirm
+              become permanent PostgreSQL facts. Unapproved claims are
+              strictly isolated from cognition.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pillar 03 */}
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center p-8 sm:p-10 rounded-2xl border border-[var(--siduri-border-subtle)] bg-[#101015] transition-all hover:border-[var(--siduri-border-ember)]">
+        <div class="md:col-span-4 flex flex-col justify-center">
+          <span class="text-xs font-mono text-[var(--siduri-ember)] uppercase tracking-wider mb-2">
+            Thesis 03 · In Progress
+          </span>
+          <h3 class="text-2xl font-serif-title font-normal text-[var(--siduri-text-primary)] leading-snug">
+            Subjective Memory ≠
+            <br />
+            <span class="text-[var(--siduri-text-secondary)]">
+              Objective Life Data.
+            </span>
+          </h3>
+        </div>
+
+        <div class="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs sm:text-sm">
+          <div class="p-5 rounded-xl border border-red-500/20 bg-red-950/10 text-[var(--siduri-text-secondary)]">
+            <div class="font-mono text-red-400 font-semibold text-xs mb-2">
+              ✕ Conventional Conflation
+            </div>
+            <p class="leading-relaxed">
+              Assistants mash your financial records, inventory items, and
+              schedules into the same fuzzy conversational database as chat
+              transcripts. The model inevitably hallucinates arithmetic and
+              locks your data in their walled cloud.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-text-primary)]">
+            <div class="font-mono text-[var(--siduri-ember-highlight)] font-semibold text-xs mb-2">
+              ✦ Sovereign Life Database
+            </div>
+            <p class="leading-relaxed">
+              How Siduri remembers your bond is subjective and emotional. But
+              your actual accounts, budgets, and files belong to your sovereign
+              local database. Siduri queries them deterministically with zero
+              hallucination and zero cloud lock-in.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

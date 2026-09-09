@@ -1,0 +1,181 @@
+---
+// Layout.astro - 1:1 migration of Next.js RootLayout + Technical SEO 10/10
+import '../styles/globals.css';
+import { FAQ_ITEMS } from '../components/FaqSection.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonical?: string;
+  noindex?: boolean;
+}
+
+const {
+  title = "Siduri-X — Conceptual Framework for Local-First AI Companions",
+  description = "Open-source local AI companion architecture with audited Truth Gate memory, sovereign Life Database, and modular 10-organ contracts. Clone to inspect and test.",
+  image = "https://siduri.vxnus.xyz/screenshots/features/chat-authoritative-memory-proposals.png",
+  canonical = "https://siduri.vxnus.xyz",
+  noindex = false,
+} = Astro.props;
+
+const siteUrl = "https://siduri.vxnus.xyz";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      "name": "Siduri-X",
+      "alternateName": "Siduri",
+      "url": siteUrl,
+      "description":
+        "Conceptual framework and open testbed for sovereign, local-first AI companions.",
+      "publisher": {
+        "@id": "https://vxnus.xyz/#organization"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${siteUrl}/#software`,
+      "name": "Siduri (Siduri-X)",
+      "applicationCategory": "DeveloperApplication",
+      "applicationSubCategory": "AI Companion Architecture",
+      "operatingSystem": "Linux, macOS, Windows",
+      "softwareVersion": "0.1.7-experimental",
+      "description":
+        "Local-first AI companion framework designed with persistent authoritative memory, atomic behavioral gating, and modular 10-organ architecture.",
+      "url": siteUrl,
+      "codeRepository": "https://github.com/vxnus-studio/siduri-x",
+      "downloadUrl": "https://www.npmjs.com/package/@vxnus/siduri",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "author": {
+        "@id": "https://krzgn.xyz/#person"
+      },
+      "publisher": {
+        "@id": "https://vxnus.xyz/#organization"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://vxnus.xyz/#organization",
+      "name": "VXNUS Studio",
+      "url": "https://vxnus.xyz",
+      "sameAs": [
+        "https://github.com/vxnus-studio"
+      ],
+      "founder": {
+        "@id": "https://krzgn.xyz/#person"
+      }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://krzgn.xyz/#person",
+      "name": "Kur Zagin",
+      "url": "https://krzgn.xyz",
+      "sameAs": [
+        "https://github.com/krzgn"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${siteUrl}/#faq`,
+      "mainEntity": FAQ_ITEMS.map((item) => ({
+        "@type": "Question",
+        "name": item.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": item.answer
+        }
+      }))
+    }
+  ]
+};
+---
+<!doctype html>
+<html lang="en" class="h-full antialiased">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0b0e" />
+
+    {/* Primary Metadata */}
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta
+      name="keywords"
+      content="local AI companion, persistent AI memory, open source AI companion, Truth Gate, Life Database, Sovereign AI, Live2D AI assistant, decoupled agent architecture, AI companion prototype, @vxnus/siduri, Kur Zagin, VXNUS"
+    />
+    <meta name="author" content="Kur Zagin" />
+    <meta name="creator" content="Kur Zagin" />
+    <meta name="publisher" content="VXNUS Studio" />
+    <link rel="canonical" href={canonical} />
+
+    {/* Favicons */}
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    {/* Open Graph / Facebook */}
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="Siduri-X" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta
+      property="og:description"
+      content="An open-source architectural exploration into persistent memory, blank-slate identity, and modular organs. The CLI and repo are open for technical inspection, testing, and community development."
+    />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Siduri Authoritative Memory Proposals and Truth Gate Concept"
+    />
+
+    {/* Twitter / X */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonical} />
+    <meta name="twitter:title" content={title} />
+    <meta
+      name="twitter:description"
+      content="An open-source exploration into persistent memory, blank-slate identity, and modular organs. Open for technical testing and community growth."
+    />
+    <meta name="twitter:creator" content="@krzgn" />
+    <meta name="twitter:image" content={image} />
+
+    {/* Robots Directives */}
+    {
+      noindex ? (
+        <>
+          <meta name="robots" content="noindex, nofollow" />
+          <meta name="googlebot" content="noindex, nofollow" />
+        </>
+      ) : (
+        <>
+          <meta
+            name="robots"
+            content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+          />
+          <meta
+            name="googlebot"
+            content="index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+          />
+        </>
+      )
+    }
+
+    {/* Linked Entity Structured Data (JSON-LD) */}
+    {!noindex && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+  </head>
+  <body class="min-h-full flex flex-col bg-[#0b0b0e] text-[#eee8df]">
+    <slot />
+  </body>
+</html>

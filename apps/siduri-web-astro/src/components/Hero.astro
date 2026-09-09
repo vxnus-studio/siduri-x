@@ -1,0 +1,183 @@
+---
+// Hero.astro - 1:1 migration from Next.js Hero.tsx
+---
+<section id="overview" class="relative overflow-hidden pt-16 pb-24 md:pt-24 md:pb-32 border-b border-[var(--siduri-border-subtle)] hearth-ambient">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 text-center flex flex-col items-center">
+    {/* Subtle Mythological / Philosophical Whisper */}
+    <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[11px] font-mono tracking-widest uppercase mb-8">
+      <span class="w-1.5 h-1.5 rounded-full bg-[var(--siduri-online)] shadow-[0_0_8px_rgba(127,199,154,0.8)] animate-pulse"></span>
+      <span>Architectural Prototype · Open to Inspect &amp; Test</span>
+    </div>
+
+    {/* Primary Headline */}
+    <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal font-serif-title text-[var(--siduri-text-primary)] tracking-tight leading-[1.12] mb-7 max-w-4xl">
+      A companion grown from memory.
+      <br />
+      <span class="text-[var(--siduri-ember-light)] italic font-light">
+        Grounded in your reality.
+      </span>
+    </h1>
+
+    {/* Humble, Thoughtful Subheadline */}
+    <p class="text-base sm:text-lg md:text-xl text-[var(--siduri-text-secondary)] font-sans leading-relaxed mb-9 max-w-2xl font-light">
+      Siduri is an evolving architectural exploration into single-owner,
+      local-first cognition. We are investigating whether persistent memory
+      can be authoritative without context drift—and whether an AI can grow
+      with you while keeping your real-world data sovereign.
+    </p>
+
+    {/* Developer Inspection Command Box */}
+    <div class="w-full max-w-lg mb-6">
+      <div class="relative group rounded-2xl border border-[var(--siduri-border-ember)] bg-[#121217] p-2 sm:p-2.5 shadow-2xl transition-all hover:border-[var(--siduri-border-ember-bright)]">
+        <div class="flex items-center justify-between gap-3 px-3 py-2 bg-[#0d0d10] rounded-xl border border-[var(--siduri-border-subtle)]">
+          <div class="flex items-center gap-3 overflow-hidden text-left font-mono text-xs sm:text-sm">
+            <span class="text-[var(--siduri-ember)] select-none font-bold">
+              $
+            </span>
+            <span class="text-[var(--siduri-text-primary)] truncate" id="hero-clone-cmd">
+              git clone https://github.com/vxnus-studio/siduri-x.git
+            </span>
+          </div>
+          <button
+            id="hero-copy-btn"
+            type="button"
+            class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--siduri-ember)] text-[#151214] font-mono text-xs font-semibold hover:bg-[var(--siduri-ember-highlight)] transition-all cursor-pointer"
+            aria-label="Copy clone command"
+          >
+            Copy
+          </button>
+        </div>
+        <div class="mt-2 px-3 pb-1 flex items-center justify-between text-[11px] font-mono text-[var(--siduri-text-muted)]">
+          <span>Or test CLI: <code>npx @vxnus/siduri create</code></span>
+          <span class="text-amber-400">Ready to Test &amp; Inspect</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Honest Advisory Notice */}
+    <div class="w-full max-w-lg mb-10 p-4 rounded-xl border border-amber-500/35 bg-amber-950/20 text-left flex items-start gap-3">
+      <span class="flex-shrink-0 text-amber-400 text-sm mt-0.5 select-none font-mono">
+        ⚠
+      </span>
+      <div class="text-xs font-sans text-amber-200/90 leading-relaxed">
+        <strong class="font-mono text-amber-300 uppercase tracking-wider text-[11px] block mb-1">
+          Open Research Prototype · Not A Finished Daily Product
+        </strong>
+        The CLI and repository are open to <strong>inspect, benchmark, and test</strong>.
+        While organ contracts and unit tests pass, Siduri is{" "}
+        <strong class="text-amber-100 font-medium">
+          untested at full real-world end-to-end (E2E) scale
+        </strong>{" "}
+        and breaking changes will occur. We warmly invite developers to clone the code,
+        inspect the architecture, and help grow the community.
+      </div>
+    </div>
+
+    {/* Primary Action Buttons */}
+    <div class="flex flex-wrap justify-center items-center gap-3.5 mb-14">
+      <a
+        href="https://github.com/vxnus-studio/siduri-x"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[var(--siduri-ember)] text-[#161214] font-sans font-semibold text-sm tracking-wide hover:bg-[var(--siduri-ember-highlight)] transition-all shadow-[0_4px_20px_rgba(217,154,104,0.22)]"
+      >
+        <svg
+          class="w-4 h-4 fill-current text-[#161214]"
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+        >
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+        <span>Clone &amp; Inspect Repo</span>
+      </a>
+
+      <a
+        href="#what-is-siduri"
+        class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-primary)] font-sans font-medium text-sm hover:border-[var(--siduri-border-ember)] hover:bg-[var(--siduri-tint-low)] transition-all"
+      >
+        Conceptual Flow
+        <span class="font-mono text-base">↓</span>
+      </a>
+
+      <a
+        href="#truth-gate"
+        class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] font-sans font-medium text-sm hover:text-[var(--siduri-text-primary)] hover:border-[var(--siduri-border-medium)] transition-all"
+      >
+        <span class="text-[var(--siduri-ember)]">✦</span>
+        Truth Gate Demo
+      </a>
+    </div>
+
+    {/* Progressing Status Signals */}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full max-w-3xl pt-8 border-t border-[var(--siduri-border-subtle)] text-left">
+      <div class="p-3 rounded-xl border border-[var(--siduri-border-subtle)] bg-[#0f0f13]/60">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-light)] mb-1">
+          Phase
+        </div>
+        <div class="text-xs sm:text-sm font-semibold text-[var(--siduri-text-primary)]">
+          Experimental Scaffold
+        </div>
+        <div class="text-[11px] text-amber-400/90 mt-0.5 font-mono">
+          Ready to test &amp; inspect
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl border border-[var(--siduri-border-subtle)] bg-[#0f0f13]/60">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-light)] mb-1">
+          Architecture
+        </div>
+        <div class="text-xs sm:text-sm font-semibold text-[var(--siduri-text-primary)]">
+          Modular Organs (WIP)
+        </div>
+        <div class="text-[11px] text-[var(--siduri-text-muted)] mt-0.5">
+          10 evolving packages
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl border border-[var(--siduri-border-subtle)] bg-[#0f0f13]/60">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-light)] mb-1">
+          Perimeter
+        </div>
+        <div class="text-xs sm:text-sm font-semibold text-[var(--siduri-text-primary)]">
+          Localhost 127.0.0.1
+        </div>
+        <div class="text-[11px] text-[var(--siduri-text-muted)] mt-0.5">
+          Single-owner security
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl border border-[var(--siduri-border-subtle)] bg-[#0f0f13]/60">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-light)] mb-1">
+          Community
+        </div>
+        <div class="text-xs sm:text-sm font-semibold text-[var(--siduri-text-primary)]">
+          Apache 2.0
+        </div>
+        <div class="text-[11px] text-[var(--siduri-text-muted)] mt-0.5">
+          Open collaboration
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const heroCopyBtn = document.getElementById('hero-copy-btn');
+  const cloneText = 'git clone https://github.com/vxnus-studio/siduri-x.git';
+
+  heroCopyBtn?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(cloneText);
+      heroCopyBtn.textContent = 'Copied';
+      setTimeout(() => {
+        heroCopyBtn.textContent = 'Copy';
+      }, 2200);
+    } catch {
+      // Fallback
+      heroCopyBtn.textContent = 'Copied';
+      setTimeout(() => {
+        heroCopyBtn.textContent = 'Copy';
+      }, 2200);
+    }
+  });
+</script>
