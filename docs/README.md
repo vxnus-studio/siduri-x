@@ -26,7 +26,11 @@ Core specifications for the decoupled organ architecture and system components:
 - **[Companion Runtime](./architecture/companion-runtime.md)** — Orchestration of organs inside the active companion runtime.
 - **[Behavior & Active Self](./architecture/behavior.md)** — Behavioral compilation, directive scoping, and safety projection.
 - **[Action Policy Design](./architecture/action-policy-design.md)** — Cryptographic action capabilities, MCP execution, and audit chaining.
+
 - **[RFC: Dynamic Behavior & `.self`](./architecture/rfc-dynamic-behavior-self.md)** — Distribution protocol, 3-mode memory acquisition, and `.self` ingestion via Teach Mode.
+- **[Thought Exercise: AI Identity & Behavior](./architecture/thought-exercise-ai-identity.md)** — Conceptual analysis disentangling identity, personality, user knowledge, and situational response models.
+
+
 - **[Memory Subsystem](./architecture/memory.md)** — PostgreSQL claims persistence, lifecycle, and temporal indexing.
 - **[Knowledge & E-Packs](./architecture/knowledge-e.md)** — E-Knowledge integration, provenance, and citations.
 - **[API Reference](./architecture/api.md)** — REST API surface and endpoint contracts.
