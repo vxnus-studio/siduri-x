@@ -12,7 +12,7 @@
 All core security, reliability, and architectural properties have been independently verified through source code AST analysis, adversarial suites, and clean-machine distribution packaging:
 
 1. **Localhost-Only Ingress (P0)**:
-   All listeners (`apps/api`, `apps/gateway`, `apps/memory-service`, and `cli/src/generator.ts` companion template) explicitly bind to `127.0.0.1`. No listener defaults to `0.0.0.0` or dual-stack broadcast.
+   All listeners (`apps/api` and `cli/src/generator.ts` companion template) explicitly bind to `127.0.0.1`. No listener defaults to `0.0.0.0` or dual-stack broadcast.
 2. **Production `/dev/*` Isolation (P0)**:
    Routes under `/dev/*` are conditionally mounted only when `process.env.NODE_ENV !== 'production' || process.env.SIDURI_DEV_MODE === 'true'`. In production, the router table does not contain these endpoints (HTTP 404).
 3. **Static Path Traversal Defenses (P0)**:
@@ -55,7 +55,7 @@ The following properties represent intentional architectural boundaries for Sidu
 
 - `ACTION_POLICY_SECRET`: **Mandatory in production** (`NODE_ENV=production`). If unset, the Action Policy Engine and Hands organ fail closed immediately at startup.
 - `DATABASE_URL`: Required for PostgreSQL memory persistence (`postgresql://...`).
-- `PORT`: Defaults to `3001` (API), `3000` (Gateway / CLI Companion), `3002` (Memory Service).
+- `PORT`: Defaults to `3001` (API) or `3000` (CLI Companion).
 - Host Binding: All listeners strictly bind to `127.0.0.1`.
 
 ---
