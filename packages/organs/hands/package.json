@@ -9,6 +9,7 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@siduri-x/core": "workspace:*"
   },
   "devDependencies": {

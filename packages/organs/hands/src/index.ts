@@ -13,20 +13,14 @@ import {
   getOrGenerateLocalActionPolicySecret,
 } from '@siduri-x/core';
 import { validateInputSchema } from './schema-validator';
+import {
+  MCPClientProvider,
+  MCPProviderConfig,
+  MCPToolHandler,
+} from './mcp-provider';
 
-export interface ToolHandler {
-  definition: ToolDefinition;
-  execute: (parameters: Record<string, unknown>, signal?: AbortSignal) => Promise<unknown>;
-}
-
-export interface MCPProviderConfig {
-  serverName: string;
-  baseUrl?: string;
-  command?: string;
-  args?: string[];
-  tools?: ToolHandler[];
-  defaultTimeoutMs?: number;
-}
+export type ToolHandler = MCPToolHandler;
+export { MCPClientProvider, MCPProviderConfig };
 
 export interface DefaultHandsOrganConfig {
   providers?: MCPProviderConfig[];
@@ -38,24 +32,69 @@ export interface DefaultHandsOrganConfig {
 export class DefaultHandsOrgan implements HandsOrgan {
   private readonly toolRegistry = new Map<string, ToolHandler>();
   private readonly providerTools = new Map<string, ToolHandler>();
+  private readonly mcpProviders = new Map<string, MCPClientProvider>();
   private readonly defaultTimeoutMs: number;
   private readonly store: ActionStore;
   private readonly secretKey: string;
+  private initialized = false;
+  private initializePromise?: Promise<void>;
 
   constructor(private readonly config: DefaultHandsOrganConfig = {}) {
     this.defaultTimeoutMs = config.defaultTimeoutMs ?? 10_000;
     this.store = config.store ?? new InMemoryActionStore();
-
     this.secretKey = getOrGenerateLocalActionPolicySecret(config.secretKey);
 
     if (config.providers) {
-      for (const provider of config.providers) {
-        if (provider.tools) {
-          for (const tool of provider.tools) {
-            this.registerTool(tool, provider.serverName);
+      for (const providerConfig of config.providers) {
+        this.addProvider(providerConfig);
+      }
+    }
+  }
+
+  addProvider(providerConfig: MCPProviderConfig): MCPClientProvider {
+    const provider = new MCPClientProvider(providerConfig);
+    this.mcpProviders.set(providerConfig.serverName, provider);
+
+    // Register static tools immediately if supplied
+    if (providerConfig.tools) {
+      for (const tool of providerConfig.tools) {
+        this.registerTool(tool, providerConfig.serverName);
+      }
+    }
+
+    return provider;
+  }
+
+  getProvider(serverName: string): MCPClientProvider | undefined {
+    return this.mcpProviders.get(serverName);
+  }
+
+  async initialize(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+    if (this.initializePromise) {
+      return this.initializePromise;
+    }
+
+    this.initializePromise = (async () => {
+      for (const provider of this.mcpProviders.values()) {
+        try {
+          const discovered = await provider.discoverTools();
+          for (const handler of discovered) {
+            this.registerTool(handler, provider.serverName);
           }
+        } catch (err) {
+          // Log or retain error, allow other providers to initialize
         }
       }
+      this.initialized = true;
+    })();
+
+    try {
+      await this.initializePromise;
+    } finally {
+      this.initializePromise = undefined;
     }
   }
 
@@ -84,6 +123,9 @@ export class DefaultHandsOrgan implements HandsOrgan {
   }
 
   async listTools(): Promise<ToolDefinition[]> {
+    if (!this.initialized && this.mcpProviders.size > 0) {
+      await this.initialize();
+    }
     return Array.from(this.providerTools.values()).map((handler) => handler.definition);
   }
 
@@ -241,6 +283,11 @@ export class DefaultHandsOrgan implements HandsOrgan {
       };
     }
 
+    // Ensure initialization if needed before tool lookup
+    if (!this.initialized && this.mcpProviders.size > 0) {
+      await this.initialize();
+    }
+
     // 3. Tool Lookup
     const handler = this.findHandler(action.toolName);
     if (!handler) {
@@ -370,6 +417,16 @@ export class DefaultHandsOrgan implements HandsOrgan {
       return failedResult;
     }
   }
+
+  async close(): Promise<void> {
+    for (const provider of this.mcpProviders.values()) {
+      await provider.disconnect();
+    }
+    this.mcpProviders.clear();
+    this.toolRegistry.clear();
+    this.providerTools.clear();
+    this.initialized = false;
+  }
 }
 
 export function probeHandsHealth(context: { config?: any; env?: Record<string, string | undefined> }): { ok: boolean; message?: string } {
@@ -384,5 +441,4 @@ export function probeHandsHealth(context: { config?: any; env?: Record<string, s
 }
 
 export * from './schema-validator';
-
-
+export * from './mcp-provider';
