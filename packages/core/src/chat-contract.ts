@@ -8,7 +8,7 @@ export interface ChatRequest {
   id?: string;
   companionId?: string;
   message: string;
-  role?: 'OWNER' | 'VIEWER' | 'OPERATOR';
+  role?: 'OWNER' | 'VIEWER' | 'OPERATOR' | string;
   context?: RequestContext;
   history?: Message[];
   [key: string]: any;
@@ -88,7 +88,7 @@ export async function dispatchCompanionChat(
   const userMessage = payload.message || payload.text || '';
   const history = Array.isArray(payload.history) ? payload.history : [];
 
-  let roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext;
+  let roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string;
   if (payload.role) {
     roleOrContext = payload.role;
   } else if (payload.context) {

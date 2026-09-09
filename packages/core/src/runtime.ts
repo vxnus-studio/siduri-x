@@ -119,7 +119,7 @@ export class SiduriRuntime {
 
   async handleUserMessage(
     message: string,
-    roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext,
+    roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string = 'OWNER',
     history: Message[] = [],
   ): Promise<any> {
     if (typeof message !== 'string' || !message.trim() || message.length > 4000) {
@@ -136,7 +136,7 @@ export class SiduriRuntime {
       ? (roleOrContext.actor.authorizationRole === 'administrator'
           ? 'OWNER'
           : (roleOrContext.actor.authorizationRole === 'operator' ? 'OPERATOR' : 'VIEWER'))
-      : roleOrContext;
+      : (roleOrContext as any);
 
     const requestContext: RequestContext = isContextObject
       ? roleOrContext

@@ -488,7 +488,7 @@ function MemoryView({
     <div className="console-view">
       <div className="view-intro">
         <div>
-          <p className="console-eyebrow">PRIVATE MEMORY</p>
+          <p className="console-eyebrow">COMPANION MEMORY</p>
           <h2>Review candidates before they become facts.</h2>
           <p>Every candidate stays isolated until you explicitly approve it.</p>
         </div>

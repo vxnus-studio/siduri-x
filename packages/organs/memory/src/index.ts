@@ -100,7 +100,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
         claimData.predicate,
         claimData.value,
         'PENDING',
-        claimData.scope,
+        claimData.scope || 'COMPANION',
         JSON.stringify(claimData.evidence || []),
         claimData.provenance || 'siduri_y_memory',
         claimData.sourceEventId || null,
@@ -145,7 +145,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
 
   async searchClaims(
     query: string,
-    scopeOrOptions: MemoryScope | MemoryQueryOptions = 'PUBLIC',
+    scopeOrOptions: MemoryScope | MemoryQueryOptions = 'COMPANION',
     limit: number = 10
   ): Promise<Claim[]> {
     this.ensureInitialized();
@@ -626,7 +626,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
           replacement.predicate,
           replacement.value,
           'PENDING',
-          replacement.scope,
+          replacement.scope || 'COMPANION',
           JSON.stringify(replacement.evidence || []),
           replacement.provenance || 'siduri_y_memory',
           replacement.sourceEventId || null,
@@ -721,7 +721,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
             replacementClaim.predicate,
             replacementClaim.value,
             'PENDING',
-            replacementClaim.scope,
+            replacementClaim.scope || 'COMPANION',
             JSON.stringify(replacementClaim.evidence),
             replacementClaim.provenance,
             replacementClaim.sourceEventId,

@@ -96,7 +96,7 @@ export interface BrainOrgan {
 
 
 // Memory Isolation (Legacy compatibility scope)
-export type MemoryScope = 'OWNER' | 'VIEWER' | 'OPERATOR' | 'PUBLIC';
+export type MemoryScope = 'OWNER' | 'VIEWER' | 'OPERATOR' | 'PUBLIC' | 'COMPANION' | string;
 
 export interface Claim {
   id: string;
@@ -105,7 +105,7 @@ export interface Claim {
   value: string;
   status: ClaimStatus;
   evidence?: string[];
-  scope: MemoryScope;
+  scope?: MemoryScope;
   companionId: string; // Strict isolation boundary
   provenance?: string;
   sourceEventId?: string;
@@ -126,7 +126,7 @@ export interface BehaviorDirective {
   id: string;
   companionId: string; // Strict isolation boundary
   directive: string;
-  scopeMatcher: string[]; // Generic role matching
+  scopeMatcher?: string[]; // Generic role matching
   priority: number;
   status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
   supersedesId?: string;
@@ -140,7 +140,7 @@ export interface BehaviorDirective {
 }
 
 export interface MemoryQueryOptions {
-  channel?: 'public' | 'direct' | 'private' | 'operator';
+  channel?: 'public' | 'direct' | 'private' | 'operator' | string;
   audienceId?: string;
   sensitivity?: string;
   limit?: number;
@@ -151,7 +151,7 @@ export interface MemoryQueryOptions {
 export interface MemoryOrgan {
   initialize(companionId: string): Promise<void>;
   proposeClaim(claim: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
-  searchClaims(query: string, scopeOrOptions: MemoryScope | MemoryQueryOptions, limit?: number): Promise<Claim[]>;
+  searchClaims(query: string, scopeOrOptions?: MemoryScope | MemoryQueryOptions, limit?: number): Promise<Claim[]>;
   getClaims(limit?: number): Promise<Claim[]>;
   getPendingClaims(limit?: number): Promise<Claim[]>;
   approveClaim(id: string): Promise<void>;
