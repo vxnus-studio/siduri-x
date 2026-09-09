@@ -56,22 +56,7 @@ All canonical Siduri-X organ and core packages are independently distributed:
 
 ---
 
-## Prerequisites
-
-Before setting up or running a Siduri companion instance, ensure you have:
-
-- **Node.js**: `v20.0.0` or higher (verify with `node -v`)
-- **LLM Credentials**: An API key for your chosen provider (e.g. `OPENROUTER_API_KEY`)
-- **Optional Local Services**:
-  - **Docker** (recommended for local PostgreSQL database):
-    - Run `npm run services:up` (or `docker compose up -d`) inside your generated companion folder to launch preconfigured services.
-  - **Non-Docker Alternatives**:
-    - **PostgreSQL**: Cloud-managed instances (e.g. Supabase, Neon) or local Postgres installation.
-  - **Voice Synthesis**: The Voicevox engine executable will be securely auto-downloaded at runtime by Siduri if no local URL is provided. Edge-TTS runs via cloud API, and RVC runs via a local headless microservice.
-
----
-
-## Creating a Companion Instance (`@vxnus/siduri`)
+## Quick Start (`@vxnus/siduri`)
 
 To create and run your own standalone companion, you can scaffold an instance anywhere on your machine using the CLI:
 
@@ -95,15 +80,7 @@ my-siduri/
     └── index.js          # Direct runtime bootstrapping with explicit organ factories
 ```
 
-### 2. Configure Environment & Start Services
-
-```bash
-cd my-siduri
-cp .env.example .env      # Fill in API keys & database credentials
-npm run services:up       # Optional: Start local Docker containers (PostgreSQL / VOICEVOX)
-```
-
-### 3. Apply Database Migrations (`siduri db push`)
+### 2. Apply Database Migrations (`siduri db push`)
 
 Executes SQL migrations with SHA-256 checksum validation for database-owning organs (such as `@siduri-x/memory`):
 
@@ -113,50 +90,22 @@ npx @vxnus/siduri db push
 
 If the companion has no database organs (e.g. Brain only, or Brain + Hands), `siduri db push` reports that no migrations are required.
 
-### 4. Run Diagnostics (`siduri doctor`)
+### 3. Run Diagnostics (`siduri doctor`)
 
 Inspects environment variables, external service declarations, database connectivity, and executes organ health probes:
 
 ```bash
-npm run doctor
-```
-
-### 5. Start Your Companion
-
-```bash
-npm start
+npx @vxnus/siduri doctor
 ```
 
 ---
 
-## Monorepo Development
-
-If you would like to contribute to Siduri's core packages, runtime engine, or developer tooling, you can set up the monorepo locally:
-
-```bash
-# Clone the development monorepo
-git clone https://github.com/vxnus-studio/siduri-x.git
-cd siduri-x
-
-# Install dependencies across all packages
-npm install
-
-# Build all packages via Turborepo
-npm run build
-
-# Run all test suites
-npm test
-
-# Verify release invariants & package integrity
-npm run release:check
-```
-
-### Contributing
+## Contributing
 
 Contributions, bug reports, and RFC discussions are warmly welcomed!
 
 - **Found a bug or have a suggestion?** Feel free to open an [Issue](https://github.com/vxnus-studio/siduri-x/issues).
-- **Want to contribute code or fixes?** Pull requests (PRs) are open and appreciated. Please make sure that tests pass (`npm test`) and release checks succeed (`npm run release:check`) before opening a PR.
+- **Want to contribute code or fixes?** Pull requests (PRs) are open and appreciated.
 - **Questions or RFCs?** Discussions and architecture questions are always welcome.
 
 ---
