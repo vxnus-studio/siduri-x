@@ -11,7 +11,6 @@ describe('T4 Evidence & Disclosure Core Contract', () => {
     origin: 'knowledge',
     trust: 'configured',
     sensitivity: 'public',
-    allowedAudiences: ['audience-public'],
     companionId: 'companion-a',
     correlationId: 'corr-1',
     createdAt: new Date(Date.now() - 5000).toISOString(),
@@ -25,7 +24,6 @@ describe('T4 Evidence & Disclosure Core Contract', () => {
     const options: EvidenceFilterOptions = {
       companionId: 'companion-a',
       channel: 'public',
-      audienceId: 'audience-public',
     };
     const { admitted, excluded } = filterEvidenceRecords(records, options);
     expect(admitted.map((e) => e.evidenceId)).toEqual(['ev-mine']);
@@ -45,7 +43,6 @@ describe('T4 Evidence & Disclosure Core Contract', () => {
     const options: EvidenceFilterOptions = {
       companionId: 'companion-a',
       channel: 'public',
-      audienceId: 'audience-public',
     };
     const { admitted, excluded } = filterEvidenceRecords(records, options);
     expect(admitted.map((e) => e.evidenceId)).toEqual(['ev-valid']);
@@ -57,53 +54,29 @@ describe('T4 Evidence & Disclosure Core Contract', () => {
     ]);
   });
 
-  test('audience intersection excludes non-matching audiences', () => {
+  test('single-owner companion admits valid evidence without multi-audience filtering', () => {
     const records: EvidenceRecord[] = [
-      { ...baseRecord, evidenceId: 'ev-public', allowedAudiences: ['audience-public'] },
-      { ...baseRecord, evidenceId: 'ev-direct-only', allowedAudiences: ['audience-direct-a'] },
+      { ...baseRecord, evidenceId: 'ev-public' },
+      { ...baseRecord, evidenceId: 'ev-direct-only' },
     ];
     const options: EvidenceFilterOptions = {
       companionId: 'companion-a',
-      channel: 'public',
-      audienceId: 'audience-public',
     };
     const { admitted, excluded } = filterEvidenceRecords(records, options);
-    expect(admitted.map((e) => e.evidenceId)).toEqual(['ev-public']);
-    expect(excluded).toEqual([
-      expect.objectContaining({
-        record: expect.objectContaining({ evidenceId: 'ev-direct-only' }),
-        reason: 'audience_not_allowed',
-      }),
-    ]);
+    expect(admitted.map((e) => e.evidenceId)).toEqual(['ev-public', 'ev-direct-only']);
+    expect(excluded).toEqual([]);
   });
 
-  test('sensitivity policy excludes private and restricted evidence from public channels', () => {
+  test('single-owner companion admits private and restricted sensitivity for companion owner', () => {
     const records: EvidenceRecord[] = [
-      { ...baseRecord, evidenceId: 'ev-pub', sensitivity: 'public', allowedAudiences: ['audience-public'] },
-      { ...baseRecord, evidenceId: 'ev-priv', sensitivity: 'private', allowedAudiences: ['audience-public'] },
-      { ...baseRecord, evidenceId: 'ev-rest', sensitivity: 'restricted', allowedAudiences: ['audience-public'] },
+      { ...baseRecord, evidenceId: 'ev-pub', sensitivity: 'public' },
+      { ...baseRecord, evidenceId: 'ev-priv', sensitivity: 'private' },
+      { ...baseRecord, evidenceId: 'ev-rest', sensitivity: 'restricted' },
     ];
     const { admitted, excluded } = filterEvidenceRecords(records, {
       companionId: 'companion-a',
-      channel: 'public',
-      audienceId: 'audience-public',
     });
-    expect(admitted.map((e) => e.evidenceId)).toEqual(['ev-pub']);
-    expect(excluded.map((e) => e.record.evidenceId)).toEqual(['ev-priv', 'ev-rest']);
-  });
-
-  test('direct channel permits private sensitivity but excludes restricted', () => {
-    const records: EvidenceRecord[] = [
-      { ...baseRecord, evidenceId: 'ev-pub', sensitivity: 'public', allowedAudiences: ['audience-direct-a'] },
-      { ...baseRecord, evidenceId: 'ev-priv', sensitivity: 'private', allowedAudiences: ['audience-direct-a'] },
-      { ...baseRecord, evidenceId: 'ev-rest', sensitivity: 'restricted', allowedAudiences: ['audience-direct-a'] },
-    ];
-    const { admitted, excluded } = filterEvidenceRecords(records, {
-      companionId: 'companion-a',
-      channel: 'direct',
-      audienceId: 'audience-direct-a',
-    });
-    expect(admitted.map((e) => e.evidenceId)).toEqual(['ev-pub', 'ev-priv']);
-    expect(excluded.map((e) => e.record.evidenceId)).toEqual(['ev-rest']);
+    expect(admitted.map((e) => e.evidenceId)).toEqual(['ev-pub', 'ev-priv', 'ev-rest']);
+    expect(excluded).toEqual([]);
   });
 });

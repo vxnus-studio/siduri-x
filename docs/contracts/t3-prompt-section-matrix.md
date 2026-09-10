@@ -1,6 +1,9 @@
 # T3 prompt-section matrix
 
-Status: prompt target; current Brain/Behavior adapters do not yet prove the full matrix
+> [!NOTE]
+> Updated for single-owner deployment model. Multi-audience prompt constraints have been aligned to companion boundary and single-owner context.
+
+Status: prompt target; updated for single-owner deployment model
 
 This matrix specifies what may enter each provider prompt section and what must
 be rejected. It operationalizes the trust ordering in

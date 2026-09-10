@@ -204,7 +204,6 @@ describe('SqliteActionStore Implementation & Durability', () => {
       },
       conversation: {
         channel: 'direct',
-        audienceId: 'aud-local',
         correlationId: 'corr-1',
       },
     };

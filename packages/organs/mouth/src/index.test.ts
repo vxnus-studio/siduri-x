@@ -114,7 +114,6 @@ describe('@siduri-x/mouth - DefaultMouthOrgan', () => {
       responseId: 'resp-1',
       correlationId: 'corr-1',
       channel: 'direct',
-      audienceId: 'aud-1',
       approval: 'APPROVED',
       kind: 'caption',
       lifecycle: 'STARTED',

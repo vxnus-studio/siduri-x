@@ -7,9 +7,6 @@ import {
 
 export interface ContextMapperOptions {
   endpointPolicy?: 'public' | 'private' | 'operator' | 'direct' | string;
-  defaultPublicAudience?: string;
-  defaultPrivateAudience?: string;
-  defaultOperatorAudience?: string;
   allowAnonymousPublicChat?: boolean;
 }
 
@@ -38,24 +35,6 @@ export function mapRequestContext(
       error: {
         code: 'MISSING_CONTEXT',
         fields: ['request'],
-      },
-    };
-  }
-
-  // Check for legacy MASTER_PRIVATE in any audience field or request
-  const rawAudience =
-    input?.context?.conversation?.audienceId ??
-    input?.conversation?.audienceId ??
-    input?.audienceId ??
-    input?.audience;
-
-  if (rawAudience === 'MASTER_PRIVATE' || input?.scope === 'MASTER_PRIVATE') {
-    return {
-      accepted: false,
-      error: {
-        code: 'LEGACY_PERSONAL_AUDIENCE',
-        field: 'audienceId',
-        correlationId: input?.context?.conversation?.correlationId || input?.correlationId,
       },
     };
   }
@@ -115,7 +94,6 @@ export function mapRequestContext(
       conversation: {
         correlationId,
         channel: rawCtx.conversation?.channel || input.channel || 'direct',
-        audienceId: rawCtx.conversation?.audienceId || input.audienceId,
         isLive: rawCtx.conversation?.isLive,
         ...rawCtx.conversation,
       },
@@ -199,7 +177,6 @@ export function mapRequestContext(
     },
     conversation: {
       channel: input.channel || input.conversation?.channel || 'direct',
-      audienceId: input.audienceId || input.conversation?.audienceId,
       correlationId,
     },
     source: input.source || 'local',

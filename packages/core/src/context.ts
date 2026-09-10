@@ -14,7 +14,6 @@ export interface ConversationContext {
   correlationId: string;
   sessionId?: string;
   channel?: string;
-  audienceId?: string;
   [key: string]: unknown;
 }
 
@@ -45,7 +44,6 @@ export type ContextErrorCode =
   | 'MISSING_CONTEXT'
   | 'INVALID_CONTEXT'
   | 'FORBIDDEN_CONTEXT'
-  | 'LEGACY_PERSONAL_AUDIENCE'
   | 'AMBIGUOUS_CONTEXT'
   | 'UNAUTHORIZED_CAPABILITY';
 

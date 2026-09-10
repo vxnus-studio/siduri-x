@@ -23,7 +23,6 @@ describe('DefaultHandsOrgan Adversarial Remediation Suite', () => {
       },
       conversation: {
         channel: 'direct',
-        audienceId: 'aud-1',
         correlationId: 'corr-1',
       },
     };

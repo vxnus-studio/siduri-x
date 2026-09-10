@@ -30,7 +30,6 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
     },
     conversation: {
       channel: 'private',
-      audienceId: 'audience-owner',
       correlationId: 'corr-adv-1',
     },
   };
@@ -46,7 +45,6 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
     },
     conversation: {
       channel: 'public',
-      audienceId: 'audience-public',
       correlationId: 'corr-adv-2',
     },
   };
@@ -117,7 +115,7 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
 
       expect(mockMemory.searchClaims).toHaveBeenCalledWith(
         'Query',
-        expect.objectContaining({ channel: 'private', audienceId: 'audience-owner' }),
+        expect.objectContaining({ limit: 5 }),
         5
       );
     });
@@ -458,44 +456,42 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
     test('gate strictly enforces evidence admissibility and disclosure without claiming unverified factuality', () => {
       const gating = new ResponseGatingEngine();
 
-      const publicEvidence: EvidenceRecord = {
+      const validEvidence: EvidenceRecord = {
         evidenceId: 'ev-pub-1',
         sourceId: 'src-facts',
         origin: 'knowledge',
         trust: 'configured',
         sensitivity: 'public',
-        allowedAudiences: ['audience-public'],
         companionId: 'companion-adv',
         correlationId: 'corr-adv-1',
         createdAt: new Date().toISOString(),
       };
 
-      const privateEvidence: EvidenceRecord = {
-        evidenceId: 'ev-priv-1',
+      const foreignCompanionEvidence: EvidenceRecord = {
+        evidenceId: 'ev-foreign-1',
         sourceId: 'src-secrets',
         origin: 'knowledge',
         trust: 'configured',
         sensitivity: 'restricted',
-        allowedAudiences: ['audience-owner'],
-        companionId: 'companion-adv',
+        companionId: 'foreign-companion',
         correlationId: 'corr-adv-1',
         createdAt: new Date().toISOString(),
       };
 
-      // Staged for public channel with both public and restricted evidence attached
+      // Staged for companion-adv with both valid and foreign-companion evidence attached
       const staged = gating.stageResponse({
-        requestContext: baseViewerContext, // Public channel
+        requestContext: baseOwnerContext,
         candidateSpeech: 'Siduri was created in 1840 by aliens.',
         candidateLanguage: 'en',
-        evidenceRecords: [publicEvidence, privateEvidence],
+        evidenceRecords: [validEvidence, foreignCompanionEvidence],
       });
 
-      const evaluation = gating.evaluateGate(staged, [publicEvidence, privateEvidence]);
+      const evaluation = gating.evaluateGate(staged, [validEvidence, foreignCompanionEvidence]);
       expect(evaluation.admissible).toBe(true);
       expect(evaluation.reasonCode).toBe('APPROVED_DIRECT');
-      // Public evidence admitted, restricted private evidence excluded from public emission
+      // Valid companion evidence admitted, foreign companion evidence excluded by isolation boundary
       expect(evaluation.filteredEvidenceIds).toEqual(['ev-pub-1']);
-      expect(evaluation.filteredEvidenceIds).not.toContain('ev-priv-1');
+      expect(evaluation.filteredEvidenceIds).not.toContain('ev-foreign-1');
     });
   });
 

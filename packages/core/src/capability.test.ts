@@ -33,7 +33,6 @@ describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
       },
       conversation: {
         channel: 'direct',
-        audienceId: 'aud-alpha',
         correlationId: 'corr-999',
       },
     };

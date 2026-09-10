@@ -42,9 +42,9 @@ All canonical Siduri-X organ and core packages are independently distributed:
 
 | Package | Version | Description |
 | :--- | :---: | :--- |
-| **`@siduri-x/core`** | `^1.0.7` | Core runtime protocol, action dispatcher, capability validation, and evidence bounds |
+| **`@siduri-x/core`** | `^1.0.8` | Core runtime protocol, action dispatcher, capability validation, and evidence bounds |
 | **`@siduri-x/brain`** | `^1.0.5` | Provider-neutral LLM reasoning, response planning, and proposal generation |
-| **`@siduri-x/memory`** | `^1.0.5` | PostgreSQL-backed conversational memory, episodic/semantic claims, and SQL migrations |
+| **`@siduri-x/memory`** | `^1.0.6` | PostgreSQL-backed conversational memory, episodic/semantic claims, and SQL migrations |
 | **`@siduri-x/hands`** | `^1.0.3` | Tool execution, cryptographic action policy capability verification, and MCP integration |
 | **`@siduri-x/knowledge`** | `^1.0.2` | Installed or hosted E-compatible packs with bounded, cited context integration |
 | **`@siduri-x/behavior`** | `^1.0.6` | Atomic directive state machine and personality projection compiler |

@@ -27,7 +27,6 @@ export interface ApproveResponseOptions {
   responseId: string;
   companionId: string;
   correlationId: string;
-  audienceId?: string;
 }
 
 export interface RejectResponseOptions {
@@ -82,7 +81,6 @@ export class ResponseGatingEngine {
       companionId: requestContext.companionId,
       correlationId: requestContext.conversation.correlationId,
       channel: requestContext.conversation?.channel,
-      audienceId: requestContext.conversation?.audienceId,
       speech: options.candidateSpeech,
       language: options.candidateLanguage,
       evidenceIds,
@@ -141,7 +139,6 @@ export class ResponseGatingEngine {
     const { admitted, excluded } = filterEvidenceRecords(attachedEvidence, {
       companionId: staged.companionId,
       channel: staged.channel,
-      audienceId: staged.audienceId,
       now,
     });
 

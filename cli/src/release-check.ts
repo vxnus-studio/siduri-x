@@ -22,20 +22,22 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
   if (fs.existsSync(tempPackDir)) fs.rmSync(tempPackDir, { recursive: true, force: true });
   fs.mkdirSync(tempPackDir, { recursive: true });
 
+  const getPkgVer = (dir: string) => JSON.parse(fs.readFileSync(path.resolve(repoRoot, dir, 'package.json'), 'utf8')).version;
+
   const canonicalPackages = [
-    { name: '@siduri-x/core', dir: 'packages/core', isOrgan: false, tarName: 'siduri-x-core-1.0.6.tgz' },
-    { name: '@siduri-x/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: 'siduri-x-brain-1.0.4.tgz' },
-    { name: '@siduri-x/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: 'siduri-x-memory-1.0.4.tgz' },
-    { name: '@siduri-x/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: 'siduri-x-knowledge-1.0.2.tgz' },
-    { name: '@siduri-x/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: 'siduri-x-behavior-1.0.5.tgz' },
-    { name: '@siduri-x/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: 'siduri-x-ear-1.0.3.tgz' },
-    { name: '@siduri-x/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: 'siduri-x-vision-1.0.2.tgz' },
-    { name: '@siduri-x/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: 'siduri-x-hands-1.0.3.tgz' },
-    { name: '@siduri-x/body', dir: 'packages/organs/body', isOrgan: true, tarName: 'siduri-x-body-1.0.4.tgz' },
-    { name: '@siduri-x/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: 'siduri-x-voice-1.0.6.tgz' },
-    { name: '@siduri-x/mouth', dir: 'packages/organs/mouth', isOrgan: true, tarName: 'siduri-x-mouth-1.0.0.tgz' },
-    { name: '@siduri-x/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: 'siduri-x-observation-1.0.3.tgz' },
-    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: 'vxnus-siduri-0.1.9.tgz' },
+    { name: '@siduri-x/core', dir: 'packages/core', isOrgan: false, tarName: `siduri-x-core-${getPkgVer('packages/core')}.tgz` },
+    { name: '@siduri-x/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: `siduri-x-brain-${getPkgVer('packages/organs/brain')}.tgz` },
+    { name: '@siduri-x/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: `siduri-x-memory-${getPkgVer('packages/organs/memory')}.tgz` },
+    { name: '@siduri-x/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: `siduri-x-knowledge-${getPkgVer('packages/organs/knowledge')}.tgz` },
+    { name: '@siduri-x/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: `siduri-x-behavior-${getPkgVer('packages/organs/behavior')}.tgz` },
+    { name: '@siduri-x/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: `siduri-x-ear-${getPkgVer('packages/organs/ear')}.tgz` },
+    { name: '@siduri-x/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: `siduri-x-vision-${getPkgVer('packages/organs/vision')}.tgz` },
+    { name: '@siduri-x/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: `siduri-x-hands-${getPkgVer('packages/organs/hands')}.tgz` },
+    { name: '@siduri-x/body', dir: 'packages/organs/body', isOrgan: true, tarName: `siduri-x-body-${getPkgVer('packages/organs/body')}.tgz` },
+    { name: '@siduri-x/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: `siduri-x-voice-${getPkgVer('packages/organs/voice')}.tgz` },
+    { name: '@siduri-x/mouth', dir: 'packages/organs/mouth', isOrgan: true, tarName: `siduri-x-mouth-${getPkgVer('packages/organs/mouth')}.tgz` },
+    { name: '@siduri-x/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: `siduri-x-observation-${getPkgVer('packages/organs/observation')}.tgz` },
+    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: `vxnus-siduri-${getPkgVer('cli')}.tgz` },
   ];
 
   let packagesChecked = 0;

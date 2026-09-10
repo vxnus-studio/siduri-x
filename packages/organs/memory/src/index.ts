@@ -39,7 +39,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
         ADD COLUMN IF NOT EXISTS authority VARCHAR NOT NULL DEFAULT 'user_explicit',
         ADD COLUMN IF NOT EXISTS user_confirmation VARCHAR NOT NULL DEFAULT 'none',
         ADD COLUMN IF NOT EXISTS sensitivity VARCHAR NOT NULL DEFAULT 'private',
-        ADD COLUMN IF NOT EXISTS allowed_audiences JSONB NOT NULL DEFAULT '[]'::jsonb,
         ADD COLUMN IF NOT EXISTS confidence REAL NOT NULL DEFAULT 1,
         ADD COLUMN IF NOT EXISTS asserted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         ADD COLUMN IF NOT EXISTS valid_from TIMESTAMPTZ,
@@ -75,7 +74,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       authority: row.authority,
       userConfirmation: row.user_confirmation,
       sensitivity: row.sensitivity,
-      allowedAudiences: row.allowed_audiences,
       confidence: row.confidence,
       assertedAt: row.asserted_at,
       validFrom: row.valid_from,
@@ -91,8 +89,8 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       `INSERT INTO memory_claims
        (companion_id, subject, predicate, value, status, scope, evidence, provenance,
         source_event_id, claim_type, authority, user_confirmation, sensitivity,
-        allowed_audiences, confidence, valid_from, valid_until, supersedes, replaces)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        confidence, valid_from, valid_until, supersedes, replaces)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        RETURNING *`,
       [
         this.companionId,
@@ -108,7 +106,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
         claimData.authority || 'user_explicit',
         claimData.userConfirmation || 'none',
         claimData.sensitivity || 'private',
-        JSON.stringify(claimData.allowedAudiences || []),
         claimData.confidence ?? 1,
         claimData.validFrom || null,
         claimData.validUntil || null,
@@ -133,7 +130,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       authority: row.authority,
       userConfirmation: row.user_confirmation,
       sensitivity: row.sensitivity,
-      allowedAudiences: row.allowed_audiences,
       confidence: row.confidence,
       assertedAt: row.asserted_at,
       validFrom: row.valid_from,
@@ -151,8 +147,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
     this.ensureInitialized();
 
     const isOptionObject = typeof scopeOrOptions === 'object' && scopeOrOptions !== null;
-    const channel = isOptionObject ? scopeOrOptions.channel : undefined;
-    const audienceId = isOptionObject ? scopeOrOptions.audienceId : undefined;
     const sensitivity = isOptionObject ? scopeOrOptions.sensitivity : undefined;
     const effectiveLimit = isOptionObject ? (scopeOrOptions.limit ?? limit) : limit;
 
@@ -617,8 +611,8 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
         `INSERT INTO memory_claims
          (companion_id, subject, predicate, value, status, scope, evidence, provenance,
           source_event_id, claim_type, authority, user_confirmation, sensitivity,
-          allowed_audiences, confidence, valid_from, valid_until, supersedes, replaces)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+          confidence, valid_from, valid_until, supersedes, replaces)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
          RETURNING *`,
         [
           this.companionId,
@@ -634,7 +628,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
           replacement.authority || 'user_explicit',
           replacement.userConfirmation || 'none',
           replacement.sensitivity || 'private',
-          JSON.stringify(replacement.allowedAudiences || []),
           replacement.confidence ?? 1,
           replacement.validFrom || null,
           replacement.validUntil || null,
@@ -700,7 +693,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
           authority: current.authority || 'user_explicit',
           userConfirmation: 'none' as const,
           sensitivity: updates.sensitivity ?? current.sensitivity,
-          allowedAudiences: (updates as any).allowedAudiences ?? (current.allowed_audiences || []),
           confidence: updates.confidence ?? current.confidence,
           validFrom: updates.validFrom ?? current.valid_from,
           validUntil: updates.validUntil ?? current.valid_until,
@@ -712,8 +704,8 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
           `INSERT INTO memory_claims
            (companion_id, subject, predicate, value, status, scope, evidence, provenance,
             source_event_id, claim_type, authority, user_confirmation, sensitivity,
-            allowed_audiences, confidence, valid_from, valid_until, supersedes, replaces)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+            confidence, valid_from, valid_until, supersedes, replaces)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
            RETURNING *`,
           [
             this.companionId,
@@ -729,7 +721,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
             replacementClaim.authority,
             replacementClaim.userConfirmation,
             replacementClaim.sensitivity,
-            JSON.stringify(replacementClaim.allowedAudiences),
             replacementClaim.confidence,
             replacementClaim.validFrom || null,
             replacementClaim.validUntil || null,
@@ -755,15 +746,11 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       const newConfidence = updates.confidence ?? current.confidence;
       const newValidFrom = updates.validFrom ?? current.valid_from;
       const newValidUntil = updates.validUntil ?? current.valid_until;
-      const newAudiences = (updates as any).allowedAudiences !== undefined
-        ? JSON.stringify((updates as any).allowedAudiences)
-        : JSON.stringify(current.allowed_audiences || []);
 
       const updateRes = await client.query(
         `UPDATE memory_claims
          SET subject = $3, predicate = $4, value = $5, scope = $6,
-             sensitivity = $7, confidence = $8, valid_from = $9, valid_until = $10,
-             allowed_audiences = $11::jsonb
+             sensitivity = $7, confidence = $8, valid_from = $9, valid_until = $10
          WHERE id = $1 AND companion_id = $2
          RETURNING *`,
         [
@@ -777,7 +764,6 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
           newConfidence,
           newValidFrom || null,
           newValidUntil || null,
-          newAudiences,
         ]
       );
 

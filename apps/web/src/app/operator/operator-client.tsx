@@ -21,7 +21,6 @@ type Proposal = {
   provenance: string;
   sensitivity: string;
   status: string;
-  allowed_audiences?: string[];
   subject?: string;
   predicate?: string;
   value?: string;

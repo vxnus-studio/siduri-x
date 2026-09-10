@@ -28,12 +28,11 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
     await organ.initialize('companion-a');
   });
 
-  test('Public request query maintains companion isolation without restrictive audience gating', async () => {
+  test('Query maintains companion isolation in single-owner mode', async () => {
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
 
     await organ.searchClaims('hello', {
-      channel: 'public',
-      audienceId: 'audience-public',
+      limit: 10,
     });
 
     expect(poolQueryMock).toHaveBeenCalledWith(
@@ -42,41 +41,38 @@ describe('T2 Memory Disclosure Matrix Contract Tests', () => {
     );
   });
 
-  test('Direct request query allows memory retrieval in single-owner mode', async () => {
+  test('Direct query allows memory retrieval in single-owner mode', async () => {
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
 
-    await organ.searchClaims('hello', {
-      channel: 'direct',
-      audienceId: 'audience-direct-a',
-    });
+    await organ.searchClaims('hello');
 
     expect(poolQueryMock.mock.calls[0][0]).toContain("WHERE companion_id = $1 AND status = 'APPROVED'");
   });
 
-  test('Private request query allows restricted private claims for explicit private audience', async () => {
+  test('Sensitivity filter applies to query when specified', async () => {
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
 
     await organ.searchClaims('hello', {
-      channel: 'private',
-      audienceId: 'audience-private-a',
+      sensitivity: 'restricted',
     });
 
     expect(poolQueryMock.mock.calls[0][0]).toContain("(valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW())");
-    expect(poolQueryMock.mock.calls[0][0]).toContain("confidence >= $");
+    expect(poolQueryMock.mock.calls[0][0]).toContain("sensitivity = $");
+    expect(poolQueryMock.mock.calls[0][1]).toContain('restricted');
   });
 
   test('Temporal validity and confidence thresholds are enforced in SQL parameters', async () => {
     poolQueryMock.mockResolvedValueOnce({ rows: [] });
 
     await organ.searchClaims('hello', {
-      channel: 'direct',
-      audienceId: 'audience-direct-a',
       minConfidence: 0.8,
     });
 
     expect(poolQueryMock.mock.calls[0][0]).toContain("(valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW())");
     expect(poolQueryMock.mock.calls[0][1]).toContain(0.8);
   });
+
+
 
   test('Lifecycle methods: markClaimSessionOnly, expireClaim, revokeClaim update status atomically', async () => {
     await organ.markClaimSessionOnly('claim-1');

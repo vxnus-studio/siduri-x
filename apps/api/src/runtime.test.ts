@@ -147,7 +147,6 @@ describe('Siduri Runtime Orchestration', () => {
       },
       conversation: {
         channel: 'direct',
-        audienceId: 'audience-direct',
         correlationId: 'corr-alice-123',
       },
     };
@@ -234,7 +233,6 @@ describe('Siduri Runtime Orchestration', () => {
       },
       conversation: {
         channel: 'public',
-        audienceId: 'audience-public',
         correlationId: 'corr-bob-999',
       },
     };

@@ -1,6 +1,9 @@
 {
   "name": "@siduri-x/api",
-  "version": "1.0.3",
+  "version": "1.0.4",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

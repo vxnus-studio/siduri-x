@@ -10,12 +10,12 @@ function cleanValue(value: string, limit: number = 160): string {
 }
 
 /**
- * Deterministically extracts teaching candidates from user messages according to neutral T1/T2 contracts.
+ * Deterministically extracts teaching candidates from user messages according to single-owner model.
  * 
  * Rules:
  * - Scoped to the requesting actor context (subject: `actor:${actorId}`), NEVER `primary_user`.
  * - Candidates are pending proposals only, never active/approved.
- * - Allowed audiences derive from the request conversation or policy context (e.g. direct audience).
+ * - In a single-owner companion, preferences apply across the companion instance without audience partitioning.
  * - Companion identity is isolated.
  */
 export function extractDeterministicTeaching(
@@ -34,7 +34,6 @@ export function extractDeterministicTeaching(
   const actorId = context?.actor?.actorId;
   const actorSubject = actorId ? `actor:${actorId}` : 'actor:anonymous';
   const companionId = context?.companionId || 'default';
-  const defaultAudience = context?.conversation?.audienceId || (context?.conversation?.channel === 'direct' ? `audience-direct-${actorId}` : 'audience-public');
   const sensitivity = context?.conversation?.channel === 'public' ? 'public' : 'private';
 
   // 1. Companion's Name: "your name is X" / "you are called X"
@@ -49,7 +48,6 @@ export function extractDeterministicTeaching(
       claimType: 'semantic',
       provenance: 'deterministic_teaching',
       sensitivity: 'public',
-      allowedAudiences: ['audience-public'],
       sourceEventId,
     });
     behaviorProposals.push({
@@ -75,35 +73,15 @@ export function extractDeterministicTeaching(
       claimType: 'preference',
       provenance: 'deterministic_teaching',
       sensitivity,
-      allowedAudiences: [defaultAudience],
       sourceEventId,
     });
   }
 
   // 3. Preferred Address / Call me X: "call me X"
-  const callMeMatch = text.match(/\b(?:(?:from now on|only),?\s*)?call me\s+(.+?)(?:\s+(in private|privately|in public|publicly|everywhere|in direct conversations))?(?=\s+and\s+(?:i\b|my\b|you\b)|[.;,]|$)/i);
+  const callMeMatch = text.match(/\b(?:(?:from now on|only),?\s*)?call me\s+(.+?)(?:\s+(?:in private|privately|in public|publicly|everywhere|in direct conversations))?(?=\s+and\s+(?:i\b|my\b|you\b)|[.;,]|$)/i);
   if (callMeMatch) {
     const address = cleanValue(callMeMatch[1], 80);
-    const scopePhrase = (callMeMatch[2] || '').toLowerCase();
-    let claimAudiences = [defaultAudience];
-    let claimSensitivity = sensitivity;
-    let directiveInstruction = `Address ${actorSubject} as ${address}`;
-
-    if (scopePhrase.includes('private') || scopePhrase.includes('privately')) {
-      claimSensitivity = 'private';
-      claimAudiences = [context?.conversation?.audienceId || `audience-private-${actorId}`];
-      directiveInstruction += ' in private conversations';
-    } else if (scopePhrase.includes('public') || scopePhrase.includes('publicly')) {
-      claimSensitivity = 'public';
-      claimAudiences = ['audience-public'];
-      directiveInstruction += ' in public conversations';
-    } else if (scopePhrase.includes('direct')) {
-      claimSensitivity = 'private';
-      claimAudiences = [context?.conversation?.audienceId || `audience-direct-${actorId}`];
-      directiveInstruction += ' in direct conversations';
-    } else {
-      directiveInstruction += ' when addressing the actor';
-    }
+    const directiveInstruction = `Address ${actorSubject} as ${address}`;
 
     claims.push({
       subject: actorSubject,
@@ -112,8 +90,7 @@ export function extractDeterministicTeaching(
       content: `The actor's preferred address is ${address}.`,
       claimType: 'relationship',
       provenance: 'deterministic_teaching',
-      sensitivity: claimSensitivity,
-      allowedAudiences: claimAudiences,
+      sensitivity,
       sourceEventId,
     });
 
@@ -140,7 +117,6 @@ export function extractDeterministicTeaching(
       claimType: 'relationship',
       provenance: 'deterministic_teaching',
       sensitivity: 'private',
-      allowedAudiences: [defaultAudience],
       sourceEventId,
     });
     behaviorProposals.push({
@@ -167,7 +143,6 @@ export function extractDeterministicTeaching(
       claimType: 'preference',
       provenance: 'deterministic_teaching',
       sensitivity,
-      allowedAudiences: [defaultAudience],
       sourceEventId,
     });
   }

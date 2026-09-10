@@ -10,7 +10,6 @@ describe('T5 Experience Event Contract Suite', () => {
     companionId: 'companion-a',
     correlationId: 'corr-123',
     channel: 'public' as const,
-    audienceId: 'audience-public',
     speech: 'Hello world',
     language: 'en',
     evidenceIds: ['ev-1'],
@@ -62,9 +61,5 @@ describe('T5 Experience Event Contract Suite', () => {
 
     const missingResponseId = { ...events[0], responseId: '' };
     expect(validateExperienceEvent(missingResponseId).valid).toBe(false);
-
-    const withoutAudience = { ...events[0] };
-    delete (withoutAudience as any).audienceId;
-    expect(validateExperienceEvent(withoutAudience).valid).toBe(true);
   });
 });

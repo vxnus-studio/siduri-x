@@ -168,7 +168,6 @@ describe('T6 Security & Operations Threat Model Suite', () => {
       responseId: 'resp-1',
       correlationId: 'corr-1',
       channel: 'public',
-      audienceId: 'audience-public',
       approval: 'APPROVED',
       kind: 'voice',
       lifecycle: 'STARTED',

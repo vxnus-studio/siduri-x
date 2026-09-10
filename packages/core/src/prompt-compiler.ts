@@ -69,11 +69,8 @@ export async function compilePrompts(
   const behaviorInjections =
     behavior && typeof behavior.compile === 'function'
       ? await behavior.compile({
-          activeRole: role,
           directives: activeDirectives,
           companionId,
-          channel: requestContext.conversation.channel,
-          audienceId: requestContext.conversation.audienceId,
           actorId: requestContext.actor.actorId,
         })
       : '';

@@ -31,7 +31,6 @@ interface ConversationContext {
   correlationId: string;        // unique request correlation ID for tracing
   sessionId?: string;
   channel?: string;             // optional transport channel descriptor (e.g. 'direct', 'web')
-  audienceId?: string;          // optional legacy compatibility field
   [key: string]: unknown;
 }
 

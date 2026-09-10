@@ -37,7 +37,6 @@ describe('T5 ExperienceDispatcher Contract Suite', () => {
       companionId: 'companion-a',
       correlationId: 'corr-1',
       channel: 'public',
-      audienceId: 'audience-public',
       speech: 'Hello dispatch',
       language: 'en',
     });
@@ -56,7 +55,6 @@ describe('T5 ExperienceDispatcher Contract Suite', () => {
       companionId: 'companion-a',
       correlationId: 'corr-1',
       channel: 'public',
-      audienceId: 'audience-public',
       speech: 'Hello empty',
     });
 

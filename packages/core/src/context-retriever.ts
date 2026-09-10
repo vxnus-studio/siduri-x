@@ -49,8 +49,6 @@ export async function retrieveRuntimeContext(
 
   const queryOptions = isContextObject
     ? {
-        channel: requestContext.conversation.channel,
-        audienceId: requestContext.conversation.audienceId,
         limit: 5,
       }
     : role;

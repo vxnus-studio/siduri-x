@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS memory_claims (
   authority VARCHAR NOT NULL DEFAULT 'user_explicit',
   user_confirmation VARCHAR NOT NULL DEFAULT 'none',
   sensitivity VARCHAR NOT NULL DEFAULT 'private',
-  allowed_audiences JSONB NOT NULL DEFAULT '[]'::jsonb,
   confidence REAL NOT NULL DEFAULT 1,
   asserted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   valid_from TIMESTAMPTZ,

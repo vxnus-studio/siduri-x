@@ -25,7 +25,6 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
       },
       conversation: {
         channel: 'direct',
-        audienceId: 'aud-direct',
         correlationId: 'corr-perc-1',
       },
     };
@@ -102,7 +101,7 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
         capabilities: ['chat:public'],
         authenticated: true,
       },
-      conversation: { channel: 'direct', audienceId: 'aud-alice', correlationId: 'c1' },
+      conversation: { channel: 'direct', correlationId: 'c1' },
     };
 
     const bobContext: RequestContext = {
@@ -114,7 +113,7 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
         capabilities: ['chat:public'],
         authenticated: false,
       },
-      conversation: { channel: 'public', audienceId: 'aud-public', correlationId: 'c2' },
+      conversation: { channel: 'public', correlationId: 'c2' },
     };
 
     await runtime.handleUserMessage('Alice secret message', aliceContext);
@@ -141,7 +140,6 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
       origin: 'knowledge' as const,
       trust: 'configured' as const,
       sensitivity: 'public' as const,
-      allowedAudiences: ['audience-public'],
       companionId: 'comp-native-ev',
       correlationId: 'corr-test',
       createdAt: new Date().toISOString(),

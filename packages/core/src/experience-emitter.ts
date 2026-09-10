@@ -51,7 +51,6 @@ export async function emitExperienceEvents(
     companionId,
     correlationId: requestContext.conversation.correlationId,
     channel: requestContext.conversation?.channel,
-    audienceId: requestContext.conversation?.audienceId,
     speech,
     language: language || 'ja',
     evidenceIds: gateEval.filteredEvidenceIds,

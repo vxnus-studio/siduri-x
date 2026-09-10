@@ -77,7 +77,7 @@ describe('DefaultEarOrgan Adversarial Remediation Suite', () => {
     const mockContext = {
       companionId: 'comp-1',
       actor: { actorId: 'legit-user', sessionId: 'sess-1', authorizationRole: 'operator' as const, capabilities: [], authenticated: true },
-      conversation: { channel: 'direct' as const, audienceId: 'aud-1', correlationId: 'corr-1' },
+      conversation: { channel: 'direct' as const, correlationId: 'corr-1' },
     };
 
     const spoofedPayload = {

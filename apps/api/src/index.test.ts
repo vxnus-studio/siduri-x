@@ -54,7 +54,6 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
           },
           conversation: {
             channel: 'public',
-            audienceId: 'audience-public',
             correlationId: 'corr-route-1',
           },
         },
@@ -73,34 +72,6 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
     );
   });
 
-  test('rejects MASTER_PRIVATE in public request with 400 and structured error', async () => {
-    const res = await request(app)
-      .post('/chat')
-      .send({
-        companionId: 'companion-a',
-        context: {
-          actor: {
-            actorId: 'actor-a',
-            sessionId: 'session-a',
-            authorizationRole: 'viewer',
-            capabilities: ['chat:public'],
-            authenticated: false,
-          },
-          conversation: {
-            channel: 'public',
-            audienceId: 'MASTER_PRIVATE',
-            correlationId: 'corr-err-1',
-          },
-        },
-        message: 'Forbidden audience test',
-      });
-
-    expect(res.status).toBe(400);
-    expect(res.body.accepted).toBe(false);
-    expect(res.body.error.code).toBe('LEGACY_PERSONAL_AUDIENCE');
-    expect(fakeRuntime.handleUserMessage).not.toHaveBeenCalled();
-  });
-
   test('rejects global primary_user subject with 400 and structured error', async () => {
     const res = await request(app)
       .post('/chat')
@@ -116,7 +87,6 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
           },
           conversation: {
             channel: 'public',
-            audienceId: 'audience-public',
             correlationId: 'corr-err-2',
           },
           subject: {

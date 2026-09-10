@@ -18,7 +18,6 @@ export interface MemoryProposal {
   provenance?: string;
   claimType?: ClaimType;
   sensitivity?: string;
-  allowedAudiences?: string[];
   sourceEventId?: string;
 }
 

@@ -26,7 +26,6 @@ passed to an API, runtime, or organ adapter:
     },
     "conversation": {
       "channel": "public",
-      "audienceId": "audience-public",
       "correlationId": "correlation-a"
     }
   },

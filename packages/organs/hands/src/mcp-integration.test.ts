@@ -26,7 +26,6 @@ describe('Hands Organ - Full MCP Protocol Integration Suite', () => {
       },
       conversation: {
         channel: 'direct',
-        audienceId: 'aud-mcp-1',
         correlationId: 'corr-mcp-1',
       },
     };

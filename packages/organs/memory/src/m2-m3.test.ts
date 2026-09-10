@@ -28,7 +28,6 @@ describe('T2 M2 & M3 Contract Suite (Teaching & Approval Lifecycle)', () => {
     },
     conversation: {
       channel: 'direct',
-      audienceId: 'audience-direct-actor-river',
       correlationId: 'corr-teach-1',
     },
   };
@@ -42,11 +41,10 @@ describe('T2 M2 & M3 Contract Suite (Teaching & Approval Lifecycle)', () => {
       expect(res.claims[0].predicate).toBe('preferred_address');
       expect(res.claims[0].value).toBe('River');
       expect(res.claims[0].sensitivity).toBe('private');
-      expect(res.claims[0].allowedAudiences).toContain('audience-direct-actor-river');
       expect(res.claims[0].sourceEventId).toBe('evt-1');
 
       expect(res.behaviorProposals).toHaveLength(1);
-      expect(res.behaviorProposals[0].directive).toContain('River in direct conversations');
+      expect(res.behaviorProposals[0].directive).toContain('Address actor:actor-river as River');
     });
 
     test('ordinary conversation produces no candidates', () => {
@@ -61,7 +59,6 @@ describe('T2 M2 & M3 Contract Suite (Teaching & Approval Lifecycle)', () => {
       expect(res.claims[0].subject).toBe('companion:companion-a');
       expect(res.claims[0].predicate).toBe('name');
       expect(res.claims[0].value).toBe('Lumina');
-      expect(res.claims[0].allowedAudiences).toEqual(['audience-public']);
     });
   });
 

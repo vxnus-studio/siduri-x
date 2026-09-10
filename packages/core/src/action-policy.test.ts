@@ -25,7 +25,6 @@ describe('ActionPolicyEngine Boundary', () => {
       },
       conversation: {
         channel: 'direct',
-        audienceId: 'audience-direct',
         correlationId: 'corr-1',
       },
     };

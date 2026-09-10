@@ -144,7 +144,6 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
       authority: 'user_explicit',
       user_confirmation: 'none',
       sensitivity: 'private',
-      allowed_audiences: ['MASTER_PRIVATE'],
       confidence: 1,
     }] });
 
@@ -158,7 +157,6 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
       sourceEventId: 'evt-1',
       claimType: 'relationship',
       sensitivity: 'private',
-      allowedAudiences: ['MASTER_PRIVATE'],
     });
 
     expect(claim.provenance).toBe('private_chat');
@@ -210,7 +208,6 @@ describe('PostgresMemoryOrgan FTS Parity', () => {
           authority: 'user_explicit',
           user_confirmation: 'explicit',
           sensitivity: 'private',
-          allowed_audiences: [],
           confidence: 1,
         }],
       })

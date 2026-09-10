@@ -72,7 +72,6 @@ export async function settleMemoryProposals(
         companionId,
         actorId: requestContext.actor.actorId,
         channel: requestContext.conversation.channel,
-        audienceId: requestContext.conversation.audienceId,
       },
     };
     await memory.addSourceEvent(sourceEvent);
@@ -95,7 +94,6 @@ export async function settleMemoryProposals(
         sensitivity:
           claim.sensitivity ||
           (requestContext.conversation?.channel === 'public' ? 'public' : 'private'),
-        allowedAudiences: claim.allowedAudiences || (requestContext.conversation?.audienceId ? [requestContext.conversation.audienceId] : undefined),
       });
       createdMemoryProposals.push(proposal);
     }
@@ -112,7 +110,6 @@ export async function settleMemoryProposals(
           sourceEventId: sourceEventId || p.sourceEventId,
           claimType: p.claimType || 'semantic',
           sensitivity: p.sensitivity || 'private',
-          allowedAudiences: p.allowedAudiences || (requestContext.conversation?.audienceId ? [requestContext.conversation.audienceId] : undefined),
         });
         createdMemoryProposals.push(proposal);
       }

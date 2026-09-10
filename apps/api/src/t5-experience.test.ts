@@ -161,7 +161,6 @@ describe('T5 Experience Event and Output Adapters Suite', () => {
       responseId: 'resp-1',
       correlationId: 'corr-1',
       channel: 'public' as const,
-      audienceId: 'audience-public',
       approval: 'STAGED' as any, // Not approved!
       kind: 'voice' as const,
       lifecycle: 'STARTED' as const,

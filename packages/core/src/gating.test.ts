@@ -16,7 +16,6 @@ describe('T4 Response Gating & Staged Approval Suite', () => {
     },
     conversation: {
       channel: 'public',
-      audienceId: 'audience-public',
       correlationId: 'corr-gate-1',
     },
   };
@@ -32,7 +31,6 @@ describe('T4 Response Gating & Staged Approval Suite', () => {
       origin: 'knowledge',
       trust: 'configured',
       sensitivity: 'public',
-      allowedAudiences: ['audience-public'],
       companionId: 'companion-a',
       correlationId: 'corr-gate-1',
       createdAt: new Date().toISOString(),
@@ -64,7 +62,6 @@ describe('T4 Response Gating & Staged Approval Suite', () => {
       origin: 'ocr',
       trust: 'untrusted',
       sensitivity: 'public',
-      allowedAudiences: ['audience-public'],
       companionId: 'companion-a',
       correlationId: 'corr-gate-2',
       createdAt: new Date().toISOString(),
@@ -186,30 +183,29 @@ describe('T4 Response Gating & Staged Approval Suite', () => {
     expect(approveRes.reason).toBe('EVIDENCE_EXPIRED');
   });
 
-  test('private evidence is filtered out and absent from public citations/evidence list', () => {
-    const privateEvidence: EvidenceRecord = {
-      evidenceId: 'ev-priv-1',
+  test('foreign companion evidence is filtered out and absent from citations/evidence list', () => {
+    const foreignEvidence: EvidenceRecord = {
+      evidenceId: 'ev-foreign-1',
       sourceId: 'src-secret',
       origin: 'knowledge',
       trust: 'configured',
       sensitivity: 'private',
-      allowedAudiences: ['audience-direct-a'],
-      companionId: 'companion-a',
+      companionId: 'companion-b',
       correlationId: 'corr-gate-1',
       createdAt: new Date().toISOString(),
     };
 
     const staged = engine.stageResponse({
-      requestContext: validPublicContext, // public channel
-      candidateSpeech: 'Public response text',
+      requestContext: validPublicContext, // companion-a
+      candidateSpeech: 'Response text',
       candidateLanguage: 'en',
-      evidenceRecords: [privateEvidence],
+      evidenceRecords: [foreignEvidence],
       citations: [{ sourceId: 'src-secret' }],
     });
 
-    const evalRes = engine.evaluateGate(staged, [privateEvidence]);
+    const evalRes = engine.evaluateGate(staged, [foreignEvidence]);
     expect(evalRes.admissible).toBe(true);
-    // Private evidence and its citation must be stripped from public output metadata
+    // Foreign companion evidence and its citation must be stripped due to companion isolation
     expect(evalRes.filteredEvidenceIds).toEqual([]);
     expect(evalRes.filteredCitations).toEqual([]);
   });

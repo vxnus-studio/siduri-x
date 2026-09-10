@@ -18,7 +18,6 @@ export interface EvidenceRecord {
   expiresAt?: string;
   trust: EvidenceTrust;
   sensitivity?: EvidenceSensitivity;
-  allowedAudiences?: string[];
   companionId: string;
   correlationId: string;
   [key: string]: unknown;
@@ -32,7 +31,6 @@ export type ResponseGateReasonCode =
   | 'UNKNOWN_APPROVAL_ID'
   | 'APPROVAL_ID_MISMATCH'
   | 'COMPANION_MISMATCH'
-  | 'AUDIENCE_MISMATCH'
   | 'EVIDENCE_EXPIRED'
   | 'EVIDENCE_SENSITIVITY_EXCLUDED'
   | 'UNRESOLVED_LOW_CONFIDENCE'
@@ -53,7 +51,6 @@ export interface StagedResponsePlan {
   companionId: string;
   correlationId: string;
   channel?: string;
-  audienceId?: string;
   speech: string;
   language: string;
   evidenceIds: string[];
@@ -83,7 +80,6 @@ export interface ResponseGateEvaluation {
 export interface EvidenceFilterOptions {
   companionId: string;
   channel?: string;
-  audienceId?: string;
   now?: string | Date;
   [key: string]: unknown;
 }
@@ -112,31 +108,8 @@ export function filterEvidenceRecords(
       }
     }
 
-    // 3. Optional audience intersection (audience-public is accessible everywhere)
-    if (
-      options.audienceId &&
-      record.allowedAudiences &&
-      record.allowedAudiences.length > 0 &&
-      !record.allowedAudiences.includes('audience-public') &&
-      !record.allowedAudiences.includes(options.audienceId)
-    ) {
-      excluded.push({ record, reason: 'audience_not_allowed' });
-      continue;
-    }
-
-    // 4. Optional channel sensitivity policy (if channel explicitly specified)
-    if (options.channel === 'public') {
-      if (record.sensitivity && record.sensitivity !== 'public') {
-        excluded.push({ record, reason: 'sensitivity_private_in_public_channel' });
-        continue;
-      }
-    } else if (options.channel === 'direct') {
-      if (record.sensitivity === 'restricted') {
-        excluded.push({ record, reason: 'sensitivity_restricted_in_direct_channel' });
-        continue;
-      }
-    }
-
+    // In single-owner architecture, memory and evidence are partitioned strictly
+    // by companion boundary (companionId) and temporal expiration.
     admitted.push(record);
   }
 

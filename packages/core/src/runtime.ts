@@ -345,7 +345,7 @@ export class SiduriRuntime {
 
     const sessionKey =
       input.requestContext.actor.sessionId ||
-      input.requestContext.conversation.audienceId ||
+      input.requestContext.conversation.correlationId ||
       'default';
 
     const currentMessage: Message = { role: 'user', content: input.perceivedText };

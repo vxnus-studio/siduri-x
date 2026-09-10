@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/behavior',
     organType: 'behavior',
-    version: '1.0.5',
+    version: '1.0.6',
     displayName: 'Behavior (Active Self Directives)',
     description: 'Atomic directive state machine and personality projection compiler',
     entrypoint: './dist/index.js',
@@ -65,7 +65,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/brain',
     organType: 'brain',
-    version: '1.0.3',
+    version: '1.0.5',
     displayName: 'Brain (Cognition & Planning)',
     description: 'Provider-neutral LLM reasoning, response planning, and proposal generation',
     entrypoint: './dist/index.js',
@@ -271,7 +271,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/memory',
     organType: 'memory',
-    version: '1.0.3',
+    version: '1.0.6',
     displayName: 'Memory (PostgreSQL FTS Claims)',
     description: 'Relational semantic claims with Full-Text Search and companion isolation',
     entrypoint: './dist/index.js',
