@@ -90,11 +90,6 @@ export async function retrieveRuntimeContext(
       if (k.evidenceRecord) {
         const nativeRecord = {
           ...k.evidenceRecord,
-          allowedAudiences:
-            k.evidenceRecord.sensitivity === 'public' &&
-            !k.evidenceRecord.allowedAudiences.includes(requestContext.conversation.audienceId)
-              ? [...k.evidenceRecord.allowedAudiences, requestContext.conversation.audienceId]
-              : k.evidenceRecord.allowedAudiences,
         };
         collectedEvidence.push(nativeRecord);
         citations.push({
@@ -115,7 +110,6 @@ export async function retrieveRuntimeContext(
           origin: 'knowledge',
           trust: 'configured',
           sensitivity: 'public',
-          allowedAudiences: ['audience-public', requestContext.conversation.audienceId],
           companionId,
           correlationId: requestContext.conversation.correlationId,
           createdAt: new Date().toISOString(),

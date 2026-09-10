@@ -1,4 +1,3 @@
-import { Channel } from './context';
 import { ResponseCitation, ResponseApprovalStatus } from './evidence';
 
 export type ExperienceEventKind = 'voice' | 'caption' | 'avatar' | 'platform_action';
@@ -9,8 +8,8 @@ export interface ExperienceEvent {
   companionId: string;
   responseId: string;
   correlationId: string;
-  channel: Channel;
-  audienceId: string;
+  channel?: string;
+  audienceId?: string;
   approval: 'APPROVED';
   kind: ExperienceEventKind;
   lifecycle: ExperienceEventLifecycle;
@@ -22,6 +21,7 @@ export interface ExperienceEvent {
   expression?: string;
   createdAt: string;
   expiresAt?: string;
+  [key: string]: unknown;
 }
 
 export interface ExperienceAdapterResult {
@@ -47,8 +47,8 @@ export interface CreateExperienceEventsOptions {
   responseId: string;
   companionId: string;
   correlationId: string;
-  channel: Channel;
-  audienceId: string;
+  channel?: string;
+  audienceId?: string;
   speech: string;
   language?: string;
   evidenceIds?: string[];
@@ -57,6 +57,7 @@ export interface CreateExperienceEventsOptions {
   action?: string;
   expiresAt?: string;
   now?: string | Date;
+  [key: string]: unknown;
 }
 
 export function createExperienceEvents(

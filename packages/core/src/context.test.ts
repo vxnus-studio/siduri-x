@@ -1,34 +1,29 @@
 import {
   RequestContext,
   validateRequestContext,
-  isValidAuthorizationRole,
-  isValidChannel,
   isValidSubjectKind,
 } from './context';
 
-describe('Core Context Contract (P1)', () => {
+describe('Core Context Contract (Single-Owner Single-Machine)', () => {
   const validContext: RequestContext = {
     companionId: 'companion-a',
     actor: {
-      actorId: 'actor-a',
+      actorId: 'local-user',
       sessionId: 'session-a',
-      authorizationRole: 'viewer',
-      capabilities: ['chat:public'],
-      authenticated: false,
+      authenticated: true,
+      capabilities: ['chat:interact'],
     },
     conversation: {
-      channel: 'public',
-      audienceId: 'audience-public',
       correlationId: 'corr-a',
     },
     subject: {
-      subjectId: 'actor:actor-a',
+      subjectId: 'actor:local-user',
       kind: 'actor',
-      ownerActorId: 'actor-a',
+      ownerActorId: 'local-user',
     },
   };
 
-  test('validates a correct neutral RequestContext', () => {
+  test('validates a correct RequestContext', () => {
     const result = validateRequestContext(validContext);
     expect(result.accepted).toBe(true);
     expect(result.context).toEqual(validContext);
@@ -56,40 +51,6 @@ describe('Core Context Contract (P1)', () => {
     expect(result.error?.fields).toEqual(
       expect.arrayContaining(['companionId', 'actor', 'conversation'])
     );
-  });
-
-  test('validates authorization role constraints', () => {
-    expect(isValidAuthorizationRole('viewer')).toBe(true);
-    expect(isValidAuthorizationRole('operator')).toBe(true);
-    expect(isValidAuthorizationRole('administrator')).toBe(true);
-    expect(isValidAuthorizationRole('owner')).toBe(false);
-    expect(isValidAuthorizationRole('user')).toBe(false);
-    expect(isValidAuthorizationRole('MASTER')).toBe(false);
-
-    const invalidRoleCtx = {
-      ...validContext,
-      actor: { ...validContext.actor, authorizationRole: 'invalid_role' as any },
-    };
-    const result = validateRequestContext(invalidRoleCtx);
-    expect(result.accepted).toBe(false);
-    expect(result.error?.fields).toContain('actor.authorizationRole');
-  });
-
-  test('validates channel constraints', () => {
-    expect(isValidChannel('public')).toBe(true);
-    expect(isValidChannel('direct')).toBe(true);
-    expect(isValidChannel('private')).toBe(true);
-    expect(isValidChannel('operator')).toBe(true);
-    expect(isValidChannel('chat')).toBe(false);
-    expect(isValidChannel('MASTER_PRIVATE')).toBe(false);
-
-    const invalidChannelCtx = {
-      ...validContext,
-      conversation: { ...validContext.conversation, channel: 'invalid_channel' as any },
-    };
-    const result = validateRequestContext(invalidChannelCtx);
-    expect(result.accepted).toBe(false);
-    expect(result.error?.fields).toContain('conversation.channel');
   });
 
   test('validates subject kinds and constraints', () => {

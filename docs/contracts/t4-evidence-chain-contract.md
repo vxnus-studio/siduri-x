@@ -24,8 +24,8 @@ interface EvidenceRecord {
   createdAt: string;
   expiresAt?: string;
   trust: "configured" | "provider" | "untrusted";
-  sensitivity: "public" | "private" | "restricted";
-  allowedAudiences: string[];
+  sensitivity?: "public" | "private" | "restricted";
+  allowedAudiences?: string[]; // Optional legacy compatibility
   companionId: string;
   correlationId: string;
 }

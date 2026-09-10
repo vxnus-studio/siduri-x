@@ -84,7 +84,7 @@ export interface BrainOrgan {
 
 
 // Single-owner local companion memory scope
-export type MemoryScope = 'COMPANION' | 'OWNER' | 'OPERATOR' | 'VIEWER' | 'PUBLIC' | string;
+export type MemoryScope = 'companion' | 'user' | string;
 
 export interface Claim {
   id: string;
@@ -101,20 +101,19 @@ export interface Claim {
   authority?: ClaimAuthority;
   userConfirmation?: 'explicit' | 'implied' | 'none';
   sensitivity?: string;
-  allowedAudiences?: string[];
   confidence?: number;
   assertedAt?: string;
   validFrom?: string;
   validUntil?: string;
   supersedes?: string;
   replaces?: string;
+  [key: string]: unknown;
 }
 
 export interface BehaviorDirective {
   id: string;
   companionId: string; // Strict isolation boundary
   directive: string;
-  scopeMatcher?: string[]; // Generic role matching
   priority: number;
   status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
   supersedesId?: string;
@@ -122,18 +121,17 @@ export interface BehaviorDirective {
   subject?: string;
   predicate?: string;
   value?: string;
-  allowedAudiences?: string[];
   validFrom?: string;
   validUntil?: string;
+  [key: string]: unknown;
 }
 
 export interface MemoryQueryOptions {
-  channel?: 'public' | 'direct' | 'private' | 'operator' | string;
-  audienceId?: string;
   sensitivity?: string;
   limit?: number;
   minConfidence?: number;
   now?: string | Date;
+  [key: string]: unknown;
 }
 
 export interface MemoryOrgan {
@@ -158,7 +156,7 @@ export interface MemoryOrgan {
   supersedeClaim?(id: string, replacement: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
   updateClaim?(
     id: string,
-    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil' | 'allowedAudiences'>>
+    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil'>>
   ): Promise<Claim>;
   resetMemory?(): Promise<void>;
   addSourceEvent?(event: SourceEvent): Promise<SourceEvent>;
@@ -197,14 +195,12 @@ export interface ActiveSelfProjection {
 }
 
 export interface BehaviorContext {
-  activeRole: string;
   directives: BehaviorDirective[];
   companionId?: string;
-  channel?: 'public' | 'direct' | 'private' | 'operator';
-  audienceId?: string;
   actorId?: string;
   sessionId?: string;
   now?: string;
+  [key: string]: unknown;
 }
 
 export interface BehaviorOrgan {

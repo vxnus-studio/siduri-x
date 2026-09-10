@@ -13,7 +13,7 @@ import { FixtureObservationOrgan } from '@siduri-x/observation';
 import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@siduri-x/hands';
 import { DefaultEarOrgan, EarOrganConfig } from '@siduri-x/ear';
 import { DefaultMouthOrgan, DefaultMouthOrganConfig } from '@siduri-x/mouth';
-import { attachIdentity, requireRole, Identity } from './auth';
+import { attachIdentity, requireAuth, requireRole, Identity } from './auth';
 import { mapRequestContext } from './context-mapper';
 
 export interface AppBrainConfig {
@@ -130,7 +130,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       : new DefaultMouthOrgan({ ...config, voice });
   }
 
-  app.post('/boot', requireRole(['OWNER']), async (req, res) => {
+  app.post('/boot', requireAuth, async (req, res) => {
     try {
       const { id, config } = req.body;
       if (runtimes.has(id)) {
@@ -209,34 +209,21 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       authenticated: identity.role === 'OWNER',
     });
   });
-  app.put('/me', requireRole(['OWNER']), (req, res) => res.json({ success: true }));
+  app.put('/me', requireAuth, (req, res) => res.json({ success: true }));
 
   // CHAT (API context boundary validation)
   app.post('/chat', attachIdentity, async (req, res) => {
     const { id, message, history } = req.body;
     const identity = (req as any).identity as Identity;
 
-    // Single-owner companion model: /chat defaults to OWNER identity.
-    // Explicit non-owner role in request body or context (e.g. adversarial test suites) is respected.
-    const effectiveRole = req.body?.role === 'VIEWER' || req.body?.context?.actor?.authorizationRole === 'viewer'
-      ? 'VIEWER'
-      : (identity?.role === 'OPERATOR' ? 'OPERATOR' : 'OWNER');
-    const isOwner = effectiveRole === 'OWNER';
-
-    // Call context mapper at the API boundary
-    const mappingResult = mapRequestContext(
-      {
-        ...req.body,
-        id: id || req.body.companionId,
-        role: effectiveRole,
-        authenticated: isOwner,
-        generateCorrelationId: true,
-      },
-      {
-        endpointPolicy: 'public',
-        defaultPublicAudience: 'audience-public',
-      }
-    );
+    // Single-owner companion model: map request context directly
+    const mappingResult = mapRequestContext({
+      ...req.body,
+      id: id || req.body.companionId,
+      authenticated: identity?.authenticated ?? true,
+      source: identity?.source ?? 'local',
+      generateCorrelationId: true,
+    });
 
     if (!mappingResult.accepted) {
       return res.status(400).json({
@@ -269,24 +256,13 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const { id, message, history } = req.body;
     const identity = (req as any).identity as Identity;
 
-    const effectiveRole = req.body?.role === 'VIEWER' || req.body?.context?.actor?.authorizationRole === 'viewer'
-      ? 'VIEWER'
-      : (identity?.role === 'OPERATOR' ? 'OPERATOR' : 'OWNER');
-    const isOwner = effectiveRole === 'OWNER';
-
-    const mappingResult = mapRequestContext(
-      {
-        ...req.body,
-        id: id || req.body.companionId,
-        role: effectiveRole,
-        authenticated: isOwner,
-        generateCorrelationId: true,
-      },
-      {
-        endpointPolicy: 'public',
-        defaultPublicAudience: 'audience-public',
-      }
-    );
+    const mappingResult = mapRequestContext({
+      ...req.body,
+      id: id || req.body.companionId,
+      authenticated: identity?.authenticated ?? true,
+      source: identity?.source ?? 'local',
+      generateCorrelationId: true,
+    });
 
     if (!mappingResult.accepted) {
       return res.status(400).json({
@@ -406,7 +382,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   });
 
   // MEMORY GETTERS
-  app.get('/memory/proposals', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
+  app.get('/memory/proposals', requireAuth, async (req, res) => {
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -419,7 +395,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.get('/memory', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
+  app.get('/memory', requireAuth, async (req, res) => {
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -432,7 +408,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.get('/memory/claims', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
+  app.get('/memory/claims', requireAuth, async (req, res) => {
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -445,7 +421,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.get('/memory/behavioral', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
+  app.get('/memory/behavioral', requireAuth, async (req, res) => {
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -459,7 +435,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   });
 
   // MEMORY MUTATIONS - PROPOSALS
-  app.post('/memory/proposals/update', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
+  app.post('/memory/proposals/update', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -478,7 +454,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.post('/memory/proposals/approve', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
+  app.post('/memory/proposals/approve', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -491,7 +467,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.post('/memory/proposals/reject', requireRole(['OWNER', 'OPERATOR']), async (req, res) => {
+  app.post('/memory/proposals/reject', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -505,7 +481,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   });
 
   // MEMORY MUTATIONS - BEHAVIORAL
-  app.post('/memory/behavioral/approve', requireRole(['OWNER']), async (req, res) => {
+  app.post('/memory/behavioral/approve', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -518,7 +494,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.post('/memory/behavioral/reject', requireRole(['OWNER']), async (req, res) => {
+  app.post('/memory/behavioral/reject', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -531,7 +507,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.post('/memory/behavioral/revoke', requireRole(['OWNER']), async (req, res) => {
+  app.post('/memory/behavioral/revoke', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -544,7 +520,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  app.post('/memory/behavioral/disable', requireRole(['OWNER']), async (req, res) => {
+  app.post('/memory/behavioral/disable', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -559,7 +535,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
 
   const isDevMode = process.env.NODE_ENV !== 'production' || process.env.SIDURI_DEV_MODE === 'true';
   if (isDevMode) {
-    app.post('/dev/memory/reset', requireRole(['OWNER']), async (req, res) => {
+    app.post('/dev/memory/reset', requireAuth, async (req, res) => {
       const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
       const runtime = runtimes.get(id);
       if (!runtime) return res.status(404).json({ error: "Companion not found" });
@@ -582,15 +558,12 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         requestContext: {
           companionId,
           actor: {
-            actorId: 'operator-a',
-            sessionId: 'sess-op',
-            authorizationRole: 'operator',
-            capabilities: ['chat:public', 'memory:approve'],
+            actorId: 'local-user',
+            sessionId: 'sess-local',
+            capabilities: ['chat', 'memory:approve'],
             authenticated: true,
           },
           conversation: {
-            channel: 'public',
-            audienceId: 'audience-public',
             correlationId: req.body?.correlation_id || `corr-${Date.now()}`,
           },
         },

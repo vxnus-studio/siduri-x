@@ -75,15 +75,15 @@ export class ResponseGatingEngine {
     const requiresApproval =
       options.requiresApproval !== undefined
         ? options.requiresApproval
-        : requestContext.conversation.channel === 'operator' ||
+        : (requestContext.conversation?.channel === 'operator') ||
           evidenceRecords.some((e) => e.origin === 'ocr' || e.trust === 'untrusted');
 
     const staged: StagedResponsePlan = {
       responseId: generateId('resp'),
       companionId: requestContext.companionId,
       correlationId: requestContext.conversation.correlationId,
-      channel: requestContext.conversation.channel,
-      audienceId: requestContext.conversation.audienceId,
+      channel: requestContext.conversation?.channel,
+      audienceId: requestContext.conversation?.audienceId,
       speech: options.candidateSpeech,
       language: options.candidateLanguage,
       evidenceIds,

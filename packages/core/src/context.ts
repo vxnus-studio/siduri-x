@@ -1,20 +1,21 @@
-export type AuthorizationRole = 'viewer' | 'operator' | 'administrator';
-
-export type Channel = 'public' | 'direct' | 'private' | 'operator';
+// Single-owner, single-machine context model
+// Security perimeter is the local machine boundary (external vs internal).
+// No internal audience, viewer, or owner role hierarchies.
 
 export interface ActorContext {
   actorId: string;
   sessionId: string;
-  authorizationRole: AuthorizationRole;
-  capabilities: string[];
-  authenticated: boolean;
+  authenticated?: boolean;
+  capabilities?: string[];
+  [key: string]: unknown;
 }
 
 export interface ConversationContext {
-  channel: Channel;
-  audienceId: string;
-  isLive?: boolean;
   correlationId: string;
+  sessionId?: string;
+  channel?: string;
+  audienceId?: string;
+  [key: string]: unknown;
 }
 
 export type SubjectKind = 'actor' | 'companion' | 'configured';
@@ -29,31 +30,30 @@ export interface RequestContext {
   companionId: string;
   actor: ActorContext;
   conversation: ConversationContext;
+  source?: 'local' | 'external' | string;
   subject?: SubjectRef;
+  metadata?: Record<string, unknown>;
 }
 
 export type DiagnosticCode =
-  | 'audience_defaulted_by_public_policy'
-  | 'legacy_role_mapped_to_authorization'
+  | 'legacy_role_removed'
   | 'anonymous_session_generated'
   | 'companion_default_mapped_for_bootstrap'
-  | 'actor_scoped_subject_mapped'
-  | 'legacy_primary_user_quarantined';
+  | 'actor_scoped_subject_mapped';
 
 export type ContextErrorCode =
   | 'MISSING_CONTEXT'
   | 'INVALID_CONTEXT'
-  | 'AMBIGUOUS_CONTEXT'
   | 'FORBIDDEN_CONTEXT'
   | 'LEGACY_PERSONAL_AUDIENCE'
-  | 'UNAUTHORIZED_CHANNEL_OR_CAPABILITY';
+  | 'AMBIGUOUS_CONTEXT'
+  | 'UNAUTHORIZED_CAPABILITY';
 
 export interface ContextError {
   code: ContextErrorCode;
   message?: string;
   fields?: string[];
   field?: string;
-  conflicts?: string[];
   correlationId?: string;
 }
 
@@ -62,14 +62,6 @@ export interface RequestContextValidationResult {
   context?: RequestContext;
   diagnostics?: DiagnosticCode[];
   error?: ContextError;
-}
-
-export function isValidAuthorizationRole(role: unknown): role is AuthorizationRole {
-  return role === 'viewer' || role === 'operator' || role === 'administrator';
-}
-
-export function isValidChannel(channel: unknown): channel is Channel {
-  return channel === 'public' || channel === 'direct' || channel === 'private' || channel === 'operator';
 }
 
 export function isValidSubjectKind(kind: unknown): kind is SubjectKind {
@@ -103,26 +95,11 @@ export function validateRequestContext(context: unknown): RequestContextValidati
     if (!ctx.actor.sessionId || typeof ctx.actor.sessionId !== 'string' || ctx.actor.sessionId.trim() === '') {
       missingFields.push('actor.sessionId');
     }
-    if (!isValidAuthorizationRole(ctx.actor.authorizationRole)) {
-      missingFields.push('actor.authorizationRole');
-    }
-    if (!Array.isArray(ctx.actor.capabilities)) {
-      missingFields.push('actor.capabilities');
-    }
-    if (typeof ctx.actor.authenticated !== 'boolean') {
-      missingFields.push('actor.authenticated');
-    }
   }
 
   if (!ctx.conversation || typeof ctx.conversation !== 'object') {
     missingFields.push('conversation');
   } else {
-    if (!isValidChannel(ctx.conversation.channel)) {
-      missingFields.push('conversation.channel');
-    }
-    if (!ctx.conversation.audienceId || typeof ctx.conversation.audienceId !== 'string' || ctx.conversation.audienceId.trim() === '') {
-      missingFields.push('conversation.audienceId');
-    }
     if (!ctx.conversation.correlationId || typeof ctx.conversation.correlationId !== 'string' || ctx.conversation.correlationId.trim() === '') {
       missingFields.push('conversation.correlationId');
     }
@@ -157,3 +134,4 @@ export function validateRequestContext(context: unknown): RequestContextValidati
     context: ctx as RequestContext,
   };
 }
+

@@ -123,9 +123,9 @@ export class ActionPolicyEngine {
 
     // Role check if tool restricts roles (supports administrator/owner role parity)
     if (toolDef.allowedRoles && toolDef.allowedRoles.length > 0) {
-      const actorRole = effectiveContext.actor.authorizationRole;
+      const actorRole = (effectiveContext.actor.authorizationRole as string) || (effectiveContext.actor as any).role || 'owner';
       const normalizedActorRoles = new Set<string>([actorRole.toLowerCase()]);
-      if (actorRole === 'administrator' || (actorRole as string) === 'owner') {
+      if (actorRole.toLowerCase() === 'administrator' || actorRole.toLowerCase() === 'owner') {
         normalizedActorRoles.add('administrator');
         normalizedActorRoles.add('owner');
         normalizedActorRoles.add('admin');
@@ -148,7 +148,7 @@ export class ActionPolicyEngine {
 
     // Channel check if tool restricts channels
     if (toolDef.allowedChannels && toolDef.allowedChannels.length > 0) {
-      const channel = effectiveContext.conversation.channel;
+      const channel = effectiveContext.conversation.channel || 'direct';
       if (!toolDef.allowedChannels.includes(channel)) {
         const decision: ActionPolicyDecision = {
           allowed: false,

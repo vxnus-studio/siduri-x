@@ -17,10 +17,11 @@ export interface EvidenceRecord {
   createdAt: string;
   expiresAt?: string;
   trust: EvidenceTrust;
-  sensitivity: EvidenceSensitivity;
-  allowedAudiences: string[];
+  sensitivity?: EvidenceSensitivity;
+  allowedAudiences?: string[];
   companionId: string;
   correlationId: string;
+  [key: string]: unknown;
 }
 
 export type ResponseApprovalStatus = 'STAGED' | 'APPROVED' | 'REJECTED' | 'EXPIRED' | 'EMITTED';
@@ -51,8 +52,8 @@ export interface StagedResponsePlan {
   responseId: string;
   companionId: string;
   correlationId: string;
-  channel: 'public' | 'direct' | 'private' | 'operator';
-  audienceId: string;
+  channel?: string;
+  audienceId?: string;
   speech: string;
   language: string;
   evidenceIds: string[];
@@ -66,6 +67,7 @@ export interface StagedResponsePlan {
   memoryProposals?: MemoryProposal[];
   behaviorProposals?: BehaviorProposal[];
   internalMonologue?: string;
+  [key: string]: unknown;
 }
 
 export interface ResponseGateEvaluation {
@@ -80,9 +82,10 @@ export interface ResponseGateEvaluation {
 
 export interface EvidenceFilterOptions {
   companionId: string;
-  channel: 'public' | 'direct' | 'private' | 'operator';
-  audienceId: string;
+  channel?: string;
+  audienceId?: string;
   now?: string | Date;
+  [key: string]: unknown;
 }
 
 export function filterEvidenceRecords(
@@ -109,19 +112,21 @@ export function filterEvidenceRecords(
       }
     }
 
-    // 3. Audience intersection
+    // 3. Optional audience intersection (audience-public is accessible everywhere)
     if (
+      options.audienceId &&
       record.allowedAudiences &&
       record.allowedAudiences.length > 0 &&
+      !record.allowedAudiences.includes('audience-public') &&
       !record.allowedAudiences.includes(options.audienceId)
     ) {
       excluded.push({ record, reason: 'audience_not_allowed' });
       continue;
     }
 
-    // 4. Sensitivity policy based on channel
+    // 4. Optional channel sensitivity policy (if channel explicitly specified)
     if (options.channel === 'public') {
-      if (record.sensitivity !== 'public') {
+      if (record.sensitivity && record.sensitivity !== 'public') {
         excluded.push({ record, reason: 'sensitivity_private_in_public_channel' });
         continue;
       }

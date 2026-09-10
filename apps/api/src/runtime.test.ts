@@ -95,7 +95,7 @@ describe('Siduri Runtime Orchestration', () => {
         riskLevel: 'LOW',
         requiredCapabilities: ['chat:public'],
       },
-      execute: async (params) => {
+      execute: async (params: any) => {
         toolExecuted = true;
         return { hits: [`Result for ${params.query}`] };
       },
@@ -291,7 +291,7 @@ describe('Siduri Runtime Orchestration', () => {
           id: 'test-web-channel',
           name: 'Web Channel',
           medium: 'web',
-          deliver: async (out) => {
+          deliver: async (out: any) => {
             deliveredOutput = out;
           },
         },

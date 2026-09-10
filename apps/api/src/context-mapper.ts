@@ -1,14 +1,12 @@
 import {
   RequestContext,
-  AuthorizationRole,
-  Channel,
   DiagnosticCode,
   ContextError,
   validateRequestContext,
 } from '@siduri-x/core';
 
 export interface ContextMapperOptions {
-  endpointPolicy?: 'public' | 'private' | 'operator' | 'direct';
+  endpointPolicy?: 'public' | 'private' | 'operator' | 'direct' | string;
   defaultPublicAudience?: string;
   defaultPrivateAudience?: string;
   defaultOperatorAudience?: string;
@@ -22,13 +20,17 @@ export interface MapRequestContextResult {
   error?: ContextError;
 }
 
+/**
+ * Maps incoming HTTP requests to a canonical RequestContext.
+ * In a single-owner, single-machine model:
+ * - Security is enforced at the external boundary, not internally between roles.
+ * - No internal audience or viewer/operator/owner role hierarchies.
+ */
 export function mapRequestContext(
   input: any,
   options: ContextMapperOptions = {}
 ): MapRequestContextResult {
   const diagnostics: DiagnosticCode[] = [];
-  const endpointPolicy = options.endpointPolicy || 'public';
-  const defaultPublicAudience = options.defaultPublicAudience || 'audience-public';
 
   if (!input || typeof input !== 'object') {
     return {
@@ -48,19 +50,17 @@ export function mapRequestContext(
     input?.audience;
 
   if (rawAudience === 'MASTER_PRIVATE' || input?.scope === 'MASTER_PRIVATE') {
-    if (endpointPolicy === 'public' || input?.channel === 'public' || input?.context?.conversation?.channel === 'public') {
-      return {
-        accepted: false,
-        error: {
-          code: 'LEGACY_PERSONAL_AUDIENCE',
-          field: 'audienceId',
-          correlationId: input?.context?.conversation?.correlationId || input?.correlationId,
-        },
-      };
-    }
+    return {
+      accepted: false,
+      error: {
+        code: 'LEGACY_PERSONAL_AUDIENCE',
+        field: 'audienceId',
+        correlationId: input?.context?.conversation?.correlationId || input?.correlationId,
+      },
+    };
   }
 
-  // 1. If incoming input already has a full neutral context structure
+  // 1. If incoming input already has a context structure
   if (input.context && typeof input.context === 'object') {
     const rawCtx = input.context;
     const companionId = input.companionId || rawCtx.companionId || input.id;
@@ -77,48 +77,6 @@ export function mapRequestContext(
       };
     }
 
-    // Role cannot select audience or subject
-    const rawRole = input.role || rawCtx.actor?.authorizationRole;
-    if (input.role && !rawCtx.conversation?.channel && !rawCtx.conversation?.audienceId) {
-      return {
-        accepted: false,
-        error: {
-          code: 'AMBIGUOUS_CONTEXT',
-          conflicts: ['role_does_not_select_audience', 'role_does_not_select_subject'],
-          correlationId,
-        },
-      };
-    }
-
-    const channel: Channel = rawCtx.conversation?.channel || (endpointPolicy as Channel);
-    let audienceId: string | undefined = rawCtx.conversation?.audienceId;
-
-    if (!audienceId) {
-      if (channel === 'public' || endpointPolicy === 'public') {
-        audienceId = defaultPublicAudience;
-        diagnostics.push('audience_defaulted_by_public_policy');
-      } else {
-        return {
-          accepted: false,
-          error: {
-            code: 'MISSING_CONTEXT',
-            fields: ['conversation.audienceId'],
-            correlationId,
-          },
-        };
-      }
-    }
-
-    if (!correlationId) {
-      return {
-        accepted: false,
-        error: {
-          code: 'MISSING_CONTEXT',
-          fields: ['conversation.correlationId'],
-        },
-      };
-    }
-
     const actor = rawCtx.actor;
     if (!actor || typeof actor !== 'object') {
       return {
@@ -131,46 +89,17 @@ export function mapRequestContext(
       };
     }
 
-    // Check required capabilities for private/operator/direct channels
-    const capabilities: string[] = Array.isArray(actor.capabilities) ? actor.capabilities : [];
-    if (channel === 'private' && !capabilities.includes('chat:private')) {
+    // Reject invalid primary_user subject
+    if (rawCtx.subject && (rawCtx.subject.subjectId === 'primary_user' || rawCtx.subject === 'primary_user')) {
       return {
         accepted: false,
         error: {
-          code: 'UNAUTHORIZED_CHANNEL_OR_CAPABILITY',
-          message: 'Private channel requires explicit chat:private capability',
-          fields: ['actor.capabilities'],
+          code: 'FORBIDDEN_CONTEXT',
+          message: 'Global primary_user subject is forbidden',
+          field: 'subject.subjectId',
           correlationId,
         },
       };
-    }
-    if (channel === 'operator' && !capabilities.includes('memory:inspect') && !capabilities.includes('operator:access')) {
-      return {
-        accepted: false,
-        error: {
-          code: 'UNAUTHORIZED_CHANNEL_OR_CAPABILITY',
-          message: 'Operator channel requires explicit operator capability',
-          fields: ['actor.capabilities'],
-          correlationId,
-        },
-      };
-    }
-
-    // Check subject policy
-    let subject = rawCtx.subject;
-    if (subject) {
-      if (subject.subjectId === 'primary_user' || subject === 'primary_user') {
-        // Global primary_user is rejected or quarantined
-        return {
-          accepted: false,
-          error: {
-            code: 'FORBIDDEN_CONTEXT',
-            message: 'Global primary_user subject is forbidden',
-            field: 'subject.subjectId',
-            correlationId,
-          },
-        };
-      }
     }
 
     const constructed: RequestContext = {
@@ -178,17 +107,20 @@ export function mapRequestContext(
       actor: {
         actorId: actor.actorId,
         sessionId: actor.sessionId,
+        capabilities: Array.isArray(actor.capabilities) ? actor.capabilities : ['chat'],
+        authenticated: actor.authenticated !== undefined ? Boolean(actor.authenticated) : true,
         authorizationRole: actor.authorizationRole,
-        capabilities,
-        authenticated: Boolean(actor.authenticated),
+        ...actor,
       },
       conversation: {
-        channel,
-        audienceId,
-        isLive: rawCtx.conversation?.isLive,
         correlationId,
+        channel: rawCtx.conversation?.channel || input.channel || 'direct',
+        audienceId: rawCtx.conversation?.audienceId || input.audienceId,
+        isLive: rawCtx.conversation?.isLive,
+        ...rawCtx.conversation,
       },
-      subject,
+      source: input.source || rawCtx.source || 'local',
+      subject: rawCtx.subject,
     };
 
     const validated = validateRequestContext(constructed);
@@ -203,9 +135,9 @@ export function mapRequestContext(
     };
   }
 
-  // 2. Legacy compatibility envelope mapping
+  // 2. Synthesize clean RequestContext from request envelope
   const companionId = input.companionId || input.id;
-  const correlationId = input.correlationId || input.conversation?.correlationId;
+  const correlationId = input.correlationId || input.conversation?.correlationId || (input.generateCorrelationId ? `corr-${Date.now()}` : undefined);
 
   if (!companionId) {
     return {
@@ -222,49 +154,16 @@ export function mapRequestContext(
     diagnostics.push('companion_default_mapped_for_bootstrap');
   }
 
-  // Map legacy role to authorizationRole
-  const legacyRole = input.role?.toString().toUpperCase();
-  let authRole: AuthorizationRole = 'viewer';
-  if (legacyRole === 'OWNER') {
-    authRole = 'administrator';
-    diagnostics.push('legacy_role_mapped_to_authorization');
-  } else if (legacyRole === 'OPERATOR') {
-    authRole = 'operator';
-    diagnostics.push('legacy_role_mapped_to_authorization');
-  } else if (legacyRole === 'VIEWER') {
-    authRole = 'viewer';
-    diagnostics.push('legacy_role_mapped_to_authorization');
-  } else if (input.role) {
-    return {
-      accepted: false,
-      error: {
-        code: 'INVALID_CONTEXT',
-        field: 'role',
-        correlationId,
-      },
-    };
-  }
-
-  // Check endpoint policy vs legacy request
-  if (endpointPolicy === 'private' || endpointPolicy === 'operator' || endpointPolicy === 'direct') {
-    // Missing explicit channel, audience, or capability on private/operator endpoint is an error
-    const fields: string[] = [];
-    if (!input.channel) fields.push('conversation.channel');
-    if (!input.audienceId) fields.push('conversation.audienceId');
-    if (!input.capabilities && !input.actor?.capabilities) fields.push('actor.capabilities');
-    if (!correlationId) fields.push('conversation.correlationId');
-
+  if (!correlationId) {
     return {
       accepted: false,
       error: {
         code: 'MISSING_CONTEXT',
-        fields: fields.length > 0 ? fields : ['conversation.audienceId', 'actor.capabilities'],
-        correlationId,
+        fields: ['conversation.correlationId'],
       },
     };
   }
 
-  // Ambiguity check: if legacy input specifies role without correlationId or endpoint context for stateful op
   if (input.subject === 'primary_user' || input.subjectId === 'primary_user') {
     return {
       accepted: false,
@@ -277,55 +176,44 @@ export function mapRequestContext(
     };
   }
 
-  // Missing correlationId for stateful requests
-  const finalCorrelationId = correlationId || (input.generateCorrelationId ? `corr-${Date.now()}` : undefined);
-  if (!finalCorrelationId) {
-    return {
-      accepted: false,
-      error: {
-        code: 'MISSING_CONTEXT',
-        fields: ['conversation.correlationId'],
-      },
-    };
-  }
-
-  // Build anonymous public context
-  const actorId = input.actorId || input.actor?.actorId || 'anonymous-session-a';
-  const sessionId = input.sessionId || input.actor?.sessionId || 'session-a';
+  const actorId = input.actorId || input.actor?.actorId || 'local-user';
+  const sessionId = input.sessionId || input.actor?.sessionId || `session-${Date.now()}`;
   if (!input.actorId && !input.actor?.actorId) {
     diagnostics.push('anonymous_session_generated');
   }
 
-  const channel: Channel = 'public';
-  const audienceId = defaultPublicAudience;
-  diagnostics.push('audience_defaulted_by_public_policy');
-
-  const capabilities = authRole === 'administrator'
-    ? ['chat:public', 'admin:access']
-    : authRole === 'operator'
-    ? ['chat:public', 'operator:access']
-    : ['chat:public'];
+  const capabilities = Array.isArray(input.capabilities)
+    ? input.capabilities
+    : Array.isArray(input.actor?.capabilities)
+    ? input.actor.capabilities
+    : ['chat', 'system'];
 
   const mappedContext: RequestContext = {
     companionId,
     actor: {
       actorId,
       sessionId,
-      authorizationRole: authRole,
       capabilities,
-      authenticated: Boolean(input.authenticated),
+      authenticated: input.authenticated !== undefined ? Boolean(input.authenticated) : true,
+      authorizationRole: input.role ? (input.role.toLowerCase() === 'viewer' ? 'viewer' : 'administrator') : undefined,
     },
     conversation: {
-      channel,
-      audienceId,
-      correlationId: finalCorrelationId,
+      channel: input.channel || input.conversation?.channel || 'direct',
+      audienceId: input.audienceId || input.conversation?.audienceId,
+      correlationId,
     },
-    subject: undefined, // Anonymous public chat has no subject
+    source: input.source || 'local',
+    subject: input.subject,
   };
+
+  const validated = validateRequestContext(mappedContext);
+  if (!validated.accepted) {
+    return validated;
+  }
 
   return {
     accepted: true,
-    context: mappedContext,
+    context: validated.context,
     diagnostics: diagnostics.length > 0 ? diagnostics : undefined,
   };
 }
