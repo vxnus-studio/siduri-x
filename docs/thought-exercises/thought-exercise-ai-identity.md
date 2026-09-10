@@ -2,10 +2,10 @@
 
 > **Context & References:**  
 > - Foundational Article: [The Character Card Was Never the Character](https://vxnus.xyz/article/persistent-personality-format-ai-companions) (Kur Zagin, VXNUS)  
-> - Architectural Specification: [RFC: Dynamic Behavior Delivery & The `.self` Asset Specification](./rfc-dynamic-behavior-self.md)  
-> - Architectural Specification: [RFC: The Life Database Specification & User Data Sovereignty](./rfc-life-database.md)  
+> - Architectural Specification: [RFC: Dynamic Behavior Delivery & The `.self` Asset Specification](../rfc/rfc-dynamic-behavior-self.md)  
+> - Architectural Specification: [RFC: The Life Database Specification & User Data Sovereignty](../rfc/rfc-life-database.md)  
 > - Behavioral Contract: [T3 Active Self Contract](../contracts/t3-active-self-contract.md)  
-> - Verification & Gating: [The Truth Gate & Anchor Architecture](./truth-gate.md)
+> - Verification & Gating: [The Truth Gate & Anchor Architecture](../architecture/truth-gate.md)
 
 ---
 
@@ -124,7 +124,7 @@ Coupled with the Brain's `internalMonologue` in `@siduri-x/brain` (which allows 
 
 ## 4. Synthesis: The Compiler Paradigm & `.self`
 
-The resolution to both the identity taxonomy and the situational response problem lies in the core principle of [RFC: Dynamic Behavior & The `.self` Asset Specification](./rfc-dynamic-behavior-self.md):
+The resolution to both the identity taxonomy and the situational response problem lies in the core principle of [RFC: Dynamic Behavior & The `.self` Asset Specification](../rfc/rfc-dynamic-behavior-self.md):
 
 $$\text{Storage Format} \neq \text{Inference Format}$$
 
@@ -159,4 +159,4 @@ Disentangling memory is not merely about avoiding persona drift inside the compa
    - The companion's existing organs interface with it deterministically: reading/reasoning via knowledge & query tools, and mutating via audited tool contracts in `@siduri-x/hands`.
 
 For the formal schema taxonomy, domain models, and organ interaction workflows, see the dedicated architectural specification:  
-👉 **[RFC: The Life Database Specification & User Data Sovereignty](./rfc-life-database.md)**
+👉 **[RFC: The Life Database Specification & User Data Sovereignty](../rfc/rfc-life-database.md)**

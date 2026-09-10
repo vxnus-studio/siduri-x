@@ -4,7 +4,7 @@
 > **Target Organs / Systems:** User Sovereign Substrate, `@siduri-x/hands`, `@siduri-x/knowledge`, `@siduri-x/memory`, `@siduri-x/brain`  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
 > **Related Documents:**  
-> - [Thought Exercise: Disentangling AI Identity, Behavior, and Situational Response](./thought-exercise-ai-identity.md)  
+> - [Thought Exercise: Disentangling AI Identity, Behavior, and Situational Response](../thought-exercises/thought-exercise-ai-identity.md)  
 > - [RFC: Dynamic Behavior Delivery & The `.self` Asset Specification](./rfc-dynamic-behavior-self.md)
 
 ---

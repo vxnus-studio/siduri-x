@@ -6,10 +6,12 @@ The documentation is organized into two primary sections:
 
 ```
 docs/
-├── README.md         # Documentation index and directory map
-├── release-status.md # Canonical release status, verified commit, invariants, and commands
-├── architecture/     # Core organ architecture, runtime design, and subsystem specifications
-└── contracts/        # Neutral context specs, memory state machine, safety gating, and event contracts
+├── README.md            # Documentation index and directory map
+├── release-status.md    # Canonical release status, verified commit, invariants, and commands
+├── architecture/        # Core organ architecture, runtime design, and subsystem specifications
+├── contracts/           # Neutral context specs, memory state machine, safety gating, and event contracts
+├── rfc/                 # Architectural RFC proposals and protocol specifications
+└── thought-exercises/   # Conceptual explorations, identity taxonomy, and philosophical analyses
 ```
 
 > **Current Release State**: See [**Canonical Release Status**](./release-status.md) for current release readiness, verified commit, and architecture invariants.
@@ -26,11 +28,6 @@ Core specifications for the decoupled organ architecture and system components:
 - **[Companion Runtime](./architecture/companion-runtime.md)** — Orchestration of organs inside the active companion runtime.
 - **[Behavior & Active Self](./architecture/behavior.md)** — Behavioral compilation, directive scoping, and safety projection.
 - **[Action Policy Design](./architecture/action-policy-design.md)** — Cryptographic action capabilities, MCP execution, and audit chaining.
-
-- **[RFC: Dynamic Behavior & `.self`](./architecture/rfc-dynamic-behavior-self.md)** — Distribution protocol, 3-mode memory acquisition, and `.self` ingestion via Teach Mode.
-- **[Thought Exercise: AI Identity & Behavior](./architecture/thought-exercise-ai-identity.md)** — Conceptual analysis disentangling identity, personality, user knowledge, and situational response models.
-
-
 - **[Memory Subsystem](./architecture/memory.md)** — PostgreSQL claims persistence, lifecycle, and temporal indexing.
 - **[Knowledge & E-Packs](./architecture/knowledge-e.md)** — E-Knowledge integration, provenance, and citations.
 - **[API Reference](./architecture/api.md)** — REST API surface and endpoint contracts.
@@ -45,7 +42,23 @@ Core specifications for the decoupled organ architecture and system components:
 
 ---
 
-## 2. Contracts & Safety (`docs/contracts/`)
+## 2. RFCs & Proposals (`docs/rfc/`)
+Architectural proposals and prospective specifications:
+
+- **[RFC: Dynamic Behavior & `.self`](./rfc/rfc-dynamic-behavior-self.md)** — Distribution protocol, 3-mode memory acquisition, and `.self` ingestion via Teach Mode.
+- **[RFC: The Life Database Specification](./rfc/rfc-life-database.md)** — Separation of subjective companion memory vs. sovereign user life database.
+- **[RFC: Benchmarking Framework](./rfc/rfc-benchmarking-framework.md)** — Performance SLA budgets, memory scaling, truth gate throughput, and microbenchmark architecture.
+
+---
+
+## 3. Thought Exercises (`docs/thought-exercises/`)
+Conceptual analysis and design philosophy:
+
+- **[Thought Exercise: AI Identity & Behavior](./thought-exercises/thought-exercise-ai-identity.md)** — Conceptual analysis disentangling identity, personality, user knowledge, and situational response models.
+
+---
+
+## 4. Contracts & Safety (`docs/contracts/`)
 Type-safe interfaces, gating engine, memory state machines, and neutral security contracts:
 
 - **[T1 Neutral Context Spec](./contracts/t1-neutral-context-spec.md)** — Actor, request context, and authorization definitions.
