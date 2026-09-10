@@ -18,7 +18,7 @@ const ORGANS: Organ[] = [
     name: "Brain",
     category: "THINK",
     pkg: "@siduri-x/brain",
-    version: "^1.0.2",
+    version: "^1.0.4",
     tagline: "Provider-neutral LLM reasoning & response planning",
     description:
       "Orchestrates model cognition across local or remote providers (OpenRouter, Anthropic, Gemini, Ollama) with global wall-clock deadline bounding and private internal monologues.",
@@ -29,7 +29,7 @@ const ORGANS: Organ[] = [
     name: "Behavior",
     category: "THINK",
     pkg: "@siduri-x/behavior",
-    version: "^1.0.2",
+    version: "^1.0.5",
     tagline: "Atomic directive state machine & .self compiler",
     description:
       "Compiles channel-specific rules, relational stance sliders (formality, trust), and dialogue exemplars into concise inference frames without token bloat or rule contradiction.",
@@ -42,7 +42,7 @@ const ORGANS: Organ[] = [
     name: "Memory",
     category: "REMEMBER",
     pkg: "@siduri-x/memory",
-    version: "^1.0.2",
+    version: "^1.0.4",
     tagline: "PostgreSQL-backed authoritative semantic storage",
     description:
       "Enforces the Truth Gate lifecycle. Claims are proposed as PENDING and promoted to immutable APPROVED records with SHA-256 revision history and SQL migration push.",
@@ -66,7 +66,7 @@ const ORGANS: Organ[] = [
     name: "Hands",
     category: "ACT",
     pkg: "@siduri-x/hands",
-    version: "^1.0.2",
+    version: "^1.0.3",
     tagline: "Tool execution & cryptographic action capability tokens",
     description:
       "Executes system and external tools through signed capability tokens and confirmation boundaries. Connects natively to Model Context Protocol (MCP) servers.",
@@ -77,7 +77,7 @@ const ORGANS: Organ[] = [
     name: "Core",
     category: "ACT",
     pkg: "@siduri-x/core",
-    version: "^1.0.2",
+    version: "^1.0.5",
     tagline: "Central event bus, contracts & response gating engine",
     description:
       "Defines the organ contracts, lifecycle events, and ResponseGatingEngine that prevents unverified candidate speech from emitting across sensitive channels.",
@@ -85,6 +85,17 @@ const ORGANS: Organ[] = [
   },
 
   // EMBODY & PERCEIVE
+  {
+    id: "mouth",
+    name: "Mouth",
+    category: "EMBODY",
+    pkg: "@siduri-x/mouth",
+    version: "^1.0.0",
+    tagline: "Output streaming, SSE tokens, visemes & channel sinks",
+    description:
+      "Streams synthesized output chunks via Server-Sent Events (SSE), generates Live2D visemes and SSML markers, and routes companion speech to active client sinks.",
+    keyCapability: "Streaming token emission, Live2D visemes & SSML dispatch",
+  },
   {
     id: "body",
     name: "Body",
@@ -101,7 +112,7 @@ const ORGANS: Organ[] = [
     name: "Voice",
     category: "EMBODY",
     pkg: "@siduri-x/voice",
-    version: "^1.0.3",
+    version: "^1.0.6",
     tagline: "Multi-engine queued speech synthesis & RVC audio",
     description:
       "Provides local and low-latency auditory expression using Edge-TTS, Piper, or VOICEVOX, with optional Retrieval-based Voice Conversion (RVC) post-processing.",
@@ -123,7 +134,7 @@ const ORGANS: Organ[] = [
     name: "Ear",
     category: "EMBODY",
     pkg: "@siduri-x/ear",
-    version: "^1.0.2",
+    version: "^1.0.3",
     tagline: "Acoustic sensory ingestion & MIME bounds verification",
     description:
       "Ingests ambient audio streams and user voice input with strict MIME type validation and audio transcription pipelines.",

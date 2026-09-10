@@ -7,7 +7,9 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "release:check": "node cli/dist/release-check.js"
+    "release:check": "node cli/dist/release-check.js",
+    "sync:versions": "node scripts/sync-versions.mjs",
+    "sync:check": "node scripts/sync-versions.mjs --check"
   },
   "devDependencies": {
     "turbo": "^1.11.2",
