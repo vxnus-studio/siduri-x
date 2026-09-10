@@ -323,7 +323,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/observation',
     organType: 'observation',
-    version: '1.0.2',
+    version: '1.0.3',
     displayName: 'Observation (Screen Perception & Frame Ingest)',
     description: 'Screen capture frame ingest, SHA-256 deduplication, and visual grounding for Eyes/Vision',
     entrypoint: './dist/index.js',

@@ -23,7 +23,7 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
   fs.mkdirSync(tempPackDir, { recursive: true });
 
   const canonicalPackages = [
-    { name: '@siduri-x/core', dir: 'packages/core', isOrgan: false, tarName: 'siduri-x-core-1.0.5.tgz' },
+    { name: '@siduri-x/core', dir: 'packages/core', isOrgan: false, tarName: 'siduri-x-core-1.0.6.tgz' },
     { name: '@siduri-x/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: 'siduri-x-brain-1.0.4.tgz' },
     { name: '@siduri-x/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: 'siduri-x-memory-1.0.4.tgz' },
     { name: '@siduri-x/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: 'siduri-x-knowledge-1.0.2.tgz' },
@@ -34,8 +34,8 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
     { name: '@siduri-x/body', dir: 'packages/organs/body', isOrgan: true, tarName: 'siduri-x-body-1.0.4.tgz' },
     { name: '@siduri-x/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: 'siduri-x-voice-1.0.6.tgz' },
     { name: '@siduri-x/mouth', dir: 'packages/organs/mouth', isOrgan: true, tarName: 'siduri-x-mouth-1.0.0.tgz' },
-    { name: '@siduri-x/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: 'siduri-x-observation-1.0.2.tgz' },
-    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: 'vxnus-siduri-0.1.8.tgz' },
+    { name: '@siduri-x/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: 'siduri-x-observation-1.0.3.tgz' },
+    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: 'vxnus-siduri-0.1.9.tgz' },
   ];
 
   let packagesChecked = 0;
