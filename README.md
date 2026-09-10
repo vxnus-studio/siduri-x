@@ -42,16 +42,16 @@ All canonical Siduri-X organ and core packages are independently distributed:
 
 | Package | Version | Description |
 | :--- | :---: | :--- |
-| **`@siduri-x/core`** | `^1.0.2` | Core runtime protocol, action dispatcher, capability validation, and evidence bounds |
-| **`@siduri-x/brain`** | `^1.0.2` | Provider-neutral LLM reasoning, response planning, and proposal generation |
-| **`@siduri-x/memory`** | `^1.0.2` | PostgreSQL-backed conversational memory, episodic/semantic claims, and SQL migrations |
-| **`@siduri-x/hands`** | `^1.0.2` | Tool execution, cryptographic action policy capability verification, and MCP integration |
+| **`@siduri-x/core`** | `^1.0.5` | Core runtime protocol, action dispatcher, capability validation, and evidence bounds |
+| **`@siduri-x/brain`** | `^1.0.4` | Provider-neutral LLM reasoning, response planning, and proposal generation |
+| **`@siduri-x/memory`** | `^1.0.4` | PostgreSQL-backed conversational memory, episodic/semantic claims, and SQL migrations |
+| **`@siduri-x/hands`** | `^1.0.3` | Tool execution, cryptographic action policy capability verification, and MCP integration |
 | **`@siduri-x/knowledge`** | `^1.0.2` | Installed or hosted E-compatible packs with bounded, cited context integration |
-| **`@siduri-x/behavior`** | `^1.0.2` | Atomic directive state machine and personality projection compiler |
-| **`@siduri-x/ear`** | `^1.0.2` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation |
+| **`@siduri-x/behavior`** | `^1.0.5` | Atomic directive state machine and personality projection compiler |
+| **`@siduri-x/ear`** | `^1.0.3` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation |
 | **`@siduri-x/vision`** | `^1.0.2` | Visual observation, cropping, and multi-pass OCR perception adapter |
 | **`@siduri-x/body`** | `^1.0.4` | Renderer-agnostic avatar expression state machine and embodiment event adapter |
-| **`@siduri-x/voice`** | `^1.0.3` | Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and RVC post-processing |
+| **`@siduri-x/voice`** | `^1.0.6` | Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and RVC post-processing |
 | **`@siduri-x/observation`** | `^1.0.2` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest |
 | **`@siduri-x/mouth`** | `^1.0.0` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks |
 

@@ -12,7 +12,9 @@
     "properties": {
       "defaultMedium": {
         "type": "string",
-        "enum": ["web"],
+        "enum": [
+          "web"
+        ],
         "default": "web"
       },
       "maxTextLength": {

@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -22,7 +22,6 @@
     "@siduri-x/voice": "workspace:*",
     "@siduri-x/mouth": "workspace:*",
     "cors": "^2.8.5",
-
     "dotenv": "^16.3.1",
     "express": "^4.18.2"
   },

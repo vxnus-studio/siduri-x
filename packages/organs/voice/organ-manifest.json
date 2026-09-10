@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/voice",
   "organType": "voice",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "displayName": "Voice Synthesis (Edge-TTS, Piper, VOICEVOX)",
   "description": "Queued speech synthesis and audio rendering lifecycle adapter",
   "entrypoint": "./dist/index.js",
@@ -38,14 +38,41 @@
       "rvc": {
         "type": "object",
         "properties": {
-          "enabled": { "type": "boolean", "default": false },
-          "serviceUrl": { "type": "string", "default": "http://localhost:50055" },
-          "modelName": { "type": "string" },
-          "modelPath": { "type": "string" },
-          "indexPath": { "type": "string" },
-          "pitchShift": { "type": "number", "default": 0 },
-          "f0Method": { "type": "string", "enum": ["rmvpe", "pm", "harvest", "crepe"], "default": "rmvpe" },
-          "indexRate": { "type": "number", "default": 0.75 }
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "serviceUrl": {
+            "type": "string",
+            "default": "http://localhost:50055"
+          },
+          "modelName": {
+            "type": "string"
+          },
+          "modelPath": {
+            "type": "string"
+          },
+          "indexPath": {
+            "type": "string"
+          },
+          "pitchShift": {
+            "type": "number",
+            "default": 0
+          },
+          "f0Method": {
+            "type": "string",
+            "enum": [
+              "rmvpe",
+              "pm",
+              "harvest",
+              "crepe"
+            ],
+            "default": "rmvpe"
+          },
+          "indexRate": {
+            "type": "number",
+            "default": 0.75
+          }
         }
       }
     }

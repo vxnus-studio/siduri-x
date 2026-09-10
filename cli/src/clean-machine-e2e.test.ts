@@ -12,19 +12,19 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
   const cleanMachineRoot = path.resolve(__dirname, '../temp-clean-machine-e2e');
 
   const ALL_CANONICAL_PACKAGES = [
-    { filter: '@siduri-x/core', tarName: 'siduri-x-core-1.0.4.tgz', isOrgan: false },
-    { filter: '@siduri-x/brain', tarName: 'siduri-x-brain-1.0.3.tgz', isOrgan: true },
-    { filter: '@siduri-x/memory', tarName: 'siduri-x-memory-1.0.3.tgz', isOrgan: true },
+    { filter: '@siduri-x/core', tarName: 'siduri-x-core-1.0.5.tgz', isOrgan: false },
+    { filter: '@siduri-x/brain', tarName: 'siduri-x-brain-1.0.4.tgz', isOrgan: true },
+    { filter: '@siduri-x/memory', tarName: 'siduri-x-memory-1.0.4.tgz', isOrgan: true },
     { filter: '@siduri-x/knowledge', tarName: 'siduri-x-knowledge-1.0.2.tgz', isOrgan: true },
     { filter: '@siduri-x/behavior', tarName: 'siduri-x-behavior-1.0.5.tgz', isOrgan: true },
-    { filter: '@siduri-x/ear', tarName: 'siduri-x-ear-1.0.2.tgz', isOrgan: true },
+    { filter: '@siduri-x/ear', tarName: 'siduri-x-ear-1.0.3.tgz', isOrgan: true },
     { filter: '@siduri-x/vision', tarName: 'siduri-x-vision-1.0.2.tgz', isOrgan: true },
-    { filter: '@siduri-x/hands', tarName: 'siduri-x-hands-1.0.2.tgz', isOrgan: true },
+    { filter: '@siduri-x/hands', tarName: 'siduri-x-hands-1.0.3.tgz', isOrgan: true },
     { filter: '@siduri-x/body', tarName: 'siduri-x-body-1.0.4.tgz', isOrgan: true },
-    { filter: '@siduri-x/voice', tarName: 'siduri-x-voice-1.0.5.tgz', isOrgan: true },
+    { filter: '@siduri-x/voice', tarName: 'siduri-x-voice-1.0.6.tgz', isOrgan: true },
     { filter: '@siduri-x/observation', tarName: 'siduri-x-observation-1.0.2.tgz', isOrgan: true },
     { filter: '@siduri-x/mouth', tarName: 'siduri-x-mouth-1.0.0.tgz', isOrgan: true },
-    { filter: '@vxnus/siduri', tarName: 'vxnus-siduri-0.1.7.tgz', isOrgan: false },
+    { filter: '@vxnus/siduri', tarName: 'vxnus-siduri-0.1.8.tgz', isOrgan: false },
   ];
 
   beforeAll(() => {
@@ -117,8 +117,8 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
       // Write instance files referencing packed tarballs directly for true clean machine install
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.4.tgz')}`,
-        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.3.tgz')}`,
+        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.5.tgz')}`,
+        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.4.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
@@ -174,9 +174,9 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.4.tgz')}`,
-        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.3.tgz')}`,
-        '@siduri-x/hands': `file:${path.join(tempPackDir, 'siduri-x-hands-1.0.2.tgz')}`,
+        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.5.tgz')}`,
+        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.4.tgz')}`,
+        '@siduri-x/hands': `file:${path.join(tempPackDir, 'siduri-x-hands-1.0.3.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
@@ -221,9 +221,9 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
-        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.4.tgz')}`,
-        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.3.tgz')}`,
-        '@siduri-x/memory': `file:${path.join(tempPackDir, 'siduri-x-memory-1.0.3.tgz')}`,
+        '@siduri-x/core': `file:${path.join(tempPackDir, 'siduri-x-core-1.0.5.tgz')}`,
+        '@siduri-x/brain': `file:${path.join(tempPackDir, 'siduri-x-brain-1.0.4.tgz')}`,
+        '@siduri-x/memory': `file:${path.join(tempPackDir, 'siduri-x-memory-1.0.4.tgz')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
