@@ -3,7 +3,7 @@
 > [!NOTE]
 > Updated for single-owner deployment model. Audience-scoped event delivery has been simplified.
 
-Status: implementation target; output adapters are not yet on one neutral event boundary
+Status: canonical specification; implemented and verified in @siduri-x/core and apps/api/src/t5-experience.test.ts
 
 This contract defines how an approved response is rendered or sent. Voice,
 body, overlay, platform, and outbound adapters are consumers of policy-approved

@@ -1,4 +1,4 @@
-# Siduri-Y — Hands / Ear / Runtime Hardening Summary
+# Siduri-X — Hands / Ear / Runtime Hardening Summary
 
 ## Overall assessment
 

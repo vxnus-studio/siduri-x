@@ -1,7 +1,7 @@
 # Canonical Release Status: Siduri-X
 
 **Release Decision**: **RELEASE WITH EXPLICIT LIMITATIONS**  
-**Current Verified Commit**: `06823ac2de61a5d8923f4072fe221bf943ea4aa4`  
+**Current Verified Commit**: `151c2b8e11c706bcaaec7e6787258aea4fe22e78`  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Localhost-only**  
 

@@ -1,6 +1,6 @@
 # Public blank-slate contract
 
-Siduri-Y is intended for public distribution. A freshly created companion is
+Siduri-X is intended for public distribution. A freshly created companion is
 therefore a blank slate, regardless of the personal configuration used by the
 original `siduri/` project.
 
@@ -25,14 +25,14 @@ source event → pending candidate → approval decision
                          └── session-only → expires with its session
 ```
 
-Approved claims retain their source, authority, sensitivity, audience,
+Approved claims retain their source, authority, sensitivity, scope,
 validity, and revision history. Corrections supersede earlier values without
 destroying the audit trail.
 
 ## Public/private separation
 
 Public, direct, private, and operator channels are runtime/configuration
-concepts. They are not personal identity concepts. Audience identifiers must
+concepts. They are not personal identity concepts. Actor and session identifiers must
 be generic and documented; personal names must never be embedded in shared
 code, defaults, or tests.
 

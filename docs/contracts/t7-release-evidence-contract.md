@@ -1,6 +1,6 @@
 # T7 release evidence contract
 
-Status: **RELEASE READY WITH EXPLICIT LIMITATIONS** (Verified commit: `06823ac2de61a5d8923f4072fe221bf943ea4aa4`)
+Status: **RELEASE READY WITH EXPLICIT LIMITATIONS** (Verified commit: `151c2b8e11c706bcaaec7e6787258aea4fe22e78`)
 Historical Status: NO-GO / RED (superseded following T1–T7 and B0–B6 verification passes)
 
 This contract defines the evidence required before Siduri may claim public
@@ -11,7 +11,7 @@ runtime experience proof.
 ## Release decision
 
 ```text
-GO WITH LIMITATIONS — Proven on candidate commit 06823ac2de61a5d8923f4072fe221bf943ea4aa4
+GO WITH LIMITATIONS — Proven on candidate commit 151c2b8e11c706bcaaec7e6787258aea4fe22e78
 ```
 
 The candidate commit has been verified across branch `main`, environment (Linux / Node 20+),
@@ -21,13 +21,13 @@ monorepo supply chain lock state, 27/27 test suites, and clean-machine distribut
 
 | Gate | Must prove | Current status | Historical Baseline |
 | --- | --- | --- | --- |
-| R0 repository | Approved branch, clean checkout, no unclassified personal/secrets/artifacts | **PASS** (Commit `06823ac`, clean tree, release:check verified) | RED; scan pending |
-| R1 neutral context | Actor, channel, audience, subject, capability, session, and correlation context are canonical | **PASS** (Proven in `apps/api/src/context-mapper.test.ts`) | RED; T1 implementation pending |
+| R0 repository | Approved branch, clean checkout, no unclassified personal/secrets/artifacts | **PASS** (Commit `151c2b8`, clean tree, release:check verified) | RED; scan pending |
+| R1 neutral context | Actor, channel, subject, capability, session, and correlation context are canonical | **PASS** (Proven in `apps/api/src/context-mapper.test.ts`) | RED; T1 implementation pending |
 | R2 blank slate | Fresh companion and `/me` contain no invented personal identity or relationship | **PASS** (Proven in `apps/api/src/t7-release.test.ts` & `b0-b6.test.ts`) | RED; personal fallback present |
 | R3 memory | Proposal, approval, revision, expiry, revocation, retrieval, disclosure, and provenance lifecycle | **PASS** (Proven in `packages/organs/memory/src/index.test.ts`) | RED; compatibility slice only |
 | R4 behavior/prompt | Active Self is approved/scoped; user context is separate; untrusted data cannot rewrite policy | **PASS** (Proven in `packages/organs/behavior/src/index.test.ts`) | RED; legacy role context remains |
 | R5 evidence | Observations/knowledge preserve citation, uncertainty, revision, expiry, and independent response approval | **PASS** (Proven in `packages/organs/knowledge/src/index.test.ts` & observation organ) | RED; end-to-end proof missing |
-| R6 experience | Only approved, audience-safe events reach voice, avatar, overlay, or outbound adapters | **PASS** (Proven in `apps/api/src/t5-experience.test.ts` & voice/body tests) | RED; unified output path missing |
+| R6 experience | Only approved, policy-safe events reach voice, avatar, overlay, or outbound adapters | **PASS** (Proven in `apps/api/src/t5-experience.test.ts` & voice/body tests) | RED; unified output path missing |
 | R7 security/operations | Isolation, capability, secret, ingress, failure, rollback, and runbook evidence | **PASS** (Proven in `apps/api/src/t6-security.test.ts` & core adversarial suite) | RED; production-like proof missing |
 | R8 vertical slice | Neutral public chat, teaching, approval, disclosure, correction, and safe output work together | **PASS** (Proven in `apps/api/src/t7-release.test.ts` & `b0-b6.test.ts`) | RED; B0–B9 not ported |
 

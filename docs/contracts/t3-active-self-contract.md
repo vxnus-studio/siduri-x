@@ -3,11 +3,11 @@
 > [!NOTE]
 > Updated for single-owner deployment model. Multi-audience context has been simplified to owner/operator.
 
-Status: implementation target; current behavior compiler still accepts legacy role context
+Status: canonical specification; implemented and verified in @siduri-x/behavior and @siduri-x/core
 
 This contract defines how approved companion behavior becomes prompt context.
 It extracts the original Active Self and prompt-boundary behavior while keeping
-Siduri-Y a blank slate. User memory is not companion identity, and a transport
+Siduri-X a blank slate. User memory is not companion identity, and a transport
 role is not a relationship.
 
 Section-level input and exclusion rules are in
@@ -21,7 +21,7 @@ Prompt assembly must keep these projections distinct:
 | --- | --- | --- | --- |
 | Companion configuration | What this deployment explicitly enables | Configured capability and neutral identity metadata | Only configured values |
 | Active Self | Approved, scoped rules for companion behavior | Active behavioral directives | No learned behavior |
-| User context | Approved facts about an explicit actor/subject | Audience-filtered claims | No user identity or relationship |
+| User context | Approved facts about an explicit actor/subject | Approved claims | No user identity or relationship |
 
 The compiler may serialize these sections into one provider prompt, but it must
 not merge their semantics or allow one section to create another.

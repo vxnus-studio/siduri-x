@@ -1,8 +1,8 @@
 # Architecture
 
-Siduri-Y is a virtual companion orchestrator that operates on the principle of
+Siduri-X is a virtual companion orchestrator that operates on the principle of
 **composable organs**. The original Siduri repository is the behavioral and
-memory reference, while Siduri-Y provides a public, blank-slate runtime that
+memory reference, while Siduri-X provides a public, blank-slate runtime that
 instantiates companions dynamically from configuration without copying the
 original project's personal identity or relationship defaults.
 
@@ -18,6 +18,8 @@ The API loads `siduri.config.json` and creates a `SiduriRuntime`. Siduri operate
 - **Body**: Controls avatar expressions and embodiment events.
 - **Hands**: Executes authorized tools via Model Context Protocol (MCP).
 - **Ear**: Handles sensory audio and text input ingestion.
+- **Observation**: Deduplicates screen observations and ingests OCR text streams.
+- **Mouth**: Manages output presentation, SSE chunk streaming, and Live2D viseme cues.
 
 ## Execution Flow
 1. API boots the configured companion into runtime.

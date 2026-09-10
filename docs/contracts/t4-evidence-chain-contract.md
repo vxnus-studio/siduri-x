@@ -3,9 +3,9 @@
 > [!NOTE]
 > Updated for single-owner deployment model. Audience intersection filtering has been removed from the evidence chain.
 
-Status: implementation target; observation, knowledge, and response approval are not yet proven end-to-end
+Status: canonical specification; implemented and verified in @siduri-x/core and apps/api/src/t4-gating.test.ts
 
-This contract defines how Siduri-Y turns observations and knowledge into
+This contract defines how Siduri-X turns observations and knowledge into
 bounded, inspectable response plans. Evidence is context with provenance; it
 is not memory, identity, policy, or permission.
 

@@ -1,19 +1,18 @@
 # T2 memory state machine
 
-Status: implementation target; current memory organ is a compatibility slice
+Status: canonical specification; implemented and enforced by PostgresMemoryOrgan in @siduri-x/memory
 
-This is the canonical lifecycle target for extracted Siduri memory. It makes
+This is the canonical lifecycle specification for Siduri memory. It makes
 approval, disclosure, correction, and expiry explicit without using a
-personal subject or audience as a shortcut. It supplements
-[`PHASE-2-MEMORY-EXTRACTION-HANDOFF.md`](./PHASE-2-MEMORY-EXTRACTION-HANDOFF.md)
-with state transitions and retrieval predicates.
+personal subject or audience as a shortcut. It defines state transitions
+and retrieval predicates.
 
 The concrete request/claim retrieval outcomes are in
 [`T2-MEMORY-DISCLOSURE-MATRIX.md`](./t2-memory-disclosure-matrix.md).
 
 ## Separate record kinds
 
-Siduri-Y must not collapse these records into one status field:
+Siduri-X must not collapse these records into one status field:
 
 | Record | Purpose | Can affect canonical memory? | Can affect visible output? |
 | --- | --- | --- | --- |

@@ -53,7 +53,7 @@ Incoming Input / Sensory Perception
 ### 3.1. Microbenchmarks (Subsystem Throughput)
 - **Response Gating Engine (`@siduri-x/core` - `gating.ts`)**:
   - `stageResponse()` and `evaluateGate()` evaluation throughput (operations/second) across varying evidence chain depths ($N = 1$ to $N = 50$).
-  - Sensitivity filtering performance (`PUBLIC` vs. `PRIVATE` data restrictions).
+  - Sensitivity filtering performance (standard vs. restricted claims and companion boundary isolation).
 - **Action Policy & Capability Engine (`@siduri-x/hands` / `action-policy.ts`)**:
   - HMAC/cryptographic capability token verification speed.
   - Rate of tool argument schema validation against JSON schema bounds.

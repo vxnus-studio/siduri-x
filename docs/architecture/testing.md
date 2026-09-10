@@ -17,7 +17,7 @@ The test suites verify architectural invariants, neutral blank-slate properties,
    - `hands`, `voice`, `body`: Provider adapters, queues, and experience event lifecycle.
 3. **API & Boundary Verification Suites** (`apps/api/src/`):
    - `b0-b6.test.ts`: Neutral blank-slate invariants (empty memory, public chat, identity queries).
-   - `context-mapper.test.ts`: Boundary mapper verifying neutral actor context, channel, and audience resolution.
+   - `context-mapper.test.ts`: Boundary mapper verifying neutral actor context, channel, and single-owner request mapping.
    - `t4-gating.test.ts`: Staged response plans and operator approval workflows.
    - `t5-experience.test.ts`: Outbound experience event contracts.
    - `t6-security.test.ts`: Ingress bounds, secret isolation, CORS, and failure boundaries.

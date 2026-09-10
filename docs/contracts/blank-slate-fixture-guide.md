@@ -1,6 +1,6 @@
 # Blank-slate fixture guide
 
-Status: fixture specification; executable B0–B9 fixtures are not yet ported
+Status: fixture specification; executable B0 and B6 fixtures ported in apps/api/src/b0-b6.test.ts; B1–B5 and B7–B9 pending
 
 This guide defines the neutral data shape for extracted behavior tests. It
 exists because a test can accidentally make a personal deployment look like
@@ -58,7 +58,7 @@ Use identifiers that communicate test topology, not a real person's identity:
 | Companion | `companion-a`, `companion-b` | `default`, a personal deployment name |
 | Actor | `actor-a`, `anonymous-session-a` | `primary_user`, a legal/display name |
 | Session | `session-a`, `session-expired-a` | an account, stream, or operator name |
-| Audience | `audience-public`, `audience-direct-a`, `audience-operator` | `MASTER_PRIVATE`, `master_stream`, a personal title |
+| Channel | `direct`, `operator` | `master_stream`, a personal title |
 | Subject | `actor:actor-a`, `companion:companion-a` | a global user subject or role-derived subject |
 | Evidence | `evidence-a`, `source-event-a` | raw prompt, screenshot, token, or private text |
 | Domain value | `value-a`, `label-a`, `topic-a` | account IDs, personal facts, or provider-specific identity defaults |
@@ -73,7 +73,7 @@ title that implies how the companion should address an actor.
 
 B0 fixtures start with empty claims, directives, subjects, and profile
 projection. Configuration may provide the companion's capabilities, but never
-a user identity, relationship, preferred address, or private audience.
+a user identity, relationship, preferred address, or private claims.
 
 ### Teaching
 

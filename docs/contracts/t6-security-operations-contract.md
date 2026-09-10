@@ -3,7 +3,7 @@
 > [!NOTE]
 > Updated for single-owner deployment model. The 4-tier capability matrix has been simplified to owner/operator.
 
-Status: implementation target; current public runtime still has unverified security and operational gaps
+Status: canonical specification; enforced and verified via single-owner machine boundary security model (apps/api/src/t6-security.test.ts)
 
 This contract turns the security/operations handoff into enforceable public
 deployment boundaries. It protects the extracted companion experience without
