@@ -1,5 +1,8 @@
 # T3 Active Self contract
 
+> [!NOTE]
+> Updated for single-owner deployment model. Multi-audience context has been simplified to owner/operator.
+
 Status: implementation target; current behavior compiler still accepts legacy role context
 
 This contract defines how approved companion behavior becomes prompt context.
@@ -32,13 +35,12 @@ interface ActiveSelfContext {
   companionId: string;
   actor: {
     actorId: string;
-    authorizationRole: "viewer" | "operator" | "administrator";
+    relationship: "owner" | "operator";
     capabilities: string[];
     authenticated: boolean;
   };
   conversation: {
-    channel: "public" | "direct" | "private" | "operator";
-    audienceId: string;
+    channel: "direct" | "operator";
     correlationId: string;
   };
   sessionId: string;
@@ -61,7 +63,7 @@ bind companion and correlation scope
     ↓
 filter directive lifecycle and validity
     ↓
-filter directive channel/audience/subject scope
+filter directive validity and scope
     ↓
 reject unsafe directive text
     ↓
@@ -86,7 +88,7 @@ A directive enters Active Self only if all conditions hold:
 
 1. its companion ID matches the request;
 2. its status is `ACTIVE` and its validity window includes the request time;
-3. its audience, channel, subject, and session scope permit this request;
+3. its scope (channel, subject, session) permits this request;
 4. it has an approval and source-event record;
 5. it passes unsafe-instruction validation;
 6. it has a bounded priority and deterministic conflict behavior.
@@ -121,7 +123,7 @@ The provider prompt should expose explicit sections with fixed precedence:
 4. permitted user claims and evidence references;
 5. bounded conversation history and current user input;
 6. untrusted retrieved/provider/platform data;
-7. response, audience, approval, and citation constraints.
+7. response, approval, and citation constraints.
 
 The exact provider syntax may vary. The semantic ordering and trust labels may
 not. User or provider content cannot override sections 1–3 or alter section 7.
@@ -147,9 +149,9 @@ The compiler/provider adapter must reject or safely degrade when:
 
 - a directive contains an instruction to bypass policy, approval, permissions,
   privacy, or secrets;
-- provider output names a recipient or audience different from the request;
+- provider output names a recipient different from the request;
 - the response plan is malformed or lacks required approval metadata;
-- context is missing companion, channel, audience, actor/session, or
+- context is missing companion, channel, actor/session, or
   correlation fields;
 - retrieval returns a claim outside the permitted disclosure set.
 
@@ -162,7 +164,7 @@ partially mutate conversation state.
 | --- | --- |
 | Empty Active Self | No active directives and neutral relationship behavior |
 | Lifecycle filtering | Every non-active lifecycle state is excluded |
-| Scope filtering | Public/direct/private/operator contexts select only permitted rules |
+| Scope filtering | Channel and session scope select only permitted rules |
 | Separation | User claim cannot become companion identity or directive |
 | Injection | Unsafe directive and untrusted context cannot rewrite policy |
 | Conflict | Priority and scope resolution is deterministic and auditable |

@@ -1,5 +1,8 @@
 # T5 experience event contract
 
+> [!NOTE]
+> Updated for single-owner deployment model. Audience-scoped event delivery has been simplified.
+
 Status: implementation target; output adapters are not yet on one neutral event boundary
 
 This contract defines how an approved response is rendered or sent. Voice,
@@ -16,8 +19,7 @@ interface ExperienceEvent {
   companionId: string;
   responseId: string;
   correlationId: string;
-  channel: "public" | "direct" | "private" | "operator";
-  audienceId: string;
+  channel: "direct" | "operator";
   approval: "APPROVED";
   kind: "voice" | "caption" | "avatar" | "platform_action";
   lifecycle: "STARTED" | "PROGRESS" | "COMPLETED" | "FAILED";
@@ -47,9 +49,8 @@ model response
 ```
 
 Raw model text, OCR, platform messages, observations, or knowledge results may
-not enter an adapter directly. Rejection, expiry, unknown approval, provider
-failure, or audience mismatch terminates the path before visible/output event
-creation.
+not enter an adapter directly. Rejection, expiry, unknown approval, or provider
+failure terminates the path before visible/output event creation.
 
 ## Adapter responsibilities
 
@@ -93,8 +94,8 @@ Before dispatch, the event builder rechecks:
 ```text
 companion isolation
   -> response status/expiry
-  -> channel and audience
-  -> evidence sensitivity and allowed audiences
+  -> channel
+  -> evidence sensitivity
   -> adapter capability and destination policy
 ```
 
@@ -111,7 +112,7 @@ Inbound events are untrusted source events. Normalization must preserve:
 source event ID
 platform/provider ID
 actor/session reference (when available)
-channel and configured audience
+channel
 received timestamp
 deduplication key
 bounded text/content
@@ -126,7 +127,7 @@ memory candidate only under the relevant policy; it cannot activate either.
 
 With a fresh companion and no approved response, adapters emit nothing. With a
 fresh companion and an approved neutral response, they must not add a personal
-name, title, relationship, account, or private audience. Output defaults come
+name, title, relationship, or account. Output defaults come
 from explicit deployment configuration and capability policy, never from the
 original personal Siduri deployment.
 

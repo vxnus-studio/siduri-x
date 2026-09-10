@@ -35,9 +35,7 @@ export async function normalizeUserInput(
 
   const isContextObject = typeof roleOrContext === 'object' && roleOrContext !== null;
   const role: 'OWNER' | 'VIEWER' | 'OPERATOR' = isContextObject
-    ? (roleOrContext.actor.authorizationRole === 'administrator'
-        ? 'OWNER'
-        : (roleOrContext.actor.authorizationRole === 'operator' ? 'OPERATOR' : 'VIEWER'))
+    ? ((roleOrContext.actor?.authorizationRole === 'viewer' ? 'VIEWER' : 'OWNER') as any)
     : (roleOrContext as any);
 
   const requestContext: RequestContext = isContextObject
@@ -45,17 +43,17 @@ export async function normalizeUserInput(
     : {
         companionId,
         actor: {
-          actorId: role === 'OWNER' ? 'owner-user' : 'anonymous-session',
+          actorId: role === 'VIEWER' ? 'anonymous-session' : 'owner-user',
           sessionId: `sess-${companionId}`,
-          authorizationRole: role === 'OWNER' ? 'administrator' : (role === 'OPERATOR' ? 'operator' : 'viewer'),
-          capabilities: role === 'OWNER' ? ['chat:public', 'chat:private', 'memory:approve'] : ['chat:public'],
-          authenticated: role === 'OWNER',
+          authorizationRole: role === 'VIEWER' ? 'viewer' : 'administrator',
+          capabilities: role === 'VIEWER' ? ['chat'] : ['chat', 'memory:approve', 'action:execute'],
+          authenticated: role !== 'VIEWER',
         },
         conversation: {
-          channel: role === 'OWNER' ? 'direct' : 'public',
-          audienceId: role === 'OWNER' ? 'audience-direct-owner' : 'audience-public',
+          channel: 'direct',
           correlationId: `corr-${Date.now()}`,
         },
+        source: 'local',
       };
 
   // Universal Perception: Route user input through EarOrgan if available

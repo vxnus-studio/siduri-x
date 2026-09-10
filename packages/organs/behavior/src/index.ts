@@ -6,7 +6,7 @@ export type { ScanResult, SafetyPatternConfig } from './safety-scanner';
 export class ActiveSelfCompiler implements BehaviorOrgan {
   
   async compileProjection(context: BehaviorContext): Promise<ActiveSelfProjection> {
-    const { activeRole, directives, companionId, channel, audienceId, now: nowIso } = context;
+    const { directives, companionId, now: nowIso } = context;
     const now = nowIso ? new Date(nowIso) : new Date();
 
     // 1. Identify superseded directives

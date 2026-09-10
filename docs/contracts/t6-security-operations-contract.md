@@ -1,5 +1,8 @@
 # T6 security and operations contract
 
+> [!NOTE]
+> Updated for single-owner deployment model. The 4-tier capability matrix has been simplified to owner/operator.
+
 Status: implementation target; current public runtime still has unverified security and operational gaps
 
 This contract turns the security/operations handoff into enforceable public
@@ -13,8 +16,8 @@ Every stateful operation must resolve a context containing:
 ```text
 companion_id
 actor_id / session_id
-authorization role and explicit capabilities
-channel / audience
+relationship (owner/operator) and explicit capabilities
+channel
 subject reference when applicable
 correlation_id
 ```
@@ -27,24 +30,23 @@ consent/capability policy.
 
 ## Capability matrix
 
-| Operation | Public actor | Authenticated actor | Operator | Administrator |
-| --- | --- | --- | --- | --- |
-| Public chat | Configured policy | Configured policy | Configured policy | Configured policy |
-| Direct/private chat | Explicit policy/capability | Explicit policy/capability | Explicit policy/capability | Explicit policy/capability |
-| Propose memory/behavior | Pending-only policy | Pending-only policy | Pending-only policy | Pending-only policy |
-| Approve memory/behavior | No | No by default | Explicit companion capability | Explicit companion capability |
-| Approve response/output | No | No by default | Explicit companion capability | Explicit companion capability |
-| Inspect private records | No | No by default | Explicit scoped capability | Explicit scoped capability |
-| Send outbound action | No | No | Explicit action capability plus approval | Explicit action capability plus approval |
+| Operation | Owner | Operator |
+| --- | --- | --- |
+| Direct chat | Yes | Configured policy |
+| Propose memory/behavior | Yes (pending) | Yes (pending) |
+| Approve memory/behavior | Yes | Explicit companion capability |
+| Approve response/output | Yes | Explicit companion capability |
+| Inspect private records | Yes | Explicit scoped capability |
+| Send outbound action | Explicit action capability plus approval | Explicit action capability plus approval |
 
-The table is a policy target. A role label alone is never sufficient for a
-private audience or approval decision.
+The table is a policy target. A relationship label alone is never sufficient for
+an approval decision.
 
 ## Isolation boundary
 
 Every database query, cache key, queue item, WebSocket subscription, approval
 ID, response event, and audit record must bind to `companion_id`. Operations
-must additionally validate the relevant actor, audience, and correlation
+must additionally validate the relevant actor and correlation
 context before returning or mutating state.
 
 Required failure behavior:
@@ -93,7 +95,7 @@ Ingress must enforce configured bounds for message length, history count,
 query size, lookup count, payload size, rate, replay window, and duplicate
 keys. Bounded rejection responses must not echo raw private payloads.
 
-Egress must recheck companion, response/action status, channel, audience,
+Egress must recheck companion, response/action status, channel,
 sensitivity, expiry, and approval immediately before dispatch. Unknown,
 rejected, expired, duplicate, or cross-companion output IDs cannot be sent.
 
@@ -105,7 +107,7 @@ Safe audit metadata includes:
 event type and stage
 companion_id
 actor/capability class (not secret)
-channel/audience identifiers
+channel identifier
 correlation_id
 source/response/approval/action IDs
 decision and reason code
@@ -134,7 +136,7 @@ exposing private memory.
 
 | Group | Minimum proof |
 | --- | --- |
-| Context/capability | Role cannot create relationship, audience, or approval authority |
+| Context/capability | Relationship label cannot create approval authority |
 | CORS/network | Allowed origins work; disallowed origins and unsafe endpoints fail |
 | Isolation | Cross-companion reads, approvals, queues, sockets, and actions fail |
 | Persistence | Timeout/failure rolls back multi-record state and keeps audit integrity |

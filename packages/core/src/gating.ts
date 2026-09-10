@@ -75,8 +75,7 @@ export class ResponseGatingEngine {
     const requiresApproval =
       options.requiresApproval !== undefined
         ? options.requiresApproval
-        : (requestContext.conversation?.channel === 'operator') ||
-          evidenceRecords.some((e) => e.origin === 'ocr' || e.trust === 'untrusted');
+        : evidenceRecords.some((e) => e.origin === 'ocr' || e.trust === 'untrusted');
 
     const staged: StagedResponsePlan = {
       responseId: generateId('resp'),
@@ -174,7 +173,7 @@ export class ResponseGatingEngine {
         filteredEvidenceIds: admittedEvidenceIds,
         filteredCitations,
         diagnostics: {
-          detail: 'Response plan requires operator approval before external emission',
+          detail: 'Response plan requires approval before external emission',
           excludedEvidenceCount: String(excluded.length),
         },
       };
@@ -207,10 +206,6 @@ export class ResponseGatingEngine {
 
     if (plan.correlationId !== options.correlationId) {
       return { success: false, reason: 'APPROVAL_ID_MISMATCH' };
-    }
-
-    if (options.audienceId && plan.audienceId !== options.audienceId) {
-      return { success: false, reason: 'AUDIENCE_MISMATCH' };
     }
 
     if (plan.status === 'EXPIRED') {

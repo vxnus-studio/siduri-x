@@ -62,3 +62,5 @@ Simplify Siduri into a clean, single-user autonomous cognitive agent and decoupl
 4. **Ear Perception Ingestion**:
    - Build a formal perception ingress abstraction for multi-modal sensory inputs (audio, text, webhooks).
 
+For the complete implementation plan eliminating legacy multi-audience assumptions, see the [**Single-Owner Phased Migration Plan**](./single-owner-phased-migration.md).
+

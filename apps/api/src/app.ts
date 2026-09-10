@@ -13,7 +13,7 @@ import { FixtureObservationOrgan } from '@siduri-x/observation';
 import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@siduri-x/hands';
 import { DefaultEarOrgan, EarOrganConfig } from '@siduri-x/ear';
 import { DefaultMouthOrgan, DefaultMouthOrganConfig } from '@siduri-x/mouth';
-import { attachIdentity, requireAuth, requireRole, Identity } from './auth';
+import { attachIdentity, requireAuth, Identity } from './auth';
 import { mapRequestContext } from './context-mapper';
 
 export interface AppBrainConfig {
@@ -204,9 +204,9 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   app.get('/me', attachIdentity, (req, res) => {
     const identity = (req as any).identity as Identity;
     res.json({
-      actorId: identity.role === 'OWNER' ? 'owner-user' : 'anonymous-session',
-      role: identity.role,
-      authenticated: identity.role === 'OWNER',
+      actorId: identity.actorId || (identity.authenticated ? 'owner-user' : 'anonymous-session'),
+      role: identity.role || (identity.authenticated ? 'OWNER' : 'VIEWER'),
+      authenticated: Boolean(identity.authenticated),
     });
   });
   app.put('/me', requireAuth, (req, res) => res.json({ success: true }));
@@ -609,7 +609,6 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         responseId,
         companionId,
         correlationId: correlationId || '',
-        audienceId: req.body?.audienceId,
       });
 
       if (!result.success) {

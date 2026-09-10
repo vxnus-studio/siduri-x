@@ -86,12 +86,7 @@ export async function settleMemoryProposals(
         subject: claim.subject,
         predicate: claim.predicate,
         value: claim.value,
-        scope:
-          role === 'OWNER' || (role as string) === 'COMPANION' || !role
-            ? 'OWNER'
-            : role === 'OPERATOR'
-            ? 'OPERATOR'
-            : 'COMPANION',
+        scope: claim.subject?.startsWith('companion:') ? 'companion' : 'user',
         provenance: claim.provenance || 'deterministic_teaching',
         sourceEventId,
         claimType: claim.claimType || 'preference',
@@ -99,10 +94,8 @@ export async function settleMemoryProposals(
         userConfirmation: 'none',
         sensitivity:
           claim.sensitivity ||
-          (requestContext.conversation.channel === 'public' ? 'public' : 'private'),
-        allowedAudiences: claim.allowedAudiences || [
-          requestContext.conversation.audienceId,
-        ],
+          (requestContext.conversation?.channel === 'public' ? 'public' : 'private'),
+        allowedAudiences: claim.allowedAudiences || (requestContext.conversation?.audienceId ? [requestContext.conversation.audienceId] : undefined),
       });
       createdMemoryProposals.push(proposal);
     }
@@ -114,17 +107,12 @@ export async function settleMemoryProposals(
           subject: p.subject || `actor:${requestContext.actor.actorId}`,
           predicate: p.predicate,
           value: p.value,
-          scope:
-            role === 'OWNER' || (role as string) === 'COMPANION' || !role
-              ? 'OWNER'
-              : 'COMPANION',
+          scope: p.subject?.startsWith('companion:') ? 'companion' : 'user',
           provenance: p.provenance || 'llm_proposal',
           sourceEventId: sourceEventId || p.sourceEventId,
           claimType: p.claimType || 'semantic',
           sensitivity: p.sensitivity || 'private',
-          allowedAudiences: p.allowedAudiences || [
-            requestContext.conversation.audienceId,
-          ],
+          allowedAudiences: p.allowedAudiences || (requestContext.conversation?.audienceId ? [requestContext.conversation.audienceId] : undefined),
         });
         createdMemoryProposals.push(proposal);
       }

@@ -1,5 +1,8 @@
 # T4 evidence-chain contract
 
+> [!NOTE]
+> Updated for single-owner deployment model. Audience intersection filtering has been removed from the evidence chain.
+
 Status: implementation target; observation, knowledge, and response approval are not yet proven end-to-end
 
 This contract defines how Siduri-Y turns observations and knowledge into
@@ -25,7 +28,6 @@ interface EvidenceRecord {
   expiresAt?: string;
   trust: "configured" | "provider" | "untrusted";
   sensitivity?: "public" | "private" | "restricted";
-  allowedAudiences?: string[]; // Optional legacy compatibility
   companionId: string;
   correlationId: string;
 }
@@ -60,7 +62,7 @@ A staged response plan must carry:
 response_id
 companion_id
 correlation_id
-channel and audience
+channel
 speech/content and language metadata
 bounded evidence IDs and citation metadata
 confidence/uncertainty summary
@@ -81,13 +83,12 @@ order:
 companion isolation
   -> evidence status and expiry
   -> channel
-  -> audience intersection
   -> sensitivity policy
   -> response/output capability
 ```
 
 Authorization permits an operation such as inspection or approval. It does not
-make private evidence public and cannot bypass sensitivity or audience rules.
+make private evidence public and cannot bypass sensitivity rules.
 Excluded evidence must be absent from speech, captions, overlay events,
 platform sends, and public citations—not merely hidden from the operator UI.
 

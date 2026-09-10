@@ -94,17 +94,10 @@ export async function dispatchCompanionChat(
   const history = Array.isArray(payload.history) ? payload.history : [];
 
   let roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string;
-  if (payload.role) {
+  if (payload.context) {
+    roleOrContext = payload.context;
+  } else if (payload.role) {
     roleOrContext = payload.role;
-  } else if (payload.context) {
-    // Map authorization role to legacy memory scope for backwards-compatible runtime calls
-    const authRole = payload.context.actor?.authorizationRole;
-    roleOrContext =
-      authRole === 'administrator'
-        ? 'OWNER'
-        : authRole === 'operator'
-        ? 'OPERATOR'
-        : (authRole === 'viewer' ? 'VIEWER' : 'OWNER');
   } else {
     roleOrContext = 'OWNER';
   }

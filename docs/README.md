@@ -37,8 +37,8 @@ Core specifications for the decoupled organ architecture and system components:
 - **[Testing Strategy](./architecture/testing.md)** — Test suite layout and execution.
 - **[Subsystem Integrations](./architecture/integrations.md)** — External adapters (Voice Synthesis, Live2D, OpenRouter).
 - **[Limitations & Boundaries](./architecture/limitations.md)** — System boundaries and non-goals.
-- **[Implementation Status](./architecture/implementation.md)** — Monorepo status, verified organs, and capabilities.
 - **[Migration & V1 Roadmap](./architecture/migration.md)** — Transition from legacy multi-viewer streaming to 1-User Agent model.
+- **[Single-Owner Phased Migration Plan](./architecture/single-owner-phased-migration.md)** — Step-by-step phases to completely eliminate remaining multi-audience and internal RBAC assumptions.
 
 ---
 

@@ -302,7 +302,6 @@ export default function ChatClient() {
         {
           id: "default",
           message: content,
-          role: "OWNER",
           medium: "web",
           history: conversation.messages.slice(-20).map((item) => ({
             role: item.role,

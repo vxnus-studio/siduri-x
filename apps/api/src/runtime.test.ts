@@ -79,7 +79,7 @@ describe('Siduri Runtime Orchestration', () => {
     expect(noKnowledgeContext).toBe(true);
     expect(proposedClaims.length).toBe(1);
     expect(proposedClaims[0].subject).toBe("Test");
-    expect(proposedClaims[0].scope).toBe("OWNER");
+    expect(proposedClaims[0].scope).toBe("user");
     expect(response.metadata.memory_proposals[0].proposal_id).toBe("claim-1");
   });
 

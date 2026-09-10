@@ -47,12 +47,11 @@ Introduce an `ActionPolicyEngine` between Brain and Hands:
 The policy engine should evaluate:
 
 - actor identity
-- authorization role
+- relationship / authorization role
 - capabilities
 - companion ID
 - session ID
 - channel
-- audience
 - tool identity
 - requested parameters
 - risk level
@@ -80,7 +79,6 @@ Every action should retain provenance such as:
     sessionId
     correlationId
     channel
-    audienceId
     authorizationRole
     capabilities
 

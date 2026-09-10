@@ -122,7 +122,9 @@ export function validateExperienceEvent(event: unknown): { valid: boolean; error
   if (!e.companionId || typeof e.companionId !== 'string') return { valid: false, error: 'Missing or invalid companionId' };
   if (!e.responseId || typeof e.responseId !== 'string') return { valid: false, error: 'Missing or invalid responseId' };
   if (!e.correlationId || typeof e.correlationId !== 'string') return { valid: false, error: 'Missing or invalid correlationId' };
-  if (!e.audienceId || typeof e.audienceId !== 'string') return { valid: false, error: 'Missing or invalid audienceId' };
+  if (e.audienceId !== undefined && typeof e.audienceId !== 'string') {
+    return { valid: false, error: 'Invalid audienceId: must be a string' };
+  }
   if (e.approval !== 'APPROVED') return { valid: false, error: 'Event approval must be APPROVED' };
   if (!['voice', 'caption', 'avatar', 'platform_action'].includes(e.kind as string)) {
     return { valid: false, error: `Invalid kind: ${e.kind}` };

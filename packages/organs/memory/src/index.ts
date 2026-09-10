@@ -666,7 +666,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
 
   async updateClaim(
     id: string,
-    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil' | 'allowedAudiences'>>
+    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil'>>
   ): Promise<Claim> {
     this.ensureInitialized();
     const client = await this.pool.connect();
@@ -700,7 +700,7 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
           authority: current.authority || 'user_explicit',
           userConfirmation: 'none' as const,
           sensitivity: updates.sensitivity ?? current.sensitivity,
-          allowedAudiences: updates.allowedAudiences ?? (current.allowed_audiences || []),
+          allowedAudiences: (updates as any).allowedAudiences ?? (current.allowed_audiences || []),
           confidence: updates.confidence ?? current.confidence,
           validFrom: updates.validFrom ?? current.valid_from,
           validUntil: updates.validUntil ?? current.valid_until,
@@ -755,8 +755,8 @@ export class PostgresMemoryOrgan implements MemoryOrgan {
       const newConfidence = updates.confidence ?? current.confidence;
       const newValidFrom = updates.validFrom ?? current.valid_from;
       const newValidUntil = updates.validUntil ?? current.valid_until;
-      const newAudiences = updates.allowedAudiences !== undefined
-        ? JSON.stringify(updates.allowedAudiences)
+      const newAudiences = (updates as any).allowedAudiences !== undefined
+        ? JSON.stringify((updates as any).allowedAudiences)
         : JSON.stringify(current.allowed_audiences || []);
 
       const updateRes = await client.query(

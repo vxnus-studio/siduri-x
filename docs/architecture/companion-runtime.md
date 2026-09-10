@@ -10,9 +10,8 @@ To prevent God-object anti-patterns and enforce strict single-responsibility bou
 
 1. **Input Normalization & Ingestion** (`packages/core/src/input-normalizer.ts`):
    - Validates input size ceilings and strips dangerous null-byte sequences.
-   - Normalizes actor identity, authorization roles, and conversation audience per contract T1.
+   - Normalizes actor identity and conversation context per contract T1.
    - Routes structured or raw audio perceptions through the configured `Ear` organ.
-   - Synthesizes fallback role metadata for non-interactive channels.
 
 2. **Intent Classification** (`packages/core/src/intent-classifier.ts`):
    - Fast deterministic regex heuristics for common conversational intents (`chat`, `command`, `reflection`, `mutation`).
@@ -20,7 +19,7 @@ To prevent God-object anti-patterns and enforce strict single-responsibility bou
 
 3. **Context Retrieval** (`packages/core/src/context-retriever.ts`):
    - Concurrent retrieval of `Memory` claims and `Knowledge` items.
-   - Audience disclosure filtering per contract T2.
+   - Owner-scoped disclosure filtering per contract T2.
    - Preserves native `EvidenceRecord` metadata and citation provenance per contract T4.
    - Isolates organ failures into structured subsystem diagnostics without crashing the cognition cycle.
 
@@ -78,7 +77,7 @@ To prevent Law of Demeter violations across consuming applications (such as `app
 
 The companion runtime strictly complies with the Siduri-X neutral contracts:
 - **T1**: Neutral Context Specification (explicit actor, audience, companion ID).
-- **T2**: Memory Disclosure Matrix (audience-scoped claims and directives).
+- **T2**: Memory Disclosure Matrix (owner-scoped claims and directives).
 - **T3**: Active Self & Prompt Matrix (strict layered system prompt composition).
 - **T4**: Evidence Chain (native `EvidenceRecord` preservation and citation provenance).
 - **T5**: Experience Events (unified event stream for voice, body, text).

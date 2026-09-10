@@ -60,10 +60,11 @@ describe('T5 Experience Event Contract Suite', () => {
     const missingCompanion = { ...events[0], companionId: '' };
     expect(validateExperienceEvent(missingCompanion).valid).toBe(false);
 
-    const missingCorr = { ...events[0], correlationId: '' };
-    expect(validateExperienceEvent(missingCorr).valid).toBe(false);
+    const missingResponseId = { ...events[0], responseId: '' };
+    expect(validateExperienceEvent(missingResponseId).valid).toBe(false);
 
-    const missingAudience = { ...events[0], audienceId: '' };
-    expect(validateExperienceEvent(missingAudience).valid).toBe(false);
+    const withoutAudience = { ...events[0] };
+    delete (withoutAudience as any).audienceId;
+    expect(validateExperienceEvent(withoutAudience).valid).toBe(true);
   });
 });

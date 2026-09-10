@@ -11,10 +11,10 @@ semantic responsibility must also remain separate.
 | Term | Meaning | Does not mean |
 | --- | --- | --- |
 | Actor | Caller or source participant identified by an opaque actor/session reference | A known person, relationship, or profile |
-| Authorization role | Coarse permission class used to authorize operations | Audience, subject, owner, creator, or private user |
+| Authorization role | Relationship/permission class (owner/operator) used to authorize operations | Subject, creator, or unrestricted authority |
 | Capability | Explicit permission for one operation in one scope | Permanent identity or unrestricted authority |
-| Channel | Interaction mode such as public, direct, private, or operator | Person who is speaking |
-| Audience | Configured visibility/retrieval set for a channel or event | Authentication role or relationship |
+| Channel | Interaction mode such as direct (owner) or operator | Person who is speaking |
+| Audience | Deprecated concept from multi-audience model; in single-owner deployments, the owner is the implicit recipient | Authentication role or relationship |
 | Subject | Explicit target of a claim, directive, or profile fact | Implicit “main user” inferred from a route or token |
 | Companion | Isolated runtime/configuration instance | A person or the original personal deployment |
 | Source event | Immutable input/provenance envelope | Confirmed truth or approval |
@@ -23,8 +23,8 @@ semantic responsibility must also remain separate.
 | Active Self | Approved, scoped behavior projection | User profile or fixed personal persona |
 | Evidence | Bounded, cited context with source/trust/expiry metadata | Memory, identity, instruction, or permission |
 | Response plan | Staged candidate response with evidence and approval policy | Emitted speech or approved memory |
-| Approval | Explicit decision scoped to a record, companion, audience, and capability | Automatic model confidence |
-| Disclosure | Policy decision about what a channel/audience may receive | Mere authentication success |
+| Approval | Explicit decision scoped to a record, companion, and capability | Automatic model confidence |
+| Disclosure | Policy decision about what data may be retrieved or emitted | Mere authentication success |
 | Session-only | Non-durable context that expires with its session | Hidden permanent memory |
 | Neutral default | Configured public-safe behavior with no personal relationship assumptions | “No configuration” or a private fallback |
 
@@ -44,14 +44,14 @@ silently combine these dimensions.
 
 ### “Owner”
 
-Use only when referring to an external resource ownership model that is
-explicitly configured. Do not use it as shorthand for actor, administrator,
-subject, audience, or creator relationship.
+The canonical term for the primary user relationship in single-owner deployments.
+In multi-companion deployments, each companion has one owner. In external resource
+contexts, refers to the configured resource owner.
 
 ### “Default”
 
-Name what is default: `configured public audience`, `development bootstrap`, or
-`selected companion`. A bare default must not hide a personal/private value.
+Name what is default: `configured companion`, `development bootstrap`, or
+`selected persona`. A bare default must not hide a personal/private value.
 
 ### “Identity”
 
@@ -65,8 +65,10 @@ These values may appear in a migration boundary or explicitly labeled legacy
 test, but must not be canonical public semantics:
 
 ```text
-OWNER / VIEWER / OPERATOR  -> authorization compatibility inputs only
+OWNER / VIEWER / OPERATOR  -> authorization compatibility inputs only (migrated to owner/operator)
 MASTER_PRIVATE             -> legacy private-audience marker only
+audience-*                 -> legacy multi-audience tiers; single-owner uses direct channel
+allowed_audiences          -> deprecated database column/field, dropped in single-owner model
 primary_user               -> rejected global subject; actor-scoped mapping only
 Primary User               -> forbidden invented profile fallback
 master / creator           -> explicit taught relationship value only

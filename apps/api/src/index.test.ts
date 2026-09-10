@@ -31,7 +31,10 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
     expect(res.status).toBe(200);
     expect(fakeRuntime.handleUserMessage).toHaveBeenCalledWith(
       'Hello neutral world',
-      'OWNER',
+      expect.objectContaining({
+        companionId: 'companion-a',
+        conversation: expect.objectContaining({ channel: 'direct' }),
+      }),
       []
     );
   });
@@ -62,7 +65,10 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
     expect(res.status).toBe(200);
     expect(fakeRuntime.handleUserMessage).toHaveBeenCalledWith(
       'Hello structured context',
-      'VIEWER',
+      expect.objectContaining({
+        companionId: 'companion-a',
+        conversation: expect.objectContaining({ channel: 'public' }),
+      }),
       []
     );
   });

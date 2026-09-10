@@ -248,7 +248,7 @@ export class SiduriRuntime {
 
   async updateClaim(
     id: string,
-    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil' | 'allowedAudiences'>>
+    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil'>>
   ): Promise<Claim> {
     if (!this.memory || typeof this.memory.updateClaim !== 'function') {
       throw new Error('Memory organ updateClaim not supported');
