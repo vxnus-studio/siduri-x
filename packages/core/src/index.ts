@@ -23,6 +23,7 @@ export * from './action-executor';
 export * from './experience-emitter';
 export * from './response-envelope';
 export * from './session-history';
+export * from './schema-validator';
 
 import { EvidenceRecord } from './evidence';
 import { ActionIntent } from './action';

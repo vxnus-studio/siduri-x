@@ -2,6 +2,7 @@ import { MemoryOrgan, Claim, MemoryScope, BehaviorDirective, SourceEvent, Memory
 import { Pool } from 'pg';
 import { UP_MIGRATION } from './schema';
 export * from './teaching';
+export * from './in-memory';
 
 export interface PostgresMemoryConfig {
   connectionString: string;

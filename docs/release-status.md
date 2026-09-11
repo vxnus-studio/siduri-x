@@ -30,7 +30,7 @@ All core security, reliability, and architectural properties have been independe
 9. **Tamper-Evident Audit Chaining (P1)**:
    Audit events separate `previousEventHash`, `eventHash`, and `resultHash` into a SHA-256 hash chain over canonicalized payloads.
 10. **Clean Distribution Packaging**:
-    `npm run release:check` passes on all 12 canonical packages. Zero `workspace:` or `link:` references leak into distribution tarballs. Clean-machine E2E test passes in isolation.
+    `npm run release:check` passes on all 13 canonical packages. Zero `workspace:` or `link:` references leak into distribution tarballs. Clean-machine E2E test passes in isolation.
 
 ---
 
@@ -45,7 +45,7 @@ The following properties represent intentional architectural boundaries for Sidu
 - **Platform Ingestion Stubs**:
   Streaming platform routes (`/platforms/*`) return truthful HTTP `501 Not Implemented`. Local companion operation is self-contained without external platform dependencies.
 - **ActionStore Durability Scope**:
-  `InMemoryActionStore` is the default in-memory implementation for single-session execution. Deployments requiring action approvals to survive host machine reboots or process restarts can configure persistent local storage via `SqliteActionStore` (e.g. SQLite database file or `:memory:`).
+  `InMemoryActionStore` is the default in-memory implementation for single-session execution. Deployments requiring action approvals to survive host machine reboots or process restarts can configure persistent local storage via `actionStore: 'sqlite'` (or passing `SqliteActionStore` into `RuntimeOrgans`).
 - **Web Client Lint Warnings**:
   The Next.js web application (`apps/web`) exports clean static artifacts for the CLI companion UI, but standalone ESLint reports non-blocking warnings concerning React 19 synchronous effect state setters and WebGL loader types.
 

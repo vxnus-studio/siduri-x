@@ -4,7 +4,7 @@ import { Express } from 'express';
 import { createApp, AppInstance, AppBrainConfig, AppBehaviorConfig } from './app';
 import { SiduriRuntime } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
-import { PostgresMemoryOrgan } from '@siduri-x/memory';
+import { PostgresMemoryOrgan, InMemoryMemoryOrgan } from '@siduri-x/memory';
 import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
 import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/knowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
@@ -77,6 +77,20 @@ function createBody(config?: Live2DAdapterConfig & { provider?: string }) {
     : new Live2DAdapter(config);
 }
 
+function createMemory(config?: { provider?: string; connectionString?: string; maxConnections?: number }) {
+  if (isDisabled(config)) return undefined;
+  const provider = config?.provider || 'postgres';
+  if (provider === 'in-memory') {
+    return new InMemoryMemoryOrgan();
+  }
+  if (provider === 'postgres') {
+    const connectionString =
+      config?.connectionString || process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri';
+    return new PostgresMemoryOrgan({ connectionString, maxConnections: config?.maxConnections });
+  }
+  return undefined;
+}
+
 const PORT = process.env.PORT || 3001;
 
 const defaultCompanionConfig = {
@@ -138,7 +152,7 @@ async function bootDefaultCompanion() {
   const config: any = await loadCompanionConfig();
   
   const brain = createBrain(config.brain);
-  const memory = new PostgresMemoryOrgan({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri' });
+  const memory = createMemory(config.memory);
   const voice = createVoice(config.voice);
   const knowledge = createKnowledge(config.knowledge);
   const vision = createVision(config.vision);
@@ -149,7 +163,9 @@ async function bootDefaultCompanion() {
   const behavior = createBehavior(config.behavior);
   const body = createBody(config.body);
 
-  await memory.runMigrations().catch(e => console.warn("Migrations warning:", e.message));
+  if (memory && typeof (memory as any).runMigrations === 'function') {
+    await (memory as any).runMigrations().catch((e: any) => console.warn("Migrations warning:", e.message));
+  }
 
   const runtime = new SiduriRuntime('default', config as any, { brain, memory, voice, knowledge, vision, behavior, body });
   await runtime.initialize();

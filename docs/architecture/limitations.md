@@ -18,7 +18,7 @@ These constraints are deliberate design choices for Siduri's target product mode
 - **Platform Ingestion Stubs**:
   Outbound streaming platform routes (`/platforms/*`) return truthful HTTP `501 Not Implemented`. Local companion operation is entirely self-contained without mandatory streaming platform dependencies.
 - **ActionStore Durability Scope**:
-  `InMemoryActionStore` is the default in-memory implementation for development and single-session execution. Deployments requiring action authorizations to survive process or host restarts can supply a persistent local store via `SqliteActionStore` (e.g. SQLite database file or `:memory:`).
+  `InMemoryActionStore` is the default in-memory implementation for development and single-session execution. Deployments requiring action authorizations to survive process or host restarts can configure `actionStore: 'sqlite'` (or pass `SqliteActionStore` via `RuntimeOrgans`).
 - **Web Client Lint Warnings**:
   The Next.js web console (`apps/web`) exports clean static artifacts for the CLI companion UI, but standalone ESLint produces warnings concerning React 19 effect state setters and WebGL loader types.
 

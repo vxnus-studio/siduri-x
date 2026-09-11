@@ -13,15 +13,15 @@ npx @vxnus/siduri create my-companion
 - **Node.js**: `v20.0.0` or newer
 - **LLM API Key**: e.g. `OPENROUTER_API_KEY` for Brain organ
 - **Optional Local Services**:
-  - **Docker**: For running local PostgreSQL database (`docker compose up -d` / `npm run services:up`) and/or VOICEVOX engine.
-  - *Non-Docker Alternatives*: Cloud databases (Supabase, Neon) or standalone [VOICEVOX Desktop App](https://voicevox.hiroshiba.jp/).
+  - **PostgreSQL**: Required if PostgreSQL memory organ is enabled (local PostgreSQL server or cloud Supabase/Neon).
+  - **VOICEVOX**: For voice synthesis (auto-downloaded at runtime by default, or connect to standalone app).
 
 ## Features
 
 - **Manifest-Driven Organ Discovery**: Dynamically discovers installed `@siduri-x/*` organs and generates custom, standalone ESM instance code.
 - **Interactive Configuration Wizard**: Model catalog discovery for OpenRouter, manifest inspection for E Knowledge Hub, and guided organ parameters.
 - **Zero Monolithic Bundling**: Scaffolds standard Node.js ESM projects with explicit dependency trees.
-- **Diagnostics (`siduri doctor`)**: Runs environment variable validation, external service checks, database health probes, and organ-specific assertions.
+- **Diagnostics (`siduri doctor`)**: Runs environment variable validation, schema conformance checks, external service checks, database health probes, and organ-specific assertions.
 - **Database Migrations (`siduri db push`)**: Inspects database-owning organs (such as `@siduri-x/memory`) and executes SQL migrations with SHA-256 integrity checksums.
 
 ## CLI Usage
@@ -41,7 +41,6 @@ my-companion/
 ├── siduri.schema.json    # Composed JSON Schema from organ manifests
 ├── .env.example          # Only environment variables required by selected organs
 ├── README.md             # Instance-specific guide
-├── docker-compose.yml    # Scaffolds PostgreSQL / VOICEVOX when selected
 └── src/
     └── index.js          # Direct runtime bootstrapping with explicit organ factories
 ```

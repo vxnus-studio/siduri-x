@@ -343,7 +343,14 @@ export class DefaultHandsOrgan implements HandsOrgan {
     // 5. Execution with Timeout and Cancellation
     const timeoutMs = options?.timeoutMs || handler.definition.timeoutMs || this.defaultTimeoutMs;
     const controller = new AbortController();
-    const effectiveSignal = options?.signal || controller.signal;
+    if (options?.signal) {
+      if (options.signal.aborted) {
+        controller.abort(options.signal.reason);
+      } else {
+        options.signal.addEventListener('abort', () => controller.abort(options.signal?.reason), { once: true });
+      }
+    }
+    const effectiveSignal = controller.signal;
 
     let timeoutHandle: any;
     const timeoutPromise = new Promise<never>((_, reject) => {

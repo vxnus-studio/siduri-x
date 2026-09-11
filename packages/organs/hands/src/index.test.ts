@@ -353,5 +353,44 @@ describe('DefaultHandsOrgan Adversarial Remediation Suite', () => {
       expect(runCount).toBe(1); // Did not re-execute side effect!
       expect((res2.result as any).status).toBe('done');
     });
+
+    it('cancels the execution when timeout occurs even if caller supplies an external AbortSignal', async () => {
+      let abortedSignal: boolean = false;
+      const hands = new DefaultHandsOrgan({ secretKey });
+      hands.registerTool({
+        definition: { name: 'slow_task', inputSchema: {}, description: 'slow task', timeoutMs: 50 },
+        execute: async (_, signal) => {
+          return new Promise((resolve, reject) => {
+            signal?.addEventListener('abort', () => {
+              abortedSignal = true;
+              const err = new Error('aborted');
+              err.name = 'AbortError';
+              reject(err);
+            });
+          });
+        },
+      });
+      engine.registerToolDefinition({ name: 'slow_task', inputSchema: {}, description: 'slow task', riskLevel: 'LOW' });
+
+      const action = {
+        actionId: 'act-timeout-signal',
+        toolName: 'slow_task',
+        parameters: {},
+        context: sampleContext,
+        executionId: 'exec-timeout-signal-1',
+      };
+
+      const { capability } = await engine.evaluateAction(action);
+      const externalController = new AbortController();
+
+      const res = await hands.executeAction(action, capability!, {
+        signal: externalController.signal,
+        timeoutMs: 30,
+      });
+
+      expect(res.success).toBe(false);
+      expect(res.lifecycle).toBe('TIMED_OUT');
+      expect(abortedSignal).toBe(true);
+    });
   });
 });

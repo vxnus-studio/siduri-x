@@ -152,7 +152,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/hands',
     organType: 'hands',
-    version: '1.0.2',
+    version: '1.0.4',
     displayName: 'Hands (MCP Tool Execution)',
     description: 'Model Context Protocol tool management and cryptographically authorized action execution',
     entrypoint: './dist/index.js',
@@ -271,7 +271,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/memory',
     organType: 'memory',
-    version: '1.0.6',
+    version: '1.0.7',
     displayName: 'Memory (PostgreSQL FTS Claims)',
     description: 'Relational semantic claims with Full-Text Search and companion isolation',
     entrypoint: './dist/index.js',

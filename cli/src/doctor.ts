@@ -3,9 +3,10 @@ import path from 'node:path';
 import { OrganRegistry } from './discovery';
 import { OrganManifest } from './manifest';
 import { Pool } from 'pg';
+import { validateCompanionConfig } from './schema-validator';
 
 export interface DoctorCheckResult {
-  category: 'Environment' | 'Services' | 'Database' | 'Health Probe';
+  category: 'Environment' | 'Services' | 'Database' | 'Health Probe' | 'Configuration';
   name: string;
   status: 'PASS' | 'FAIL' | 'OPTIONAL_MISSING' | 'SKIPPED';
   organName?: string;
@@ -68,6 +69,29 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<DoctorRepo
 
   const selectedManifests: OrganManifest[] = [];
   const results: DoctorCheckResult[] = [];
+
+  // 0. Schema Validation Check
+  const schemaPath = path.join(projectDir, 'siduri.schema.json');
+  if (fs.existsSync(schemaPath)) {
+    try {
+      const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
+      validateCompanionConfig(config, schema);
+      results.push({
+        category: 'Configuration',
+        name: 'Schema Conformance',
+        status: 'PASS',
+        message: 'siduri.config.json conforms to siduri.schema.json',
+      });
+    } catch (err: any) {
+      results.push({
+        category: 'Configuration',
+        name: 'Schema Conformance',
+        status: 'FAIL',
+        message: err.message,
+        remediation: 'Update siduri.config.json to conform to the generated schema.',
+      });
+    }
+  }
 
   // 1. Resolve manifests for selected organs
   for (const organKey of organKeys) {

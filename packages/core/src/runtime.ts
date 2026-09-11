@@ -14,6 +14,8 @@ import {
   Message,
   RequestContext,
   ActionPolicyEngine,
+  ActionStore,
+  SqliteActionStore,
   ResponseGatingEngine,
   StageResponseOptions,
   ApproveResponseOptions,
@@ -61,6 +63,8 @@ export interface SiduriRuntimeConfig {
   observation?: OrganConfig | Record<string, unknown>;
   mouth?: OrganConfig | Record<string, unknown>;
   actionPolicy?: Record<string, unknown>;
+  actionStore?: 'in-memory' | 'sqlite' | { type: 'sqlite' | 'in-memory'; dbPath?: string };
+  actionStorePath?: string;
   [key: string]: unknown;
 }
 
@@ -76,6 +80,7 @@ export interface RuntimeOrgans {
   ear?: EarOrgan;
   observation?: ObservationOrgan;
   mouth?: MouthOrgan;
+  actionStore?: ActionStore;
   actionPolicy?: ActionPolicyEngine;
 }
 
@@ -139,7 +144,19 @@ export class SiduriRuntime {
     this.observation = organs.observation;
     this.mouth = organs.mouth;
     this.gating = new ResponseGatingEngine();
-    this.actionPolicy = organs.actionPolicy || new ActionPolicyEngine();
+
+    let actionStore = organs.actionStore;
+    if (!actionStore) {
+      const storeOpt = config.actionStore;
+      const storePath = config.actionStorePath || (typeof storeOpt === 'object' ? storeOpt.dbPath : undefined);
+      if (storeOpt === 'sqlite' || (typeof storeOpt === 'object' && storeOpt.type === 'sqlite') || storePath) {
+        actionStore = new SqliteActionStore({ dbPath: storePath });
+      }
+    }
+
+    this.actionPolicy = organs.actionPolicy || new ActionPolicyEngine({
+      store: actionStore,
+    });
     this.dispatcher = new ExperienceDispatcher();
 
     if (this.voice && typeof (this.voice as any).handleEvent === 'function') {

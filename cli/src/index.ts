@@ -272,10 +272,6 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
     await writeFile(path.join(publicDir, 'index.html'), files['public/index.html'], 'utf8');
   }
 
-  if (files['docker-compose.yml']) {
-    await writeFile(path.join(projectDir, 'docker-compose.yml'), files['docker-compose.yml'], 'utf8');
-  }
-
   if (files.createAssetsDirs && files.createAssetsDirs.length > 0) {
     for (const dir of files.createAssetsDirs) {
       await mkdir(path.join(projectDir, dir), { recursive: true });
@@ -300,9 +296,6 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   console.log(`Your Siduri companion is ready! Next steps:\n`);
   console.log(`  cd ${path.relative(process.cwd(), projectDir) || '.'}`);
   console.log(`  cp .env.example .env          ${colors.dim}# Fill in required API keys/credentials${colors.reset}`);
-  if (files['docker-compose.yml']) {
-    console.log(`  npm run services:up           ${colors.dim}# Start local Docker services (PostgreSQL / VOICEVOX)${colors.reset}`);
-  }
   const hasMemory = selectedManifests.some((m) => m.organType === 'memory');
   if (hasMemory) {
     console.log(`  npx @vxnus/siduri db push     ${colors.dim}# Push PostgreSQL memory schema${colors.reset}`);

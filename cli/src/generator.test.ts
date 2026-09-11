@@ -178,23 +178,23 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     expect(files['README.md']).toContain('assets/voice/companion-full');
     expect(files['README.md']).toContain('Prerequisites');
 
-    // Docker compose generated for memory (voicevox is auto-downloaded at runtime)
-    expect(files['docker-compose.yml']).toBeDefined();
-    expect(files['docker-compose.yml']).toContain('postgres:15');
+    // No docker compose generated (Docker completely removed, host-native runtime)
+    expect((files as any)['docker-compose.yml']).toBeUndefined();
     expect(files['README.md']).toContain('Voicevox engine executable will be securely auto-downloaded');
-    expect(pkg.scripts['services:up']).toBe('docker compose up -d');
-    expect(pkg.scripts['services:down']).toBe('docker compose down');
+    expect(pkg.scripts['services:up']).toBeUndefined();
+    expect(pkg.scripts['services:down']).toBeUndefined();
   });
 
-  test('Composition E: Brain only has no docker-compose.yml', () => {
+  test('Composition E: Standalone companion never generates docker-compose.yml and validates config', () => {
     const files = generateInstanceFiles({
       name: 'brain-solo',
       selectedManifests: [MOCK_MANIFESTS.brain],
     });
 
-    expect(files['docker-compose.yml']).toBeUndefined();
+    expect((files as any)['docker-compose.yml']).toBeUndefined();
     const pkg = JSON.parse(files['package.json']);
     expect(pkg.scripts['services:up']).toBeUndefined();
+    expect(files['src/index.js']).toContain('validateCompanionConfig');
     expect(files['public/index.html']).toBeDefined();
     expect(files['public/index.html']).toContain('Memory Console');
     expect(files['public/index.html']).toContain('Companion Chat');

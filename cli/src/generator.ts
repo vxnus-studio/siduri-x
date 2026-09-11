@@ -9,7 +9,6 @@ export interface GeneratedInstanceFiles {
   'README.md': string;
   'src/index.js': string;
   'public/index.html': string;
-  'docker-compose.yml'?: string;
   createAssetsBodyDir?: boolean;
   createAssetsDirs?: string[];
 }
@@ -82,7 +81,7 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^1.0.8';
+  const coreVersion = options.coreVersion || '^1.0.9';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -96,61 +95,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const memoryConfig = options.organConfigs?.memory || options.organConfigs?.['@siduri-x/memory'];
   const isPostgresLocal = hasMemory && (!memoryConfig || memoryConfig.deployment === 'local' || memoryConfig.provider === 'postgres');
 
-  // 1. Optional docker-compose.yml
-  let dockerComposeYaml: string | undefined;
-  const dockerServices: string[] = [];
-  const dockerVolumes: string[] = [];
-
-  if (hasMemory && isPostgresLocal) {
-    dockerServices.push([
-      '  db:',
-      '    image: postgres:15',
-      '    environment:',
-      '      POSTGRES_USER: postgres',
-      '      POSTGRES_PASSWORD: password',
-      '      POSTGRES_DB: siduri',
-      '    ports:',
-      '      - "5432:5432"',
-      '    volumes:',
-      '      - postgres_data:/var/lib/postgresql/data',
-      '    healthcheck:',
-      '      test: ["CMD-SHELL", "pg_isready -U postgres"]',
-      '      interval: 2s',
-      '      timeout: 5s',
-      '      retries: 5',
-    ].join('\n'));
-    dockerVolumes.push('  postgres_data:');
-  }
-
-
-  if (hasVoice && voiceConfig?.rvc?.enabled) {
-    dockerServices.push([
-      '  rvc:',
-      '    image: ghcr.io/vxnus-studio/rvc-headless:latest',
-      '    ports:',
-      '      - "50055:50055"',
-      '    volumes:',
-      '      - ./assets/voice:/app/models',
-      '    environment:',
-      '      - RVC_MODELS_DIR=/app/models',
-    ].join('\n'));
-  }
-
-  if (dockerServices.length > 0) {
-    const composeLines = [
-      'version: "3.8"',
-      '',
-      'services:',
-      ...dockerServices,
-    ];
-    if (dockerVolumes.length > 0) {
-      composeLines.push('', 'volumes:', ...dockerVolumes);
-    }
-    composeLines.push('');
-    dockerComposeYaml = composeLines.join('\n');
-  }
-
-  // 2. package.json
+  // 1. package.json
   const dependencies: Record<string, string> = {
     '@siduri-x/core': coreVersion,
   };
@@ -164,12 +109,6 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     doctor: 'siduri doctor',
     db: 'siduri db',
   };
-
-  if (dockerComposeYaml) {
-    scripts['services:up'] = 'docker compose up -d';
-    scripts['services:down'] = 'docker compose down';
-    scripts['services:logs'] = 'docker compose logs -f';
-  }
 
   const packageJsonObj = {
     name: instanceName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'my-siduri',
@@ -243,7 +182,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `import { readFile, stat, readdir } from 'node:fs/promises';`,
     `import path from 'node:path';`,
     `import { fileURLToPath } from 'node:url';`,
-    `import { SiduriRuntime, dispatchCompanionChat } from '@siduri-x/core';`,
+    `import { SiduriRuntime, dispatchCompanionChat, validateCompanionConfig } from '@siduri-x/core';`,
   ];
   for (const m of manifests) {
     importLines.push(`import { ${m.factory} } from '${m.name}';`);
@@ -274,6 +213,16 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `const config = JSON.parse(`,
     `  await readFile(path.join(rootDir, 'siduri.config.json'), 'utf8')`,
     `);`,
+    `const schemaPath = path.join(rootDir, 'siduri.schema.json');`,
+    `try {`,
+    `  const schema = JSON.parse(await readFile(schemaPath, 'utf8'));`,
+    `  validateCompanionConfig(config, schema);`,
+    `} catch (err) {`,
+    `  if (err?.code !== 'ENOENT') {`,
+    `    console.error('Config validation failed:', err.message);`,
+    `    throw err;`,
+    `  }`,
+    `}`,
     '',
     ...instantiationLines,
     '',
@@ -657,9 +606,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
 
   if (hasMemory) {
     readmeLines.push(
-      '- **Local Services (Optional)**: Docker (or standalone alternatives):',
+      '- **PostgreSQL (Optional)**: Required if PostgreSQL memory organ is enabled (local PostgreSQL server or cloud Supabase/Neon).',
     );
-    readmeLines.push('  - **PostgreSQL**: Required for memory claims & durable state (or use cloud Supabase/Neon)');
   }
 
   if (isVoicevox) {
@@ -682,21 +630,10 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     'Fill in your LLM API key (e.g. `OPENROUTER_API_KEY`) and any other service credentials in `.env`.'
   );
 
-  if (dockerComposeYaml) {
-    readmeLines.push(
-      '',
-      '### 3. Start Local Services (Docker)',
-      '```bash',
-      'npm run services:up',
-      '```',
-      '*(To stop services later, run `npm run services:down`)*'
-    );
-  }
-
   if (hasMemory) {
     readmeLines.push(
       '',
-      `### ${dockerComposeYaml ? '4' : '3'}. Database Migrations`,
+      '### 3. Database Migrations',
       'Ensure `DATABASE_URL` in `.env` is reachable, then push the memory organ PostgreSQL schema:',
       '```bash',
       'npx @vxnus/siduri db push',
@@ -706,13 +643,13 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
 
   readmeLines.push(
     '',
-    `### ${hasMemory ? (dockerComposeYaml ? '5' : '4') : (dockerComposeYaml ? '4' : '3')}. Diagnostics & Health Probe`,
-    'Verify all environment variables, services, and organ connections:',
+    `### ${hasMemory ? '4' : '3'}. Diagnostics & Health Probe`,
+    'Verify all environment variables, schema conformance, services, and organ connections:',
     '```bash',
     'npm run doctor',
     '```',
     '',
-    `### ${hasMemory ? (dockerComposeYaml ? '6' : '5') : (dockerComposeYaml ? '5' : '4')}. Start Companion & Web Console`,
+    `### ${hasMemory ? '5' : '4'}. Start Companion & Web Console`,
     'Launch your companion runtime and Web UI / Memory Control Panel:',
     '```bash',
     'npm start',
@@ -762,10 +699,6 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     createAssetsBodyDir: hasBody,
     createAssetsDirs,
   };
-
-  if (dockerComposeYaml) {
-    result['docker-compose.yml'] = dockerComposeYaml;
-  }
 
   return result;
 }

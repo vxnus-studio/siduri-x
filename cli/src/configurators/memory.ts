@@ -20,7 +20,7 @@ export async function configureMemory(
     choices: [
       { name: 'Supabase (Hosted Postgres with connection pooling)', value: 'supabase' },
       { name: 'Neon (Serverless Postgres with branch-per-companion)', value: 'neon' },
-      { name: 'Local PostgreSQL (Docker or system service)', value: 'local' },
+      { name: 'Local PostgreSQL (System service or local installation)', value: 'local' },
       { name: 'Other PostgreSQL URL', value: 'other' },
     ],
   });

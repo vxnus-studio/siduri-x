@@ -106,7 +106,8 @@ describe('Localweb and CLI Standalone 1:1 Runtime & Chat Parity', () => {
     const srcIndexJs = files['src/index.js'];
 
     // Ensures single source of truth import
-    expect(srcIndexJs).toContain("import { SiduriRuntime, dispatchCompanionChat } from '@siduri-x/core';");
+    expect(srcIndexJs).toContain("import { SiduriRuntime, dispatchCompanionChat, validateCompanionConfig } from '@siduri-x/core';");
+    expect(srcIndexJs).toContain('validateCompanionConfig(config, schema);');
 
     // Ensures /chat uses dispatchCompanionChat directly without ad-hoc runtimeResult envelope
     expect(srcIndexJs).toContain('const response = await dispatchCompanionChat(runtime,');

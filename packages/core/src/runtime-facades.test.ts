@@ -82,4 +82,33 @@ describe('SiduriRuntime Facade Methods & Delegation', () => {
     await runtime.resetMemory();
     expect(mockMemory.resetMemory).toHaveBeenCalled();
   });
+
+  test('configures SqliteActionStore when actionStore is sqlite', () => {
+    const runtime = new SiduriRuntime('comp-sqlite', {
+      id: 'comp-sqlite',
+      name: 'Sqlite Test',
+      actionStore: 'sqlite',
+    });
+    expect(runtime.actionPolicy.getStore()).toBeDefined();
+    // Verify it is an instance of SqliteActionStore
+    expect(runtime.actionPolicy.getStore().constructor.name).toBe('SqliteActionStore');
+  });
+
+  test('accepts custom actionStore via RuntimeOrgans', () => {
+    const customStore: any = {
+      recordExecution: jest.fn(),
+      getExecution: jest.fn(),
+      updateExecution: jest.fn(),
+      recordApproval: jest.fn(),
+      getApproval: jest.fn(),
+      recordAudit: jest.fn(),
+      getAuditLog: jest.fn(),
+      verifyAuditChain: jest.fn(),
+    };
+    const runtime = new SiduriRuntime('comp-custom', { id: 'comp-custom', name: 'Custom' }, {
+      actionStore: customStore,
+    });
+    expect(runtime.actionPolicy.getStore()).toBe(customStore);
+  });
 });
+

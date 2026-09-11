@@ -44,7 +44,7 @@ Next steps for technical developers:
 
 ✔ Generated testbed companion in ./test-companion
 ✔ Composed siduri.schema.json from active organ manifests
-✔ Created docker-compose.yml for local testing services
+✔ Validated environment and dependencies
 
 Next steps:
   cd test-companion
@@ -199,7 +199,7 @@ const initialCmd = CLI_COMMANDS.find((c) => c.id === "create") || CLI_COMMANDS[0
           </li>
           <li class="flex items-center gap-2">
             <span class="text-[var(--siduri-online)]">✓</span>
-            <span>Optional local Docker services for PostgreSQL</span>
+            <span>Validated schema conformance with <code>siduri.schema.json</code></span>
           </li>
         </ul>
       </div>
@@ -213,7 +213,7 @@ const initialCmd = CLI_COMMANDS.find((c) => c.id === "create") || CLI_COMMANDS[0
           <div>├── siduri.config.json &nbsp;<span class="text-[var(--siduri-text-dim)]"># Composed configurations</span></div>
           <div>├── siduri.schema.json &nbsp;<span class="text-[var(--siduri-text-dim)]"># Dynamically built JSON schema</span></div>
           <div>├── .env.example &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[var(--siduri-text-dim)]"># Only variables needed</span></div>
-          <div>├── docker-compose.yml &nbsp;<span class="text-[var(--siduri-text-dim)]"># Optional local PostgreSQL</span></div>
+          <div>├── README.md &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[var(--siduri-text-dim)]"># Instance guide</span></div>
           <div>└── src/</div>
           <div>&nbsp;&nbsp;&nbsp;&nbsp;└── index.js &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[var(--siduri-text-dim)]"># Direct runtime bootstrap</span></div>
         </div>

@@ -32,7 +32,7 @@ const voice = new VoiceAdapter({
   provider: 'edge-tts', // 'voicevox' | 'edge-tts' | 'piper' | 'kokoro'
   rvc: {
     enabled: true,
-    serviceUrl: 'http://localhost:50055', // Connects to RVC headless docker container
+    serviceUrl: 'http://localhost:50055', // Connects to RVC headless service
     modelName: 'my-companion-model'
   }
 });

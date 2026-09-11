@@ -100,7 +100,7 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
     });
 
     test('memory organ tarball packages migrations/001_initial_schema.sql', () => {
-      const memoryTarPath = path.join(tempPackDir, 'siduri-x-memory-1.0.4.tgz');
+      const memoryTarPath = getTarPath('@siduri-x/memory');
       const listing = execSync(`tar -tzf ${memoryTarPath}`, { encoding: 'utf8' });
       expect(listing).toContain('package/migrations/001_initial_schema.sql');
     });

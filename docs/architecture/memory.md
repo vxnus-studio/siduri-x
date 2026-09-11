@@ -29,7 +29,7 @@ The canonical `@siduri-x/memory` organ is built directly on native **`pg` (`node
 ### Why Native `pg` is the Default
 1. **Zero ORM Overhead**: Keeps `@siduri-x/memory` ultralight and dependency-minimal.
 2. **Postgres-Native Features**: Direct use of generated columns (`to_tsvector`) and GIN indexes without ORM translation layers.
-3. **Universal Portability**: SQL migration files (`migrations/*.sql`) work with `npx @vxnus/siduri db push`, `psql`, Supabase, Neon, AWS RDS, and Docker.
+3. **Universal Portability**: SQL migration files (`migrations/*.sql`) work with `npx @vxnus/siduri db push`, `psql`, Supabase, Neon, and AWS RDS.
 
 ### Schema Structure (`001_initial_schema.sql`)
 - `memory_claims`: Authoritative semantic and episodic claims.
@@ -70,7 +70,7 @@ To accommodate different developer workflows, Siduri's memory architecture is de
 ---
 
 ### 3.1 Option A: Native PostgreSQL (`pg`) — *Current Default*
-- **Best For**: Lightweight instances, embedded deployments, clean-machine CLI scaffolding, Docker setups.
+- **Best For**: Lightweight instances, embedded deployments, and clean-machine CLI scaffolding.
 - **Key Advantages**: Fastest cold start, zero compilation step, minimal memory footprint.
 
 ---
