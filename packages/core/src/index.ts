@@ -24,6 +24,8 @@ export * from './experience-emitter';
 export * from './response-envelope';
 export * from './session-history';
 export * from './schema-validator';
+export * from './siduri-db';
+export * from './database';
 
 import { EvidenceRecord } from './evidence';
 import { ActionIntent } from './action';
