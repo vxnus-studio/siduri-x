@@ -1,12 +1,12 @@
 {
-  "name": "@siduri-x/knowledge",
-  "organType": "knowledge",
-  "version": "1.0.2",
-  "displayName": "Knowledge (E-Compatible Cited Facts)",
+  "name": "@siduri-x/eknowledge",
+  "organType": "eknowledge",
+  "version": "1.0.0",
+  "displayName": "E-Knowledge (External Cited Facts & Packs)",
   "description": "Factual context retrieval from local or hosted E Knowledge packs",
   "entrypoint": "./dist/index.js",
   "factory": "EKnowledgeAdapter",
-  "configKey": "knowledge",
+  "configKey": "eknowledge",
   "configSchema": {
     "type": "object",
     "required": [

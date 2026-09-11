@@ -12,11 +12,12 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-x/behavior": "workspace:*",
+    "@siduri-x/self": "workspace:*",
     "@siduri-x/body": "workspace:*",
     "@siduri-x/brain": "workspace:*",
     "@siduri-x/core": "workspace:*",
     "@siduri-x/ear": "workspace:*",
+    "@siduri-x/eknowledge": "workspace:*",
     "@siduri-x/hands": "workspace:*",
     "@siduri-x/knowledge": "workspace:*",
     "@siduri-x/memory": "workspace:*",

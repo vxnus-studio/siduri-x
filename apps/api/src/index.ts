@@ -6,9 +6,9 @@ import { SiduriRuntime } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
 import { PostgresMemoryOrgan, InMemoryMemoryOrgan } from '@siduri-x/memory';
 import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
-import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/knowledge';
+import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/eknowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
-import { ActiveSelfCompiler } from '@siduri-x/behavior';
+import { ActiveSelfCompiler } from '@siduri-x/self';
 import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
 import { FixtureObservationOrgan } from '@siduri-x/observation';
 

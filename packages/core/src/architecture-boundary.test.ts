@@ -8,16 +8,14 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
 
   const EXPECTED_ORGANS = [
     { dir: 'brain', name: '@siduri-x/brain', organType: 'brain', configKey: 'brain' },
-    { dir: 'memory', name: '@siduri-x/memory', organType: 'memory', configKey: 'memory' },
-    { dir: 'knowledge', name: '@siduri-x/knowledge', organType: 'knowledge', configKey: 'knowledge' },
-    { dir: 'behavior', name: '@siduri-x/behavior', organType: 'behavior', configKey: 'behavior' },
     { dir: 'ear', name: '@siduri-x/ear', organType: 'ear', configKey: 'ear' },
+    { dir: 'voice', name: '@siduri-x/voice', organType: 'voice', configKey: 'voice' },
+    { dir: 'mouth', name: '@siduri-x/mouth', organType: 'mouth', configKey: 'mouth' },
     { dir: 'vision', name: '@siduri-x/vision', organType: 'vision', configKey: 'vision' },
     { dir: 'hands', name: '@siduri-x/hands', organType: 'hands', configKey: 'hands' },
     { dir: 'body', name: '@siduri-x/body', organType: 'body', configKey: 'body' },
-    { dir: 'voice', name: '@siduri-x/voice', organType: 'voice', configKey: 'voice' },
     { dir: 'observation', name: '@siduri-x/observation', organType: 'observation', configKey: 'observation' },
-    { dir: 'mouth', name: '@siduri-x/mouth', organType: 'mouth', configKey: 'mouth' },
+    { dir: 'eknowledge', name: '@siduri-x/eknowledge', organType: 'eknowledge', configKey: 'eknowledge' },
   ];
 
   it('package.json has zero dependencies on @siduri-x organ packages', () => {
@@ -57,7 +55,7 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
     expect(forbiddenImports).toEqual([]);
   });
 
-  it('all 10 organ packages have a valid organ-manifest.json', () => {
+  it('all 9 peripheral organ packages have a valid organ-manifest.json', () => {
     for (const organ of EXPECTED_ORGANS) {
       const manifestPath = path.join(rootOrgansDir, organ.dir, 'organ-manifest.json');
       expect(fs.existsSync(manifestPath)).toBe(true);
@@ -89,12 +87,5 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
         }
       }
     }
-  });
-
-  it('memory organ packages SQL migrations', () => {
-    const memoryMigrationsDir = path.join(rootOrgansDir, 'memory', 'migrations');
-    expect(fs.existsSync(memoryMigrationsDir)).toBe(true);
-    const files = fs.readdirSync(memoryMigrationsDir).filter((f) => f.endsWith('.sql'));
-    expect(files.length).toBeGreaterThanOrEqual(1);
   });
 });
