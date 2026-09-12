@@ -4,10 +4,10 @@ import { execSync } from 'node:child_process';
 import { OrganRegistry } from './discovery';
 import { generateInstanceFiles } from './generator';
 
-describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
+describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
   const repoRoot = path.resolve(__dirname, '../../');
-  const tempPackDir = path.resolve(__dirname, '../temp-packs-e2e');
-  const cleanMachineRoot = path.resolve(__dirname, '../temp-clean-machine-e2e');
+  const tempPackDir = path.resolve(__dirname, '../temp-packs-smoke');
+  const cleanMachineRoot = path.resolve(__dirname, '../temp-clean-machine-smoke');
 
   const getPkgVer = (dir: string) => JSON.parse(fs.readFileSync(path.resolve(repoRoot, dir, 'package.json'), 'utf8')).version;
 

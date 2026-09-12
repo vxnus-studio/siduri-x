@@ -1,6 +1,6 @@
 # CLI Architecture & Reference (`@vxnus/siduri`)
 
-> **Status:** Implemented (`v0.0.7`+) — Clean Architecture with Pure SQLite (`siduri.sqlite`)  
+> **Status:** Implemented (`v2.0.0`+) — Clean Architecture with Pure SQLite (`siduri.sqlite`)  
 > **Ecosystem:** Zero external database dependencies. PostgreSQL removed.
 
 ---

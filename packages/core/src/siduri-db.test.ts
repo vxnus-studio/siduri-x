@@ -53,6 +53,15 @@ describe('SiduriDatabase', () => {
       }).not.toThrow();
     });
 
+    it('initializes schema and WAL mode within the <20ms latency budget', () => {
+      const start = performance.now();
+      const benchDb = new SiduriDatabase({ dbPath });
+      const duration = performance.now() - start;
+      benchDb.close();
+
+      expect(duration).toBeLessThan(20);
+    });
+
     it('stores and retrieves companion identity', () => {
       db = new SiduriDatabase({ dbPath });
 

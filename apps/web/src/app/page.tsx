@@ -79,13 +79,13 @@ export default function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {[
                 { name: "Brain", desc: "Cognition, planning, and authoritative decision making." },
-                { name: "Memory", desc: "PostgreSQL-backed authoritative storage of claims and preferences." },
+                { name: "Memory", desc: "SQLite FTS5 authoritative storage of verified claims and episodic memory." },
                 { name: "Behavior", desc: "Atomic directive state machine and personality projection." },
                 { name: "Knowledge", desc: "External factual context and verifiable E-compatible packs." },
                 { name: "Hands", desc: "Tool execution and strict cryptographic action policy capabilities." },
                 { name: "Ear", desc: "Audio transcription, perception, and sensory input ingestion." },
                 { name: "Vision", desc: "Visual observation, cropping, and OCR interpretation." },
-                { name: "Voice", desc: "Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and auditory expression." },
+                { name: "Voice", desc: "Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and auditory expression." },
                 { name: "Body", desc: "Renderer-agnostic avatar expression (Live2D) and embodiment." },
                 { name: "Observation", desc: "Event frame deduplication and real-time evidence extraction." }
               ].map((organ) => (

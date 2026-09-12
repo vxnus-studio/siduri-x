@@ -1,7 +1,7 @@
 # Prototype Verification Status: Siduri-X
 
 **Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
-**Current Verified Commit**: `6a958105` (Clean Architecture, SQLite FTS5 & Security Hardening)  
+**Current Verified Commit**: `3f59a517` (Clean Architecture, SQLite FTS5, Security Hardening & Node 22 SSRF Compatibility)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 
@@ -25,7 +25,7 @@ The following invariants have been verified in unit test suites and mock fixture
 4. **Approved Memory Immutability (P0)**:
    `SqliteMemoryStore` (`@siduri-x/memory`) enforces lifecycle gating. Any update generates a new `PENDING` replacement claim linked via `supersedes`. The approved original remains authoritative until explicit approval of the revision.
 5. **Pure SQLite Storage Foundation (P0)**:
-   External database servers (PostgreSQL) are completely eradicated. Persistent continuity (`Self`, `Knowledge`/Life DB, `Memory`) runs on a unified, zero-config `siduri.sqlite` with WAL mode and FTS5 full-text indexing, initializing in `< 20ms`.
+   External database servers (PostgreSQL) are completely eradicated. Persistent continuity (`Self`, `Knowledge`/Life DB, `Memory`) runs on a unified, zero-config `siduri.sqlite` with WAL mode and FTS5 full-text indexing, initializing in `< 20ms` (verified via automated performance test in `packages/core/src/siduri-db.test.ts`).
 6. **Brain Global Wall-Clock Deadline (P1)**:
    Overall deadline is governed by a global `AbortController` timer spanning all retry attempts. In-flight `fetch` calls abort immediately upon deadline expiry; retries cannot extend execution indefinitely.
 7. **Voice Response Byte Bounding (P1)**:
@@ -37,7 +37,7 @@ The following invariants have been verified in unit test suites and mock fixture
 10. **Tamper-Evident Audit Chaining (P1)**:
     Audit events separate `previousEventHash`, `eventHash`, and `resultHash` into a SHA-256 hash chain over canonicalized payloads.
 11. **Clean Distribution Packaging & Smoke Test**:
-    `npm run release:check` passes on all 13 canonical packages (zero leaking `workspace:` references). `clean-machine-e2e.test.ts` validates that tarballs unpack and scaffold an empty project in an isolated temp folder (packaging smoke test).
+    `npm run release:check` passes on all 14 packages (13 canonical `@siduri-x/*` domain and organ packages + `@vxnus/siduri` CLI; zero leaking `workspace:` references). `clean-machine-smoke.test.ts` validates that tarballs unpack and scaffold an empty project in an isolated temp folder (packaging smoke test).
 
 ---
 
@@ -80,12 +80,12 @@ pnpm run typecheck
 # 2. Build monorepo packages and web static distribution
 npm run build
 
-# 3. Full fresh test suite (27 suites across all organs and packages)
-npm test -- --force
+# 3. Full fresh test suite across all organs and packages (29 Turbo tasks across workspace packages)
+pnpm test
 
-# 4. Packaging and distribution integrity check (12 packages inspected)
+# 4. Packaging and distribution integrity check (14 packages inspected)
 npm run release:check
 
-# 5. Clean-machine packaging end-to-end verification
-pnpm --filter @vxnus/siduri test src/clean-machine-e2e.test.ts
+# 5. Clean-machine packaging smoke verification
+pnpm --filter @vxnus/siduri test src/clean-machine-smoke.test.ts
 ```
