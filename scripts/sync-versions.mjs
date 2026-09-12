@@ -12,37 +12,37 @@ const isCheckMode = process.argv.includes('--check');
 // 1. Read single source of truth (SSOT) from package.json files
 function readJson(relativePath) {
   const fullPath = path.join(rootDir, relativePath);
+  if (!fs.existsSync(fullPath)) return null;
   return JSON.parse(fs.readFileSync(fullPath, 'utf8'));
 }
 
-const cliPkg = readJson('cli/package.json');
-const corePkg = readJson('packages/core/package.json');
-
-const organNames = [
-  'behavior',
-  'body',
-  'brain',
-  'ear',
-  'hands',
-  'knowledge',
-  'memory',
-  'mouth',
-  'observation',
-  'vision',
-  'voice'
+const packagePaths = [
+  'cli/package.json',
+  'packages/core/package.json',
+  'packages/self/package.json',
+  'packages/knowledge/package.json',
+  'packages/memory/package.json',
+  'packages/organs/body/package.json',
+  'packages/organs/brain/package.json',
+  'packages/organs/ear/package.json',
+  'packages/organs/eknowledge/package.json',
+  'packages/organs/hands/package.json',
+  'packages/organs/mouth/package.json',
+  'packages/organs/observation/package.json',
+  'packages/organs/vision/package.json',
+  'packages/organs/voice/package.json',
+  'apps/api/package.json'
 ];
 
-const organPkgs = {};
-for (const organ of organNames) {
-  organPkgs[organ] = readJson(`packages/organs/${organ}/package.json`);
+const allPackageVersions = {};
+for (const rel of packagePaths) {
+  const pkg = readJson(rel);
+  if (pkg && pkg.name && pkg.version) {
+    allPackageVersions[pkg.name] = pkg.version;
+  }
 }
 
-const allPackageVersions = {
-  '@vxnus/siduri': cliPkg.version,
-  '@siduri-x/core': corePkg.version,
-  ...Object.fromEntries(organNames.map(name => [organPkgs[name].name, organPkgs[name].version]))
-};
-
+const cliVer = allPackageVersions['@vxnus/siduri'] || '2.0.0';
 let hasDiff = false;
 
 function updateFile(relativePath, transformFn) {
@@ -80,7 +80,7 @@ updateFile('README.md', (content) => {
 updateFile('apps/siduri-web-astro/src/components/Navbar.astro', (content) => {
   return content.replace(
     /<span>v[0-9]+\.[0-9]+\.[0-9]+ \(Testing\)<\/span>/g,
-    `<span>v${cliPkg.version} (Testing)</span>`
+    `<span>v${cliVer} (Testing)</span>`
   );
 });
 
@@ -88,7 +88,7 @@ updateFile('apps/siduri-web-astro/src/components/Navbar.astro', (content) => {
 updateFile('apps/siduri-web-astro/src/layouts/Layout.astro', (content) => {
   return content.replace(
     /"softwareVersion": "[0-9]+\.[0-9]+\.[0-9]+(-[^"]*)?"/g,
-    `"softwareVersion": "${cliPkg.version}-experimental"`
+    `"softwareVersion": "${cliVer}-experimental"`
   );
 });
 
@@ -104,8 +104,11 @@ updateFile('apps/siduri-web-astro/src/components/OrgansMatrix.astro', (content) 
 });
 
 if (isCheckMode && hasDiff) {
-  console.error('\n🚨 Versions are out of sync with package.json! Run "pnpm run sync:versions" to fix.');
+  console.error('\nDocumentation or metadata versions are out of sync with package.json.');
+  console.error('Run "pnpm run sync:versions" to update them.');
   process.exit(1);
+} else if (!isCheckMode && hasDiff) {
+  console.log('\nAll version references successfully synchronized to package.json sources of truth.');
 } else {
-  console.log('\n✨ All versions are synchronized with package.json SSOT.');
+  console.log('\nAll version references already in sync.');
 }

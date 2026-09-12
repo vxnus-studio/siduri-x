@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/memory",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Siduri Memory domain: Pure SQLite FTS5 Episodic Memory Store and Claim Verification",
   "license": "Apache-2.0",
   "main": "dist/index.js",
@@ -26,5 +26,16 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.4.12",
     "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vxnus-studio/siduri-x",
+    "directory": "packages/memory"
   }
 }

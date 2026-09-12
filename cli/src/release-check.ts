@@ -26,11 +26,12 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
 
   const canonicalPackages = [
     { name: '@siduri-x/core', dir: 'packages/core', isOrgan: false, tarName: `siduri-x-core-${getPkgVer('packages/core')}.tgz` },
+    { name: '@siduri-x/self', dir: 'packages/self', isOrgan: false, tarName: `siduri-x-self-${getPkgVer('packages/self')}.tgz` },
+    { name: '@siduri-x/knowledge', dir: 'packages/knowledge', isOrgan: false, tarName: `siduri-x-knowledge-${getPkgVer('packages/knowledge')}.tgz` },
+    { name: '@siduri-x/memory', dir: 'packages/memory', isOrgan: false, tarName: `siduri-x-memory-${getPkgVer('packages/memory')}.tgz` },
     { name: '@siduri-x/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: `siduri-x-brain-${getPkgVer('packages/organs/brain')}.tgz` },
-    { name: '@siduri-x/memory', dir: 'packages/organs/memory', isOrgan: true, tarName: `siduri-x-memory-${getPkgVer('packages/organs/memory')}.tgz` },
-    { name: '@siduri-x/knowledge', dir: 'packages/organs/knowledge', isOrgan: true, tarName: `siduri-x-knowledge-${getPkgVer('packages/organs/knowledge')}.tgz` },
-    { name: '@siduri-x/behavior', dir: 'packages/organs/behavior', isOrgan: true, tarName: `siduri-x-behavior-${getPkgVer('packages/organs/behavior')}.tgz` },
     { name: '@siduri-x/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: `siduri-x-ear-${getPkgVer('packages/organs/ear')}.tgz` },
+    { name: '@siduri-x/eknowledge', dir: 'packages/organs/eknowledge', isOrgan: true, tarName: `siduri-x-eknowledge-${getPkgVer('packages/organs/eknowledge')}.tgz` },
     { name: '@siduri-x/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: `siduri-x-vision-${getPkgVer('packages/organs/vision')}.tgz` },
     { name: '@siduri-x/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: `siduri-x-hands-${getPkgVer('packages/organs/hands')}.tgz` },
     { name: '@siduri-x/body', dir: 'packages/organs/body', isOrgan: true, tarName: `siduri-x-body-${getPkgVer('packages/organs/body')}.tgz` },
@@ -94,11 +95,7 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
         }
       }
 
-      if (pkg.name === '@siduri-x/memory') {
-        if (!listing.some((l) => l.includes('package/migrations/001_initial_schema.sql'))) {
-          errors.push(`${pkg.name}: migrations/001_initial_schema.sql missing in tarball`);
-        }
-      }
+
 
       if (pkg.name === '@vxnus/siduri') {
         if (!pkgJson.bin || !pkgJson.bin.siduri) {

@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/mouth",
   "organType": "mouth",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "displayName": "Mouth (Communication & UI Delivery)",
   "description": "Decoupled output delivery organ formatting cognitive decisions for web interfaces",
   "entrypoint": "./dist/index.js",

@@ -43,23 +43,23 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 ### Core Domain Substrates (Persistent Continuity)
 | Package | Version | Description | Status |
 | :--- | :---: | :--- | :--- |
-| **`@siduri-x/core`** | `^1.0.9` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
-| **`@siduri-x/self`** | `^1.0.0` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
-| **`@siduri-x/knowledge`** | `^1.0.0` | Internal sovereign Life Database (Inventory, Finance, Schedule, Preferences) | **Implemented** |
-| **`@siduri-x/memory`** | `^1.0.0` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
+| **`@siduri-x/core`** | `^2.0.0` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
+| **`@siduri-x/self`** | `^2.0.0` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
+| **`@siduri-x/knowledge`** | `^2.0.0` | Internal sovereign Life Database (Inventory, Finance, Schedule, Preferences) | **Implemented** |
+| **`@siduri-x/memory`** | `^2.0.0` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
 
 ### Pluggable Peripheral Organs
 | Package | Version | Description | Status |
 | :--- | :---: | :--- | :--- |
-| **`@siduri-x/brain`** | `^1.0.5` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
-| **`@siduri-x/hands`** | `^1.0.4` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
-| **`@siduri-x/eknowledge`** | `^1.0.0` | External E-compatible lore / documentation client with cited context & SSRF defense | **Implemented** |
-| **`@siduri-x/ear`** | `^1.0.3` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
-| **`@siduri-x/vision`** | `^1.0.2` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
-| **`@siduri-x/body`** | `^1.0.4` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
-| **`@siduri-x/voice`** | `^1.0.6` | Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and RVC post-processing | **Implemented** |
-| **`@siduri-x/observation`** | `^1.0.3` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Implemented** |
-| **`@siduri-x/mouth`** | `^1.0.0` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
+| **`@siduri-x/brain`** | `^2.0.0` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
+| **`@siduri-x/hands`** | `^2.0.0` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
+| **`@siduri-x/eknowledge`** | `^2.0.0` | External E-compatible lore / documentation client with cited context & SSRF defense | **Implemented** |
+| **`@siduri-x/ear`** | `^2.0.0` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
+| **`@siduri-x/vision`** | `^2.0.0` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
+| **`@siduri-x/body`** | `^2.0.0` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
+| **`@siduri-x/voice`** | `^2.0.0` | Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and RVC post-processing | **Implemented** |
+| **`@siduri-x/observation`** | `^2.0.0` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Implemented** |
+| **`@siduri-x/mouth`** | `^2.0.0` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
 | ~~`@siduri-x/behavior`~~ | `^1.0.6` | *Legacy compatibility package* (superseded by `@siduri-x/self`) | **Legacy / Deprecated** |
 
 ---
