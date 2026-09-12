@@ -17,16 +17,20 @@ To prevent God-object anti-patterns and enforce strict single-responsibility bou
    - Fast deterministic regex heuristics for common conversational intents (`chat`, `command`, `reflection`, `mutation`).
    - Asynchronous cognitive classification (`classifyInputIntentAsync`) delegating to organ classification when available.
 
-3. **Context Retrieval** (`packages/core/src/context-retriever.ts`):
-   - Concurrent retrieval of `Memory` claims and `Knowledge` items.
-   - Owner-scoped disclosure filtering per contract T2.
+3. **Context Retrieval (4 Parallel Streams)** (`packages/core/src/context-retriever.ts`):
+   - Queries all four context streams concurrently in a single pass with graceful degradation:
+     - **Stream A (External Knowledge)**: Cited external packs via `@siduri-x/eknowledge`.
+     - **Stream B (Episodic Memory)**: Verified claims via `@siduri-x/memory` (FTS5 BM25 relevance).
+     - **Stream C (Self Directives)**: Active behavioral directives from `@siduri-x/self` (`SelfRepository`).
+     - **Stream D (Life DB Context)**: Sovereign facts (inventory, finances, schedule, preferences) from `@siduri-x/knowledge`.
    - Preserves native `EvidenceRecord` metadata and citation provenance per contract T4.
-   - Isolates organ failures into structured subsystem diagnostics without crashing the cognition cycle.
+   - Isolates organ/domain failures into structured subsystem diagnostics without crashing the cognition cycle.
 
 4. **Prompt Compilation** (`packages/core/src/prompt-compiler.ts`):
-   - Compiles layered system prompts adhering to the contract T3 prompt section matrix.
-   - Injects active persona directives from `Behavior` organ.
-   - Formats contextual knowledge citations and working context.
+   - Compiles neutral system prompt and layered context prompt.
+   - Injects active persona directives compiled by `ActiveSelfCompiler` (`@siduri-x/self`).
+   - Injects sovereign `LIFE CONTEXT` block from Life DB queries.
+   - Formats contextual knowledge citations and memory context.
    - Emits bounded fallback prompts if context retrieval degrades.
 
 5. **Cognition Planning** (`packages/core/src/cognition-planner.ts`):

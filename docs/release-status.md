@@ -1,9 +1,9 @@
 # Canonical Release Status: Siduri-X
 
 **Release Decision**: **RELEASE WITH EXPLICIT LIMITATIONS**  
-**Current Verified Commit**: `151c2b8e11c706bcaaec7e6787258aea4fe22e78`  
+**Current Verified Commit**: `3b57c79a` (Clean Architecture & PostgreSQL Purged)  
 **Branch**: `main`  
-**Product Architecture**: **Single-owner / Single-machine / Local companion / Localhost-only**  
+**Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 
 ---
 
@@ -18,8 +18,10 @@ All core security, reliability, and architectural properties have been independe
 3. **Static Path Traversal Defenses (P0)**:
    Decoded path traversal attacks (`../`, `%2e%2e%2f`, `%252e%252e%252f`, null bytes, backslashes, outside symlinks) are strictly rejected by the generator's path containment check (`path.relative(root, target)`).
 4. **Approved Memory Immutability (P0)**:
-   `PostgresMemoryOrgan.updateClaim` refuses in-place mutation of `APPROVED` claims. Any update generates a new `PENDING` replacement claim linked to the predecessor via `supersedes`. The approved original remains authoritative until explicit approval of the revision.
-5. **Brain Global Wall-Clock Deadline (P1)**:
+   `SqliteMemoryStore` (`@siduri-x/memory`) enforces strict lifecycle gating. Any update generates a new `PENDING` replacement claim linked via `supersedes`. The approved original remains authoritative until explicit approval of the revision.
+5. **Pure SQLite Zero-Dependency Storage (P0)**:
+   External database servers (PostgreSQL) are completely eradicated. Persistent continuity (`Self`, `Knowledge`/Life DB, `Memory`) runs on a unified, zero-config `siduri.sqlite` with WAL mode and FTS5 full-text indexing, initializing in `< 20ms`.
+6. **Brain Global Wall-Clock Deadline (P1)**:
    Overall deadline is governed by a global `AbortController` timer spanning all retry attempts. In-flight `fetch` calls abort immediately upon deadline expiry; retries cannot extend execution indefinitely.
 6. **Voice Response Byte Bounding (P1)**:
    `readBoundedResponseBody` enforces size ceilings on both `Content-Length` headers and incremental streaming chunks via `reader.cancel()`, preventing unbounded memory buffering.
@@ -54,7 +56,7 @@ The following properties represent intentional architectural boundaries for Sidu
 ## 3. Configuration Contract & Production Requirements
 
 - `ACTION_POLICY_SECRET`: **Mandatory in production** (`NODE_ENV=production`). If unset, the Action Policy Engine and Hands organ fail closed immediately at startup.
-- `DATABASE_URL`: Required for PostgreSQL memory persistence (`postgresql://...`).
+- `STORAGE_PATH`: Optional local SQLite path (defaults to `./siduri.sqlite`). Zero external database dependencies.
 - `PORT`: Defaults to `3001` (API) or `3000` (CLI Companion).
 - Host Binding: All listeners strictly bind to `127.0.0.1`.
 

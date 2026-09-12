@@ -1,6 +1,6 @@
 # T7 release evidence contract
 
-Status: **RELEASE READY WITH EXPLICIT LIMITATIONS** (Verified commit: `151c2b8e11c706bcaaec7e6787258aea4fe22e78`)
+Status: **RELEASE READY WITH EXPLICIT LIMITATIONS** (Verified commit: `3b57c79a` — Clean Architecture & PostgreSQL Purged)
 Historical Status: NO-GO / RED (superseded following T1–T7 and B0–B6 verification passes)
 
 This contract defines the evidence required before Siduri may claim public
@@ -11,11 +11,11 @@ runtime experience proof.
 ## Release decision
 
 ```text
-GO WITH LIMITATIONS — Proven on candidate commit 151c2b8e11c706bcaaec7e6787258aea4fe22e78
+GO WITH LIMITATIONS — Proven on candidate commit 3b57c79a
 ```
 
 The candidate commit has been verified across branch `main`, environment (Linux / Node 20+),
-monorepo supply chain lock state, 27/27 test suites, and clean-machine distribution packaging.
+monorepo supply chain lock state, 29/29 Turbo tasks across all packages, and clean-machine distribution packaging.
 
 ## Gate order & Verification Summary
 

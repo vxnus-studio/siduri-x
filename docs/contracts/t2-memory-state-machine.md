@@ -1,6 +1,6 @@
 # T2 memory state machine
 
-Status: canonical specification; implemented and enforced by PostgresMemoryOrgan in @siduri-x/memory
+Status: canonical specification; implemented and enforced by SqliteMemoryStore in @siduri-x/memory
 
 This is the canonical lifecycle specification for Siduri memory. It makes
 approval, disclosure, correction, and expiry explicit without using a

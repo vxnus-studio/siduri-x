@@ -1,9 +1,11 @@
 # RFC: Siduri-X Self, Organs, Knowledge, and Memory Architecture
 
-**Status:** Proposed
-**Scope:** Core architecture / persistence / cognitive model
-**Authors:** Siduri-X
-**Date:** 2026-09-11
+> **Status:** Implemented (Adopted as Canonical Architecture)  
+> **Canonical Blueprint:** [`docs/self-organ-knowledge/README.md`](../self-organ-knowledge/README.md)  
+> **Scope:** Core architecture / persistence / cognitive model  
+> **Execution:** Completed across Phases 1–6 (`docs/self-organ-knowledge/03-phased-migration-plan.md`)  
+> **Authors:** Siduri-X  
+> **Date:** 2026-09-11  
 
 ---
 

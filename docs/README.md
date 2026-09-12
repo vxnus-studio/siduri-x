@@ -1,67 +1,79 @@
 # Siduri Documentation Hub
 
-Siduri is an agentic AI cognition and runtime system structured as independent, composable organs.
-
-The documentation is organized into two primary sections:
+Siduri is an agentic AI companion and runtime system structured around **four core domain substrates** (`Self`, `Knowledge` / Life DB, `Memory`, `Core`) and **nine pluggable peripheral organs** (`Brain`, `Hands`, `Ear`, `Vision`, `Voice`, `Body`, `Observation`, `Mouth`, `E-Knowledge`).
 
 ```
 docs/
-├── README.md            # Documentation index and directory map
-├── release-status.md    # Canonical release status, verified commit, invariants, and commands
-├── architecture/        # Core organ architecture, runtime design, and subsystem specifications
-├── contracts/           # Neutral context specs, memory state machine, safety gating, and event contracts
-├── rfc/                 # Architectural RFC proposals and protocol specifications
-└── thought-exercises/   # Conceptual explorations, identity taxonomy, and philosophical analyses
+├── README.md                 # Documentation index and directory map
+├── release-status.md         # Canonical release status, verified commit, invariants, and commands
+├── self-organ-knowledge/     # [CANONICAL] Clean Architecture, Pure SQLite, and .self Ingestion Suite
+│   ├── README.md             # Clean architecture blueprint and core questions
+│   ├── 01-domain-architecture.md   # Domain models, SQLite schema, and contracts
+│   ├── 02-self-asset-and-teach-mode.md # .self file format, safety scanner, and Teach Mode
+│   └── 03-phased-migration-plan.md     # 6-phase zero-baggage migration roadmap (COMPLETED)
+├── architecture/             # Organ architecture, runtime design, and subsystem specifications
+├── contracts/                # Neutral context specs, memory state machine, safety gating, and event contracts
+├── rfc/                      # Architectural RFC proposals and protocol specifications
+└── thought-exercises/        # Conceptual explorations, identity taxonomy, and philosophical analyses
 ```
 
 > **Current Release State**: See [**Canonical Release Status**](./release-status.md) for current release readiness, verified commit, and architecture invariants.
 
 ---
 
-## 1. Architecture (`docs/architecture/`)
-Core specifications for the decoupled organ architecture and system components:
+## 0. Clean Architecture & Pure SQLite Substrates (`docs/self-organ-knowledge/`) **[CANONICAL / IMPLEMENTED]**
 
-- **[Siduri Organ Architecture](./architecture/siduri-organ-architecture.md)** — **Primary architectural blueprint:** Decoupling philosophy, the 10 core organs (Brain, Memory, Knowledge, Behavior, Ear, Vision, Mouth, Hands, Body, Voice), perception-decision-action loops, and the E-ecosystem.
-- **[Architecture Overview](./architecture/architecture.md)** — High-level runtime overview.
+The authoritative architecture specification defining the complete eradication of PostgreSQL, unified `siduri.sqlite` storage, and the 4-domain separation:
+
+- **[Architecture Blueprint](./self-organ-knowledge/README.md)** — Core ontological model: *Self* (Who am I?), *Knowledge* (What do I know?), *Memory* (What happened?), *Organs* (What can I do?).
+- **[01. Domain Architecture & SQLite Schema](./self-organ-knowledge/01-domain-architecture.md)** — Unified `siduri.sqlite` schema, FTS5 BM25 search, `SelfRepository`, `LifeDatabase`, and `EpisodicMemoryStore` contracts.
+- **[02. The `.self` Asset Specification & Teach Mode](./self-organ-knowledge/02-self-asset-and-teach-mode.md)** — Specification for `.self` character ethos packages, safety scanning (`scanDirective`), and interactive Teach Mode batch proposal cards.
+- **[03. Phased Engineering Roadmap](./self-organ-knowledge/03-phased-migration-plan.md)** — **[COMPLETED ✅]** Full 6-phase migration plan executed: Pure SQLite foundation, package extraction, organ purification, 4-stream runtime refactor, Teach Mode API, and PostgreSQL purge.
+
+---
+
+## 1. Architecture Reference (`docs/architecture/`)
+
+Detailed subsystem and organ-level specifications:
+
+- **[Architecture Overview](./architecture/architecture.md)** — High-level runtime overview and 4-stream parallel execution flow.
 - **[The Truth Gate & Anchor](./architecture/truth-gate.md)** — Two-tier reality model: memory proposal staging and runtime response/evidence gating.
-- **[Organs Reference](./architecture/organs.md)** — Detailed responsibilities and interfaces of organ packages.
-- **[Companion Runtime](./architecture/companion-runtime.md)** — Orchestration of organs inside the active companion runtime.
-- **[Behavior & Active Self](./architecture/behavior.md)** — Behavioral compilation, directive scoping, and safety projection.
+- **[Organs Reference](./architecture/organs.md)** — Detailed responsibilities and package mapping for all 4 domains and 9 peripheral organs.
+- **[Companion Runtime](./architecture/companion-runtime.md)** — `SiduriRuntime` orchestration pipeline, 4-stream parallel context retrieval, and life context injection.
+- **[Memory Subsystem](./architecture/memory.md)** — SQLite FTS5 episodic memory store, claims lifecycle, and historical PostgreSQL migration notes.
+- **[External Knowledge & E-Packs](./architecture/knowledge-e.md)** — `@siduri-x/eknowledge` client, cited context, and SSRF hardening.
 - **[Action Policy Design](./architecture/action-policy-design.md)** — Cryptographic action capabilities, MCP execution, and audit chaining.
-- **[Memory Subsystem](./architecture/memory.md)** — PostgreSQL claims persistence, lifecycle, and temporal indexing.
-- **[Knowledge & E-Packs](./architecture/knowledge-e.md)** — E-Knowledge integration, provenance, and citations.
-- **[API Reference](./architecture/api.md)** — REST API surface and endpoint contracts.
-- **[CLI Reference](./architecture/cli.md)** — Command-line interface and diagnostic tools.
+- **[API Reference](./architecture/api.md)** — REST API surface including `/chat`, `/chat/stream`, `/teach/upload-self`, and `/teach/install-self`.
+- **[CLI Reference](./architecture/cli.md)** — `@vxnus/siduri` CLI reference, dynamic organ discovery, and diagnostic tools.
 - **[Configuration Guide](./architecture/configuration.md)** — Runtime and companion YAML/JSON configuration.
 - **[Development Guide](./architecture/development.md)** — Local development environment, building, and running.
-- **[Testing Strategy](./architecture/testing.md)** — Test suite layout and execution.
+- **[Testing Strategy](./architecture/testing.md)** — Test suite layout, invariant assertions, and clean-machine verification.
 - **[Subsystem Integrations](./architecture/integrations.md)** — External adapters (Voice Synthesis, Live2D, OpenRouter).
 - **[Limitations & Boundaries](./architecture/limitations.md)** — System boundaries and non-goals.
-- **[Migration & V1 Roadmap](./architecture/migration.md)** — Transition from legacy multi-viewer streaming to 1-User Agent model.
-- **[Single-Owner Phased Migration Plan](./architecture/single-owner-phased-migration.md)** — Step-by-step phases to completely eliminate remaining multi-audience and internal RBAC assumptions.
+- **[Migration & V1 Roadmap](./architecture/migration.md)** — Historical transition from legacy multi-viewer streaming to single-owner companion model.
+- **[Single-Owner Phased Migration Plan](./architecture/single-owner-phased-migration.md)** — Step-by-step roadmap that eliminated internal RBAC partitions.
+- ~~**[Behavior & Active Self](./architecture/behavior.md)**~~ — *Legacy Reference* (behavior compiled into `@siduri-x/self`).
 
 ---
 
 ## 2. RFCs & Proposals (`docs/rfc/`)
-Architectural proposals and prospective specifications:
 
-- **[RFC: Dynamic Behavior & `.self`](./rfc/rfc-dynamic-behavior-self.md)** — Distribution protocol, 3-mode memory acquisition, and `.self` ingestion via Teach Mode.
-- **[RFC: The Life Database Specification](./rfc/rfc-life-database.md)** — Separation of subjective companion memory vs. sovereign user life database.
-- **[RFC: Benchmarking Framework](./rfc/rfc-benchmarking-framework.md)** — Performance SLA budgets, memory scaling, truth gate throughput, and microbenchmark architecture.
+Architectural proposals, design explorations, and prospective specifications:
 
----
-
-## 3. Thought Exercises (`docs/thought-exercises/`)
-Conceptual analysis and design philosophy:
-
-- **[Thought Exercise: AI Identity & Behavior](./thought-exercises/thought-exercise-ai-identity.md)** — Conceptual analysis disentangling identity, personality, user knowledge, and situational response models.
+| Document | Title | Status |
+| :--- | :--- | :--- |
+| **[`rfc-siduri-self-organ-knowledge.md`](./rfc/rfc-siduri-self-organ-knowledge.md)** | Core Self, Organs, Knowledge, and Memory Architecture | **Implemented** (Adopted in `self-organ-knowledge/`) |
+| **[`rfc-dynamic-behavior-self.md`](./rfc/rfc-dynamic-behavior-self.md)** | Dynamic Behavior Delivery & The `.self` Asset Specification | **Implemented** (`@siduri-x/self` + Teach Mode) |
+| **[`rfc-life-database.md`](./rfc/rfc-life-database.md)** | The Life Database Specification & User Data Sovereignty | **Implemented** (`@siduri-x/knowledge`) |
+| **[`rfc-benchmarking-framework.md`](./rfc/rfc-benchmarking-framework.md)** | Performance SLA Budgets, Scaling & Microbenchmarks | **Planned** (Upcoming Benchmark Suite) |
 
 ---
 
-## 4. Contracts & Safety (`docs/contracts/`)
-Type-safe interfaces, gating engine, memory state machines, and neutral security contracts:
+## 3. Contracts & Safety Specifications (`docs/contracts/`)
 
-- **[T1 Neutral Context Spec](./contracts/t1-neutral-context-spec.md)** — Actor, request context, and authorization definitions.
+Type-safe interfaces, gating engine invariants, and security contracts:
+
+- **[T1 Neutral Context Spec](./contracts/t1-neutral-context-spec.md)** — Actor, request context, and single-owner authorization definitions.
 - **[T1 API Contract Examples](./contracts/t1-api-contract-examples.md)** — Concrete payload examples for API endpoints.
 - **[T2 Memory State Machine](./contracts/t2-memory-state-machine.md)** — Claim lifecycle (`PENDING` -> `APPROVED` -> `EXPIRED` / `REVOKED`).
 - **[T2 Memory Disclosure Matrix](./contracts/t2-memory-disclosure-matrix.md)** — Channel sensitivity and disclosure boundaries.
@@ -73,5 +85,8 @@ Type-safe interfaces, gating engine, memory state machines, and neutral security
 - **[Neutral Terminology Glossary](./contracts/neutral-terminology-glossary.md)** — Standard terminology dictionary.
 - **[Blank Slate Contract](./contracts/blank-slate-contract.md)** & **[Fixture Guide](./contracts/blank-slate-fixture-guide.md)** — Invariants for clean-slate initializations.
 
+---
 
+## 4. Thought Exercises (`docs/thought-exercises/`)
 
+- **[Thought Exercise: AI Identity & Behavior](./thought-exercises/thought-exercise-ai-identity.md)** — Conceptual analysis disentangling identity, personality, user knowledge, and situational response models.

@@ -1,42 +1,39 @@
 # E Knowledge Integration
 
-Siduri consumes E knowledge packs through `@siduri-x/knowledge`.
+> **Status:** Implemented and Renamed to `@siduri-x/eknowledge`  
+> **Package Location:** `packages/organs/eknowledge`  
+> **Note on Naming:** The name `@siduri-x/knowledge` is now canonically reserved for the **Internal Sovereign Life Database** domain (`packages/knowledge`). External cited packs and remote providers are managed by `@siduri-x/eknowledge`.
 
-## Installation
+---
 
-The CLI writes an E pack path into `siduri.config.json`:
+Siduri consumes external E knowledge packs through `@siduri-x/eknowledge`.
+
+## Installation & Configuration
+
+The companion configuration specifies external knowledge via `externalKnowledge` or `knowledge`:
 
 ```json
 {
-  "knowledge": {
+  "externalKnowledge": {
     "provider": "e-knowledge",
     "packPath": "/path/to/knowledge-pack"
   }
 }
 ```
 
-The repository's first end-to-end fixture is:
+At boot, `EKnowledgeAdapter` loads and validates the pack before exposing it as an `EKnowledgeOrgan`. Invalid references, missing revisions, or hash mismatches fail before the runtime starts using the pack.
+
+## Security & SSRF Hardening
+
+`@siduri-x/eknowledge` includes strict SSRF defenses:
+- Rejection of private, loopback, link-local, and cloud metadata IPs (`169.254.169.254`, etc.)
+- Open redirect filtering
+- DNS resolution checks prior to outbound fetches
+
+## Runtime Boundary
 
 ```text
-/home/zagin/Projects/vxnuslabs/architecture/e/packages/knowledge/fixtures/siduri-basics
+E knowledge pack → EKnowledgeAdapter → EKnowledgeOrgan → SiduriRuntime (Stream A) → Brain
 ```
 
-Use that path while developing Siduri. It contains one cited fact:
-“Siduri is a persistent companion runtime.”
-
-At boot, `EKnowledgeAdapter` loads and validates the pack before exposing it as a
-`KnowledgeOrgan`. Invalid references, missing revisions, or hash mismatches
-fail before the runtime starts using the pack.
-
-## Runtime boundary
-
-```text
-E knowledge → EKnowledgeAdapter → KnowledgeOrgan → SiduriRuntime → Brain
-```
-
-Retrieved context includes its E revision and citations. The Hub will later
-provide discovery and distribution metadata; Siduri remains responsible for
-installing and managing the local pack.
-
-The previous hardcoded E-Teyvat HTTP adapter is removed. Knowledge providers
-must enter through the E pack/provider contract.
+Retrieved context includes its E revision and citations. Third-party lore or documentation is provided with cited evidence badges and strictly segregated from the companion's personal memory and sovereign life data.

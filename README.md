@@ -38,22 +38,29 @@ Our goal is simple: **Siduri should be as easy to install or run anywhere as a s
 
 ## Canonical Packages (`@siduri-x/*`)
 
-All canonical Siduri-X organ and core packages are independently distributed:
+All canonical Siduri-X domain substrates and peripheral organs are independently distributed:
 
-| Package | Version | Description |
-| :--- | :---: | :--- |
-| **`@siduri-x/core`** | `^1.0.9` | Core runtime protocol, action dispatcher, capability validation, and evidence bounds |
-| **`@siduri-x/brain`** | `^1.0.5` | Provider-neutral LLM reasoning, response planning, and proposal generation |
-| **`@siduri-x/memory`** | `^1.0.7` | PostgreSQL-backed conversational memory, episodic/semantic claims, and SQL migrations |
-| **`@siduri-x/hands`** | `^1.0.4` | Tool execution, cryptographic action policy capability verification, and MCP integration |
-| **`@siduri-x/knowledge`** | `^1.0.2` | Installed or hosted E-compatible packs with bounded, cited context integration |
-| **`@siduri-x/behavior`** | `^1.0.6` | Atomic directive state machine and personality projection compiler |
-| **`@siduri-x/ear`** | `^1.0.3` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation |
-| **`@siduri-x/vision`** | `^1.0.2` | Visual observation, cropping, and multi-pass OCR perception adapter |
-| **`@siduri-x/body`** | `^1.0.4` | Renderer-agnostic avatar expression state machine and embodiment event adapter |
-| **`@siduri-x/voice`** | `^1.0.6` | Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and RVC post-processing |
-| **`@siduri-x/observation`** | `^1.0.3` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest |
-| **`@siduri-x/mouth`** | `^1.0.0` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks |
+### Core Domain Substrates (Persistent Continuity)
+| Package | Version | Description | Status |
+| :--- | :---: | :--- | :--- |
+| **`@siduri-x/core`** | `^1.0.9` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
+| **`@siduri-x/self`** | `^1.0.0` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
+| **`@siduri-x/knowledge`** | `^1.0.0` | Internal sovereign Life Database (Inventory, Finance, Schedule, Preferences) | **Implemented** |
+| **`@siduri-x/memory`** | `^1.0.0` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
+
+### Pluggable Peripheral Organs
+| Package | Version | Description | Status |
+| :--- | :---: | :--- | :--- |
+| **`@siduri-x/brain`** | `^1.0.5` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
+| **`@siduri-x/hands`** | `^1.0.4` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
+| **`@siduri-x/eknowledge`** | `^1.0.0` | External E-compatible lore / documentation client with cited context & SSRF defense | **Implemented** |
+| **`@siduri-x/ear`** | `^1.0.3` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
+| **`@siduri-x/vision`** | `^1.0.2` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
+| **`@siduri-x/body`** | `^1.0.4` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
+| **`@siduri-x/voice`** | `^1.0.6` | Queued speech synthesis (Edge-TTS, Piper, VOICEVOX) and RVC post-processing | **Implemented** |
+| **`@siduri-x/observation`** | `^1.0.3` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Implemented** |
+| **`@siduri-x/mouth`** | `^1.0.0` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
+| ~~`@siduri-x/behavior`~~ | `^1.0.6` | *Legacy compatibility package* (superseded by `@siduri-x/self`) | **Legacy / Deprecated** |
 
 ---
 
@@ -80,19 +87,13 @@ my-siduri/
     └── index.js          # Direct runtime bootstrapping with explicit organ factories
 ```
 
-### 2. Apply Database Migrations (`siduri db push`)
+### 2. Zero-Config Local Storage (`siduri.sqlite`)
 
-Executes SQL migrations with SHA-256 checksum validation for database-owning organs (such as `@siduri-x/memory`):
-
-```bash
-npx @vxnus/siduri db push
-```
-
-If the companion has no database organs (e.g. Brain only, or Brain + Hands), `siduri db push` reports that no migrations are required.
+Siduri uses a unified, zero-configuration SQLite database (`siduri.sqlite`) with WAL mode and built-in FTS5 full-text indexing. No external database servers or Docker containers (like PostgreSQL) are required. The database initializes automatically in `< 20ms` on first boot.
 
 ### 3. Run Diagnostics (`siduri doctor`)
 
-Inspects environment variables, external service declarations, database connectivity, and executes organ health probes:
+Inspects environment variables, external service declarations, local database readiness, and executes organ health probes:
 
 ```bash
 npx @vxnus/siduri doctor

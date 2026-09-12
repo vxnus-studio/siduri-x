@@ -12,7 +12,7 @@ interface Organ {
 }
 
 const ORGANS: Organ[] = [
-  // THINK
+  // THINK & IDENTITY
   {
     id: "brain",
     name: "Brain",
@@ -25,39 +25,50 @@ const ORGANS: Organ[] = [
     keyCapability: "Cognitive planning, proposal generation, and stance adaptation",
   },
   {
-    id: "behavior",
-    name: "Behavior",
+    id: "self",
+    name: "Self",
     category: "THINK",
-    pkg: "@siduri-x/behavior",
-    version: "^1.0.6",
-    tagline: "Atomic directive state machine & .self compiler",
+    pkg: "@siduri-x/self",
+    version: "^1.0.0",
+    tagline: "Identity, personality sliders & ActiveSelfCompiler",
     description:
-      "Compiles channel-specific rules, relational stance sliders (formality, trust), and dialogue exemplars into concise inference frames without token bloat or rule contradiction.",
-    keyCapability: "Dynamic active-self compilation & channel policy gating",
+      "Maintains companion identity, calibrated personality spectrum sliders (warmth, formality, sarcasm), directional relationships, and parses cryptographically signable .self v1.0.0 packages.",
+    keyCapability: "Dynamic Active Self compilation, .self parser & safety scanner",
   },
 
-  // REMEMBER
+  // REMEMBER & SOVEREIGN REALITY
   {
     id: "memory",
     name: "Memory",
     category: "REMEMBER",
     pkg: "@siduri-x/memory",
-    version: "^1.0.7",
-    tagline: "PostgreSQL-backed authoritative semantic storage",
+    version: "^1.0.0",
+    tagline: "Pure SQLite FTS5 authoritative episodic storage",
     description:
-      "Enforces the Truth Gate lifecycle. Claims are proposed as PENDING and promoted to immutable APPROVED records with SHA-256 revision history and SQL migration push.",
-    keyCapability: "Immutable semantic & episodic claims with full provenance",
+      "Enforces the Truth Gate lifecycle directly in siduri.sqlite. Tracks conversational episodes and verified claims using built-in SQLite FTS5 BM25 full-text ranking with zero external database dependencies.",
+    keyCapability: "Zero-config SQLite FTS5 BM25 search & immutable claims lifecycle",
   },
   {
     id: "knowledge",
     name: "Knowledge",
     category: "REMEMBER",
     pkg: "@siduri-x/knowledge",
-    version: "^1.0.2",
-    tagline: "Verifiable E-compatible domain knowledge packs",
+    version: "^1.0.0",
+    tagline: "Internal sovereign Life Database (User Reality)",
     description:
-      "Retrieves external domain facts and documentation with cited evidence badges, ensuring third-party lore never masquerades as autobiographical companion memory.",
-    keyCapability: "Evidence citation bounds and verified domain retrieval",
+      "Provides structured, deterministic repositories for user reality: account inventories, finances, schedules, and preferences. Guarantees zero arithmetic hallucination.",
+    keyCapability: "Typed sovereign Life Database (inventory, finance, schedule)",
+  },
+  {
+    id: "eknowledge",
+    name: "E-Knowledge",
+    category: "REMEMBER",
+    pkg: "@siduri-x/eknowledge",
+    version: "^1.0.0",
+    tagline: "External cited domain packs & SSRF-hardened client",
+    description:
+      "Retrieves external domain facts and documentation with cited evidence badges and strict SSRF defenses, ensuring external lore never pollutes autobiographical memory.",
+    keyCapability: "Evidence citation bounds, E-pack client & SSRF defense",
   },
 
   // ACT
@@ -188,7 +199,7 @@ const TABS = ["ALL", "THINK", "REMEMBER", "ACT", "EMBODY"] as const;
               : "bg-[var(--siduri-surface)] text-[var(--siduri-text-secondary)] border border-[var(--siduri-border-subtle)] hover:text-[var(--siduri-text-primary)]"
           }`}
         >
-          {tab === "ALL" ? "All Organs (11)" : tab}
+          {tab === "ALL" ? "All Modules (11)" : tab}
         </button>
       ))}
     </div>

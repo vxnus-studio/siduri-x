@@ -57,5 +57,5 @@ Each generated companion instance validates its configuration against a tailored
 3. **Secret Separation & Production Enforcement**:
    API keys, passwords, and cryptographic secrets are never saved into `siduri.config.json`. The configuration references environment variable names (e.g. `apiKeyEnv: "OPENROUTER_API_KEY"`), and secrets are loaded from the environment or `.env` at runtime.
    - `ACTION_POLICY_SECRET`: **Mandatory in production** (`NODE_ENV=production`). If unset, the Action Policy Engine and Hands organ fail closed immediately at startup with a fatal error. In local/development environments, an ephemeral random secret is generated per process if unconfigured.
-   - `DATABASE_URL`: PostgreSQL connection string for authoritative memory persistence.
+   - `STORAGE_PATH`: Optional path for local `siduri.sqlite` storage (defaults to `./siduri.sqlite`). No external database servers or connection strings are required.
    - Host Binding: All generated and canonical servers bind explicitly to `127.0.0.1`.

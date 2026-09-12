@@ -1,11 +1,13 @@
 # RFC: The Life Database Specification & User Data Sovereignty
 
-> **Status:** Draft / Proposal  
-> **Target Organs / Systems:** User Sovereign Substrate, `@siduri-x/hands`, `@siduri-x/knowledge`, `@siduri-x/memory`, `@siduri-x/brain`  
+> **Status:** Implemented (Adopted in `@siduri-x/knowledge` & `SiduriDatabase`)  
+> **Canonical Specification:** [`docs/self-organ-knowledge/01-domain-architecture.md`](../self-organ-knowledge/01-domain-architecture.md)  
+> **Target Subsystems:** `@siduri-x/knowledge` (Life DB), `SiduriDatabase` (`siduri.sqlite`), `@siduri-x/core` (`LifeDatabase` contract)  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
-> **Related Documents:**  
-> - [Thought Exercise: Disentangling AI Identity, Behavior, and Situational Response](../thought-exercises/thought-exercise-ai-identity.md)  
-> - [RFC: Dynamic Behavior Delivery & The `.self` Asset Specification](./rfc-dynamic-behavior-self.md)
+
+> [!NOTE]
+> **STATUS UPDATE: IMPLEMENTED**  
+> The Life Database is fully implemented as the sovereign Knowledge domain substrate in `@siduri-x/knowledge` (`SqliteLifeDatabase`), backed by tables `life_inventory`, `life_finance`, `life_schedule`, and `life_preferences` in `siduri.sqlite`.
 
 ---
 

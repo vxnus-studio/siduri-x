@@ -48,33 +48,33 @@ Next steps for technical developers:
 
 Next steps:
   cd test-companion
-  npx @vxnus/siduri db push
+  npx @vxnus/siduri doctor
   npm start`,
   },
   {
     id: "db",
-    name: "siduri db push",
-    command: "npx @vxnus/siduri db push",
+    name: "siduri storage",
+    command: "siduri.sqlite (auto-initialized)",
     purpose:
-      "Executes SQL migrations with SHA-256 checksum integrity verification exclusively for configured database organs (such as @siduri-x/memory).",
-    outputSnippet: `[siduri] Inspecting database-owning organs...
-[siduri:memory] Checking migration ledger in public.schema_migrations...
-[siduri:memory] Applying 001_initial_memory_schema.sql (sha256:4b91f08a)... ✔
-[siduri:memory] Applying 002_truth_gate_revision_history.sql (sha256:7c10da2e)... ✔
-[siduri:memory] Database schema is up to date. (2 migrations verified)`,
+      "Unified SQLite database with WAL mode and built-in FTS5 BM25 search. Zero external database dependencies or Docker containers required.",
+    outputSnippet: `[siduri:storage] Initializing unified database at ./siduri.sqlite...
+[siduri:self] Mounted tables: self_identity, self_personality, self_directives, self_relationships
+[siduri:knowledge] Mounted Life DB: life_inventory, life_finance, life_schedule, life_preferences
+[siduri:memory] Mounted episodic memory: episodic_events, memory_claims, memory_claims_fts (FTS5)
+[siduri:storage] Database initialized in 3ms. WAL mode enabled. Ready.`,
   },
   {
     id: "doctor",
     name: "siduri doctor",
     command: "npx @vxnus/siduri doctor",
     purpose:
-      "Probes active configuration, validates required and optional environment variables, checks database connectivity, and executes organ health assertions.",
+      "Probes active configuration, validates required and optional environment variables, checks SQLite storage permissions, and executes organ health assertions.",
     outputSnippet: `[siduri doctor] Running companion diagnostics...
   ✔ Node.js version (v20.18.0 >= v20.0.0)
   ✔ Brain provider credentials (OPENROUTER_API_KEY detected)
-  ✔ Database connection (PostgreSQL 16 on 127.0.0.1:5432)
+  ✔ Local storage (siduri.sqlite write permissions verified)
   ✔ Action policy secret (ACTION_POLICY_SECRET configured)
-  ✔ Organ manifests validated (5 active organs healthy)
+  ✔ Organ manifests validated (active organs healthy)
 
 All health probes passed. Companion is ready for launch.`,
   },

@@ -1,8 +1,8 @@
 # RFC: Siduri-X Performance & Reliability Benchmarking Framework
 
-> **Status:** Draft / Proposal  
+> **Status:** Planned (Target Milestone: Next Benchmark Release)  
 > **RFC Number:** 0004  
-> **Target Systems:** `@siduri-x/core`, `@siduri-x/memory`, `@siduri-x/gating`, `@siduri-x/hands`, `@siduri-x/brain`, `packages/benchmarks`  
+> **Target Systems:** `@siduri-x/core`, `@siduri-x/memory` (SQLite FTS5), `@siduri-x/self`, `@siduri-x/knowledge` (Life DB), `packages/benchmarks`  
 > **Authors:** Siduri Architecture & Runtime Engineering  
 > **Related Documents:**  
 > - [The Truth Gate & Anchor Architecture](../architecture/truth-gate.md)  

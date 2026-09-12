@@ -23,19 +23,19 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "faq-3",
     question: "How does the Truth Gate prevent memory corruption and prompt injection?",
     answer:
-      "When interacting with you, Siduri stages extracted statements as PENDING candidates. These candidates are strictly quarantined from active cognition. Only when you—acting as the human Anchor—explicitly approve a claim does it enter permanent PostgreSQL memory. Malicious prompt injections attempting to rewrite her beliefs are halted at the gate, unable to corrupt her worldview.",
+      "When interacting with you, Siduri stages extracted statements as PENDING candidates. These candidates are strictly quarantined from active cognition. Only when you—acting as the human Anchor—explicitly approve a claim does it enter permanent local memory in siduri.sqlite. Malicious prompt injections attempting to rewrite her beliefs are halted at the gate, unable to corrupt her worldview.",
   },
   {
     id: "faq-4",
     question: "What is the Life Database, and why can't user facts live in vector memory?",
     answer:
-      "Companion Memory (@siduri-x/memory) represents the subjective, emotional bond between you and your companion. However, factual user records—such as game rosters, bank expenses, calendars, and file paths—are objective realities. Storing arithmetic facts in semantic vector embeddings causes catastrophic hallucinations. The sovereign Life Database is a structured substrate that Siduri queries deterministically via audited tool contracts in @siduri-x/hands, ensuring zero arithmetic drift.",
+      "Companion Memory (@siduri-x/memory) represents the subjective, emotional bond between you and your companion. However, factual user records—such as game rosters, bank expenses, calendars, and file paths—are objective realities. Storing arithmetic facts in semantic vector embeddings causes catastrophic hallucinations. The sovereign Life Database (@siduri-x/knowledge) is a structured SQLite substrate that Siduri queries deterministically, ensuring zero arithmetic drift.",
   },
   {
     id: "faq-5",
     question: "Can I swap or upgrade the underlying LLM without losing my companion?",
     answer:
-      "Yes. Siduri's cognition is decoupled from any single model provider. Her personality baseline, relational stances, and approved memories are compiled into concise, model-neutral inference frames by @siduri-x/behavior. You can switch between Claude, Gemini, DeepSeek, or local models via Ollama at any time—her memories and bond remain completely intact in PostgreSQL.",
+      "Yes. Siduri's cognition is decoupled from any single model provider. Her identity baseline, relational stances, and approved directives are compiled into concise, model-neutral inference frames by @siduri-x/self. You can switch between Claude, Gemini, DeepSeek, or local models via Ollama at any time—her memories and bond remain completely intact in your local siduri.sqlite database.",
   },
   {
     id: "faq-6",

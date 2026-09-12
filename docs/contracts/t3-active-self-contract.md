@@ -3,7 +3,7 @@
 > [!NOTE]
 > Updated for single-owner deployment model. Multi-audience context has been simplified to owner/operator.
 
-Status: canonical specification; implemented and verified in @siduri-x/behavior and @siduri-x/core
+Status: canonical specification; implemented and verified in @siduri-x/self (ActiveSelfCompiler) and @siduri-x/core
 
 This contract defines how approved companion behavior becomes prompt context.
 It extracts the original Active Self and prompt-boundary behavior while keeping

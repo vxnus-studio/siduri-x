@@ -1,33 +1,48 @@
-# Architecture
+# Architecture Overview
 
-Siduri-X is a virtual companion orchestrator that operates on the principle of
-**composable organs**. The original Siduri repository is the behavioral and
-memory reference, while Siduri-X provides a public, blank-slate runtime that
-instantiates companions dynamically from configuration without copying the
-original project's personal identity or relationship defaults.
+> **Status:** Implemented (Clean Architecture, Pure SQLite Foundation)  
+> **Topology:** 4 Core Domains (`packages/{core, self, knowledge, memory}`) + 9 Pluggable Peripheral Organs (`packages/organs/{brain, hands, ear, vision, voice, body, observation, mouth, eknowledge}`)
 
-## Status: Standalone Single-Owner Architecture
+---
 
-The API loads `siduri.config.json` and creates a `SiduriRuntime`. Siduri operates as a local-first, single-owner companion running on the user's host machine. The runtime orchestrates interactions between the user and the organs:
-- **Brain**: Handles LLM intelligence and structured response generation.
-- **Memory**: Stores long-term claims and behaviors, strictly scoped by `companionId`.
-- **Behavior**: Compiles dynamic persona rules into system prompts.
-- **Voice**: Enqueues and synthesizes TTS audio.
-- **Knowledge**: Loads an E-compatible pack/provider and preserves citations and revision metadata for the Brain.
-- **Vision**: Analyzes images.
-- **Body**: Controls avatar expressions and embodiment events.
-- **Hands**: Executes authorized tools via Model Context Protocol (MCP).
-- **Ear**: Handles sensory audio and text input ingestion.
-- **Observation**: Deduplicates screen observations and ingests OCR text streams.
-- **Mouth**: Manages output presentation, SSE chunk streaming, and Live2D viseme cues.
+## 1. Ontological Architecture
 
-## Execution Flow
-1. API boots the configured companion into runtime.
-2. User chats with the companion via `/chat` (running locally on `127.0.0.1`).
-3. Runtime validates actor context and bounded history.
-4. Runtime retrieves contextual `Memory` and `Knowledge` for the companion.
-5. Runtime compiles active `Behavior` directives into the prompt.
-6. `Brain` generates a validated `ResponsePlan` (speech + memory proposals + optional actions).
-7. Memory and response approval boundaries are evaluated.
-8. Output adapters (`Voice`, `Body`) emit experience events to the user.
+Siduri-X structures artificial companion consciousness into **four fundamental questions**, governed by one gatekeeping authority (Truth Gate) and orchestrated by one cognitive organ (Brain):
 
+```text
+                                SIDURI RUNTIME (@siduri-x/core)
+                                             │
+                 ┌───────────────────────────┼───────────────────────────┐
+                 │                           │                           │
+               SELF                      KNOWLEDGE                     MEMORY
+          (@siduri-x/self)          (@siduri-x/knowledge)        (@siduri-x/memory)
+          [ Who am I? ]             [ What do I know? ]          [ What happened? ]
+                 │                           │                           │
+                 └───────────────────────────┼───────────────────────────┘
+                                             │
+                                             ▼
+                                COGNITIVE ORGAN: BRAIN
+                                             │
+                 ┌───────────────────────────┼───────────────────────────┐
+                 │                           │                           │
+               VOICE                       HANDS                       VISION / ...
+                     (Sensory & Physical Organs: What can I do?)
+```
+
+All three persistent continuity substrates (`Self`, `Knowledge`, `Memory`) are backed by a single unified local-first database: **`siduri.sqlite`** (SQLite WAL mode + FTS5 full-text indexing).
+
+---
+
+## 2. Execution Flow
+
+1. **Perception**: Sensory input (audio via `Ear`, text via `/chat`, or frames via `Observation`) is ingested and normalized.
+2. **Context Retrieval (4 Streams in Parallel)**:
+   - **Stream A (External Knowledge)**: Cited external lore / docs via `@siduri-x/eknowledge`.
+   - **Stream B (Episodic Memory)**: Verified past conversational episodes and claims via `@siduri-x/memory` (FTS5).
+   - **Stream C (Self Directives)**: Active identity and behavioral rules from `@siduri-x/self`.
+   - **Stream D (Life Context)**: Objective user reality (inventory, expenses, schedules) from `@siduri-x/knowledge`.
+3. **Prompt Compilation**: Injects active self rules, neutral framing, and sovereign life context into inference prompts.
+4. **Cognition Planning**: `Brain` produces a structured `ResponsePlan` (speech, internal monologue, memory proposals, action intents).
+5. **Truth Gate & Gating Evaluation**: Response plans are evaluated against safety and evidence criteria. Candidate claims are quarantined as `PENDING`.
+6. **Settlement & Action**: Memory proposals are recorded; action intents are verified by `ActionPolicyEngine` and executed via `Hands`.
+7. **Experience Emission & Output**: Speech is synthesized via `Voice` and rendered to the client via `Mouth` (SSE streaming + Live2D visemes).
