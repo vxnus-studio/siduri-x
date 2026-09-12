@@ -1,7 +1,7 @@
 import { KnowledgeItem, KnowledgeOrgan } from '@siduri-x/core';
 import type { LoadedPack } from '@vxnus/e-knowledge';
 import type { KnowledgeProvider, RetrievalResult, KnowledgePackManifest, RetrievalRequest, RetrievalResponse } from '@vxnus/e';
-import { Agent } from 'undici';
+import { Agent, Dispatcher, Dispatcher1Wrapper } from 'undici';
 import net from 'node:net';
 import dns from 'node:dns/promises';
 import nodeDns from 'node:dns';
@@ -146,11 +146,13 @@ export async function validateSafeUrl(urlStr: string, options: SafeUrlValidation
 }
 
 /**
- * Creates an undici.Agent configured to enforce connect-time SSRF defenses,
+ * Creates an undici Dispatcher configured to enforce connect-time SSRF defenses,
  * neutralizing DNS rebinding and TOCTOU attacks at socket creation time.
+ * Wrapped in Dispatcher1Wrapper to support both legacy v1 handlers (Node.js 22 built-in fetch)
+ * and v2 handlers.
  */
-export function createSafeDispatcher(customLookup?: (hostname: string) => Promise<string[]>): Agent {
-  return new Agent({
+export function createSafeDispatcher(customLookup?: (hostname: string) => Promise<string[]>): Dispatcher {
+  const agent = new Agent({
     connect: {
       lookup: (hostname: string, options: any, callback: any) => {
         if (net.isIP(hostname)) {
@@ -204,12 +206,14 @@ export function createSafeDispatcher(customLookup?: (hostname: string) => Promis
       },
     },
   });
+
+  return new Dispatcher1Wrapper(agent);
 }
 
 /**
  * Safe fetch wrapper that enforces:
  * 1. Target URL validation (SSRF defense)
- * 2. Connect-time DNS validation via undici.Agent (anti-DNS rebinding / TOCTOU)
+ * 2. Connect-time DNS validation via undici Dispatcher (anti-DNS rebinding / TOCTOU)
  * 3. Manual redirect following with re-validation of each redirect target
  * 4. Timeout via AbortController
  * 5. Maximum response size limit
@@ -224,14 +228,15 @@ export async function safeFetch(
     maxBytes?: number;
     maxRedirects?: number;
     dnsLookup?: (hostname: string) => Promise<string[]>;
-    dispatcher?: Agent;
+    dispatcher?: Dispatcher;
   } = {}
 ): Promise<Response> {
   let currentUrl = urlStr;
   const maxRedirects = options.maxRedirects ?? 3;
   const timeoutMs = options.timeoutMs ?? 5000;
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
-  const dispatcher = options.dispatcher || createSafeDispatcher(options.dnsLookup);
+  const rawDispatcher = options.dispatcher || createSafeDispatcher(options.dnsLookup);
+  const dispatcher = rawDispatcher instanceof Dispatcher1Wrapper ? rawDispatcher : new Dispatcher1Wrapper(rawDispatcher as any);
 
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount++) {
     const validated = await validateSafeUrl(currentUrl, { dnsLookup: options.dnsLookup });
