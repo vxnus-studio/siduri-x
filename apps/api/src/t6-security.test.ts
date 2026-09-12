@@ -51,7 +51,7 @@ describe('T6 Security & Operations Threat Model Suite', () => {
     const config = {
       name: 'CompanionSec',
       brain: { provider: 'openrouter' },
-      memory: { provider: 'postgres' },
+      memory: { provider: 'sqlite' },
       knowledge: { provider: 'none' },
       behavior: { provider: 'active-self' },
       voice: { provider: 'voicevox' },

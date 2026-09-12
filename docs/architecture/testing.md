@@ -10,7 +10,7 @@ The test suites verify architectural invariants, neutral blank-slate properties,
    - `gating.test.ts`: Response staging, evidence filtering, and operator approval flows.
    - `action-policy.test.ts`: Action authorization, cryptographic capability tokens, and replay prevention.
 2. **Organ Subsystems** (`packages/organs/`):
-   - `memory`: PostgreSQL isolation (`companion_id`), proposal transitions, full-text search, and audit history.
+   - `memory`: SQLite FTS5 isolation (`companion_id`), proposal transitions, full-text search, and audit history.
    - `behavior`: `ActiveSelfCompiler` rules, safety filters, leet-speak normalization, and priority ordering.
    - `brain`: Structured schema validation and response generation.
    - `observation`: Frame deduplication, rate limiting, and size bounding.

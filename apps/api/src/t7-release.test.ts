@@ -57,7 +57,7 @@ describe('T7 Release Readiness End-to-End Verification Suite', () => {
     const config = {
       name: 'NeutralCompanion',
       brain: { provider: 'openrouter' },
-      memory: { provider: 'postgres' },
+      memory: { provider: 'sqlite' },
       knowledge: { provider: 'e-knowledge' },
       behavior: { provider: 'active-self' },
       voice: { provider: 'voicevox' },

@@ -104,7 +104,7 @@ Use one record for every candidate release:
 ```text
 Candidate commit: 06823ac2de61a5d8923f4072fe221bf943ea4aa4
 Branch: main
-Environment: Linux (x86_64), Node v20+, PostgreSQL 16
+Environment: Linux (x86_64), Node v20+, SQLite (WAL mode + FTS5)
 Dependency lock: pnpm-lock.yaml verified (zero workspace: / link: in distribution)
 R0 repository: PASS
 R1 neutral context: PASS

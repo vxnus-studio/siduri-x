@@ -13,8 +13,8 @@ npx @vxnus/siduri create my-companion
 - **Node.js**: `v22.0.0` or newer
 - **LLM API Key**: e.g. `OPENROUTER_API_KEY` for Brain organ
 - **Optional Local Services**:
-  - **PostgreSQL**: Required if PostgreSQL memory organ is enabled (local PostgreSQL server or cloud Supabase/Neon).
   - **VOICEVOX**: For voice synthesis (auto-downloaded at runtime by default, or connect to standalone app).
+  - Storage is powered by embedded SQLite with WAL mode and built-in FTS5 (`siduri.sqlite`). No external database servers or Docker containers are required.
 
 ## Features
 
@@ -22,7 +22,7 @@ npx @vxnus/siduri create my-companion
 - **Interactive Configuration Wizard**: Model catalog discovery for OpenRouter, manifest inspection for E Knowledge Hub, and guided organ parameters.
 - **Zero Monolithic Bundling**: Scaffolds standard Node.js ESM projects with explicit dependency trees.
 - **Diagnostics (`siduri doctor`)**: Runs environment variable validation, schema conformance checks, external service checks, database health probes, and organ-specific assertions.
-- **Database Migrations (`siduri db push`)**: Inspects database-owning organs (such as `@siduri-x/memory`) and executes SQL migrations with SHA-256 integrity checksums.
+- **Zero-Config Database**: Powered by embedded SQLite (`siduri.sqlite`). Memory and persistent state are initialized automatically at startup without manual SQL migrations.
 
 ## CLI Usage
 
@@ -53,13 +53,13 @@ npx @vxnus/siduri doctor [directory]
 
 Inspects active configuration, checks required/optional environment variables, and executes health probes.
 
-### 3. Apply Migrations
+### 3. Database Management
 
 ```bash
 npx @vxnus/siduri db push [directory]
 ```
 
-Runs database migrations exclusively for configured database organs. If no database organs are selected (e.g. Brain + Hands), reports that no migrations are needed.
+Inspects the instance storage configuration. Under the SQLite unified foundation, schema initialization and table creation are handled natively and automatically at boot.
 
 ## Local Development
 

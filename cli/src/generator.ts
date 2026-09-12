@@ -50,7 +50,7 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
     config.model = config.model || 'anthropic/claude-3.5-sonnet';
     config.apiKeyEnv = 'OPENROUTER_API_KEY';
   } else if (manifest.organType === 'memory') {
-    config.provider = config.provider || 'postgres';
+    config.provider = config.provider || 'sqlite';
   } else if (manifest.organType === 'voice') {
     config.provider = config.provider || 'voicevox';
     config.speakerId = config.speakerId || 1;
@@ -91,9 +91,6 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
 
   const voiceConfig = options.organConfigs?.voice || options.organConfigs?.['@siduri-x/voice'];
   const isVoicevox = hasVoice && (!voiceConfig || voiceConfig.provider === 'voicevox');
-
-  const memoryConfig = options.organConfigs?.memory || options.organConfigs?.['@siduri-x/memory'];
-  const isPostgresLocal = hasMemory && (!memoryConfig || memoryConfig.deployment === 'local' || memoryConfig.provider === 'postgres');
 
   // 1. package.json
   const dependencies: Record<string, string> = {
@@ -606,7 +603,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
 
   if (hasMemory) {
     readmeLines.push(
-      '- **PostgreSQL (Optional)**: Required if PostgreSQL memory organ is enabled (local PostgreSQL server or cloud Supabase/Neon).',
+      '- **Database**: Embedded SQLite (`siduri.sqlite`). Automatically initialized with WAL mode and FTS5 full-text indexing with zero external setup.',
     );
   }
 
@@ -630,26 +627,15 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     'Fill in your LLM API key (e.g. `OPENROUTER_API_KEY`) and any other service credentials in `.env`.'
   );
 
-  if (hasMemory) {
-    readmeLines.push(
-      '',
-      '### 3. Database Migrations',
-      'Ensure `DATABASE_URL` in `.env` is reachable, then push the memory organ PostgreSQL schema:',
-      '```bash',
-      'npx @vxnus/siduri db push',
-      '```'
-    );
-  }
-
   readmeLines.push(
     '',
-    `### ${hasMemory ? '4' : '3'}. Diagnostics & Health Probe`,
+    '### 3. Diagnostics & Health Probe',
     'Verify all environment variables, schema conformance, services, and organ connections:',
     '```bash',
     'npm run doctor',
     '```',
     '',
-    `### ${hasMemory ? '5' : '4'}. Start Companion & Web Console`,
+    '### 4. Start Companion & Web Console',
     'Launch your companion runtime and Web UI / Memory Control Panel:',
     '```bash',
     'npm start',

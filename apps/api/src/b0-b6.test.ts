@@ -43,7 +43,7 @@ describe('T0 B0 & B6 Runtime Proof Suite', () => {
     const config = {
       name: 'NeutralCompanion',
       brain: { provider: 'openrouter' },
-      memory: { provider: 'postgres' },
+      memory: { provider: 'sqlite' },
       knowledge: { provider: 'e-knowledge' },
       behavior: { provider: 'active-self' },
       voice: { provider: 'none' },

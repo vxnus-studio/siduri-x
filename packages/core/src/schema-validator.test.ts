@@ -30,7 +30,7 @@ describe('validateCompanionConfig', () => {
             properties: {
               provider: {
                 type: 'string',
-                enum: ['postgres', 'in-memory', 'none'],
+                enum: ['sqlite', 'in-memory', 'none'],
               },
               maxConnections: { type: 'number' },
             },
@@ -112,7 +112,7 @@ describe('validateCompanionConfig', () => {
       name: 'Test',
       organs: {
         memory: {
-          provider: 'postgres',
+          provider: 'sqlite',
           maxConnections: 'ten', // should be number
         },
       },

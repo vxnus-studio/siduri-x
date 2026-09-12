@@ -31,14 +31,14 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
       name: '@siduri-x/memory',
       organType: 'memory',
       version: '1.0.0',
-      displayName: 'Memory (PostgreSQL FTS Claims)',
+      displayName: 'Memory (SQLite FTS5 Claims)',
       entrypoint: './dist/index.js',
       factory: 'SqliteMemoryStore',
       configKey: 'memory',
       configSchema: { type: 'object', properties: { provider: { type: 'string' } } },
-      environment: [{ name: 'DATABASE_URL', required: true, secret: true }],
-      services: [{ name: 'PostgreSQL', kind: 'database' }],
-      database: { engine: 'postgres', migrationsDir: './migrations' },
+      environment: [],
+      services: [],
+      database: { engine: 'sqlite' },
     },
     body: {
       name: '@siduri-x/body',
@@ -140,12 +140,13 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
 
     // .env.example
     expect(files['.env.example']).toContain('OPENROUTER_API_KEY');
-    expect(files['.env.example']).toContain('DATABASE_URL');
+    expect(files['.env.example']).not.toContain('DATABASE_URL');
     expect(files['.env.example']).not.toContain('ACTION_POLICY_SECRET');
 
     // README mentions database
-    expect(files['README.md']).toContain('DATABASE_URL');
-    expect(files['README.md']).toContain('npx @vxnus/siduri db push');
+    expect(files['README.md']).toContain('siduri.sqlite');
+    expect(files['README.md']).not.toContain('PostgreSQL');
+    expect(files['README.md']).not.toContain('npx @vxnus/siduri db push');
   });
 
   test('Composition D: Full with Body', () => {

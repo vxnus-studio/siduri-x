@@ -5,7 +5,7 @@ Status: **RELEASE READY WITH EXPLICIT LIMITATIONS** (Verified on `main`)
 Siduri-X is implemented as a decoupled, 10-organ cognition and runtime architecture:
 
 - **Brain (`@siduri-x/brain`)**: Implemented using OpenRouter and OpenAI-compatible structured generation with deadline-bound execution.
-- **Memory (`@siduri-x/memory`)**: Implemented via PostgreSQL adapter with TSVECTOR indexing, immutability on approved claims (`supersedes`), and strict `companion_id` isolation.
+- **Memory (`@siduri-x/memory`)**: Implemented via SQLite adapter with WAL mode, FTS5 BM25 indexing, immutability on approved claims (`supersedes`), and strict `companion_id` isolation.
 - **Behavior (`@siduri-x/behavior`)**: Implemented `ActiveSelfCompiler` preserving safety constraints and excluding pending directives.
 - **Voice (`@siduri-x/voice`)**: Implemented priority queue with multi-TTS (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC support.
 - **Hands (`@siduri-x/hands`)**: Implemented tool execution and Model Context Protocol (MCP) with `ActionPolicyEngine` capability authorization and tamper-evident audit chaining.

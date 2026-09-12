@@ -33,7 +33,7 @@ The following gaps identified in earlier extraction phases have been fully resol
 - **Identity & Subjects**:
   Resolved — `primary_user`, creator defaults, and `MASTER_PRIVATE` assumptions were purged from schemas and runtime context.
 - **Memory Lifecycle & Immutability**:
-  Resolved — `PostgresMemoryOrgan.updateClaim` enforces strict immutability for `APPROVED` claims, generating `PENDING` revisions with `supersedes` provenance.
+  Resolved — `SqliteMemoryStore.updateClaim` enforces strict immutability for `APPROVED` claims, generating `PENDING` revisions with `supersedes` provenance.
 - **Single-Owner Memory & Behavior Access**:
   Resolved — Memory claims and Active Self behavioral directives are accessible to the owner on the local machine without audience/channel segregation or artificial token walls. Companion isolation (`companionId`) remains strictly enforced.
 - **Response Approval & Gating (T4)**:

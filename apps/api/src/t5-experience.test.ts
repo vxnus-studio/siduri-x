@@ -64,7 +64,7 @@ describe('T5 Experience Event and Output Adapters Suite', () => {
     const config = {
       name: 'NeutralCompanion',
       brain: { provider: 'openrouter' },
-      memory: { provider: 'postgres' },
+      memory: { provider: 'sqlite' },
       knowledge: { provider: 'e-knowledge' },
       behavior: { provider: 'active-self' },
       voice: { provider: 'voicevox' },

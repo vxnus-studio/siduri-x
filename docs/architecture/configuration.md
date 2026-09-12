@@ -22,8 +22,7 @@ Each generated companion instance validates its configuration against a tailored
       "apiKeyEnv": "OPENROUTER_API_KEY"
     },
     "memory": {
-      "provider": "postgres",
-      "deployment": "local"
+      "provider": "sqlite"
     },
     "hands": {
       "defaultTimeoutMs": 10000,

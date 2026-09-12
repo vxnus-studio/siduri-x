@@ -430,7 +430,7 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
       const failingMemory = {
         initialize: jest.fn().mockResolvedValue(undefined),
         searchClaims: jest.fn().mockRejectedValue(new Error('Connection terminated unexpectedly')),
-        getDirectives: jest.fn().mockRejectedValue(new Error('PostgreSQL read timeout')),
+        getDirectives: jest.fn().mockRejectedValue(new Error('Database read timeout')),
       };
 
       const runtime = new SiduriRuntime('companion-adv', { name: 'AdvCompanion' } as any, {

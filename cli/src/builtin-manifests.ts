@@ -272,8 +272,8 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     name: '@siduri-x/memory',
     organType: 'memory',
     version: '2.0.0',
-    displayName: 'Memory (PostgreSQL FTS Claims)',
-    description: 'Relational semantic claims with Full-Text Search and companion isolation',
+    displayName: 'Memory (SQLite FTS5 Claims)',
+    description: 'Relational semantic claims with Full-Text Search (FTS5) and companion isolation',
     entrypoint: './dist/index.js',
     factory: 'SqliteMemoryStore',
     configKey: 'memory',
@@ -283,18 +283,11 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
       properties: {
         provider: {
           type: 'string',
-          enum: ['postgres']
+          enum: ['sqlite']
         },
-        deployment: {
+        databasePath: {
           type: 'string',
-          enum: ['local', 'neon', 'supabase', 'other']
-        },
-        connectionString: {
-          type: 'string'
-        },
-        maxConnections: {
-          type: 'number',
-          default: 10
+          default: 'siduri.sqlite'
         }
       }
     },

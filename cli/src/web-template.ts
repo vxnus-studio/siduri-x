@@ -368,7 +368,7 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
       <div class="operator-layout">
         <div class="card">
           <div class="card-header">
-            <div class="card-title">💾 Authoritative Memory Claims (PostgreSQL FTS)</div>
+            <div class="card-title">💾 Authoritative Memory Claims (SQLite FTS5)</div>
             <input type="text" class="search-input" placeholder="⌕ Filter claims..." oninput="filterClaims(this.value)" />
           </div>
           <table id="claims-table">

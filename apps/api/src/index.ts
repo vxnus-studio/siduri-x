@@ -89,7 +89,7 @@ const defaultCompanionConfig = {
   name: 'Siduri',
   brain: { provider: 'openrouter', model: 'gpt-4o-mini' },
   voice: { provider: 'voicevox', speakerId: 1 },
-  memory: { provider: 'postgres' },
+  memory: { provider: 'sqlite' },
   knowledge: {
     provider: (process.env.SIDURI_KNOWLEDGE_PROVIDER as 'e-knowledge' | 'e-remote' | 'e-hub') || 'e-knowledge',
     packPath: process.env.SIDURI_KNOWLEDGE_PACK || '',

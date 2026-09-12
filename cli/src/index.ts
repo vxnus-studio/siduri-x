@@ -296,10 +296,6 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   console.log(`Your Siduri companion is ready! Next steps:\n`);
   console.log(`  cd ${path.relative(process.cwd(), projectDir) || '.'}`);
   console.log(`  cp .env.example .env          ${colors.dim}# Fill in required API keys/credentials${colors.reset}`);
-  const hasMemory = selectedManifests.some((m) => m.organType === 'memory');
-  if (hasMemory) {
-    console.log(`  npx @vxnus/siduri db push     ${colors.dim}# Push PostgreSQL memory schema${colors.reset}`);
-  }
   console.log(`  npm run doctor                ${colors.dim}# Run diagnostic health probes${colors.reset}`);
   console.log(`  npm start                     ${colors.dim}# Start Web Companion & Memory Console at http://localhost:3000${colors.reset}\n`);
 }

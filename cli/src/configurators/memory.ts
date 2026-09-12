@@ -4,42 +4,22 @@ import { OrganConfiguratorContext, OrganConfigurationResult } from './types';
 export async function configureMemory(
   _context: OrganConfiguratorContext
 ): Promise<OrganConfigurationResult> {
-  const { database } = await inquirer.prompt<{ database: string }>({
+  const { provider } = await inquirer.prompt<{ provider: string }>({
     type: 'list',
-    name: 'database',
-    message: 'Memory database?',
+    name: 'provider',
+    message: 'Memory storage engine?',
     choices: [
-      { name: 'PostgreSQL (FTS relational claims with ACID durability)', value: 'postgres' },
+      { name: 'SQLite (Unified zero-config WAL + FTS5 full-text indexing)', value: 'sqlite' },
     ],
   });
-
-  const { deployment } = await inquirer.prompt<{ deployment: string }>({
-    type: 'list',
-    name: 'deployment',
-    message: 'PostgreSQL deployment target?',
-    choices: [
-      { name: 'Supabase (Hosted Postgres with connection pooling)', value: 'supabase' },
-      { name: 'Neon (Serverless Postgres with branch-per-companion)', value: 'neon' },
-      { name: 'Local PostgreSQL (System service or local installation)', value: 'local' },
-      { name: 'Other PostgreSQL URL', value: 'other' },
-    ],
-  });
-
-  const deploymentDisplayNames: Record<string, string> = {
-    supabase: 'Supabase',
-    neon: 'Neon',
-    local: 'Local PostgreSQL',
-    other: 'Other PostgreSQL',
-  };
 
   return {
     config: {
-      provider: database,
-      deployment,
+      provider,
     },
     summary: {
-      Database: 'PostgreSQL',
-      Deploy: deploymentDisplayNames[deployment] || deployment,
+      Database: 'SQLite (WAL + FTS5)',
+      Storage: 'siduri.sqlite',
     },
   };
 }

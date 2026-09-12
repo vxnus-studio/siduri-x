@@ -14,7 +14,7 @@ export interface OrganServiceRequirement {
 }
 
 export interface OrganDatabaseRequirement {
-  engine: 'postgres' | 'sqlite' | string;
+  engine: 'sqlite' | string;
   migrationsDir?: string;
 }
 
