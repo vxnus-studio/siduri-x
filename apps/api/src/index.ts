@@ -4,11 +4,11 @@ import { Express } from 'express';
 import { createApp, AppInstance, AppBrainConfig, AppBehaviorConfig } from './app';
 import { SiduriRuntime } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
-import { PostgresMemoryOrgan, InMemoryMemoryOrgan } from '@siduri-x/memory';
+import { SqliteMemoryStore } from '@siduri-x/memory';
 import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
 import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/eknowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
-import { ActiveSelfCompiler } from '@siduri-x/self';
+import { ActiveSelfCompiler, SqliteSelfRepository } from '@siduri-x/self';
 import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
 import { FixtureObservationOrgan } from '@siduri-x/observation';
 
@@ -77,18 +77,9 @@ function createBody(config?: Live2DAdapterConfig & { provider?: string }) {
     : new Live2DAdapter(config);
 }
 
-function createMemory(config?: { provider?: string; connectionString?: string; maxConnections?: number }) {
+function createMemory(config?: { provider?: string; connectionString?: string; maxConnections?: number; dbPath?: string }) {
   if (isDisabled(config)) return undefined;
-  const provider = config?.provider || 'postgres';
-  if (provider === 'in-memory') {
-    return new InMemoryMemoryOrgan();
-  }
-  if (provider === 'postgres') {
-    const connectionString =
-      config?.connectionString || process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri';
-    return new PostgresMemoryOrgan({ connectionString, maxConnections: config?.maxConnections });
-  }
-  return undefined;
+  return new SqliteMemoryStore({ dbPath: config?.dbPath || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
 }
 
 const PORT = process.env.PORT || 3001;
@@ -160,6 +151,7 @@ async function bootDefaultCompanion() {
     vision ?? { analyze: async () => JSON.stringify({ readings: [] }) },
   );
   instance.setObservationOrgan(observation);
+  const selfRepo = new SqliteSelfRepository({ dbPath: process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
   const behavior = createBehavior(config.behavior);
   const body = createBody(config.body);
 
@@ -167,7 +159,17 @@ async function bootDefaultCompanion() {
     await (memory as any).runMigrations().catch((e: any) => console.warn("Migrations warning:", e.message));
   }
 
-  const runtime = new SiduriRuntime('default', config as any, { brain, memory, voice, knowledge, vision, behavior, body });
+  const runtime = new SiduriRuntime('default', config as any, { 
+    brain, 
+    memory, 
+    voice, 
+    knowledge, 
+    vision, 
+    behavior, 
+    body,
+    self: selfRepo,
+    externalKnowledge: knowledge
+  });
   await runtime.initialize();
 
   runtimes.set('default', runtime);

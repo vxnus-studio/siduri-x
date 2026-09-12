@@ -39,11 +39,10 @@ export class OrganRegistry {
     const rootsToScan = searchRoots && searchRoots.length > 0
       ? searchRoots
       : [
-          // 1. Monorepo organs folder relative to cli
           path.resolve(__dirname, '../../packages/organs'),
-          // 2. Monorepo organs folder relative to cwd
           path.resolve(process.cwd(), 'packages/organs'),
-          // 3. Node modules of current directory or global resolution
+          path.resolve(__dirname, '../../packages'),
+          path.resolve(process.cwd(), 'packages'),
           path.resolve(process.cwd(), 'node_modules/@siduri-x'),
           path.resolve(__dirname, '../node_modules/@siduri-x'),
         ];
@@ -75,10 +74,9 @@ export class OrganRegistry {
       }
     }
 
-    // If running in a standalone environment without local package folders (e.g. via npx in an empty directory),
-    // register canonical built-in @siduri-x/* organ manifests as fallback.
-    if (registry.getAll().length === 0) {
-      for (const builtinManifest of BUILTIN_ORGAN_MANIFESTS) {
+    // Always merge canonical built-in @siduri-x/* organ manifests as fallback for ones that weren't found
+    for (const builtinManifest of BUILTIN_ORGAN_MANIFESTS) {
+      if (!registry.get(builtinManifest.organType)) {
         registry.register(builtinManifest);
       }
     }

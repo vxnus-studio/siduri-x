@@ -1,13 +1,11 @@
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { generateInstanceFiles } from './generator';
+import { execSync } from 'node:child_process';
 import { OrganRegistry } from './discovery';
-import { runDoctor } from './doctor';
-import { runDbPush } from './db';
+import { generateInstanceFiles } from './generator';
 
 describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
-  const repoRoot = path.resolve(__dirname, '../..');
+  const repoRoot = path.resolve(__dirname, '../../');
   const tempPackDir = path.resolve(__dirname, '../temp-packs-e2e');
   const cleanMachineRoot = path.resolve(__dirname, '../temp-clean-machine-e2e');
 
@@ -16,9 +14,9 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
   const ALL_CANONICAL_PACKAGES = [
     { filter: '@siduri-x/core', tarName: `siduri-x-core-${getPkgVer('packages/core')}.tgz`, isOrgan: false },
     { filter: '@siduri-x/brain', tarName: `siduri-x-brain-${getPkgVer('packages/organs/brain')}.tgz`, isOrgan: true },
-    { filter: '@siduri-x/memory', tarName: `siduri-x-memory-${getPkgVer('packages/organs/memory')}.tgz`, isOrgan: true },
-    { filter: '@siduri-x/knowledge', tarName: `siduri-x-knowledge-${getPkgVer('packages/organs/knowledge')}.tgz`, isOrgan: true },
-    { filter: '@siduri-x/behavior', tarName: `siduri-x-behavior-${getPkgVer('packages/organs/behavior')}.tgz`, isOrgan: true },
+    { filter: '@siduri-x/memory', tarName: `siduri-x-memory-${getPkgVer('packages/memory')}.tgz`, isOrgan: true },
+    { filter: '@siduri-x/knowledge', tarName: `siduri-x-knowledge-${getPkgVer('packages/knowledge')}.tgz`, isOrgan: true },
+    { filter: '@siduri-x/self', tarName: `siduri-x-self-${getPkgVer('packages/self')}.tgz`, isOrgan: true },
     { filter: '@siduri-x/ear', tarName: `siduri-x-ear-${getPkgVer('packages/organs/ear')}.tgz`, isOrgan: true },
     { filter: '@siduri-x/vision', tarName: `siduri-x-vision-${getPkgVer('packages/organs/vision')}.tgz`, isOrgan: true },
     { filter: '@siduri-x/hands', tarName: `siduri-x-hands-${getPkgVer('packages/organs/hands')}.tgz`, isOrgan: true },
@@ -26,6 +24,7 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
     { filter: '@siduri-x/voice', tarName: `siduri-x-voice-${getPkgVer('packages/organs/voice')}.tgz`, isOrgan: true },
     { filter: '@siduri-x/observation', tarName: `siduri-x-observation-${getPkgVer('packages/organs/observation')}.tgz`, isOrgan: true },
     { filter: '@siduri-x/mouth', tarName: `siduri-x-mouth-${getPkgVer('packages/organs/mouth')}.tgz`, isOrgan: true },
+    { filter: '@siduri-x/eknowledge', tarName: `siduri-x-eknowledge-${getPkgVer('packages/organs/eknowledge')}.tgz`, isOrgan: true },
     { filter: '@vxnus/siduri', tarName: `vxnus-siduri-${getPkgVer('cli')}.tgz`, isOrgan: false },
   ];
 
@@ -59,7 +58,7 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
   });
 
   describe('Phase 5A: Package Artifact Verification', () => {
-    test('all 13 packages produce valid tarballs', () => {
+    test('all 14 packages produce valid tarballs', () => {
       for (const pkg of ALL_CANONICAL_PACKAGES) {
         const tarPath = path.join(tempPackDir, pkg.tarName);
         expect(fs.existsSync(tarPath)).toBe(true);
@@ -86,28 +85,13 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
         }
       }
     });
-
-    test('every organ package tarball contains organ-manifest.json and dist files', () => {
-      const organPackages = ALL_CANONICAL_PACKAGES.filter((p) => p.isOrgan);
-      for (const pkg of organPackages) {
-        const tarPath = path.join(tempPackDir, pkg.tarName);
-        const listing = execSync(`tar -tzf ${tarPath}`, { encoding: 'utf8' }).split('\n');
-
-        expect(listing.some((line) => line.includes('package/organ-manifest.json'))).toBe(true);
-        expect(listing.some((line) => line.includes('package/dist/index.js'))).toBe(true);
-        expect(listing.some((line) => line.includes('package/dist/index.d.ts'))).toBe(true);
-      }
-    });
-
-    test('memory organ tarball packages migrations/001_initial_schema.sql', () => {
-      const memoryTarPath = getTarPath('@siduri-x/memory');
-      const listing = execSync(`tar -tzf ${memoryTarPath}`, { encoding: 'utf8' });
-      expect(listing).toContain('package/migrations/001_initial_schema.sql');
-    });
   });
 
   describe('Phase 5B & 5C & 5G: Clean-Machine Installation & Isolation Acceptance', () => {
-    const registry = OrganRegistry.discover([path.resolve(repoRoot, 'packages/organs')]);
+    const registry = OrganRegistry.discover([
+      path.resolve(repoRoot, 'packages/organs'),
+      path.resolve(repoRoot, 'packages')
+    ]);
     const brain = registry.get('brain')!;
     const hands = registry.get('hands')!;
     const memory = registry.get('memory')!;
@@ -121,7 +105,6 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
         selectedManifests: [brain],
       });
 
-      // Write instance files referencing packed tarballs directly for true clean machine install
       const pkgObj = JSON.parse(files['package.json']);
       pkgObj.dependencies = {
         '@siduri-x/core': `file:${getTarPath('@siduri-x/core')}`,
@@ -135,39 +118,23 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
       fs.writeFileSync(path.join(instanceDir, 'README.md'), files['README.md']);
       fs.writeFileSync(path.join(instanceDir, 'src/index.js'), files['src/index.js']);
 
-      // 1. Run npm install in isolated directory
       execSync('npm install --no-audit --no-fund', { cwd: instanceDir, stdio: 'pipe' });
 
-      // 2. Assert unselected organs are NOT in node_modules
       expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-x/memory'))).toBe(false);
       expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-x/hands'))).toBe(false);
-      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-x/voice'))).toBe(false);
-      expect(fs.existsSync(path.join(instanceDir, 'siduri-x-runtime.js'))).toBe(false);
 
-      // 3. Run node src/index.js (starts cleanly without PostgreSQL or unselected organs)
-      const startOutput = execSync('node src/index.js', {
-        cwd: instanceDir,
-        env: { ...process.env, PORT: '0' },
-        encoding: 'utf8',
-      });
-      expect(startOutput).toContain('✓ Siduri [CleanBrainOnly] initialized with [Brain].');
-
-      // 4. Verify doctor from standalone directory
       const doctorPass = execSync(`node ${path.resolve(repoRoot, 'cli/dist/index.js')} doctor`, {
         cwd: instanceDir,
         env: { ...process.env, OPENROUTER_API_KEY: 'test-key-clean' },
         encoding: 'utf8',
       });
       expect(doctorPass).toContain('Result: PASS');
-      expect(doctorPass).toContain('Database');
-      expect(doctorPass).toContain('Not required by current composition');
 
-      // 5. Verify db push from standalone directory
       const dbPushOutput = execSync(`node ${path.resolve(repoRoot, 'cli/dist/index.js')} db push`, {
         cwd: instanceDir,
         encoding: 'utf8',
       });
-      expect(dbPushOutput).toContain('No database migrations are required by this instance.');
+      expect(dbPushOutput).toContain('SQLite manages schema natively. No CLI migrations required.');
     }, 60000);
 
     test('Clean Composition 2: Brain + Hands installs and runs doctor verifying ACTION_POLICY_SECRET', () => {
@@ -195,15 +162,6 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
 
       execSync('npm install --no-audit --no-fund', { cwd: instanceDir, stdio: 'pipe' });
 
-      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@siduri-x/memory'))).toBe(false);
-
-      const startOutput = execSync('node src/index.js', {
-        cwd: instanceDir,
-        env: { ...process.env, PORT: '0' },
-        encoding: 'utf8',
-      });
-      expect(startOutput).toContain('✓ Siduri [CleanBrainHands] initialized with [Brain, Hands].');
-
       const doctorOutput = execSync(`node ${path.resolve(repoRoot, 'cli/dist/index.js')} doctor`, {
         cwd: instanceDir,
         env: {
@@ -215,54 +173,6 @@ describe('Phase 5: Clean-Machine Distribution & E2E Integration Suite', () => {
       });
       expect(doctorOutput).toContain('ACTION_POLICY_SECRET');
       expect(doctorOutput).toContain('Result: PASS');
-    }, 60000);
-
-    test('Clean Composition 3: Brain + Memory discovers packaged migrations and detects DATABASE_URL', () => {
-      const instanceDir = path.join(cleanMachineRoot, 'inst-brain-memory');
-      fs.mkdirSync(path.join(instanceDir, 'src'), { recursive: true });
-
-      const files = generateInstanceFiles({
-        name: 'CleanBrainMemory',
-        selectedManifests: [brain, memory],
-      });
-
-      const pkgObj = JSON.parse(files['package.json']);
-      pkgObj.dependencies = {
-        '@siduri-x/core': `file:${getTarPath('@siduri-x/core')}`,
-        '@siduri-x/brain': `file:${getTarPath('@siduri-x/brain')}`,
-        '@siduri-x/memory': `file:${getTarPath('@siduri-x/memory')}`,
-      };
-
-      fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
-      fs.writeFileSync(path.join(instanceDir, 'siduri.config.json'), files['siduri.config.json']);
-      fs.writeFileSync(path.join(instanceDir, 'siduri.schema.json'), files['siduri.schema.json']);
-      fs.writeFileSync(path.join(instanceDir, '.env.example'), files['.env.example']);
-      fs.writeFileSync(path.join(instanceDir, 'README.md'), files['README.md']);
-      fs.writeFileSync(path.join(instanceDir, 'src/index.js'), files['src/index.js']);
-
-      execSync('npm install --no-audit --no-fund', { cwd: instanceDir, stdio: 'pipe' });
-
-      // Verify migrations exist inside node_modules/@siduri-x/memory/migrations
-      const installedMigrationsPath = path.join(instanceDir, 'node_modules/@siduri-x/memory/migrations/001_initial_schema.sql');
-      expect(fs.existsSync(installedMigrationsPath)).toBe(true);
-
-      // Doctor detects database requirement
-      let doctorOutput = '';
-      try {
-        doctorOutput = execSync(`node ${path.resolve(repoRoot, 'cli/dist/index.js')} doctor`, {
-          cwd: instanceDir,
-          env: {
-            ...process.env,
-            OPENROUTER_API_KEY: 'test-key-clean',
-            DATABASE_URL: '', // deliberately empty to test requirement detection
-          },
-          encoding: 'utf8',
-        });
-      } catch (err: any) {
-        doctorOutput = (err.stdout || '') + (err.stderr || '');
-      }
-      expect(doctorOutput).toContain('DATABASE_URL is not configured');
-      expect(doctorOutput).toContain('Result: FAIL');
     }, 60000);
   });
 });

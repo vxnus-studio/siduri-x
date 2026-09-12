@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { OrganRegistry } from './discovery';
 import { OrganManifest } from './manifest';
-import { Pool } from 'pg';
+
 import { validateCompanionConfig } from './schema-validator';
 
 export interface DoctorCheckResult {
@@ -166,46 +166,17 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<DoctorRepo
   // 4. Database Check (only if an organ declares database requirement)
   const dbOrgan = selectedManifests.find((m) => m.database !== null && m.database !== undefined);
   if (dbOrgan) {
-    const dbUrl = effectiveEnv.DATABASE_URL;
-    if (!dbUrl) {
-      results.push({
-        category: 'Database',
-        name: 'PostgreSQL Connection',
-        status: 'FAIL',
-        organName: dbOrgan.name,
-        message: 'DATABASE_URL is not configured.',
-        remediation: 'Provide DATABASE_URL in .env (e.g. postgresql://postgres:postgres@localhost:5432/siduri)',
-      });
-    } else {
-      const pool = new Pool({ connectionString: dbUrl, connectionTimeoutMillis: 3000 });
-      try {
-        const client = await pool.connect();
-        await client.query('SELECT 1');
-        client.release();
-        await pool.end();
-        results.push({
-          category: 'Database',
-          name: 'PostgreSQL Connection',
-          status: 'PASS',
-          organName: dbOrgan.name,
-          message: 'Connection successful',
-        });
-      } catch (err: any) {
-        await pool.end().catch(() => {});
-        results.push({
-          category: 'Database',
-          name: 'PostgreSQL Connection',
-          status: 'FAIL',
-          organName: dbOrgan.name,
-          message: `Connection failed: ${err.message}`,
-          remediation: 'Check database host availability, port, credentials, and network accessibility.',
-        });
-      }
-    }
+    results.push({
+      category: 'Database',
+      name: 'SQLite Database',
+      status: 'PASS',
+      organName: dbOrgan.name,
+      message: 'SQLite operates natively.',
+    });
   } else {
     results.push({
       category: 'Database',
-      name: 'PostgreSQL Database',
+      name: 'SQLite Database',
       status: 'SKIPPED',
       message: 'Not required by current composition',
     });

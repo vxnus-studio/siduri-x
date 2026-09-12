@@ -3,7 +3,7 @@ import cors from 'cors';
 import { createCorsOptions } from './cors';
 import { SiduriRuntime, dispatchCompanionChat } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
-import { PostgresMemoryOrgan } from '@siduri-x/memory';
+import { SqliteMemoryStore } from '@siduri-x/memory';
 import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
 import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/eknowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
@@ -138,7 +138,8 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       }
 
       const brain = createBrain(config.brain);
-      const memory = new PostgresMemoryOrgan({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/siduri' });
+      const memory = new SqliteMemoryStore({ dbPath: process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+      const selfRepo = new SqliteSelfRepository({ dbPath: process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
       const voice = createVoice(config.voice);
       const knowledge = createKnowledge(config.knowledge);
       const vision = createVision(config.vision);
@@ -160,6 +161,8 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         ear,
         mouth,
         observation: observationOrgan,
+        self: selfRepo,
+        externalKnowledge: knowledge,
       });
       await runtime.initialize();
 

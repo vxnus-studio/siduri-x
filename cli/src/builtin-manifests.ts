@@ -275,7 +275,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     displayName: 'Memory (PostgreSQL FTS Claims)',
     description: 'Relational semantic claims with Full-Text Search and companion isolation',
     entrypoint: './dist/index.js',
-    factory: 'PostgresMemoryOrgan',
+    factory: 'SqliteMemoryStore',
     configKey: 'memory',
     configSchema: {
       type: 'object',
@@ -298,25 +298,10 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
         }
       }
     },
-    environment: [
-      {
-        name: 'DATABASE_URL',
-        required: true,
-        secret: true,
-        default: 'postgresql://postgres:postgres@localhost:5432/siduri',
-        description: 'PostgreSQL connection string'
-      }
-    ],
-    services: [
-      {
-        name: 'PostgreSQL Database',
-        kind: 'database',
-        optional: false
-      }
-    ],
+    environment: [],
+    services: [],
     database: {
-      engine: 'postgres',
-      migrationsDir: './migrations'
+      engine: 'sqlite'
     },
     healthCheck: 'probeMemoryHealth'
   },

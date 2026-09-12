@@ -33,7 +33,7 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
       version: '1.0.0',
       displayName: 'Memory (PostgreSQL FTS Claims)',
       entrypoint: './dist/index.js',
-      factory: 'PostgresMemoryOrgan',
+      factory: 'SqliteMemoryStore',
       configKey: 'memory',
       configSchema: { type: 'object', properties: { provider: { type: 'string' } } },
       environment: [{ name: 'DATABASE_URL', required: true, secret: true }],
