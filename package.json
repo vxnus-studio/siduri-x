@@ -1,6 +1,9 @@
 {
   "name": "siduri-x",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --concurrency 25",

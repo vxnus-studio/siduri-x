@@ -2,7 +2,7 @@
 
 Experimental CLI for creating, diagnosing, and managing standalone Siduri companions powered by the `@siduri-x/*` organ ecosystem.
 
-Requires Node.js 20 or newer.
+Requires Node.js 22 or newer.
 
 ```bash
 npx @vxnus/siduri create my-companion
@@ -10,7 +10,7 @@ npx @vxnus/siduri create my-companion
 
 ## Prerequisites
 
-- **Node.js**: `v20.0.0` or newer
+- **Node.js**: `v22.0.0` or newer
 - **LLM API Key**: e.g. `OPENROUTER_API_KEY` for Brain organ
 - **Optional Local Services**:
   - **PostgreSQL**: Required if PostgreSQL memory organ is enabled (local PostgreSQL server or cloud Supabase/Neon).
