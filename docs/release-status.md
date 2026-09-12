@@ -1,7 +1,7 @@
 # Prototype Verification Status: Siduri-X
 
 **Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
-**Current Verified Commit**: `3f59a517` (Clean Architecture, SQLite FTS5, Security Hardening & Node 22 SSRF Compatibility)  
+**Verification Baseline**: `main` branch (v2.0.0 milestone) (Clean Architecture, SQLite FTS5, Security Hardening, SSRF Streaming Limits & Node 22 Compatibility)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 
@@ -23,13 +23,13 @@ The following invariants have been verified in unit test suites and mock fixture
 3. **Static Path Traversal Defenses (P0)**:
    Decoded path traversal attacks (`../`, `%2e%2e%2f`, `%252e%252e%252f`, null bytes, backslashes, outside symlinks) are strictly rejected by the generator's path containment check (`path.relative(root, target)`).
 4. **Approved Memory Immutability (P0)**:
-   `SqliteMemoryStore` (`@siduri-x/memory`) enforces lifecycle gating. Any update generates a new `PENDING` replacement claim linked via `supersedes`. The approved original remains authoritative until explicit approval of the revision.
+   `SqliteMemoryStore` (`@siduri-x/memory`) enforces lifecycle gating. Any update generates a new `PENDING` replacement claim linked via `supersedes`. The approved original remains authoritative until explicit approval of the revision. `approveClaim()` rejects transitions from non-`PENDING` states.
 5. **Pure SQLite Storage Foundation (P0)**:
-   External database servers (PostgreSQL) are completely eradicated. Persistent continuity (`Self`, `Knowledge`/Life DB, `Memory`) runs on a unified, zero-config `siduri.sqlite` with WAL mode and FTS5 full-text indexing, initializing in `< 20ms` (verified via automated performance test in `packages/core/src/siduri-db.test.ts`).
+   External database servers (PostgreSQL) are completely eradicated. Persistent continuity (`Self`, `Knowledge`/Life DB, `Memory`) runs on a unified, zero-config `siduri.sqlite` with WAL mode and FTS5 full-text indexing, initializing instantaneously (typical `< 20ms` locally, verified within `< 100ms` budget under CI virtualization in `packages/core/src/siduri-db.test.ts`).
 6. **Brain Global Wall-Clock Deadline (P1)**:
    Overall deadline is governed by a global `AbortController` timer spanning all retry attempts. In-flight `fetch` calls abort immediately upon deadline expiry; retries cannot extend execution indefinitely.
-7. **Voice Response Byte Bounding (P1)**:
-   `readBoundedResponseBody` enforces size ceilings on both `Content-Length` headers and incremental streaming chunks via `reader.cancel()`, preventing unbounded memory buffering.
+7. **Peripheral Response Byte Bounding (P1)**:
+   `readBoundedResponseBody` (Voice) and `readBoundedResponseText` (Knowledge) enforce size ceilings on both `Content-Length` headers and incremental streaming chunks via reader cancellation, preventing unbounded memory buffering.
 8. **Durable Action Approval & Restart (P1)**:
    `ActionPolicyEngine` and `ActionStore` cryptographically sign capabilities and record approvals durably. Restarting the engine preserves approval validity without duplicate execution.
 9. **Idempotency & Concurrency Safety (P1)**:

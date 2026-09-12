@@ -1,4 +1,4 @@
-import { EKnowledgeAdapter, isBlockedIp, validateSafeUrl, safeFetch, createSafeDispatcher } from './index';
+import { EKnowledgeAdapter, isBlockedIp, validateSafeUrl, safeFetch, createSafeDispatcher, safeFetchJson, readBoundedResponseText } from './index';
 import fs from 'node:fs';
 import path from 'node:path';
 import dns from 'node:dns/promises';
@@ -185,5 +185,63 @@ describe('SSRF Hardening Suite', () => {
           done(assertionErr);
         }
       });
+  });
+
+  test('readBoundedResponseText rejects response exceeding Content-Length header limit', async () => {
+    const mockResponse = {
+      headers: new Headers({ 'content-length': '2048' }),
+      body: null,
+      text: async () => 'small text',
+    } as any;
+
+    await expect(readBoundedResponseText(mockResponse, 1024)).rejects.toThrow(
+      /Response Content-Length \(2048 bytes\) exceeds maximum allowed 1024 bytes/
+    );
+  });
+
+  test('readBoundedResponseText cancels stream and rejects when stream exceeds maxBytes', async () => {
+    let cancelCalled = false;
+    let readCount = 0;
+    const mockReader = {
+      read: jest.fn().mockImplementation(async () => {
+        readCount++;
+        if (readCount === 1) {
+          return { done: false, value: new TextEncoder().encode('12345') };
+        }
+        if (readCount === 2) {
+          return { done: false, value: new TextEncoder().encode('6789012345') }; // exceeds 10 bytes
+        }
+        return { done: true, value: undefined };
+      }),
+      cancel: jest.fn().mockImplementation(async () => {
+        cancelCalled = true;
+      }),
+      releaseLock: jest.fn(),
+    };
+
+    const mockResponse = {
+      headers: new Headers(),
+      body: {
+        getReader: () => mockReader,
+      },
+    } as any;
+
+    await expect(readBoundedResponseText(mockResponse, 10)).rejects.toThrow(
+      /Response stream exceeded maximum allowed size of 10 bytes/
+    );
+    expect(cancelCalled).toBe(true);
+  });
+
+  test('safeFetchJson successfully parses bounded responses within limit', async () => {
+    const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-length': '23' }),
+      text: async () => '{"status":"ok","id":42}',
+    } as Response);
+
+    const result = await safeFetchJson<{ status: string; id: number }>('https://public.example/api', { maxBytes: 1024 });
+    expect(result).toEqual({ status: 'ok', id: 42 });
+    fetchMock.mockRestore();
   });
 });

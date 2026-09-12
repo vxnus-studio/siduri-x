@@ -649,13 +649,21 @@ export class SiduriDatabase {
   }
 
   public approveClaim(id: string, companionId?: string): void {
-    // If this claim supersedes an earlier claim, transition that prior claim to SUPERSEDED
     const findClaim = companionId
-      ? this.db.prepare("SELECT supersedes FROM memory_claims WHERE id = ? AND companion_id = ?")
-      : this.db.prepare("SELECT supersedes FROM memory_claims WHERE id = ?");
-    const row = companionId ? findClaim.get(id, companionId) : findClaim.get(id);
-    if (row && (row as any).supersedes) {
-      const supersededId = (row as any).supersedes;
+      ? this.db.prepare("SELECT id, status, supersedes FROM memory_claims WHERE id = ? AND companion_id = ?")
+      : this.db.prepare("SELECT id, status, supersedes FROM memory_claims WHERE id = ?");
+    const row = (companionId ? findClaim.get(id, companionId) : findClaim.get(id)) as any;
+    if (!row) {
+      return;
+    }
+
+    if (row.status !== 'PENDING') {
+      throw new Error(`Cannot approve claim '${id}': invalid transition from status '${row.status}' to 'APPROVED' (only PENDING claims can be approved)`);
+    }
+
+    // If this claim supersedes an earlier claim, transition that prior claim to SUPERSEDED
+    if (row.supersedes) {
+      const supersededId = row.supersedes;
       if (companionId) {
         const supersedeStmt = this.db.prepare("UPDATE memory_claims SET status = 'SUPERSEDED' WHERE id = ? AND companion_id = ?");
         supersedeStmt.run(supersededId, companionId);
@@ -666,10 +674,10 @@ export class SiduriDatabase {
     }
 
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ? AND companion_id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ? AND companion_id = ? AND status = 'PENDING'");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ? AND status = 'PENDING'");
       stmt.run(id);
     }
   }

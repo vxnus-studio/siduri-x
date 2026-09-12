@@ -52,7 +52,7 @@ When learning from explicit user teaching or structured LLM proposals (`memoryPr
 
 ### 2.2 Strict Projection Boundaries
 - **Worldview Isolation**: `memory.searchClaims()` filters strictly on `status = 'APPROVED'`. Unapproved claims are invisible to cognitive retrieval and context construction.
-- **Active Self Persona Isolation**: In the `@siduri-x/behavior` compiler, pending directives are excluded from prompt compilation under the `pending_not_active` invariant diagnostic.
+- **Active Self Persona Isolation**: In the `@siduri-x/self` compiler (`ActiveSelfCompiler`, formerly `@siduri-x/behavior`), pending directives are excluded from prompt compilation under the `pending_not_active` invariant diagnostic.
 
 ### 2.3 Operator Audit & Approval Workflow
 Human operators manage the Truth Gate via administrative API endpoints:

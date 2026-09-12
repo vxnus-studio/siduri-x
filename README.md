@@ -92,7 +92,7 @@ my-siduri/
 
 ### 2. Zero-Config Local Storage (`siduri.sqlite`)
 
-Siduri uses a unified, zero-configuration SQLite database (`siduri.sqlite`) with WAL mode and built-in FTS5 full-text indexing. No external database servers or Docker containers (like PostgreSQL) are required. The database initializes automatically in `< 20ms` on first boot.
+Siduri uses a unified, zero-configuration SQLite database (`siduri.sqlite`) with WAL mode and built-in FTS5 full-text indexing. No external database servers or Docker containers (like PostgreSQL) are required. The database initializes automatically in `< 20ms` on local hardware (`< 100ms` under virtualized CI runners).
 
 ### 3. Run Diagnostics (`siduri doctor`)
 

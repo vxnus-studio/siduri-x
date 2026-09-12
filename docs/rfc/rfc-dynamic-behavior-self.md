@@ -35,7 +35,7 @@ This document evaluates the architectural options for distributing behavior via 
 ### 2.1 Core Architectural Principles
 1. **Zero Storage Redundancy:** Does not require modifying `@siduri-x/memory` or altering its schema. The memory organ's existing lifecycle (`source event → pending candidate → approved active`) already possesses the machinery needed for directives, priorities, and audit tracking.
 2. **Strict Human-in-the-Loop Verification:** Downloading or uploading a behavior package never mutates active runtime behavior silently. Ingestion is treated as an intentional **Batch Memory Proposal**.
-3. **Living Runtime Evolution:** Directives become living records in Siduri's local database that dynamically adapt, supersede, decay, and compile through `@siduri-x/behavior`.
+3. **Living Runtime Evolution:** Directives become living records in Siduri's local database that dynamically adapt, supersede, decay, and compile through `@siduri-x/self` (`ActiveSelfCompiler`, formerly `@siduri-x/behavior`).
 
 > [!IMPORTANT]
 > ### Perspective: Universal Text Upload vs. Dedicated `.self` Format
@@ -97,7 +97,7 @@ sequenceDiagram
     participant UI as Siduri Chat UI (Teach Mode)
     participant Core as Siduri Runtime / Brain
     participant Mem as Memory Organ (@siduri-x/memory)
-    participant Beh as Behavior Organ (@siduri-x/behavior)
+    participant Beh as Self / Behavior (@siduri-x/self)
 
     User->>UI: Selects "Teach Mode" & uploads "elena-tsundere.self"
     UI->>Core: Ingest .self payload
@@ -141,7 +141,7 @@ To thoroughly evaluate all pathways, the following alternative models are preser
 ### Option 2: Declarative State Machine & Reactive Rule Engine
 Rather than unpacking directives into generic memory, `.self` defines an explicit **Finite State Machine (FSM)**:
 - **Format:** YAML/JSON detailing states (`neutral`, `affectionate`, `guarded`), transition triggers (`on: TRUST_INCREASED`), and state-specific directives.
-- **Execution:** `@siduri-x/behavior` maintains an active FSM pointer and evaluates transitions based on experience events and context metrics.
+- **Execution:** `@siduri-x/self` (`ActiveSelfCompiler`) maintains an active FSM pointer and evaluates transitions based on experience events and context metrics.
 - **Pros:** Highly predictable character arcs and multi-phase personalities.
 - **Cons:** Rigid authoring requirements; difficult for non-technical users to modify dynamically without re-authoring the state tree.
 
@@ -224,7 +224,7 @@ dialogueExamples:
 
 - [ ] **Protocol Definition** (`packages/protocol` in É and `@siduri-x/core`):
   - Add schema validator for `specVersion: "1.0.0"`, `kind: "behavior"` (`.self`).
-- [ ] **Teach Mode Parser** (`@siduri-x/behavior` / API):
+- [ ] **Teach Mode Parser** (`@siduri-x/self` / API):
   - Implement batch proposal transformation mapping `.self` directives $\rightarrow$ `PendingCandidate[]`.
   - Integrate unsafe instruction pattern screening.
 - [ ] **UI Controls & Mode Switcher** (`apps/web`):

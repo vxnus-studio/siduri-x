@@ -90,7 +90,7 @@ Humans do not operate on thousands of discrete `if/then` scripts; they operate o
 
 #### Tier 1: Macro Boundaries (When Scripting IS Necessary)
 * **Scope**: Hard channel, audience, or security boundaries.
-* **Mechanism**: Handled by `@siduri-x/behavior` compiler.
+* **Mechanism**: Handled by `@siduri-x/self` (`ActiveSelfCompiler`).
 * **Example**:
   - `channel == "public"` $\rightarrow$ Inject: *"Maintain professional distance. Do not reference private session context."*
   - `channel == "operator"` $\rightarrow$ Inject: *"Diagnostic mode: prioritize structured factual outputs."*
@@ -136,7 +136,7 @@ $$\text{Storage Format} \neq \text{Inference Format}$$
 2. **The Truth Gate & Ingestion**:
    Directives do not silently alter active cognition; they enter as `PENDING` candidates evaluated through human operator review.
 3. **The Active Self Compiler**:
-   At runtime, `@siduri-x/behavior` compiles only the relevant slice: the immutable anchor, current relational stance, channel-specific active directives, and dialogue exemplars.
+   At runtime, `@siduri-x/self` (`ActiveSelfCompiler`) compiles only the relevant slice: the immutable anchor, current relational stance, channel-specific active directives, and dialogue exemplars.
 
 By refusing to collapse identity, behavior, preference, and memory into a single flat document, Siduri ensures that companions remain faithful to who they are, clear about what they know, and grounded in their relationship with the user.
 

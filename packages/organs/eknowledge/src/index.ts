@@ -285,7 +285,56 @@ export async function safeFetch(
   throw new Error('Too many redirects');
 }
 
-async function safeFetchJson<T>(
+export async function readBoundedResponseText(response: Response, maxBytes: number = DEFAULT_MAX_RESPONSE_BYTES): Promise<string> {
+  const contentLengthHeader = response?.headers?.get ? response.headers.get('content-length') : null;
+  if (contentLengthHeader) {
+    const declaredLength = parseInt(contentLengthHeader, 10);
+    if (!isNaN(declaredLength) && declaredLength > maxBytes) {
+      throw new Error(`Response Content-Length (${declaredLength} bytes) exceeds maximum allowed ${maxBytes} bytes`);
+    }
+  }
+
+  if (response.body && typeof (response.body as any).getReader === 'function') {
+    const reader = (response.body as any).getReader();
+    const chunks: Uint8Array[] = [];
+    let receivedBytes = 0;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          receivedBytes += value.byteLength;
+          if (receivedBytes > maxBytes) {
+            await reader.cancel();
+            throw new Error(`Response stream exceeded maximum allowed size of ${maxBytes} bytes`);
+          }
+          chunks.push(value);
+        }
+      }
+    } finally {
+      reader.releaseLock?.();
+    }
+
+    const merged = new Uint8Array(receivedBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return new TextDecoder().decode(merged);
+  }
+
+  // Fallback for mock responses or environments without getReader()
+  const text = await response.text();
+  const byteLength = Buffer.byteLength(text, 'utf8');
+  if (byteLength > maxBytes) {
+    throw new Error(`Response body length (${byteLength} bytes) exceeds maximum allowed ${maxBytes} bytes`);
+  }
+  return text;
+}
+
+export async function safeFetchJson<T>(
   urlStr: string,
   options: {
     method?: string;
@@ -301,11 +350,8 @@ async function safeFetchJson<T>(
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
 
-  // Read response as text with size limit to prevent memory exhaustion
-  const text = await response.text();
-  if (text.length > maxBytes) {
-    throw new Error(`Response body length (${text.length} chars) exceeds maximum allowed ${maxBytes} bytes`);
-  }
+  // Stream-read response with strict byte bounding to prevent memory exhaustion
+  const text = await readBoundedResponseText(response as any, maxBytes);
 
   try {
     return JSON.parse(text) as T;
