@@ -9,15 +9,15 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "zod": "^4.4.3",
-    "@siduri-x/core": "workspace:*"
+    "@siduri-x/core": "workspace:*",
+    "zod": "^4.6.2"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.14",
-    "@types/node": "^20.19.43",
-    "jest": "^29.7.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.20.2",
+    "jest": "^30.5.1",
     "ts-jest": "^29.4.12",
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3"
   },
   "description": "Brain organ for LLM reasoning, response planning, and proposal generation",
   "license": "Apache-2.0",

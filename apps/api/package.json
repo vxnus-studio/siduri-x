@@ -15,7 +15,6 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-x/self": "workspace:*",
     "@siduri-x/body": "workspace:*",
     "@siduri-x/brain": "workspace:*",
     "@siduri-x/core": "workspace:*",
@@ -24,22 +23,23 @@
     "@siduri-x/hands": "workspace:*",
     "@siduri-x/knowledge": "workspace:*",
     "@siduri-x/memory": "workspace:*",
+    "@siduri-x/mouth": "workspace:*",
     "@siduri-x/observation": "workspace:*",
+    "@siduri-x/self": "workspace:*",
     "@siduri-x/vision": "workspace:*",
     "@siduri-x/voice": "workspace:*",
-    "@siduri-x/mouth": "workspace:*",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2"
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/jest": "^29.5.14",
-    "@types/supertest": "^6.0.2",
-    "jest": "^29.7.0",
-    "supertest": "^6.3.4",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^7.2.1",
+    "jest": "^30.5.1",
+    "supertest": "^7.2.2",
     "ts-jest": "^29.4.12",
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3"
   }
 }

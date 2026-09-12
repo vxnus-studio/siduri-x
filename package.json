@@ -16,7 +16,7 @@
     "sync:check": "node scripts/sync-versions.mjs --check"
   },
   "devDependencies": {
-    "turbo": "^1.11.2",
-    "typescript": "^5.3.3"
+    "turbo": "^2.10.12",
+    "typescript": "^5.9.3"
   }
 }
