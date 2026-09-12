@@ -1,11 +1,15 @@
 # Siduri Documentation Hub
 
-Siduri is an agentic AI companion and runtime system structured around **four core domain substrates** (`Self`, `Knowledge` / Life DB, `Memory`, `Core`) and **nine pluggable peripheral organs** (`Brain`, `Hands`, `Ear`, `Vision`, `Voice`, `Body`, `Observation`, `Mouth`, `E-Knowledge`).
+Siduri is an **experimental, open-source AI companion research runtime** structured around **four core domain substrates** (`Self`, `Knowledge` / Life DB, `Memory`, `Core`) and **nine pluggable peripheral organs** (`Brain`, `Hands`, `Ear`, `Vision`, `Voice`, `Body`, `Observation`, `Mouth`, `E-Knowledge`).
+
+> [!NOTE]
+> **Research & Prototype Notice**  
+> Siduri is an evolving architectural testbed. Subsystems and contracts are verified in isolated mock unit test suites and package scaffolding fixtures, but are **untested in continuous real-world end-to-end (E2E) environments**. We welcome inspection, feedback, and experimentation.
 
 ```
 docs/
 ├── README.md                 # Documentation index and directory map
-├── release-status.md         # Canonical release status, verified commit, invariants, and commands
+├── release-status.md         # Prototype verification status, testing boundaries, and invariants
 ├── self-organ-knowledge/     # [CANONICAL] Clean Architecture, Pure SQLite, and .self Ingestion Suite
 │   ├── README.md             # Clean architecture blueprint and core questions
 │   ├── 01-domain-architecture.md   # Domain models, SQLite schema, and contracts
@@ -17,7 +21,7 @@ docs/
 └── thought-exercises/        # Conceptual explorations, identity taxonomy, and philosophical analyses
 ```
 
-> **Current Release State**: See [**Canonical Release Status**](./release-status.md) for current release readiness, verified commit, and architecture invariants.
+> **Current Status**: See [**Prototype Verification Status**](./release-status.md) for architectural invariants, testing boundaries, and limitations.
 
 ---
 

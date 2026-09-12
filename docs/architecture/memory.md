@@ -29,8 +29,8 @@ Memories in Siduri are structured as **versioned claims** rather than raw unboun
 - **Value**: The current asserted truth (`teal`, `March 14`, `software_engineer`).
 - **Metadata**: Provenance, confidence score (`0.0` - `1.0`), privacy/sensitivity level (`public`, `private`, `system`), and creation/validity timestamps.
 
-### 1.2 Companion Isolation
-Every memory table strictly enforces `companion_id`. This guarantees multi-tenant safety and complete isolation between different companion instances sharing the same database.
+### 1.2 Companion Scoping
+Every memory table tracks `companion_id`, scoping memory events to specific companion instances on the local machine.
 
 ### 1.3 Full-Text Search (FTS)
 * **Legacy Design:** PostgreSQL Full-Text Search (`tsvector`) and GIN indexes.

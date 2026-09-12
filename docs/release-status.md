@@ -1,15 +1,20 @@
-# Canonical Release Status: Siduri-X
+# Prototype Verification Status: Siduri-X
 
-**Release Decision**: **RELEASE WITH EXPLICIT LIMITATIONS**  
+**Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
 **Current Verified Commit**: `3b57c79a` (Clean Architecture & PostgreSQL Purged)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 
+> [!IMPORTANT]
+> **Testing Scope & Real-World Reality**  
+> All current verification is based on **isolated unit tests, mock fixtures, AST analysis, and packaging tarball smoke tests**.  
+> Siduri is **untested at real-world end-to-end (E2E) scale**: live audio input/output on diverse physical hardware, multi-week continuous memory accumulation, and un-mocked LLM latency and drift are active research frontiers, not verified production guarantees.
+
 ---
 
-## 1. Verified Release Invariants
+## 1. Verified Architectural & Unit Invariants
 
-All core security, reliability, and architectural properties have been independently verified through source code AST analysis, adversarial suites, and clean-machine distribution packaging:
+The following invariants have been verified in unit test suites and mock fixtures within the monorepo:
 
 1. **Localhost-Only Ingress (P0)**:
    All listeners (`apps/api` and `cli/src/generator.ts` companion template) explicitly bind to `127.0.0.1`. No listener defaults to `0.0.0.0` or dual-stack broadcast.
@@ -18,21 +23,21 @@ All core security, reliability, and architectural properties have been independe
 3. **Static Path Traversal Defenses (P0)**:
    Decoded path traversal attacks (`../`, `%2e%2e%2f`, `%252e%252e%252f`, null bytes, backslashes, outside symlinks) are strictly rejected by the generator's path containment check (`path.relative(root, target)`).
 4. **Approved Memory Immutability (P0)**:
-   `SqliteMemoryStore` (`@siduri-x/memory`) enforces strict lifecycle gating. Any update generates a new `PENDING` replacement claim linked via `supersedes`. The approved original remains authoritative until explicit approval of the revision.
-5. **Pure SQLite Zero-Dependency Storage (P0)**:
+   `SqliteMemoryStore` (`@siduri-x/memory`) enforces lifecycle gating. Any update generates a new `PENDING` replacement claim linked via `supersedes`. The approved original remains authoritative until explicit approval of the revision.
+5. **Pure SQLite Storage Foundation (P0)**:
    External database servers (PostgreSQL) are completely eradicated. Persistent continuity (`Self`, `Knowledge`/Life DB, `Memory`) runs on a unified, zero-config `siduri.sqlite` with WAL mode and FTS5 full-text indexing, initializing in `< 20ms`.
 6. **Brain Global Wall-Clock Deadline (P1)**:
    Overall deadline is governed by a global `AbortController` timer spanning all retry attempts. In-flight `fetch` calls abort immediately upon deadline expiry; retries cannot extend execution indefinitely.
-6. **Voice Response Byte Bounding (P1)**:
+7. **Voice Response Byte Bounding (P1)**:
    `readBoundedResponseBody` enforces size ceilings on both `Content-Length` headers and incremental streaming chunks via `reader.cancel()`, preventing unbounded memory buffering.
-7. **Durable Action Approval & Restart (P1)**:
+8. **Durable Action Approval & Restart (P1)**:
    `ActionPolicyEngine` and `ActionStore` cryptographically sign capabilities and record approvals durably. Restarting the engine preserves approval validity without duplicate execution.
-8. **Idempotency & Concurrency Safety (P1)**:
+9. **Idempotency & Concurrency Safety (P1)**:
    Two-phase reservation prevents concurrent duplicate execution; replaying a completed execution returns the cached result without re-invoking the tool handler.
-9. **Tamper-Evident Audit Chaining (P1)**:
-   Audit events separate `previousEventHash`, `eventHash`, and `resultHash` into a SHA-256 hash chain over canonicalized payloads.
-10. **Clean Distribution Packaging**:
-    `npm run release:check` passes on all 13 canonical packages. Zero `workspace:` or `link:` references leak into distribution tarballs. Clean-machine E2E test passes in isolation.
+10. **Tamper-Evident Audit Chaining (P1)**:
+    Audit events separate `previousEventHash`, `eventHash`, and `resultHash` into a SHA-256 hash chain over canonicalized payloads.
+11. **Clean Distribution Packaging & Smoke Test**:
+    `npm run release:check` passes on all 13 canonical packages (zero leaking `workspace:` references). `clean-machine-e2e.test.ts` validates that tarballs unpack and scaffold an empty project in an isolated temp folder (packaging smoke test).
 
 ---
 
@@ -40,6 +45,8 @@ All core security, reliability, and architectural properties have been independe
 
 The following properties represent intentional architectural boundaries for Siduri's single-owner local model:
 
+- **Synthetic Mock Testing vs. Real E2E**:
+  All peripheral organs (`brain`, `voice`, `ear`, `vision`, `body`, `hands`) and runtime pipelines are currently verified using synthetic mocks and unit fixtures. Siduri has **not yet undergone continuous real-world E2E validation** (e.g., live microphone hardware, real GPU Live2D rendering loads, edge network TTS variations, or long-term multi-week memory consistency). It should be treated as an experimental prototype.
 - **Local Trust Boundary**:
   Siduri does not implement multi-tenant authentication, public identity federation (OAuth2/OIDC), or tenant isolation. Authentication relies on server-verified local tokens (`OWNER_TOKEN`, `OPERATOR_TOKEN`) or development environment defaults.
 - **Localhost-Only Deployment**:

@@ -1,10 +1,14 @@
 # Siduri (Siduri-X)
 
-Siduri is an intelligent AI companion framework designed with **persistent, authoritative memory**, atomic behavioral gating, and modular capability organs.
+Siduri is an **experimental, open-source AI companion framework** exploring single-owner persistent memory, modular capability organs, and local-first architecture.
 
-Unlike standard conversational agents that lose context when a session ends or a context window fills up, Siduri is built around a robust memory foundation. She learns, remembers, and adapts over time, treating her memory as a central source of truth for identity, relationships, and learned behaviors.
+Instead of treating memory as an unverified vector dump that silently drifts over time, Siduri explores an architectural model where memories are staged as explicit proposals, verified against local truth, and retained across sessions in a sovereign local SQLite store.
 
-Our goal is simple: **Siduri should be as easy to install or run anywhere as a single command** — no matter the platform, no matter the setup.
+> [!WARNING]
+> **Project Status: Experimental Prototype (Mock-Tested)**
+> Siduri is an active research and architectural exploration, not a finished consumer appliance.
+> - While package boundaries, schemas, and organ contracts are verified through unit tests and mock fixtures, the system is **untested in real-world end-to-end (E2E) scenarios** (e.g. live sensory hardware, extended multi-week conversational stability, diverse GPU environments).
+> - Interfaces, storage structures, and protocols are under continuous development; breaking changes will occur. We invite developers to inspect the architecture, run local testbeds, and contribute feedback.
 
 > *“She answered, ‘Gilgamesh, where are you hurrying to? You will never find that life for which you are looking. When the gods created man they allotted to him death, but life they retained in their own keeping. As for you, Gilgamesh, fill your belly with good things; day and night, night and day, dance and be merry, feast and rejoice. Let your clothes be fresh, bathe yourself in water, cherish the little child that holds your hand, and make your wife happy in your embrace; for this too is the lot of man.’”*
 >
@@ -15,24 +19,23 @@ Our goal is simple: **Siduri should be as easy to install or run anywhere as a s
 > [!NOTE]
 > **Getting Started & Repository Guide**
 >
-> - **Looking to run your own companion?** You don't need to clone this repository! The quickest way to get started is with the official CLI:
+> - **Looking to experiment with a local testbed?** You can scaffold a standalone companion instance using the development CLI:
 >   ```bash
 >   npx @vxnus/siduri create my-companion
 >   ```
->   The CLI guides you through an interactive setup and scaffolds a clean, standalone companion instance with only the organs and configurations you choose.
+>   The CLI guides you through an interactive setup and scaffolds a testbed companion instance with the organs and configurations you select.
 > - **About this repository:** This repository (`siduri-x`) houses the monorepo for the core engine, architectural contracts, and `@siduri-x/*` packages.
-> - **Status:** Siduri is currently in an active, experimental development phase. APIs and configurations are evolving, and we are grateful for your feedback, suggestions, and contributions!
+> - **Feedback & Collaboration:** We warmly welcome bug reports, architectural critiques, and community contributions.
 
 ---
 
-## Core Features & Architecture
+## Architectural Focus & Hypotheses
 
-- **Single-Owner, Local-First Architecture**: Siduri is built as a personal, single-owner companion running on a single local machine. She is not a multi-tenant SaaS or enterprise RBAC service: your machine is her security perimeter. Everything she learns and experiences is directly accessible to her owner locally, without artificial token barriers or partitioned audience boundaries.
-- **Blank Slate Instance**: Every Siduri instance starts with no pre-baked persona or backstory. She isn't scripted into being — she's *grown* into it, forming her identity entirely through accumulated memory and real interaction. Same core, completely different Siduri depending on who she grows with.
-- **Persistent Memory**: Siduri remembers past interactions, preferences, and established facts across sessions. Her memory is not a temporary cache, but an authoritative database of shared history.
-- **Modular Capabilities**: Extensible by design. Whether she needs to speak, see, or interact with platforms, her capabilities act as independent `@siduri-x/*` packages that plug into her core runtime with **zero bundling** and standard Node.js ESM resolution.
-- **Contextual Awareness**: Siduri dynamically retrieves relevant memories to ground her responses in established facts, maintaining a consistent persona over time.
-- **Privacy & Safety First**: Designed for local-first operations and explicit consent. Action policies and capability tokens prevent unauthorized actions.
+- **Single-Owner, Local-First Perimeter**: Siduri explores a personal, single-owner companion running on a local workstation. Rather than a multi-tenant cloud service with complex RBAC partitions, the local machine is the primary security boundary.
+- **Blank Slate Model**: Rather than arriving with a scripted backstory or pre-baked persona, an instance begins with an empty relational slate, investigating how personality and communication nuances might grow organically through interaction.
+- **Audited Memory Proposals (The Truth Gate)**: Staged candidate memories must be confirmed before becoming persistent local facts, aiming to prevent prompt injection and conversational hallucination from silently corrupting long-term beliefs.
+- **Modular Capability Organs**: Capabilities (reasoning, voice, vision, embodiment, tool calling) are separated into pluggable `@siduri-x/*` packages with standard ESM resolution.
+- **Sovereign Data Storage**: Personal data (such as inventory, finance, and schedules) lives in structured SQLite tables, separating factual life data from subjective conversational memory.
 
 ---
 

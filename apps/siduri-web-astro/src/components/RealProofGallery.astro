@@ -15,66 +15,66 @@ interface ProofItem {
 const PROOFS: ProofItem[] = [
   {
     id: "memory-proposals",
-    title: "Authoritative Memory Proposals",
-    category: "CHAT RUNTIME",
+    title: "Staged Memory Proposals",
+    category: "CHAT PROTOTYPE",
     src: "/screenshots/features/chat-authoritative-memory-proposals.png",
     width: 1400,
     height: 875,
-    alt: "Siduri Chat showing structured memory proposals committed in real time",
+    alt: "Siduri Chat prototype showing structured memory proposals",
     caption:
-      "Siduri committing structured preference and episodic memory proposals in real-time with APPROVED receipts and citation links.",
+      "Staging preference and episodic memory proposals in a local test session with approval receipts and citation links.",
     details: [
-      "Staged candidate claims appear under assistant dialogue",
-      "Cryptographic receipts linked directly to source conversational events",
-      "Explicit user approval updates long-term PostgreSQL memory",
+      "Candidate claims staged under assistant dialogue for review",
+      "Cryptographic receipts linked to source conversational turns",
+      "Explicit user approval commits verified claims to local siduri.sqlite",
     ],
   },
   {
     id: "operator-console",
-    title: "Web Operator Console (/operator)",
+    title: "Local Operator Inspection (/operator)",
     category: "OPERATOR CONSOLE",
     src: "/screenshots/features/operator-memory-claims-and-directives.png",
     width: 1400,
     height: 875,
     alt: "Operator Console displaying active behavioral directives and claims",
     caption:
-      "The local Operator Console inspecting active behavioral directives (stream_behavior, relationship_address) and structured semantic claims with one-click revocation.",
+      "Local developer console inspecting active behavioral directives (stream_behavior, relationship_address) and structured claims with manual revocation controls.",
     details: [
-      "Audit active and pending directives in one central HUD",
-      "Instant revoke and disable controls for full data sovereignty",
-      "No hidden prompt injection or silent persona degradation",
+      "Inspect active and pending directives in a single local interface",
+      "Revoke and disable controls to test memory state transitions",
+      "Transparent audit view into candidate prompt injections",
     ],
   },
   {
     id: "avatar-embodiment",
-    title: "Live2D Cubism Embodiment",
+    title: "Live2D Embodiment Prototype",
     category: "BODY ORGAN",
     src: "/screenshots/avatar/live2d-hooded-avatar-embodiment.jpeg",
     width: 1200,
     height: 800,
-    alt: "Full-body Live2D character embodiment running in the chat interface",
+    alt: "Live2D character embodiment running in the experimental chat interface",
     caption:
-      "Renderer-agnostic Live2D avatar embodiment rendering smoothly on a WebGL canvas with presence status tracking and lip-sync synchronization.",
+      "Renderer-agnostic Live2D avatar prototype rendering on a WebGL canvas with presence status tracking and viseme synchronization.",
     details: [
-      "Real-time expression state machine linked to Brain emotion vectors",
-      "Natural eye contact tracking and idle breathing physics",
-      "Decoupled from runtime: swap avatar models with zero engine changes",
+      "Expression state machine driven by Brain emotion parameters",
+      "Gaze tracking and idle physics adapters (in testing)",
+      "Decoupled from runtime core: swappable avatar assets",
     ],
   },
   {
     id: "knowledge-citations",
-    title: "Grounded Knowledge Citations",
+    title: "Document Knowledge Citations",
     category: "KNOWLEDGE ORGAN",
     src: "/screenshots/features/chat-knowledge-citations.png",
     width: 1400,
     height: 875,
-    alt: "Siduri answering factual inquiries with structured evidence badges",
+    alt: "Siduri prototype answering factual inquiries with evidence badges",
     caption:
-      "Factual inquiries answered with verifiable evidence badges (e.g. '4 evidence links') ensuring domain facts never masquerade as personal memories.",
+      "Prototype factual responses with evidence badges (e.g. '4 evidence links') testing the separation of external documentation from personal memory.",
     details: [
-      "Cited evidence bounds for transparent provenance",
+      "Cited evidence bounds for source documentation tracking",
       "Dual Japanese/English subtitle streams",
-      "Isolated from autobiographical memory to prevent persona drift",
+      "Kept isolated from autobiographical memory to prevent persona drift",
     ],
   },
 ];
@@ -89,12 +89,13 @@ const initialProof = PROOFS[0];
         05 · Lab Notes &amp; Snapshots
       </div>
       <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal font-serif-title text-[var(--siduri-text-primary)] mb-5">
-        Development Snapshots &amp; Lab Notes
+        Prototype Artifacts &amp; Lab Notes
       </h2>
       <p class="text-sm sm:text-base text-[var(--siduri-text-secondary)] font-sans leading-relaxed font-light">
-        Working captures from our local experimental testbed. These snapshots illustrate
+        Working captures from our local testbed. These snapshots illustrate
         how Live2D presence, structured memory proposals, operator directive auditing,
-        and cited knowledge retrieval operate in our active prototype.
+        and cited knowledge retrieval are currently tested in our development environment.
+        They reflect work-in-progress experiments, not a final product.
       </p>
     </div>
 

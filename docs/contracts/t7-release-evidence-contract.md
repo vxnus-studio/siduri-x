@@ -1,7 +1,10 @@
 # T7 release evidence contract
 
-Status: **RELEASE READY WITH EXPLICIT LIMITATIONS** (Verified commit: `3b57c79a` — Clean Architecture & PostgreSQL Purged)
+Status: **ALPHA TESTBED VERIFIED (MOCK/UNIT SUITES)** (Commit: `3b57c79a` — Clean Architecture & PostgreSQL Purged)  
 Historical Status: NO-GO / RED (superseded following T1–T7 and B0–B6 verification passes)
+
+> [!NOTE]
+> **Verification Boundary**: The proofs below document pass criteria for automated test suites, contract assertions, and mock API boundaries. Live real-world end-to-end (E2E) testing with physical audio hardware and long-term un-mocked LLM sessions is not covered by these gates and remains an active research target.
 
 This contract defines the evidence required before Siduri may claim public
 blank-slate behavioral parity. It is stricter than a successful build and does
