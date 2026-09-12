@@ -62,8 +62,8 @@ Human operators manage the Truth Gate via administrative API endpoints:
 - `POST /memory/proposals/update`: Refine or correct proposed claims before approving them.
 - `POST /memory/behavioral/approve` & `reject`: Approve or reject behavioral and persona directives.
 
-### 2.4 Immutability & Audit History
-Approved claims are immutable. Any modification generates a superseding pending claim while recording transition logs (`memory_claim_history`) with full tamper-evident audit hashes.
+### 2.4 Immutability & Lineage Tracking
+Approved claims are immutable. Any modification via `memory.updateClaim()` proposes a new replacement claim with `supersedes: originalClaimId` in `'PENDING'` status. When the replacement is approved, the original claim transitions to `'SUPERSEDED'`, preserving full provenance and lineage in SQLite (`memory_claims.supersedes` and `memory_claims.source_event_id`). For cryptographic, tamper-evident operational audit trails with SHA-256 hash chaining, see the Action Audit System (`action_audit_log` via `ActionStore`).
 
 ---
 

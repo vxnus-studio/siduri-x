@@ -368,5 +368,36 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       expect(afterApproval.find((c) => c.id === 'claim-to-update')).toBeUndefined();
       expect(afterApproval.find((c) => c.id === updated.id)?.value).toBe('LeadArchitect');
     });
+
+    it('persists and retrieves sourceEventId provenance for claims', async () => {
+      const companionId = 'source-event-companion';
+      await store.recordEvent(companionId, {
+        id: 'event-origin-123',
+        sourceType: 'chat_turn',
+        payload: { text: 'I live in Tokyo' },
+      });
+
+      const claim = await store.proposeClaim({
+        id: 'claim-provenance-1',
+        companionId,
+        subject: 'UserLocation',
+        predicate: 'livesIn',
+        value: 'Tokyo',
+        sourceEventId: 'event-origin-123',
+      });
+      expect(claim.sourceEventId).toBe('event-origin-123');
+
+      await store.approveClaim('claim-provenance-1');
+
+      const approved = await store.getApprovedClaims(companionId);
+      const found = approved.find((c) => c.id === 'claim-provenance-1');
+      expect(found).toBeDefined();
+      expect(found?.sourceEventId).toBe('event-origin-123');
+
+      // Search also preserves sourceEventId
+      const searched = await store.searchClaims(companionId, 'Tokyo');
+      expect(searched.length).toBeGreaterThan(0);
+      expect(searched[0].sourceEventId).toBe('event-origin-123');
+    });
   });
 });

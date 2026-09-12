@@ -10,6 +10,7 @@ import {
 } from './capability';
 import { ActionPolicyEngine } from './action-policy';
 import { RequestContext } from './context';
+import { ActionAuditEvent } from './action';
 
 describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
   const secretKey = 'prod_secret_signing_key';
@@ -202,6 +203,7 @@ describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
           decisionCode: event1.decision.decisionCode,
         } : null,
         parametersHash: event1.parametersHash || null,
+        resultHash: null,
         error: event1.error || null,
         timestamp: event1.timestamp,
       });
@@ -228,6 +230,7 @@ describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
           decisionCode: event2.decision.decisionCode,
         } : null,
         parametersHash: event2.parametersHash || null,
+        resultHash: null,
         error: event2.error || null,
         timestamp: event2.timestamp,
       });
@@ -243,7 +246,50 @@ describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
       const tamperedHash1 = crypto.createHash('sha256').update(`${initialPrevHash}:${tamperedCanonical1}`, 'utf8').digest('hex');
       const brokenHash2 = crypto.createHash('sha256').update(`${tamperedHash1}:${canonical2}`, 'utf8').digest('hex');
 
-      expect(brokenHash2).not.toBe(event2.resultHash);
+      expect(brokenHash2).not.toBe(event2.eventHash);
+    });
+
+    it('detects tampering with resultHash on completed action events', async () => {
+      const store = new InMemoryActionStore();
+      const initialPrevHash = '0000000000000000000000000000000000000000000000000000000000000000';
+      const event: ActionAuditEvent = {
+        executionId: 'exec-1',
+        actionId: 'act-1',
+        toolName: 'comm/send_email',
+        companionId: 'comp-1',
+        riskLevel: 'LOW',
+        lifecycle: 'COMPLETED',
+        parametersHash: 'param-hash-1',
+        resultHash: 'result-hash-original',
+        timestamp: '2026-09-12T10:00:00.000Z',
+      };
+
+      await store.appendAudit(event);
+      const log = await store.getAuditLog();
+      const recorded = log[0];
+
+      // Tampering with resultHash changes canonical payload and recalculates a mismatched hash
+      const tamperedPayload = {
+        executionId: recorded.executionId,
+        actionId: recorded.actionId,
+        toolName: recorded.toolName,
+        providerId: recorded.providerId || null,
+        companionId: recorded.companionId,
+        actorId: recorded.actorId || null,
+        sessionId: recorded.sessionId || null,
+        channel: recorded.channel || null,
+        correlationId: recorded.correlationId || null,
+        riskLevel: recorded.riskLevel,
+        lifecycle: recorded.lifecycle,
+        decision: null,
+        parametersHash: recorded.parametersHash || null,
+        resultHash: 'result-hash-TAMPERED',
+        error: recorded.error || null,
+        timestamp: recorded.timestamp,
+      };
+      const tamperedCanonical = canonicalizeJson(tamperedPayload);
+      const recomputedHash = crypto.createHash('sha256').update(`${initialPrevHash}:${tamperedCanonical}`, 'utf8').digest('hex');
+      expect(recomputedHash).not.toBe(recorded.eventHash);
     });
   });
 

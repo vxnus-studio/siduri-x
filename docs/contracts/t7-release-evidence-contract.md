@@ -17,7 +17,7 @@ runtime experience proof.
 GO WITH LIMITATIONS — Proven on candidate commit 3b57c79a
 ```
 
-The candidate commit has been verified across branch `main`, environment (Linux / Node 22+),
+The candidate commit has been verified across branch `main`, environment (Linux / Node >=22.16.0),
 monorepo supply chain lock state, 29/29 Turbo tasks across all packages, and clean-machine distribution packaging.
 
 ## Gate order & Verification Summary

@@ -544,6 +544,7 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
         'riskLevel',
         'lifecycle',
         'parametersHash',
+        'resultHash',
       ];
 
       for (const field of criticalFields) {
@@ -568,13 +569,14 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
             decisionCode: tamperedEvent.decision.decisionCode,
           } : null,
           parametersHash: tamperedEvent.parametersHash || null,
+          resultHash: field === 'resultHash' ? 'TAMPERED_VALUE' : null,
           error: tamperedEvent.error || null,
           timestamp: tamperedEvent.timestamp,
         });
 
         const crypto = require('node:crypto');
         const brokenHash1 = crypto.createHash('sha256').update(`${initialPrevHash}:${canonical}`, 'utf8').digest('hex');
-        expect(brokenHash1).not.toBe(event1.resultHash);
+        expect(brokenHash1).not.toBe(event1.eventHash);
       }
     });
   });

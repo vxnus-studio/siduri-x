@@ -1,4 +1,4 @@
-import { EKnowledgeAdapter, isBlockedIp, validateSafeUrl, safeFetch } from './index';
+import { EKnowledgeAdapter, isBlockedIp, validateSafeUrl, safeFetch, createSafeDispatcher } from './index';
 import fs from 'node:fs';
 import path from 'node:path';
 import dns from 'node:dns/promises';
@@ -169,5 +169,21 @@ describe('SSRF Hardening Suite', () => {
 
     await expect(safeFetch('https://public.example/redirect')).rejects.toThrow(/Blocked destination IP address/);
     fetchMock.mockRestore();
+  });
+
+  test('createSafeDispatcher blocks DNS rebinding / TOCTOU at socket connect time', (done) => {
+    const rebindingLookup = async () => ['127.0.0.1'];
+    const dispatcher = createSafeDispatcher(rebindingLookup);
+
+    fetch('http://rebound-attack.example:9999', { dispatcher } as any)
+      .then(() => done(new Error('Expected connect-time SSRF block')))
+      .catch((err) => {
+        try {
+          expect(err.cause?.message || err.message).toMatch(/Connect-time.*blocked/i);
+          done();
+        } catch (assertionErr) {
+          done(assertionErr);
+        }
+      });
   });
 });

@@ -138,6 +138,7 @@ describe('SqliteActionStore Implementation & Durability', () => {
       lifecycle: event1.lifecycle,
       decision: null,
       parametersHash: null,
+      resultHash: null,
       error: null,
       timestamp: event1.timestamp,
     });

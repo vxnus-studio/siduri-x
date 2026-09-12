@@ -202,6 +202,7 @@ export class SqliteActionStore implements ActionStore {
         decisionCode: event.decision.decisionCode,
       } : null,
       parametersHash: event.parametersHash || null,
+      resultHash: event.resultHash || null,
       error: event.error || null,
       timestamp: event.timestamp,
     };

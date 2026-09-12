@@ -238,29 +238,13 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         return res.status(400).json({ error: "Invalid manifest: missing identity.name" });
       }
 
-      const repo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
-
-      await repo.setIdentity({
-        companionId,
-        name: manifest.identity.name,
-        archetype: manifest.identity.archetype,
-        version: manifest.version || '1.0.0',
-        updatedAt: new Date().toISOString(),
-      });
-
-      if (manifest.personality) {
-        await repo.setPersonality(companionId, manifest.personality);
-      }
-
       const directivesToCommit = manifest.directives?.filter((d: any) => approvedDirectiveIds.includes(d.id)) || [];
       for (const d of directivesToCommit) {
         if (!d || typeof d.directive !== 'string') {
-          repo.close();
           return res.status(400).json({ error: "Invalid directive entry: missing directive string" });
         }
         const scan = scanDirective(d.directive);
         if (!scan.safe) {
-          repo.close();
           return res.status(400).json({
             error: `Safety check failed for directive: ${scan.reason}`,
             directiveId: d.id,
@@ -269,11 +253,27 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         }
       }
 
-      if (directivesToCommit.length > 0) {
-        await repo.commitDirectives(companionId, directivesToCommit);
+      const repo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+
+      try {
+        await repo.setIdentity({
+          companionId,
+          name: manifest.identity.name,
+          archetype: manifest.identity.archetype,
+          version: manifest.version || '1.0.0',
+          updatedAt: new Date().toISOString(),
+        });
+
+        if (manifest.personality) {
+          await repo.setPersonality(companionId, manifest.personality);
+        }
+
+        if (directivesToCommit.length > 0) {
+          await repo.commitDirectives(companionId, directivesToCommit);
+        }
+      } finally {
+        repo.close();
       }
-      
-      repo.close();
 
       res.json({ success: true });
     } catch (e: any) {

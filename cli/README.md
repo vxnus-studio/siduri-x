@@ -2,7 +2,7 @@
 
 Experimental CLI for creating, diagnosing, and managing standalone Siduri companions powered by the `@siduri-x/*` organ ecosystem.
 
-Requires Node.js 22 or newer.
+Requires Node.js >=22.16.0.
 
 ```bash
 npx @vxnus/siduri create my-companion
@@ -10,7 +10,7 @@ npx @vxnus/siduri create my-companion
 
 ## Prerequisites
 
-- **Node.js**: `v22.0.0` or newer
+- **Node.js**: `v22.16.0` or newer
 - **LLM API Key**: e.g. `OPENROUTER_API_KEY` for Brain organ
 - **Optional Local Services**:
   - **VOICEVOX**: For voice synthesis (auto-downloaded at runtime by default, or connect to standalone app).

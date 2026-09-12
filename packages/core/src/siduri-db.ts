@@ -106,6 +106,7 @@ export interface MemoryClaim {
   evidence?: string[];
   assertedAt: string;
   supersedes?: string;
+  sourceEventId?: string;
 }
 
 // ==========================================
@@ -228,7 +229,8 @@ export class SiduriDatabase {
         valid_until TEXT,
         evidence TEXT,
         asserted_at TEXT DEFAULT (datetime('now')),
-        supersedes TEXT
+        supersedes TEXT,
+        source_event_id TEXT
       );
 
       -- FTS5 Virtual Table for Memory Claims
@@ -262,6 +264,11 @@ export class SiduriDatabase {
 
     try {
       this.db.exec("ALTER TABLE memory_claims ADD COLUMN supersedes TEXT");
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE memory_claims ADD COLUMN source_event_id TEXT");
     } catch {
       // Column already exists
     }
@@ -603,6 +610,7 @@ export class SiduriDatabase {
       confidence?: number;
       assertedAt?: string;
       supersedes?: string;
+      sourceEventId?: string;
     }
   ): MemoryClaim {
     const id = claim.id || crypto.randomUUID();
@@ -610,8 +618,8 @@ export class SiduriDatabase {
     const confidence = claim.confidence ?? 1.0;
     const assertedAt = claim.assertedAt || new Date().toISOString();
     const stmt = this.db.prepare(`
-      INSERT INTO memory_claims (id, companion_id, subject, predicate, value, status, confidence, valid_from, valid_until, evidence, asserted_at, supersedes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, coalesce(?, datetime('now')), ?)
+      INSERT INTO memory_claims (id, companion_id, subject, predicate, value, status, confidence, valid_from, valid_until, evidence, asserted_at, supersedes, source_event_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, coalesce(?, datetime('now')), ?, ?)
     `);
     stmt.run(
       id,
@@ -625,7 +633,8 @@ export class SiduriDatabase {
       claim.validUntil || null,
       claim.evidence ? JSON.stringify(claim.evidence) : null,
       assertedAt || null,
-      claim.supersedes || null
+      claim.supersedes || null,
+      claim.sourceEventId || null
     );
 
     return {
@@ -635,6 +644,7 @@ export class SiduriDatabase {
       confidence,
       assertedAt,
       supersedes: claim.supersedes,
+      sourceEventId: claim.sourceEventId,
     };
   }
 
@@ -725,6 +735,7 @@ export class SiduriDatabase {
       evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
       assertedAt: row.asserted_at,
       supersedes: row.supersedes || undefined,
+      sourceEventId: row.source_event_id || undefined,
     }));
   }
 
@@ -743,6 +754,7 @@ export class SiduriDatabase {
       evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
       assertedAt: row.asserted_at,
       supersedes: row.supersedes || undefined,
+      sourceEventId: row.source_event_id || undefined,
     }));
   }
 
@@ -761,6 +773,7 @@ export class SiduriDatabase {
       evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
       assertedAt: row.asserted_at,
       supersedes: row.supersedes || undefined,
+      sourceEventId: row.source_event_id || undefined,
     }));
   }
 
@@ -781,6 +794,7 @@ export class SiduriDatabase {
       evidence: (row as any).evidence ? JSON.parse((row as any).evidence) : undefined,
       assertedAt: (row as any).asserted_at,
       supersedes: (row as any).supersedes || undefined,
+      sourceEventId: (row as any).source_event_id || undefined,
     };
   }
 

@@ -1,8 +1,10 @@
 import { KnowledgeItem, KnowledgeOrgan } from '@siduri-x/core';
 import type { LoadedPack } from '@vxnus/e-knowledge';
 import type { KnowledgeProvider, RetrievalResult, KnowledgePackManifest, RetrievalRequest, RetrievalResponse } from '@vxnus/e';
+import { Agent } from 'undici';
 import net from 'node:net';
 import dns from 'node:dns/promises';
+import nodeDns from 'node:dns';
 
 type EKnowledgeModule = typeof import('@vxnus/e-knowledge');
 const loadEKnowledgeModule = (): Promise<EKnowledgeModule> =>
@@ -144,11 +146,73 @@ export async function validateSafeUrl(urlStr: string, options: SafeUrlValidation
 }
 
 /**
+ * Creates an undici.Agent configured to enforce connect-time SSRF defenses,
+ * neutralizing DNS rebinding and TOCTOU attacks at socket creation time.
+ */
+export function createSafeDispatcher(customLookup?: (hostname: string) => Promise<string[]>): Agent {
+  return new Agent({
+    connect: {
+      lookup: (hostname: string, options: any, callback: any) => {
+        if (net.isIP(hostname)) {
+          if (isBlockedIp(hostname)) {
+            return callback(new Error(`Connect-time blocked destination IP address: ${hostname}`));
+          }
+          if (options?.all) {
+            return callback(null, [{ address: hostname, family: net.isIPv4(hostname) ? 4 : 6 }]);
+          }
+          return callback(null, hostname, net.isIPv4(hostname) ? 4 : 6);
+        }
+
+        if (customLookup) {
+          customLookup(hostname)
+            .then((addresses) => {
+              if (!addresses || addresses.length === 0) {
+                return callback(new Error(`No DNS records found for hostname: ${hostname}`));
+              }
+              for (const addr of addresses) {
+                if (isBlockedIp(addr)) {
+                  return callback(new Error(`Connect-time hostname "${hostname}" resolved to blocked IP address: ${addr}`));
+                }
+              }
+              if (options?.all) {
+                return callback(null, addresses.map((a) => ({ address: a, family: net.isIPv4(a) ? 4 : 6 })));
+              }
+              return callback(null, addresses[0], net.isIPv4(addresses[0]) ? 4 : 6);
+            })
+            .catch((err) => callback(err));
+          return;
+        }
+
+        nodeDns.lookup(hostname, options, (err: any, addresses: any, family: any) => {
+          if (err) return callback(err);
+          if (options?.all && Array.isArray(addresses)) {
+            for (const item of addresses) {
+              if (isBlockedIp(item.address)) {
+                return callback(new Error(`Connect-time hostname "${hostname}" resolved to blocked IP address: ${item.address}`));
+              }
+            }
+            return callback(null, addresses);
+          }
+          if (typeof addresses === 'string') {
+            if (isBlockedIp(addresses)) {
+              return callback(new Error(`Connect-time hostname "${hostname}" resolved to blocked IP address: ${addresses}`));
+            }
+            return callback(null, addresses, family);
+          }
+          callback(null, addresses, family);
+        });
+      },
+    },
+  });
+}
+
+/**
  * Safe fetch wrapper that enforces:
  * 1. Target URL validation (SSRF defense)
- * 2. Manual redirect following with re-validation of each redirect target
- * 3. Timeout via AbortController
- * 4. Maximum response size limit
+ * 2. Connect-time DNS validation via undici.Agent (anti-DNS rebinding / TOCTOU)
+ * 3. Manual redirect following with re-validation of each redirect target
+ * 4. Timeout via AbortController
+ * 5. Maximum response size limit
  */
 export async function safeFetch(
   urlStr: string,
@@ -159,15 +223,18 @@ export async function safeFetch(
     timeoutMs?: number;
     maxBytes?: number;
     maxRedirects?: number;
+    dnsLookup?: (hostname: string) => Promise<string[]>;
+    dispatcher?: Agent;
   } = {}
 ): Promise<Response> {
   let currentUrl = urlStr;
   const maxRedirects = options.maxRedirects ?? 3;
   const timeoutMs = options.timeoutMs ?? 5000;
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
+  const dispatcher = options.dispatcher || createSafeDispatcher(options.dnsLookup);
 
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount++) {
-    const validated = await validateSafeUrl(currentUrl);
+    const validated = await validateSafeUrl(currentUrl, { dnsLookup: options.dnsLookup });
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -179,7 +246,8 @@ export async function safeFetch(
         body: options.body,
         signal: controller.signal,
         redirect: 'manual',
-      });
+        dispatcher,
+      } as any);
 
       // Handle Redirects safely
       if (response.status >= 300 && response.status < 400) {

@@ -26,6 +26,7 @@ export interface ClaimProposalInput {
   validUntil?: string;
   evidence?: string[];
   supersedes?: string;
+  sourceEventId?: string;
 }
 
 export interface EpisodicMemoryStore {

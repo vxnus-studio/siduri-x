@@ -215,6 +215,14 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `const __dirname = path.dirname(__filename);`,
     `const rootDir = path.resolve(__dirname, '..');`,
     '',
+    `try {`,
+    `  process.loadEnvFile(path.join(rootDir, '.env'));`,
+    `} catch (err) {`,
+    `  if (err?.code !== 'ENOENT') {`,
+    `    console.error('Failed to load .env file:', err.message);`,
+    `  }`,
+    `}`,
+    '',
     `const config = JSON.parse(`,
     `  await readFile(path.join(rootDir, 'siduri.config.json'), 'utf8')`,
     `);`,
@@ -605,7 +613,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '',
     '## Prerequisites',
     '',
-    '- **Node.js**: `v22.0.0` or higher',
+    '- **Node.js**: `v22.16.0` or higher',
     '- **Environment**: Valid `.env` file (configured from `.env.example`)',
   ];
 

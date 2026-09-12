@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Express } from 'express';

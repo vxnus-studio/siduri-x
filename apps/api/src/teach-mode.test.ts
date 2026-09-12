@@ -144,5 +144,9 @@ kind: "other"
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('Safety check failed');
     expect(res.body.directiveId).toBe('dir-evil');
+
+    // Verify repo was never instantiated or written to for unsafe manifest
+    const MockRepo = SqliteSelfRepository as jest.MockedClass<typeof SqliteSelfRepository>;
+    expect(MockRepo.mock.instances.length).toBe(0);
   });
 });

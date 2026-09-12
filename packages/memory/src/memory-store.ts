@@ -73,6 +73,7 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
       evidence: raw.evidence,
       assertedAt: new Date().toISOString(),
       supersedes: raw.supersedes,
+      sourceEventId: raw.sourceEventId,
     });
     return claim;
   }
