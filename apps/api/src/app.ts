@@ -7,7 +7,7 @@ import { PostgresMemoryOrgan } from '@siduri-x/memory';
 import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
 import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/eknowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
-import { ActiveSelfCompiler } from '@siduri-x/self';
+import { ActiveSelfCompiler, SelfPackageParser, SqliteSelfRepository } from '@siduri-x/self';
 import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
 import { FixtureObservationOrgan } from '@siduri-x/observation';
 import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@siduri-x/hands';
@@ -210,6 +210,52 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     });
   });
   app.put('/me', requireAuth, (req, res) => res.json({ success: true }));
+
+  // TEACH MODE ENDPOINTS
+  app.post('/teach/upload-self', requireAuth, async (req, res) => {
+    try {
+      const { content } = req.body;
+      if (!content) return res.status(400).json({ error: "Missing content" });
+      const parsed = SelfPackageParser.parse(content);
+      res.json(parsed);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/teach/install-self', requireAuth, async (req, res) => {
+    try {
+      const { companionId, manifest, approvedDirectiveIds } = req.body;
+      if (!companionId || !manifest || !Array.isArray(approvedDirectiveIds)) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const repo = new SqliteSelfRepository({ dbPath: process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+
+      await repo.setIdentity({
+        companionId,
+        name: manifest.identity.name,
+        archetype: manifest.identity.archetype,
+        version: manifest.version || '1.0.0',
+        updatedAt: new Date().toISOString(),
+      });
+
+      if (manifest.personality) {
+        await repo.setPersonality(companionId, manifest.personality);
+      }
+
+      const directivesToCommit = manifest.directives?.filter((d: any) => approvedDirectiveIds.includes(d.id)) || [];
+      if (directivesToCommit.length > 0) {
+        await repo.commitDirectives(companionId, directivesToCommit);
+      }
+      
+      repo.close();
+
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 
   // CHAT (API context boundary validation)
   app.post('/chat', attachIdentity, async (req, res) => {
