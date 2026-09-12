@@ -358,7 +358,9 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         res.write(`event: avatar\ndata: ${JSON.stringify(avatarEvent)}\n\n`);
       }
 
-      const speechText = response.delivery?.text || response.response?.subtitle_en || response.response?.spoken_ja || '';
+      const maxStreamLen = Number(process.env.SIDURI_MAX_RESPONSE_CHARS || 8000);
+      const rawSpeechText = response.delivery?.text || response.response?.subtitle_en || response.response?.spoken_ja || '';
+      const speechText = rawSpeechText.slice(0, maxStreamLen);
       const utterance = {
         utteranceId: response.response_id || 'utt-stream',
         companionId,

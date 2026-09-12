@@ -103,6 +103,14 @@ updateFile('apps/siduri-web-astro/src/components/OrgansMatrix.astro', (content) 
   return res;
 });
 
+// 6. Sync CLI_VERSION in cli/src/index.ts
+updateFile('cli/src/index.ts', (content) => {
+  return content.replace(
+    /export const CLI_VERSION = '[0-9]+\.[0-9]+\.[0-9]+';/g,
+    `export const CLI_VERSION = '${cliVer}';`
+  );
+});
+
 if (isCheckMode && hasDiff) {
   console.error('\nDocumentation or metadata versions are out of sync with package.json.');
   console.error('Run "pnpm run sync:versions" to update them.');

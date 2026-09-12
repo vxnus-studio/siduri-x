@@ -1,7 +1,10 @@
-SIDURI ORGAN ARCHITECTURE — DECOUPLING PHILOSOPHY
+# SIDURI ORGAN ARCHITECTURE — DECOUPLING PHILOSOPHY
 
-Core philosophy
-----------------
+> **CANONICAL ARCHITECTURAL SPECIFICATION NOTICE:**  
+> For the authoritative implementation architecture, package topology, and SQLite database schema, refer to [**Architecture Overview**](./architecture.md) and [**Clean Architecture & Pure SQLite Substrates**](../self-organ-knowledge/README.md).  
+> This document serves as the foundational decoupling philosophy reference.
+
+## Core philosophy
 Siduri should not be designed as a chat application with AI features attached.
 
 Siduri is a cognition/runtime system composed of independent organs.

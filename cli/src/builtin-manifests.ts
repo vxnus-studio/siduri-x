@@ -2,10 +2,10 @@ import { OrganManifest } from './manifest';
 
 export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
-    name: '@siduri-x/behavior',
+    name: '@siduri-x/self',
     organType: 'behavior',
     version: '2.0.0',
-    displayName: 'Behavior (Active Self Directives)',
+    displayName: 'Behavior / Self (Active Self Directives)',
     description: 'Atomic directive state machine and personality projection compiler',
     entrypoint: './dist/index.js',
     factory: 'ActiveSelfCompiler',

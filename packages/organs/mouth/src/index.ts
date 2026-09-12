@@ -323,7 +323,8 @@ export class DefaultMouthOrgan implements MouthOrgan, ExperienceAdapter {
     }
 
     try {
-      const text = utterance.text || '';
+      const rawText = utterance.text || '';
+      const text = rawText.slice(0, this.maxTextLength);
       const words = text.split(/(\s+)/);
       let index = 0;
 

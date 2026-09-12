@@ -33,6 +33,9 @@ export interface EpisodicMemoryStore {
   proposeClaim(claim: ClaimProposalInput): Promise<MemoryClaim>;
   approveClaim(claimId: string): Promise<void>;
   rejectClaim(claimId: string): Promise<void>;
+  revokeClaim?(claimId: string): Promise<void>;
+  expireClaim?(claimId: string): Promise<void>;
+  markClaimSessionOnly?(claimId: string): Promise<void>;
   searchClaims(companionId: string, query: string, limit?: number): Promise<MemoryClaim[]>;
   getApprovedClaims(companionId: string, limit?: number): Promise<MemoryClaim[]>;
   close(): void;

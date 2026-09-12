@@ -64,6 +64,22 @@ export class SqliteSelfRepository implements SelfRepository {
     }
   }
 
+  async approveDirective(id: string): Promise<void> {
+    this.db.approveDirective(id);
+  }
+
+  async rejectDirective(id: string): Promise<void> {
+    this.db.rejectDirective(id);
+  }
+
+  async revokeDirective(id: string): Promise<void> {
+    this.db.revokeDirective(id);
+  }
+
+  async expireDirective(id: string): Promise<void> {
+    this.db.expireDirective(id);
+  }
+
   async disableDirective(id: string): Promise<void> {
     this.db.disableDirective(id);
   }

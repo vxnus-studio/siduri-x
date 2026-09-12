@@ -646,5 +646,86 @@ describe('SiduriDatabase', () => {
       expect(db.searchClaims(cId, 'anything')).toHaveLength(0);
       expect(db.getApprovedClaims(cId)).toHaveLength(0);
     });
+
+    it('enforces directive state transitions (pending -> active -> disabled/rejected/revoked)', () => {
+      db = new SiduriDatabase({ dbPath });
+      const cId = 'directive-state-test';
+      const dId = 'dir-lifecycle-1';
+
+      // 1. Commit directive in PENDING state
+      db.commitDirective({
+        id: dId,
+        companionId: cId,
+        priority: 60,
+        directive: 'Always verify claims',
+        status: 'PENDING',
+        category: 'behavioral',
+      });
+
+      // Pending directives must not be returned by getActiveDirectives
+      expect(db.getActiveDirectives(cId)).toHaveLength(0);
+
+      // 2. Approve directive
+      db.approveDirective(dId);
+      const active = db.getActiveDirectives(cId);
+      expect(active).toHaveLength(1);
+      expect(active[0].id).toBe(dId);
+      expect(active[0].status).toBe('ACTIVE');
+
+      // 3. Revoke directive
+      db.revokeDirective(dId);
+      expect(db.getActiveDirectives(cId)).toHaveLength(0);
+
+      // 4. Reject directive
+      const d2Id = 'dir-lifecycle-2';
+      db.commitDirective({
+        id: d2Id,
+        companionId: cId,
+        priority: 50,
+        directive: 'Unsafe rule',
+        status: 'PENDING',
+        category: 'behavioral',
+      });
+      db.rejectDirective(d2Id);
+      expect(db.getActiveDirectives(cId)).toHaveLength(0);
+    });
+
+    it('enforces claim state transitions (pending -> approved -> revoked/expired/session_only)', () => {
+      db = new SiduriDatabase({ dbPath });
+      const cId = 'claim-state-test';
+
+      const claim = db.proposeClaim({
+        id: 'claim-1',
+        companionId: cId,
+        subject: 'user',
+        predicate: 'likes',
+        value: 'matcha',
+      });
+      expect(claim.status).toBe('PENDING');
+      expect(db.getApprovedClaims(cId)).toHaveLength(0);
+
+      // Approve
+      db.approveClaim('claim-1');
+      expect(db.getApprovedClaims(cId)).toHaveLength(1);
+
+      // Revoke
+      db.revokeClaim('claim-1');
+      expect(db.getApprovedClaims(cId)).toHaveLength(0);
+
+      // Session only
+      const claim2 = db.proposeClaim({
+        id: 'claim-2',
+        companionId: cId,
+        subject: 'session',
+        predicate: 'topic',
+        value: 'investigation',
+      });
+      db.markClaimSessionOnly('claim-2');
+      expect(db.getApprovedClaims(cId)).toHaveLength(0);
+
+      // Expire
+      db.expireClaim('claim-2');
+      expect(db.getApprovedClaims(cId)).toHaveLength(0);
+    });
   });
 });

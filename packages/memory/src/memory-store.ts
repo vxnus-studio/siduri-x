@@ -84,6 +84,18 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     this.db.rejectClaim(claimId);
   }
 
+  async revokeClaim(claimId: string): Promise<void> {
+    this.db.revokeClaim(claimId);
+  }
+
+  async expireClaim(claimId: string): Promise<void> {
+    this.db.expireClaim(claimId);
+  }
+
+  async markClaimSessionOnly(claimId: string): Promise<void> {
+    this.db.markClaimSessionOnly(claimId);
+  }
+
   async searchClaims(
     arg1: string,
     arg2?: string | MemoryScope | MemoryQueryOptions,
@@ -151,15 +163,19 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
   }
 
   async approveDirective(id: string): Promise<void> {
-    // Commit as active
+    this.db.approveDirective(id);
   }
 
   async rejectDirective(id: string): Promise<void> {
-    this.db.disableDirective(id);
+    this.db.rejectDirective(id);
   }
 
   async revokeDirective(id: string): Promise<void> {
-    this.db.disableDirective(id);
+    this.db.revokeDirective(id);
+  }
+
+  async expireDirective(id: string): Promise<void> {
+    this.db.expireDirective(id);
   }
 
   async disableDirective(id: string): Promise<void> {

@@ -106,6 +106,24 @@ describe('@siduri-x/mouth - DefaultMouthOrgan', () => {
     expect(reconstructed).toBe(sampleUtterance.text);
   });
 
+  test('strictly bounds streaming text length to maxTextLength', async () => {
+    const mouth = new DefaultMouthOrgan({ maxTextLength: 10 });
+    const longUtterance: MouthUtterance = {
+      ...sampleUtterance,
+      text: 'This is a very long response text that exceeds 10 characters',
+    };
+
+    const chunks: string[] = [];
+    for await (const chunk of mouth.stream(longUtterance)) {
+      if (!chunk.isComplete) {
+        chunks.push(chunk.deltaText);
+      }
+    }
+
+    const reconstructed = chunks.join('');
+    expect(reconstructed.length).toBeLessThanOrEqual(10);
+  });
+
   test('implements ExperienceAdapter interface and handles events', async () => {
     const mouth = new DefaultMouthOrgan();
     const approvedEvent: ExperienceEvent = {

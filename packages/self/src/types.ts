@@ -20,6 +20,10 @@ export interface SelfRepository {
   getActiveDirectives(companionId: string): Promise<SelfDirective[]>;
   commitDirectives(companionId: string, directives: SelfDirective[]): Promise<void>;
   disableDirective(id: string): Promise<void>;
+  approveDirective?(id: string): Promise<void>;
+  rejectDirective?(id: string): Promise<void>;
+  revokeDirective?(id: string): Promise<void>;
+  expireDirective?(id: string): Promise<void>;
   getRelationship(companionId: string, entityId: string): Promise<SelfRelationship | null>;
   updateRelationship(companionId: string, rel: SelfRelationship): Promise<void>;
 }

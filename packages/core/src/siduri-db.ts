@@ -30,10 +30,10 @@ export interface SelfDirective {
   companionId: string;
   priority: number;
   directive: string;
-  status: 'ACTIVE' | 'DISABLED' | 'SUPERSEDED';
-  category: 'behavioral' | 'guardrail' | 'relational';
+  status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
+  category: 'behavioral' | 'guardrail' | 'relational' | string;
   supersedesId?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface SelfRelationship {
@@ -99,7 +99,7 @@ export interface MemoryClaim {
   subject: string;
   predicate: string;
   value: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SESSION_ONLY' | 'SUPERSEDED' | 'REVOKED' | 'EXPIRED';
   confidence: number;
   validFrom?: string;
   validUntil?: string;
@@ -363,6 +363,26 @@ export class SiduriDatabase {
     );
   }
 
+  public approveDirective(id: string): void {
+    const stmt = this.db.prepare("UPDATE self_directives SET status = 'ACTIVE' WHERE id = ?");
+    stmt.run(id);
+  }
+
+  public rejectDirective(id: string): void {
+    const stmt = this.db.prepare("UPDATE self_directives SET status = 'REJECTED' WHERE id = ?");
+    stmt.run(id);
+  }
+
+  public revokeDirective(id: string): void {
+    const stmt = this.db.prepare("UPDATE self_directives SET status = 'REVOKED' WHERE id = ?");
+    stmt.run(id);
+  }
+
+  public expireDirective(id: string): void {
+    const stmt = this.db.prepare("UPDATE self_directives SET status = 'EXPIRED' WHERE id = ?");
+    stmt.run(id);
+  }
+
   public disableDirective(id: string): void {
     const stmt = this.db.prepare("UPDATE self_directives SET status = 'DISABLED' WHERE id = ?");
     stmt.run(id);
@@ -570,9 +590,16 @@ export class SiduriDatabase {
     }));
   }
 
-  public proposeClaim(claim: Omit<MemoryClaim, 'status'>): MemoryClaim {
+  public proposeClaim(
+    claim: Omit<MemoryClaim, 'status' | 'confidence' | 'assertedAt'> & {
+      confidence?: number;
+      assertedAt?: string;
+    }
+  ): MemoryClaim {
     const id = claim.id || crypto.randomUUID();
     const status = 'PENDING';
+    const confidence = claim.confidence ?? 1.0;
+    const assertedAt = claim.assertedAt || new Date().toISOString();
     const stmt = this.db.prepare(`
       INSERT INTO memory_claims (id, companion_id, subject, predicate, value, status, confidence, valid_from, valid_until, evidence, asserted_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, coalesce(?, datetime('now')))
@@ -584,17 +611,19 @@ export class SiduriDatabase {
       claim.predicate,
       claim.value,
       status,
-      claim.confidence ?? 1.0,
+      confidence,
       claim.validFrom || null,
       claim.validUntil || null,
       claim.evidence ? JSON.stringify(claim.evidence) : null,
-      claim.assertedAt || null
+      assertedAt || null
     );
 
     return {
       ...claim,
       id,
-      status
+      status,
+      confidence,
+      assertedAt,
     };
   }
 
@@ -605,6 +634,21 @@ export class SiduriDatabase {
 
   public rejectClaim(id: string): void {
     const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REJECTED' WHERE id = ?");
+    stmt.run(id);
+  }
+
+  public revokeClaim(id: string): void {
+    const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REVOKED' WHERE id = ?");
+    stmt.run(id);
+  }
+
+  public expireClaim(id: string): void {
+    const stmt = this.db.prepare("UPDATE memory_claims SET status = 'EXPIRED' WHERE id = ?");
+    stmt.run(id);
+  }
+
+  public markClaimSessionOnly(id: string): void {
+    const stmt = this.db.prepare("UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = ?");
     stmt.run(id);
   }
 

@@ -247,4 +247,48 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       store2.close();
     });
   });
+
+  describe('Directive and Claim Lifecycle State Machine', () => {
+    it('proposes, approves, and revokes directives', async () => {
+      const dir = await store.proposeDirective({
+        directive: 'Respond with conciseness',
+        priority: 70,
+        category: 'behavioral',
+      });
+      expect(dir.status).toBe('PENDING');
+
+      // Before approval, active directives must not include it
+      let directives = await store.getDirectives();
+      expect(directives.some((d) => d.id === dir.id)).toBe(false);
+
+      // Approve directive
+      await store.approveDirective(dir.id);
+      directives = await store.getDirectives();
+      expect(directives.some((d) => d.id === dir.id && d.status === 'ACTIVE')).toBe(true);
+
+      // Revoke directive
+      await store.revokeDirective(dir.id);
+      directives = await store.getDirectives();
+      expect(directives.some((d) => d.id === dir.id)).toBe(false);
+    });
+
+    it('proposes, approves, revokes, and expires claims', async () => {
+      const claim = await store.proposeClaim({
+        id: 'claim-fsm',
+        companionId,
+        subject: 'weather',
+        predicate: 'condition',
+        value: 'rainy',
+      });
+      expect(claim.status).toBe('PENDING');
+
+      await store.approveClaim('claim-fsm');
+      let approved = await store.getApprovedClaims(companionId);
+      expect(approved.some((c) => c.id === 'claim-fsm')).toBe(true);
+
+      await store.revokeClaim('claim-fsm');
+      approved = await store.getApprovedClaims(companionId);
+      expect(approved.some((c) => c.id === 'claim-fsm')).toBe(false);
+    });
+  });
 });

@@ -1,7 +1,8 @@
 # RFC: Siduri-X Self, Organs, Knowledge, and Memory Architecture
 
-> **Status:** Implemented (Adopted as Canonical Architecture)  
+> **Status:** Historical Proposal / Implemented (Adopted as Canonical Architecture)  
 > **Canonical Blueprint:** [`docs/self-organ-knowledge/README.md`](../self-organ-knowledge/README.md)  
+> **Database Notice:** Early drafts of this RFC discussed retaining PostgreSQL for memory. The final implementation completely purged PostgreSQL in Phase 6 in favor of unified Pure SQLite WAL + FTS5 (`siduri.sqlite`).  
 > **Scope:** Core architecture / persistence / cognitive model  
 > **Execution:** Completed across Phases 1–6 (`docs/self-organ-knowledge/03-phased-migration-plan.md`)  
 > **Authors:** Siduri-X  

@@ -1,6 +1,7 @@
 # Phased Migration Plan: Single-Owner Single-Machine Architecture
 
-> **Status**: Approved Roadmap  
+> **Status**: Completed (Historical Reference)  
+> **Note**: This roadmap guided the initial removal of multi-audience RBAC columns from PostgreSQL. All PostgreSQL dependencies have since been purged in favor of unified Pure SQLite (`siduri.sqlite`). See [03-phased-migration-plan.md](../self-organ-knowledge/03-phased-migration-plan.md) for the canonical architecture migration.  
 > **Target**: Completely eliminate remaining assumptions, data types, database schemas, prompt instructions, and UI partitions of the legacy multi-audience and internal RBAC (`VIEWER` / `OPERATOR` / `OWNER`) mental model across `@siduri-x`.
 
 ---
