@@ -50,7 +50,7 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
     for (const pkg of canonicalPackages) {
       packagesChecked++;
       try {
-        run(`pnpm --filter ${pkg.name} pack --pack-destination ${tempPackDir}`, repoRoot);
+        run(`pnpm pack --pack-destination ${tempPackDir}`, path.resolve(repoRoot, pkg.dir));
       } catch (err: any) {
         errors.push(`Failed to pack ${pkg.name}: ${err.message}`);
         continue;
