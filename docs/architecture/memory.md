@@ -30,11 +30,12 @@ Memories in Siduri are structured as **versioned claims** rather than raw unboun
 - **Metadata**: Provenance, confidence score (`0.0` - `1.0`), privacy/sensitivity level (`public`, `private`, `system`), and creation/validity timestamps.
 
 ### 1.2 Companion Scoping
-Every memory table tracks `companion_id`, scoping memory events to specific companion instances on the local machine.
+Every memory table tracks `companion_id`, scoping memory events to specific companion instances on the local machine. In current single-companion releases, this defaults to `'default'` and is architecturally reserved for multi-agent workspaces.
 
-### 1.3 Full-Text Search (FTS)
+### 1.3 Full-Text Search (FTS) & Truth Gating
+* **Truth Gating Filter**: `searchClaims()` strictly filters `status = 'APPROVED'` to prevent unverified or rejected claims from entering the perception cycle and context prompt.
 * **Legacy Design:** PostgreSQL Full-Text Search (`tsvector`) and GIN indexes.
-* **Implemented Design:** SQLite FTS5 virtual tables (`memory_claims_fts`) using BM25 relevance ranking.
+* **Implemented Design:** SQLite FTS5 virtual tables (`memory_search`) using BM25 relevance ranking.
 
 ---
 

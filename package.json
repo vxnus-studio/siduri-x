@@ -2,7 +2,7 @@
   "name": "siduri-x",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "build": "turbo run build",

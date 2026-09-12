@@ -290,5 +290,76 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       approved = await store.getApprovedClaims(companionId);
       expect(approved.some((c) => c.id === 'claim-fsm')).toBe(false);
     });
+
+    it('excludes pending and rejected claims from searchClaims', async () => {
+      const pendingClaim: ClaimProposalInput = {
+        id: 'claim-secret-unapproved',
+        companionId,
+        subject: 'TopSecret',
+        predicate: 'codename',
+        value: 'ProjectNebulaX',
+      };
+      await store.proposeClaim(pendingClaim);
+
+      // Search before approval: must NOT find it
+      const unapprovedResults = await store.searchClaims(companionId, 'ProjectNebulaX');
+      expect(unapprovedResults.some((c) => c.id === 'claim-secret-unapproved')).toBe(false);
+
+      // After approval: must find it
+      await store.approveClaim('claim-secret-unapproved');
+      const approvedResults = await store.searchClaims(companionId, 'ProjectNebulaX');
+      expect(approvedResults.some((c) => c.id === 'claim-secret-unapproved')).toBe(true);
+    });
+
+    it('resets memory for active companion without affecting other companions', async () => {
+      const otherCompanion = 'companion-other-reset';
+      await store.proposeClaim({
+        id: 'claim-self-reset',
+        companionId,
+        subject: 'LocalUser',
+        predicate: 'resides',
+        value: 'NeoTokyo',
+      });
+      await store.approveClaim('claim-self-reset');
+
+      await store.proposeClaim({
+        id: 'claim-other-stay',
+        companionId: otherCompanion,
+        subject: 'RemoteUser',
+        predicate: 'resides',
+        value: 'Kyoto',
+      });
+      // Approve for other companion directly on db
+      (store as any).db.approveClaim('claim-other-stay', otherCompanion);
+
+      expect((await store.getApprovedClaims(companionId)).length).toBe(1);
+      expect((await store.getApprovedClaims(otherCompanion)).length).toBe(1);
+
+      await store.resetMemory(companionId);
+
+      expect(await store.getApprovedClaims(companionId)).toHaveLength(0);
+      expect(await store.getApprovedClaims(otherCompanion)).toHaveLength(1);
+    });
+
+    it('updates claim by proposing a pending replacement claim', async () => {
+      await store.proposeClaim({
+        id: 'claim-to-update',
+        companionId,
+        subject: 'UserRole',
+        predicate: 'is',
+        value: 'Developer',
+      });
+      await store.approveClaim('claim-to-update');
+
+      const updated = await store.updateClaim('claim-to-update', {
+        value: 'LeadArchitect',
+      });
+      expect(updated.status).toBe('PENDING');
+      expect(updated.value).toBe('LeadArchitect');
+
+      // The original approved claim remains Developer until replacement is approved
+      const currentApproved = await store.getApprovedClaims(companionId);
+      expect(currentApproved.find((c) => c.id === 'claim-to-update')?.value).toBe('Developer');
+    });
   });
 });

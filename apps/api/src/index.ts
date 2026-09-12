@@ -79,7 +79,7 @@ function createBody(config?: Live2DAdapterConfig & { provider?: string }) {
 
 function createMemory(config?: { provider?: string; connectionString?: string; maxConnections?: number; dbPath?: string }) {
   if (isDisabled(config)) return undefined;
-  return new SqliteMemoryStore({ dbPath: config?.dbPath || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+  return new SqliteMemoryStore({ dbPath: config?.dbPath || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
 }
 
 const PORT = process.env.PORT || 3001;
@@ -151,7 +151,7 @@ async function bootDefaultCompanion() {
     vision ?? { analyze: async () => JSON.stringify({ readings: [] }) },
   );
   instance.setObservationOrgan(observation);
-  const selfRepo = new SqliteSelfRepository({ dbPath: process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+  const selfRepo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
   const behavior = createBehavior(config.behavior);
   const body = createBody(config.body);
 

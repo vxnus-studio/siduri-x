@@ -517,6 +517,94 @@ describe('SiduriDatabase', () => {
       // More occurrences of "dark" → better BM25 rank (lower rank value = better match)
       expect(results[0].id).toBe(c1.id);
     });
+
+    it('excludes pending and rejected claims from searchClaims in SiduriDatabase', () => {
+      db = new SiduriDatabase({ dbPath });
+
+      const pending = db.proposeClaim({
+        id: crypto.randomUUID(),
+        companionId: 'siduri-test',
+        subject: 'SecretProject',
+        predicate: 'status',
+        value: 'unapproved draft specification',
+        confidence: 0.9,
+        assertedAt: new Date().toISOString(),
+      });
+
+      // Must not match while pending
+      let results = db.searchClaims('siduri-test', 'unapproved');
+      expect(results.some((r) => r.id === pending.id)).toBe(false);
+
+      // Approve: now it matches
+      db.approveClaim(pending.id, 'siduri-test');
+      results = db.searchClaims('siduri-test', 'unapproved');
+      expect(results.some((r) => r.id === pending.id)).toBe(true);
+
+      // Reject: must no longer match
+      db.rejectClaim(pending.id, 'siduri-test');
+      results = db.searchClaims('siduri-test', 'unapproved');
+      expect(results.some((r) => r.id === pending.id)).toBe(false);
+    });
+
+    it('bounds approveClaim to specific companionId when provided', () => {
+      db = new SiduriDatabase({ dbPath });
+
+      const claim = db.proposeClaim({
+        id: crypto.randomUUID(),
+        companionId: 'companion-target',
+        subject: 'ProtectedFact',
+        predicate: 'belongsTo',
+        value: 'Target',
+        confidence: 1.0,
+        assertedAt: new Date().toISOString(),
+      });
+
+      // Attempting to approve for a different companion must not affect it
+      db.approveClaim(claim.id, 'companion-intruder');
+      expect(db.getApprovedClaims('companion-target')).toHaveLength(0);
+
+      // Approving with the correct companionId succeeds
+      db.approveClaim(claim.id, 'companion-target');
+      expect(db.getApprovedClaims('companion-target')).toHaveLength(1);
+    });
+
+    it('resets memory for the specified companion only', () => {
+      db = new SiduriDatabase({ dbPath });
+
+      const c1 = db.proposeClaim({
+        id: crypto.randomUUID(),
+        companionId: 'comp-1',
+        subject: 'Fact1',
+        predicate: 'is',
+        value: 'One',
+        confidence: 1.0,
+      });
+      const c2 = db.proposeClaim({
+        id: crypto.randomUUID(),
+        companionId: 'comp-2',
+        subject: 'Fact2',
+        predicate: 'is',
+        value: 'Two',
+        confidence: 1.0,
+      });
+
+      db.approveClaim(c1.id, 'comp-1');
+      db.approveClaim(c2.id, 'comp-2');
+
+      db.recordEvent({
+        id: crypto.randomUUID(),
+        companionId: 'comp-1',
+        sourceType: 'chat_turn',
+        occurredAt: new Date().toISOString(),
+        payload: { text: 'Hello' },
+      });
+
+      db.resetMemory('comp-1');
+
+      expect(db.getApprovedClaims('comp-1')).toHaveLength(0);
+      expect(db.getRecentEvents('comp-1')).toHaveLength(0);
+      expect(db.getApprovedClaims('comp-2')).toHaveLength(1);
+    });
   });
 
   // ==========================================

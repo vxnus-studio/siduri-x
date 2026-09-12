@@ -138,8 +138,8 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       }
 
       const brain = createBrain(config.brain);
-      const memory = new SqliteMemoryStore({ dbPath: process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
-      const selfRepo = new SqliteSelfRepository({ dbPath: process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+      const memory = new SqliteMemoryStore({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+      const selfRepo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
       const voice = createVoice(config.voice);
       const knowledge = createKnowledge(config.knowledge);
       const vision = createVision(config.vision);
@@ -233,7 +233,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const repo = new SqliteSelfRepository({ dbPath: process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+      const repo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
 
       await repo.setIdentity({
         companionId,

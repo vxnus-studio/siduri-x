@@ -112,7 +112,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     private: true,
     type: 'module',
     engines: {
-      node: '>=22',
+      node: '>=22.13.0',
     },
     scripts,
     dependencies,

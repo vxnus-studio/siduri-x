@@ -76,24 +76,24 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return claim;
   }
 
-  async approveClaim(claimId: string): Promise<void> {
-    this.db.approveClaim(claimId);
+  async approveClaim(claimId: string, companionId?: string): Promise<void> {
+    this.db.approveClaim(claimId, companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined));
   }
 
-  async rejectClaim(claimId: string): Promise<void> {
-    this.db.rejectClaim(claimId);
+  async rejectClaim(claimId: string, companionId?: string): Promise<void> {
+    this.db.rejectClaim(claimId, companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined));
   }
 
-  async revokeClaim(claimId: string): Promise<void> {
-    this.db.revokeClaim(claimId);
+  async revokeClaim(claimId: string, companionId?: string): Promise<void> {
+    this.db.revokeClaim(claimId, companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined));
   }
 
-  async expireClaim(claimId: string): Promise<void> {
-    this.db.expireClaim(claimId);
+  async expireClaim(claimId: string, companionId?: string): Promise<void> {
+    this.db.expireClaim(claimId, companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined));
   }
 
-  async markClaimSessionOnly(claimId: string): Promise<void> {
-    this.db.markClaimSessionOnly(claimId);
+  async markClaimSessionOnly(claimId: string, companionId?: string): Promise<void> {
+    this.db.markClaimSessionOnly(claimId, companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined));
   }
 
   async searchClaims(
@@ -136,8 +136,26 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
   }
 
   async getPendingClaims(limit: number = 50): Promise<Claim[]> {
-    const all = this.db.searchClaims(this.activeCompanionId, '', limit);
-    return all.filter((c) => c.status === 'PENDING') as any;
+    return this.db.getPendingClaims(this.activeCompanionId, limit) as any;
+  }
+
+  async updateClaim(
+    id: string,
+    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil'>>
+  ): Promise<Claim> {
+    const rawExisting = (await this.getClaims(100)).find((c: any) => c.id === id) ||
+      (await this.getPendingClaims(100)).find((c: any) => c.id === id);
+    const existing = rawExisting as any;
+    const replacement = await this.proposeClaim({
+      companionId: this.activeCompanionId,
+      subject: updates.subject || existing?.subject || '',
+      predicate: updates.predicate || existing?.predicate || '',
+      value: updates.value || existing?.value || '',
+      confidence: updates.confidence ?? existing?.confidence ?? 1.0,
+      validFrom: updates.validFrom || existing?.validFrom,
+      validUntil: updates.validUntil || existing?.validUntil,
+    });
+    return replacement;
   }
 
   async getDirectives(): Promise<BehaviorDirective[]> {
@@ -186,8 +204,9 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     // In pure SQLite WAL mode, schema is initialized automatically in constructor
   }
 
-  async resetMemory(): Promise<void> {
-    // Reset memory for active companion
+  async resetMemory(companionId?: string): Promise<void> {
+    const target = companionId || this.activeCompanionId;
+    this.db.resetMemory(target);
   }
 
   close(): void {

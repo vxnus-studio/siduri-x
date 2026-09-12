@@ -627,40 +627,82 @@ export class SiduriDatabase {
     };
   }
 
-  public approveClaim(id: string): void {
-    const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ?");
-    stmt.run(id);
+  public approveClaim(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ?");
+      stmt.run(id);
+    }
   }
 
-  public rejectClaim(id: string): void {
-    const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REJECTED' WHERE id = ?");
-    stmt.run(id);
+  public rejectClaim(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REJECTED' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REJECTED' WHERE id = ?");
+      stmt.run(id);
+    }
   }
 
-  public revokeClaim(id: string): void {
-    const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REVOKED' WHERE id = ?");
-    stmt.run(id);
+  public revokeClaim(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REVOKED' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REVOKED' WHERE id = ?");
+      stmt.run(id);
+    }
   }
 
-  public expireClaim(id: string): void {
-    const stmt = this.db.prepare("UPDATE memory_claims SET status = 'EXPIRED' WHERE id = ?");
-    stmt.run(id);
+  public expireClaim(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'EXPIRED' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'EXPIRED' WHERE id = ?");
+      stmt.run(id);
+    }
   }
 
-  public markClaimSessionOnly(id: string): void {
-    const stmt = this.db.prepare("UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = ?");
-    stmt.run(id);
+  public markClaimSessionOnly(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = ?");
+      stmt.run(id);
+    }
   }
 
   public searchClaims(companionId: string, query: string, limit: number = 20): MemoryClaim[] {
     const stmt = this.db.prepare(`
       SELECT c.* FROM memory_claims c
       JOIN memory_search s ON c.rowid = s.rowid
-      WHERE c.companion_id = ? AND memory_search MATCH ?
+      WHERE c.companion_id = ? AND c.status = 'APPROVED' AND memory_search MATCH ?
       ORDER BY rank
       LIMIT ?
     `);
     return stmt.all(companionId, query, limit).map((row: any) => ({
+      id: row.id,
+      companionId: row.companion_id,
+      subject: row.subject,
+      predicate: row.predicate,
+      value: row.value,
+      status: row.status,
+      confidence: row.confidence,
+      validFrom: row.valid_from || undefined,
+      validUntil: row.valid_until || undefined,
+      evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
+      assertedAt: row.asserted_at
+    }));
+  }
+
+  public getPendingClaims(companionId: string, limit: number = 50): MemoryClaim[] {
+    const stmt = this.db.prepare("SELECT * FROM memory_claims WHERE companion_id = ? AND status = 'PENDING' ORDER BY asserted_at DESC LIMIT ?");
+    return stmt.all(companionId, limit).map((row: any) => ({
       id: row.id,
       companionId: row.companion_id,
       subject: row.subject,
@@ -690,5 +732,12 @@ export class SiduriDatabase {
       evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
       assertedAt: row.asserted_at
     }));
+  }
+
+  public resetMemory(companionId: string): void {
+    const deleteClaims = this.db.prepare("DELETE FROM memory_claims WHERE companion_id = ?");
+    deleteClaims.run(companionId);
+    const deleteEvents = this.db.prepare("DELETE FROM memory_events WHERE companion_id = ?");
+    deleteEvents.run(companionId);
   }
 }

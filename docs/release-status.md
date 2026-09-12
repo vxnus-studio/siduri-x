@@ -55,6 +55,8 @@ The following properties represent intentional architectural boundaries for Sidu
   Streaming platform routes (`/platforms/*`) return truthful HTTP `501 Not Implemented`. Local companion operation is self-contained without external platform dependencies.
 - **ActionStore Durability Scope**:
   `InMemoryActionStore` is the default in-memory implementation for single-session execution. Deployments requiring action approvals to survive host machine reboots or process restarts can configure persistent local storage via `actionStore: 'sqlite'` (or passing `SqliteActionStore` into `RuntimeOrgans`).
+- **Single Active Companion Scope**:
+  While database schemas and runtime facades include `companion_id` partitioning as a reserved architectural foundation for future multi-agent capabilities, the product is verified and supported strictly for **single-companion operation** at this time.
 - **Web Client Lint Warnings**:
   The Next.js web application (`apps/web`) exports clean static artifacts for the CLI companion UI, but standalone ESLint reports non-blocking warnings concerning React 19 synchronous effect state setters and WebGL loader types.
 
