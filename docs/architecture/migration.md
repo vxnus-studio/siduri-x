@@ -1,13 +1,13 @@
-# Migration
+# Migration (Historical Prototype Notes)
 
-Status: historical migration notes; not proof of behavioral parity
+> [!WARNING]
+> **HISTORICAL PROTOTYPE ARCHIVE — NOT CURRENT ARCHITECTURE**
+> 
+> This document records early prototype porting notes from the Python `siduri/` codebase to TypeScript `pg`.
+> PostgreSQL was completely purged from `@siduri-x` in Phase 6. All persistent state now runs on native Pure SQLite (`siduri.sqlite`).
+> For current canonical architecture, see [`docs/self-organ-knowledge/`](../self-organ-knowledge/README.md).
 
-These notes describe the original porting intent. Current extraction status and
-known contradictions are maintained in
-[`SIDURI_EXTRACTION_MATRIX.md`](./SIDURI_EXTRACTION_MATRIX.md) and
-[`REPOSITORY_HEALTH_AUDIT.md`](./REPOSITORY_HEALTH_AUDIT.md). “Changed” entries
-are not accepted as complete until the neutral contract and B0–B9 evidence
-exist.
+---
 
 For every piece copied from `siduri/`:
 

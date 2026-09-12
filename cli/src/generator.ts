@@ -81,7 +81,7 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^1.0.9';
+  const coreVersion = options.coreVersion || '^2.0.0';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -97,7 +97,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '@siduri-x/core': coreVersion,
   };
   for (const m of manifests) {
-    dependencies[m.name] = `^${m.version || '1.0.1'}`;
+    dependencies[m.name] = `^${m.version || '2.0.0'}`;
   }
 
   const scripts: Record<string, string> = {
@@ -111,6 +111,9 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     name: instanceName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'my-siduri',
     private: true,
     type: 'module',
+    engines: {
+      node: '>=22',
+    },
     scripts,
     dependencies,
   };
@@ -597,7 +600,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '',
     '## Prerequisites',
     '',
-    '- **Node.js**: `v20.0.0` or higher',
+    '- **Node.js**: `v22.0.0` or higher',
     '- **Environment**: Valid `.env` file (configured from `.env.example`)',
   ];
 

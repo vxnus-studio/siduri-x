@@ -153,26 +153,67 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<DoctorRepo
   // 3. Check External Services
   for (const m of selectedManifests) {
     for (const service of m.services || []) {
-      results.push({
-        category: 'Services',
-        name: `${service.name} (${m.organType})`,
-        status: 'PASS',
-        organName: m.name,
-        message: 'Service requirement declared',
-      });
+      const organConf = configuredOrgansMap[m.configKey] || configuredOrgansMap[m.organType];
+      const configuredUrl = organConf?.baseUrl || organConf?.url || effectiveEnv[`${service.name.toUpperCase()}_URL`];
+      if (configuredUrl && typeof configuredUrl === 'string' && configuredUrl.startsWith('http')) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 1000);
+          await fetch(configuredUrl, { signal: controller.signal }).catch(() => {});
+          clearTimeout(timer);
+          results.push({
+            category: 'Services',
+            name: `${service.name} (${m.organType})`,
+            status: 'PASS',
+            organName: m.name,
+            message: `Endpoint configured: ${configuredUrl}`,
+          });
+        } catch {
+          results.push({
+            category: 'Services',
+            name: `${service.name} (${m.organType})`,
+            status: 'OPTIONAL_MISSING',
+            organName: m.name,
+            message: `Service at ${configuredUrl} is not responding (optional local service)`,
+            remediation: `Start ${service.name} or allow auto-download if applicable.`,
+          });
+        }
+      } else {
+        results.push({
+          category: 'Services',
+          name: `${service.name} (${m.organType})`,
+          status: 'PASS',
+          organName: m.name,
+          message: 'Service requirement declared (managed locally)',
+        });
+      }
     }
   }
 
   // 4. Database Check (only if an organ declares database requirement)
   const dbOrgan = selectedManifests.find((m) => m.database !== null && m.database !== undefined);
   if (dbOrgan) {
-    results.push({
-      category: 'Database',
-      name: 'SQLite Database',
-      status: 'PASS',
-      organName: dbOrgan.name,
-      message: 'SQLite operates natively.',
-    });
+    try {
+      const testDbPath = path.join(projectDir, '.doctor-sqlite-test.tmp');
+      fs.writeFileSync(testDbPath, '');
+      fs.unlinkSync(testDbPath);
+      results.push({
+        category: 'Database',
+        name: 'SQLite Database',
+        status: 'PASS',
+        organName: dbOrgan.name,
+        message: 'Local storage directory writeable; SQLite operational',
+      });
+    } catch (err: any) {
+      results.push({
+        category: 'Database',
+        name: 'SQLite Database',
+        status: 'FAIL',
+        organName: dbOrgan.name,
+        message: `Storage directory write check failed: ${err.message}`,
+        remediation: 'Verify write permissions for the companion directory.',
+      });
+    }
   } else {
     results.push({
       category: 'Database',

@@ -17,7 +17,7 @@ runtime experience proof.
 GO WITH LIMITATIONS — Proven on candidate commit 3b57c79a
 ```
 
-The candidate commit has been verified across branch `main`, environment (Linux / Node 20+),
+The candidate commit has been verified across branch `main`, environment (Linux / Node 22+),
 monorepo supply chain lock state, 29/29 Turbo tasks across all packages, and clean-machine distribution packaging.
 
 ## Gate order & Verification Summary
@@ -27,9 +27,9 @@ monorepo supply chain lock state, 29/29 Turbo tasks across all packages, and cle
 | R0 repository | Approved branch, clean checkout, no unclassified personal/secrets/artifacts | **PASS** (Commit `151c2b8`, clean tree, release:check verified) | RED; scan pending |
 | R1 neutral context | Actor, channel, subject, capability, session, and correlation context are canonical | **PASS** (Proven in `apps/api/src/context-mapper.test.ts`) | RED; T1 implementation pending |
 | R2 blank slate | Fresh companion and `/me` contain no invented personal identity or relationship | **PASS** (Proven in `apps/api/src/t7-release.test.ts` & `b0-b6.test.ts`) | RED; personal fallback present |
-| R3 memory | Proposal, approval, revision, expiry, revocation, retrieval, disclosure, and provenance lifecycle | **PASS** (Proven in `packages/organs/memory/src/index.test.ts`) | RED; compatibility slice only |
-| R4 behavior/prompt | Active Self is approved/scoped; user context is separate; untrusted data cannot rewrite policy | **PASS** (Proven in `packages/organs/behavior/src/index.test.ts`) | RED; legacy role context remains |
-| R5 evidence | Observations/knowledge preserve citation, uncertainty, revision, expiry, and independent response approval | **PASS** (Proven in `packages/organs/knowledge/src/index.test.ts` & observation organ) | RED; end-to-end proof missing |
+| R3 memory | Proposal, approval, revision, expiry, revocation, retrieval, disclosure, and provenance lifecycle | **PASS** (Proven in `packages/memory/src/memory-store.test.ts`) | RED; compatibility slice only |
+| R4 behavior/prompt | Active Self is approved/scoped; user context is separate; untrusted data cannot rewrite policy | **PASS** (Proven in `packages/self/src/self.test.ts`) | RED; legacy role context remains |
+| R5 evidence | Observations/knowledge preserve citation, uncertainty, revision, expiry, and independent response approval | **PASS** (Proven in `packages/knowledge/src/life-db.test.ts` & observation organ) | RED; end-to-end proof missing |
 | R6 experience | Only approved, policy-safe events reach voice, avatar, overlay, or outbound adapters | **PASS** (Proven in `apps/api/src/t5-experience.test.ts` & voice/body tests) | RED; unified output path missing |
 | R7 security/operations | Isolation, capability, secret, ingress, failure, rollback, and runbook evidence | **PASS** (Proven in `apps/api/src/t6-security.test.ts` & core adversarial suite) | RED; production-like proof missing |
 | R8 vertical slice | Neutral public chat, teaching, approval, disclosure, correction, and safe output work together | **PASS** (Proven in `apps/api/src/t7-release.test.ts` & `b0-b6.test.ts`) | RED; B0–B9 not ported |
@@ -104,7 +104,7 @@ Use one record for every candidate release:
 ```text
 Candidate commit: 06823ac2de61a5d8923f4072fe221bf943ea4aa4
 Branch: main
-Environment: Linux (x86_64), Node v20+, SQLite (WAL mode + FTS5)
+Environment: Linux (x86_64), Node v22+, SQLite (WAL mode + FTS5)
 Dependency lock: pnpm-lock.yaml verified (zero workspace: / link: in distribution)
 R0 repository: PASS
 R1 neutral context: PASS

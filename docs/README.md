@@ -40,11 +40,11 @@ The authoritative architecture specification defining the complete eradication o
 
 Detailed subsystem and organ-level specifications:
 
+### Active Subsystem Deep-Dives
 - **[Architecture Overview](./architecture/architecture.md)** — High-level runtime overview and 4-stream parallel execution flow.
 - **[The Truth Gate & Anchor](./architecture/truth-gate.md)** — Two-tier reality model: memory proposal staging and runtime response/evidence gating.
 - **[Organs Reference](./architecture/organs.md)** — Detailed responsibilities and package mapping for all 4 domains and 9 peripheral organs.
 - **[Companion Runtime](./architecture/companion-runtime.md)** — `SiduriRuntime` orchestration pipeline, 4-stream parallel context retrieval, and life context injection.
-- **[Memory Subsystem](./architecture/memory.md)** — SQLite FTS5 episodic memory store, claims lifecycle, and historical PostgreSQL migration notes.
 - **[External Knowledge & E-Packs](./architecture/knowledge-e.md)** — `@siduri-x/eknowledge` client, cited context, and SSRF hardening.
 - **[Action Policy Design](./architecture/action-policy-design.md)** — Cryptographic action capabilities, MCP execution, and audit chaining.
 - **[API Reference](./architecture/api.md)** — REST API surface including `/chat`, `/chat/stream`, `/teach/upload-self`, and `/teach/install-self`.
@@ -54,9 +54,14 @@ Detailed subsystem and organ-level specifications:
 - **[Testing Strategy](./architecture/testing.md)** — Test suite layout, invariant assertions, and clean-machine verification.
 - **[Subsystem Integrations](./architecture/integrations.md)** — External adapters (Voice Synthesis, Live2D, OpenRouter).
 - **[Limitations & Boundaries](./architecture/limitations.md)** — System boundaries and non-goals.
-- **[Migration & V1 Roadmap](./architecture/migration.md)** — Historical transition from legacy multi-viewer streaming to single-owner companion model.
-- **[Single-Owner Phased Migration Plan](./architecture/single-owner-phased-migration.md)** — Step-by-step roadmap that eliminated internal RBAC partitions.
-- ~~**[Behavior & Active Self](./architecture/behavior.md)**~~ — *Legacy Reference* (behavior compiled into `@siduri-x/self`).
+
+### Historical Migration Archives (Superseded)
+The following documents record historical prototypes, past migration milestones, or superseded organ packages. They are retained for archival provenance:
+- **[Historical Migration & V1 Notes](./architecture/migration.md)** — Early prototype notes porting Python `siduri/` to TypeScript.
+- **[Historical PostgreSQL Memory Driver Guide](./architecture/memory.md)** — Superseded `pg` exploration prior to the Phase 6 Pure SQLite migration.
+- **[Historical Single-Owner Migration Plan](./architecture/single-owner-phased-migration.md)** — Historical plan for stripping multi-audience columns from PostgreSQL.
+- **[Legacy Behavior Organ Reference](./architecture/behavior.md)** — Superseded reference for `@siduri-x/behavior` (merged into `@siduri-x/self`).
+- **[Organ Decoupling Philosophy Note](./architecture/siduri-organ-architecture.md)** — Foundational decoupling principles.
 
 ---
 

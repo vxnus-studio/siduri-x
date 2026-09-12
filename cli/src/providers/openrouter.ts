@@ -41,7 +41,7 @@ export class OpenRouterModelProvider implements ModelProvider {
         method: 'GET',
         headers: {
           Accept: 'application/json',
-          'User-Agent': 'Siduri-CLI/1.0',
+          'User-Agent': 'Siduri-CLI/2.0',
         },
         signal: controller.signal,
       });
