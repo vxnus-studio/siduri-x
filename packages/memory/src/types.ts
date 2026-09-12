@@ -25,6 +25,7 @@ export interface ClaimProposalInput {
   validFrom?: string;
   validUntil?: string;
   evidence?: string[];
+  supersedes?: string;
 }
 
 export interface EpisodicMemoryStore {

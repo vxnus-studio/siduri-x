@@ -105,6 +105,7 @@ export interface MemoryClaim {
   validUntil?: string;
   evidence?: string[];
   assertedAt: string;
+  supersedes?: string;
 }
 
 // ==========================================
@@ -226,7 +227,8 @@ export class SiduriDatabase {
         valid_from TEXT,
         valid_until TEXT,
         evidence TEXT,
-        asserted_at TEXT DEFAULT (datetime('now'))
+        asserted_at TEXT DEFAULT (datetime('now')),
+        supersedes TEXT
       );
 
       -- FTS5 Virtual Table for Memory Claims
@@ -257,6 +259,12 @@ export class SiduriDatabase {
       END;
     `;
     this.db.exec(schema);
+
+    try {
+      this.db.exec("ALTER TABLE memory_claims ADD COLUMN supersedes TEXT");
+    } catch {
+      // Column already exists
+    }
   }
 
   public close(): void {
@@ -594,6 +602,7 @@ export class SiduriDatabase {
     claim: Omit<MemoryClaim, 'status' | 'confidence' | 'assertedAt'> & {
       confidence?: number;
       assertedAt?: string;
+      supersedes?: string;
     }
   ): MemoryClaim {
     const id = claim.id || crypto.randomUUID();
@@ -601,8 +610,8 @@ export class SiduriDatabase {
     const confidence = claim.confidence ?? 1.0;
     const assertedAt = claim.assertedAt || new Date().toISOString();
     const stmt = this.db.prepare(`
-      INSERT INTO memory_claims (id, companion_id, subject, predicate, value, status, confidence, valid_from, valid_until, evidence, asserted_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, coalesce(?, datetime('now')))
+      INSERT INTO memory_claims (id, companion_id, subject, predicate, value, status, confidence, valid_from, valid_until, evidence, asserted_at, supersedes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, coalesce(?, datetime('now')), ?)
     `);
     stmt.run(
       id,
@@ -615,7 +624,8 @@ export class SiduriDatabase {
       claim.validFrom || null,
       claim.validUntil || null,
       claim.evidence ? JSON.stringify(claim.evidence) : null,
-      assertedAt || null
+      assertedAt || null,
+      claim.supersedes || null
     );
 
     return {
@@ -624,10 +634,27 @@ export class SiduriDatabase {
       status,
       confidence,
       assertedAt,
+      supersedes: claim.supersedes,
     };
   }
 
   public approveClaim(id: string, companionId?: string): void {
+    // If this claim supersedes an earlier claim, transition that prior claim to SUPERSEDED
+    const findClaim = companionId
+      ? this.db.prepare("SELECT supersedes FROM memory_claims WHERE id = ? AND companion_id = ?")
+      : this.db.prepare("SELECT supersedes FROM memory_claims WHERE id = ?");
+    const row = companionId ? findClaim.get(id, companionId) : findClaim.get(id);
+    if (row && (row as any).supersedes) {
+      const supersededId = (row as any).supersedes;
+      if (companionId) {
+        const supersedeStmt = this.db.prepare("UPDATE memory_claims SET status = 'SUPERSEDED' WHERE id = ? AND companion_id = ?");
+        supersedeStmt.run(supersededId, companionId);
+      } else {
+        const supersedeStmt = this.db.prepare("UPDATE memory_claims SET status = 'SUPERSEDED' WHERE id = ?");
+        supersedeStmt.run(supersededId);
+      }
+    }
+
     if (companionId) {
       const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ? AND companion_id = ?");
       stmt.run(id, companionId);
@@ -696,7 +723,8 @@ export class SiduriDatabase {
       validFrom: row.valid_from || undefined,
       validUntil: row.valid_until || undefined,
       evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
-      assertedAt: row.asserted_at
+      assertedAt: row.asserted_at,
+      supersedes: row.supersedes || undefined,
     }));
   }
 
@@ -713,7 +741,8 @@ export class SiduriDatabase {
       validFrom: row.valid_from || undefined,
       validUntil: row.valid_until || undefined,
       evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
-      assertedAt: row.asserted_at
+      assertedAt: row.asserted_at,
+      supersedes: row.supersedes || undefined,
     }));
   }
 
@@ -730,8 +759,29 @@ export class SiduriDatabase {
       validFrom: row.valid_from || undefined,
       validUntil: row.valid_until || undefined,
       evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
-      assertedAt: row.asserted_at
+      assertedAt: row.asserted_at,
+      supersedes: row.supersedes || undefined,
     }));
+  }
+
+  public getClaim(id: string): MemoryClaim | undefined {
+    const stmt = this.db.prepare("SELECT * FROM memory_claims WHERE id = ?");
+    const row = stmt.get(id);
+    if (!row) return undefined;
+    return {
+      id: (row as any).id,
+      companionId: (row as any).companion_id,
+      subject: (row as any).subject,
+      predicate: (row as any).predicate,
+      value: (row as any).value,
+      status: (row as any).status,
+      confidence: (row as any).confidence,
+      validFrom: (row as any).valid_from || undefined,
+      validUntil: (row as any).valid_until || undefined,
+      evidence: (row as any).evidence ? JSON.parse((row as any).evidence) : undefined,
+      assertedAt: (row as any).asserted_at,
+      supersedes: (row as any).supersedes || undefined,
+    };
   }
 
   public resetMemory(companionId: string): void {

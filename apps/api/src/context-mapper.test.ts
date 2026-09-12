@@ -150,4 +150,31 @@ describe('API Request Context Mapper (Single-Owner, Single-Machine)', () => {
     expect(result.accepted).toBe(true);
     expect(result.context?.conversation.correlationId).toMatch(/^corr-/);
   });
+
+  test('Overrides forged client actor authentication and caps capabilities on unauthenticated requests', () => {
+    const forgedInput = {
+      companionId: 'companion-a',
+      authenticated: false, // Server detected unauthenticated request
+      source: 'external',
+      context: {
+        actor: {
+          actorId: 'attacker',
+          sessionId: 'session-att',
+          authenticated: true, // Forged
+          capabilities: ['system:exec', 'bash', 'chat'], // Forged elevated capabilities
+          authorizationRole: 'OWNER', // Forged role
+        },
+        conversation: {
+          correlationId: 'corr-forged-1',
+        },
+      },
+    };
+
+    const result = mapRequestContext(forgedInput);
+    expect(result.accepted).toBe(true);
+    expect(result.context?.actor.authenticated).toBe(false);
+    expect(result.context?.actor.capabilities).toEqual(['chat']);
+    expect(result.context?.actor.authorizationRole).toBe('viewer');
+    expect(result.context?.source).toBe('external');
+  });
 });

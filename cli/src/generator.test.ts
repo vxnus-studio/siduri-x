@@ -79,6 +79,7 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     expect(pkg.dependencies['@siduri-x/hands']).toBeUndefined();
     expect(pkg.dependencies['@siduri-x/voice']).toBeUndefined();
     expect(pkg.dependencies['@siduri-x/body']).toBeUndefined();
+    expect(pkg.devDependencies['@vxnus/siduri']).toBeDefined();
 
     // src/index.js
     expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@siduri-x/brain'");

@@ -1,7 +1,7 @@
 # Prototype Verification Status: Siduri-X
 
 **Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
-**Current Verified Commit**: `3b57c79a` (Clean Architecture & PostgreSQL Purged)  
+**Current Verified Commit**: `6a958105` (Clean Architecture, SQLite FTS5 & Security Hardening)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 

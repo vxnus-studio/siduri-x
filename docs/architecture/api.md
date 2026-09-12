@@ -10,7 +10,7 @@ The API is a single deployable Express process (`apps/api`):
 ## 1. Lifecycle & Chat Endpoints
 - `POST /boot`: Loads a companion configuration into the runtime with all wired substrates and organs.
 - `POST /chat`: Sends a chat message to a specific companion.
-- `POST /chat/stream`: Real-time Server-Sent Events (SSE) streaming endpoint delivering staged response info, avatar events, token chunks with Live2D visemes, and completion envelopes.
+- `POST /chat/stream`: Real-time Server-Sent Events (SSE) streaming endpoint delivering staged response info, avatar events, timed token/viseme chunks via the Mouth organ, and completion envelopes. (Operates on an utterance-staging model to allow Truth Gate validation and synchronous avatar synthesis).
 - `POST /chat/interrupt`: Triggers barge-in cancellation on active streams.
 
 ## 2. Teach Mode & `.self` Ingestion Endpoints (Phase 5)

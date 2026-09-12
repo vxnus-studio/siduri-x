@@ -107,6 +107,10 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     db: 'siduri db',
   };
 
+  const devDependencies: Record<string, string> = {
+    '@vxnus/siduri': coreVersion,
+  };
+
   const packageJsonObj = {
     name: instanceName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'my-siduri',
     private: true,
@@ -116,6 +120,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     },
     scripts,
     dependencies,
+    devDependencies,
   };
   const packageJson = JSON.stringify(packageJsonObj, null, 2) + '\n';
 

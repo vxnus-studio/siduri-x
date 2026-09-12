@@ -81,15 +81,28 @@ export function mapRequestContext(
       };
     }
 
+    // Determine server-enforced authentication status
+    const isAuthenticated = input.authenticated !== undefined
+      ? Boolean(input.authenticated)
+      : (actor.authenticated !== undefined ? Boolean(actor.authenticated) : true);
+
+    const safeCapabilities = isAuthenticated
+      ? (Array.isArray(actor.capabilities) ? actor.capabilities : ['chat'])
+      : ['chat'];
+
+    const safeRole = isAuthenticated
+      ? actor.authorizationRole
+      : 'viewer';
+
     const constructed: RequestContext = {
       companionId,
       actor: {
+        ...actor,
         actorId: actor.actorId,
         sessionId: actor.sessionId,
-        capabilities: Array.isArray(actor.capabilities) ? actor.capabilities : ['chat'],
-        authenticated: actor.authenticated !== undefined ? Boolean(actor.authenticated) : true,
-        authorizationRole: actor.authorizationRole,
-        ...actor,
+        capabilities: safeCapabilities,
+        authenticated: isAuthenticated,
+        authorizationRole: safeRole,
       },
       conversation: {
         correlationId,
@@ -97,7 +110,7 @@ export function mapRequestContext(
         isLive: rawCtx.conversation?.isLive,
         ...rawCtx.conversation,
       },
-      source: input.source || rawCtx.source || 'local',
+      source: input.source || rawCtx.source || (isAuthenticated ? 'local' : 'external'),
       subject: rawCtx.subject,
     };
 
@@ -160,11 +173,14 @@ export function mapRequestContext(
     diagnostics.push('anonymous_session_generated');
   }
 
-  const capabilities = Array.isArray(input.capabilities)
-    ? input.capabilities
-    : Array.isArray(input.actor?.capabilities)
-    ? input.actor.capabilities
-    : ['chat', 'system'];
+  const isAuthenticated = input.authenticated !== undefined ? Boolean(input.authenticated) : true;
+  const capabilities = isAuthenticated
+    ? (Array.isArray(input.capabilities)
+        ? input.capabilities
+        : Array.isArray(input.actor?.capabilities)
+        ? input.actor.capabilities
+        : ['chat', 'system'])
+    : ['chat'];
 
   const mappedContext: RequestContext = {
     companionId,
@@ -172,14 +188,14 @@ export function mapRequestContext(
       actorId,
       sessionId,
       capabilities,
-      authenticated: input.authenticated !== undefined ? Boolean(input.authenticated) : true,
+      authenticated: isAuthenticated,
       authorizationRole: input.role ? (input.role.toLowerCase() === 'viewer' ? 'viewer' : 'administrator') : undefined,
     },
     conversation: {
       channel: input.channel || input.conversation?.channel || 'direct',
       correlationId,
     },
-    source: input.source || 'local',
+    source: input.source || (isAuthenticated ? 'local' : 'external'),
     subject: input.subject,
   };
 

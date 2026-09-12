@@ -72,12 +72,15 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
       validUntil: raw.validUntil,
       evidence: raw.evidence,
       assertedAt: new Date().toISOString(),
+      supersedes: raw.supersedes,
     });
     return claim;
   }
 
   async approveClaim(claimId: string, companionId?: string): Promise<void> {
-    this.db.approveClaim(claimId, companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined));
+    const existing = (this.db as any).getClaim ? (this.db as any).getClaim(claimId) : undefined;
+    const targetCompanionId = companionId || existing?.companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined);
+    this.db.approveClaim(claimId, targetCompanionId);
   }
 
   async rejectClaim(claimId: string, companionId?: string): Promise<void> {
@@ -143,17 +146,20 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     id: string,
     updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil'>>
   ): Promise<Claim> {
-    const rawExisting = (await this.getClaims(100)).find((c: any) => c.id === id) ||
-      (await this.getPendingClaims(100)).find((c: any) => c.id === id);
-    const existing = rawExisting as any;
+    const existing = (this.db as any).getClaim ? (this.db as any).getClaim(id) : (
+      (await this.getClaims(100)).find((c: any) => c.id === id) ||
+      (await this.getPendingClaims(100)).find((c: any) => c.id === id)
+    );
+    const targetCompanionId = existing?.companionId || this.activeCompanionId;
     const replacement = await this.proposeClaim({
-      companionId: this.activeCompanionId,
+      companionId: targetCompanionId,
       subject: updates.subject || existing?.subject || '',
       predicate: updates.predicate || existing?.predicate || '',
       value: updates.value || existing?.value || '',
       confidence: updates.confidence ?? existing?.confidence ?? 1.0,
       validFrom: updates.validFrom || existing?.validFrom,
       validUntil: updates.validUntil || existing?.validUntil,
+      supersedes: id,
     });
     return replacement;
   }

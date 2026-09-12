@@ -21,6 +21,8 @@ These constraints are deliberate design choices for Siduri's target product mode
   `InMemoryActionStore` is the default in-memory implementation for development and single-session execution. Deployments requiring action authorizations to survive process or host restarts can configure `actionStore: 'sqlite'` (or pass `SqliteActionStore` via `RuntimeOrgans`).
 - **Web Client Lint Warnings**:
   The Next.js web console (`apps/web`) exports clean static artifacts for the CLI companion UI, but standalone ESLint produces warnings concerning React 19 effect state setters and WebGL loader types.
+- **Utterance Staging vs. Raw Token Streaming**:
+  `/chat/stream` delivers timed SSE chunks via the Mouth organ following complete utterance generation, rather than raw LLM token streaming. This architectural boundary ensures that the Truth Gate can verify epistemic claims, the Active Self compiler can enforce behavioral bounds, and avatar animations/visemes can be synchronized before emission. Client barge-in cancellation is supported via `POST /chat/interrupt`.
 
 ---
 

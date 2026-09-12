@@ -7,7 +7,7 @@ import { SqliteMemoryStore } from '@siduri-x/memory';
 import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
 import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/eknowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
-import { ActiveSelfCompiler, SelfPackageParser, SqliteSelfRepository } from '@siduri-x/self';
+import { ActiveSelfCompiler, SelfPackageParser, SqliteSelfRepository, scanDirective } from '@siduri-x/self';
 import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
 import { FixtureObservationOrgan } from '@siduri-x/observation';
 import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@siduri-x/hands';
@@ -137,17 +137,18 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         return res.status(400).json({ error: "Already booted" });
       }
 
-      const brain = createBrain(config.brain);
+      const organs = config?.organs || {};
+      const brain = createBrain(organs.brain || config?.brain);
       const memory = new SqliteMemoryStore({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
       const selfRepo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
-      const voice = createVoice(config.voice);
-      const knowledge = createKnowledge(config.knowledge);
-      const vision = createVision(config.vision);
-      const behavior = createBehavior(config.behavior);
-      const body = createBody(config.body);
-      const hands = createHands(config.hands);
-      const ear = createEar(config.ear);
-      const mouth = createMouth(config.mouth, voice);
+      const voice = createVoice(organs.voice || config?.voice);
+      const knowledge = createKnowledge(organs.knowledge || config?.knowledge);
+      const vision = createVision(organs.vision || config?.vision);
+      const behavior = createBehavior(organs.behavior || config?.behavior);
+      const body = createBody(organs.body || config?.body);
+      const hands = createHands(organs.hands || config?.hands);
+      const ear = createEar(organs.ear || config?.ear);
+      const mouth = createMouth(organs.mouth || config?.mouth, voice);
 
       const runtime = new SiduriRuntime(id, config, {
         brain,
@@ -233,6 +234,10 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         return res.status(400).json({ error: "Missing required fields" });
       }
 
+      if (!manifest.identity || !manifest.identity.name) {
+        return res.status(400).json({ error: "Invalid manifest: missing identity.name" });
+      }
+
       const repo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
 
       await repo.setIdentity({
@@ -248,6 +253,22 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       }
 
       const directivesToCommit = manifest.directives?.filter((d: any) => approvedDirectiveIds.includes(d.id)) || [];
+      for (const d of directivesToCommit) {
+        if (!d || typeof d.directive !== 'string') {
+          repo.close();
+          return res.status(400).json({ error: "Invalid directive entry: missing directive string" });
+        }
+        const scan = scanDirective(d.directive);
+        if (!scan.safe) {
+          repo.close();
+          return res.status(400).json({
+            error: `Safety check failed for directive: ${scan.reason}`,
+            directiveId: d.id,
+            reason: scan.reason,
+          });
+        }
+      }
+
       if (directivesToCommit.length > 0) {
         await repo.commitDirectives(companionId, directivesToCommit);
       }

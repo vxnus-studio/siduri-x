@@ -356,10 +356,17 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       });
       expect(updated.status).toBe('PENDING');
       expect(updated.value).toBe('LeadArchitect');
+      expect((updated as any).supersedes).toBe('claim-to-update');
 
       // The original approved claim remains Developer until replacement is approved
       const currentApproved = await store.getApprovedClaims(companionId);
       expect(currentApproved.find((c) => c.id === 'claim-to-update')?.value).toBe('Developer');
+
+      // Once the replacement is approved, the original claim is superseded and retired
+      await store.approveClaim(updated.id);
+      const afterApproval = await store.getApprovedClaims(companionId);
+      expect(afterApproval.find((c) => c.id === 'claim-to-update')).toBeUndefined();
+      expect(afterApproval.find((c) => c.id === updated.id)?.value).toBe('LeadArchitect');
     });
   });
 });

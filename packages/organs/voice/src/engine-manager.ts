@@ -1,10 +1,10 @@
-import { join } from 'node:path';
-import { existsSync, mkdirSync, createWriteStream, rmSync, createReadStream } from 'node:fs';
+import { join, resolve, relative, isAbsolute, dirname } from 'node:path';
+import { existsSync, mkdirSync, createWriteStream, rmSync, createReadStream, promises as fsPromises } from 'node:fs';
 import { spawn, ChildProcess } from 'node:child_process';
 import { pipeline } from 'node:stream/promises';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
-import extractZip from 'extract-zip';
+import yauzl from 'yauzl';
 import tar from 'tar';
 
 export interface PinnedVoicevoxAsset {
@@ -65,6 +65,115 @@ export async function verifyArchiveIntegrity(filePath: string, expectedSha256: s
   }
   const actualHash = await computeFileSha256(filePath);
   return actualHash === expectedSha256.toLowerCase();
+}
+
+export async function secureExtractZip(zipPath: string, targetDir: string): Promise<void> {
+  const resolvedTarget = resolve(targetDir);
+  await fsPromises.mkdir(resolvedTarget, { recursive: true });
+  const canonicalTarget = await fsPromises.realpath(resolvedTarget);
+
+  return new Promise((resolvePromise, rejectPromise) => {
+    yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
+      if (err || !zipfile) {
+        return rejectPromise(err || new Error('Failed to open zip archive'));
+      }
+
+      let canceled = false;
+      const fail = (error: any) => {
+        if (!canceled) {
+          canceled = true;
+          try {
+            zipfile.close();
+          } catch {}
+          rejectPromise(error);
+        }
+      };
+
+      zipfile.on('error', (e) => fail(e));
+
+      zipfile.on('entry', async (entry) => {
+        if (canceled) return;
+
+        try {
+          if (entry.fileName.startsWith('__MACOSX/') || entry.fileName.includes('/__MACOSX/')) {
+            zipfile.readEntry();
+            return;
+          }
+
+          // Path traversal defense (Zip Slip defense)
+          const destPath = resolve(canonicalTarget, entry.fileName);
+          const rel = relative(canonicalTarget, destPath);
+          if (rel.startsWith('..') || isAbsolute(rel)) {
+            throw new Error(`Path traversal attempt detected in zip entry: "${entry.fileName}"`);
+          }
+
+          const mode = (entry.externalFileAttributes >> 16) & 0xffff;
+          const IFLNK = 40960;
+          const IFDIR = 16384;
+          const isSymlink = (mode & 61440) === IFLNK;
+          const isDir = (mode & 61440) === IFDIR || entry.fileName.endsWith('/');
+
+          if (isDir) {
+            await fsPromises.mkdir(destPath, { recursive: true });
+            zipfile.readEntry();
+            return;
+          }
+
+          // Ensure parent directory exists and is strictly contained within canonicalTarget
+          const parentDir = dirname(destPath);
+          await fsPromises.mkdir(parentDir, { recursive: true });
+          const realParent = await fsPromises.realpath(parentDir);
+          const parentRel = relative(canonicalTarget, realParent);
+          if (parentRel.startsWith('..') || isAbsolute(parentRel)) {
+            throw new Error(`Zip entry destination escapes extraction directory: "${entry.fileName}"`);
+          }
+
+          zipfile.openReadStream(entry, async (streamErr, readStream) => {
+            if (streamErr || !readStream) {
+              return fail(streamErr || new Error(`Failed to read entry: ${entry.fileName}`));
+            }
+
+            try {
+              if (isSymlink) {
+                const chunks: Buffer[] = [];
+                for await (const chunk of readStream) {
+                  chunks.push(Buffer.from(chunk));
+                }
+                const linkTarget = Buffer.concat(chunks).toString('utf8');
+                // Validate that symlink target stays strictly inside extraction root
+                const resolvedLink = resolve(parentDir, linkTarget);
+                const linkRel = relative(canonicalTarget, resolvedLink);
+                if (linkRel.startsWith('..') || isAbsolute(linkRel)) {
+                  throw new Error(`Symlink escapes target directory: "${entry.fileName}" -> "${linkTarget}"`);
+                }
+                await fsPromises.symlink(linkTarget, destPath);
+              } else {
+                const procMode = (mode & 0o777) || 0o644;
+                const writeStream = createWriteStream(destPath, { mode: procMode });
+                await pipeline(readStream, writeStream);
+              }
+
+              if (!canceled) {
+                zipfile.readEntry();
+              }
+            } catch (writeErr) {
+              fail(writeErr);
+            }
+          });
+        } catch (procErr) {
+          fail(procErr);
+        }
+      });
+
+      zipfile.on('close', () => {
+        if (!canceled) {
+          resolvePromise();
+        }
+      });
+
+      zipfile.readEntry();
+    });
+  });
 }
 
 export interface VoicevoxEngineManagerOptions {
@@ -162,7 +271,7 @@ export class VoicevoxEngineManager {
 
     onProgress?.('Extracting engine...');
     if (isZip) {
-      await extractZip(tmpFile, { dir: engineDir });
+      await secureExtractZip(tmpFile, engineDir);
     } else {
       mkdirSync(engineDir, { recursive: true });
       await tar.x({
