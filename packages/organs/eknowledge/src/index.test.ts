@@ -1,8 +1,22 @@
 import { EKnowledgeAdapter, isBlockedIp, validateSafeUrl, safeFetch } from './index';
+import fs from 'node:fs';
 import path from 'node:path';
 import dns from 'node:dns/promises';
-
-const testPackPath = process.env.E_TEST_PACK_PATH || path.resolve(__dirname, '../../../../../e/packages/knowledge/fixtures/sample');
+let testPackPath = process.env.E_TEST_PACK_PATH || '';
+if (!testPackPath) {
+  try {
+    const entry = require.resolve('@vxnus/e-knowledge');
+    const bundledFixture = path.resolve(path.dirname(entry), '../fixtures/sample');
+    if (fs.existsSync(bundledFixture)) {
+      testPackPath = bundledFixture;
+    }
+  } catch {
+    // fallback
+  }
+}
+if (!testPackPath) {
+  testPackPath = path.resolve(__dirname, '../../../../../e/packages/knowledge/fixtures/sample');
+}
 
 describe('EKnowledgeAdapter', () => {
   beforeEach(() => {
