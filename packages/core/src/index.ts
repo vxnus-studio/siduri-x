@@ -310,5 +310,53 @@ export type HealthProbeFn = (context: HealthProbeContext) => Promise<HealthProbe
 // Mouth (Communication & Output Delivery)
 export * from './mouth-types';
 
+// Core Domain Substrates (Clean Architecture)
+import type {
+  SelfIdentity,
+  PersonalityTraits,
+  SelfDirective,
+  SelfRelationship,
+  LifeInventoryItem,
+  LifeScheduleItem,
+  LifePreference,
+  MemoryClaim,
+  EpisodicEvent,
+} from './siduri-db';
 
+export interface SelfRepository {
+  getIdentity(companionId: string): Promise<SelfIdentity | undefined>;
+  getPersonality(companionId: string): Promise<PersonalityTraits>;
+  getActiveDirectives(companionId: string): Promise<SelfDirective[]>;
+  getRelationship(companionId: string, entityId: string): Promise<SelfRelationship | null>;
+  commitDirectives(companionId: string, directives: SelfDirective[]): Promise<void>;
+  updateRelationship(companionId: string, rel: SelfRelationship): Promise<void>;
+  disableDirective?(id: string): Promise<void>;
+  getActiveSelf?(companionId: string): Promise<{
+    identity?: SelfIdentity;
+    personality: PersonalityTraits;
+    directives: SelfDirective[];
+  }>;
+}
 
+export interface LifeDatabase {
+  getInventory(companionId: string, domain?: string): Promise<LifeInventoryItem[]>;
+  getFinanceSummary?(companionId: string): Promise<any>;
+  getSchedule?(companionId: string, windowStart?: Date, windowEnd?: Date): Promise<LifeScheduleItem[]>;
+  getPreferences?(companionId: string): Promise<Record<string, string> | LifePreference[]>;
+  queryContext(companionId: string, query: string): Promise<string[]>;
+  searchLifeContext?(queryText: string): Promise<string[]>;
+}
+
+export interface EpisodicMemoryStore {
+  recordEvent(companionId: string, event: any): Promise<void>;
+  searchClaims(companionId: string, query: string, limit?: number): Promise<MemoryClaim[]>;
+  proposeClaim(claim: any): Promise<MemoryClaim>;
+  approveClaim(claimId: string): Promise<void>;
+  rejectClaim?(claimId: string): Promise<void>;
+  getApprovedClaims?(companionId: string, limit?: number): Promise<MemoryClaim[]>;
+  getRecentEvents?(companionId: string, limit?: number): Promise<EpisodicEvent[]>;
+}
+
+export interface EKnowledgeOrgan {
+  search(query: string): Promise<KnowledgeItem[]>;
+}

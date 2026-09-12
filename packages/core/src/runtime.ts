@@ -34,6 +34,8 @@ import {
   FormattedMouthOutput,
   MouthStreamChunk,
   MouthChannel,
+  SelfRepository,
+  EKnowledgeOrgan,
 } from './index';
 import { normalizeUserInput } from './input-normalizer';
 import { classifyInputIntentAsync } from './intent-classifier';
@@ -62,6 +64,8 @@ export interface SiduriRuntimeConfig {
   ear?: OrganConfig | Record<string, unknown>;
   observation?: OrganConfig | Record<string, unknown>;
   mouth?: OrganConfig | Record<string, unknown>;
+  self?: OrganConfig | Record<string, unknown>;
+  externalKnowledge?: OrganConfig | Record<string, unknown>;
   actionPolicy?: Record<string, unknown>;
   actionStore?: 'in-memory' | 'sqlite' | { type: 'sqlite' | 'in-memory'; dbPath?: string };
   actionStorePath?: string;
@@ -80,6 +84,8 @@ export interface RuntimeOrgans {
   ear?: EarOrgan;
   observation?: ObservationOrgan;
   mouth?: MouthOrgan;
+  self?: SelfRepository;
+  externalKnowledge?: EKnowledgeOrgan;
   actionStore?: ActionStore;
   actionPolicy?: ActionPolicyEngine;
 }
@@ -115,6 +121,8 @@ export class SiduriRuntime {
   public ear?: EarOrgan;
   public observation?: ObservationOrgan;
   public mouth?: MouthOrgan;
+  public self?: SelfRepository;
+  public externalKnowledge?: EKnowledgeOrgan;
   public gating: ResponseGatingEngine;
   public actionPolicy: ActionPolicyEngine;
   public dispatcher: ExperienceDispatcher;
@@ -143,6 +151,8 @@ export class SiduriRuntime {
     this.ear = organs.ear;
     this.observation = organs.observation;
     this.mouth = organs.mouth;
+    this.self = organs.self;
+    this.externalKnowledge = organs.externalKnowledge;
     this.gating = new ResponseGatingEngine();
 
     let actionStore = organs.actionStore;
@@ -389,6 +399,8 @@ export class SiduriRuntime {
       shouldQueryKnowledge: intent.shouldQueryKnowledge,
       knowledge: this.knowledge,
       memory: this.memory,
+      self: this.self,
+      externalKnowledge: this.externalKnowledge,
     });
 
     // 4. Neutral system prompt and contextual prompt compilation
@@ -402,6 +414,7 @@ export class SiduriRuntime {
       subsystemDiagnostics: contextRetrieval.subsystemDiagnostics,
       knowledgeData: contextRetrieval.knowledgeData,
       memoryData: contextRetrieval.memoryData,
+      lifeContext: contextRetrieval.lifeContext,
     });
 
     // 5. Cognition planning via BrainOrgan

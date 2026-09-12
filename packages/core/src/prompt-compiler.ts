@@ -16,6 +16,7 @@ export interface PromptCompilationParams {
   subsystemDiagnostics: Record<string, string>;
   knowledgeData: KnowledgeItem[];
   memoryData: Claim[];
+  lifeContext?: string[];
 }
 
 export interface CompiledPrompts {
@@ -39,6 +40,7 @@ export async function compilePrompts(
     subsystemDiagnostics,
     knowledgeData,
     memoryData,
+    lifeContext,
   } = params;
 
   let contextPrompt = '';
@@ -62,6 +64,12 @@ export async function compilePrompts(
     contextPrompt +=
       'MEMORY:\n' +
       memoryData.map((m) => `- ${m.subject} ${m.predicate} ${m.value}`).join('\n') +
+      '\n';
+  }
+  if (lifeContext && lifeContext.length > 0) {
+    contextPrompt +=
+      'LIFE CONTEXT:\n' +
+      lifeContext.map((l) => `- ${l}`).join('\n') +
       '\n';
   }
 
