@@ -1,39 +1,45 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  verify:
-    name: Build, Lint & Test (Node.js 22)
+  build-and-test:
+    name: Build, Typecheck, Test & Release Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22.13.0'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: Verify package version sync
-        run: npm run sync:check
+      - name: Check version sync
+        run: node scripts/sync-versions.mjs --check
 
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm run typecheck
 
-      - name: Build
-        run: npm run build
+      - name: Build packages
+        run: pnpm run build
 
-      - name: Run Test Suite
-        run: npm run test
+      - name: Run tests
+        run: pnpm run test
 
-      - name: Verify Release Packaging
-        run: npm run release:check
+      - name: Verify release packaging
+        run: node cli/dist/release-check.js
