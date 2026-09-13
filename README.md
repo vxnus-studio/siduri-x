@@ -48,7 +48,7 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 | :--- | :---: | :--- | :--- |
 | **`@siduri-x/core`** | `^2.0.3` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
 | **`@siduri-x/self`** | `^2.0.2` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
-| **`@siduri-x/knowledge`** | `^2.0.1` | Internal sovereign Life Database (Inventory, Finance, Schedule, Preferences) | **Implemented** |
+| **`@siduri-x/knowledge`** | `^2.0.2` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
 | **`@siduri-x/memory`** | `^2.0.1` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
 
 ### Pluggable Peripheral Organs
@@ -60,7 +60,7 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 | **`@siduri-x/ear`** | `^2.0.1` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
 | **`@siduri-x/vision`** | `^2.0.1` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
 | **`@siduri-x/body`** | `^2.0.1` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
-| **`@siduri-x/voice`** | `^2.0.1` | Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC post-processing | **Implemented** |
+| **`@siduri-x/voice`** | `^2.0.2` | Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC voice conversion | **Implemented** |
 | **`@siduri-x/observation`** | `^2.0.1` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Implemented** |
 | **`@siduri-x/mouth`** | `^2.0.1` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
 | ~~`@siduri-x/behavior`~~ | `^1.0.6` | *Legacy compatibility package* (superseded by `@siduri-x/self`) | **Legacy / Deprecated** |
