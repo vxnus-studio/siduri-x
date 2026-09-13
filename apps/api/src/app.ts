@@ -13,7 +13,7 @@ import { FixtureObservationOrgan } from '@siduri-x/observation';
 import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@siduri-x/hands';
 import { DefaultEarOrgan, EarOrganConfig } from '@siduri-x/ear';
 import { DefaultMouthOrgan, DefaultMouthOrganConfig } from '@siduri-x/mouth';
-import { attachIdentity, requireAuth, Identity } from './auth';
+import { attachIdentity, requireAuth, Identity, isLocalRequest } from './auth';
 import { mapRequestContext } from './context-mapper';
 
 export interface AppBrainConfig {
@@ -291,13 +291,20 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   app.post('/chat', attachIdentity, async (req, res) => {
     const { id, message, history } = req.body;
     const identity = (req as any).identity as Identity;
+    const local = isLocalRequest(req);
+    const hasConfiguredToken = Boolean(process.env.AUTH_TOKEN || process.env.OPERATOR_TOKEN || process.env.OWNER_TOKEN);
+    const isLocalDirectOwner = local && !hasConfiguredToken;
 
-    // Single-owner companion model: map request context directly
+    const authenticated = identity?.authenticated || isLocalDirectOwner;
+    const serverRole = identity?.authenticated ? identity.role : (isLocalDirectOwner ? 'OWNER' : 'VIEWER');
+
+    // Single-owner companion model: map request context directly with server identity enforcement
     const mappingResult = mapRequestContext({
       ...req.body,
       id: id || req.body.companionId,
-      authenticated: identity?.authenticated ?? true,
-      source: identity?.source ?? 'local',
+      authenticated,
+      serverRole,
+      source: identity?.source ?? (local ? 'local' : 'external'),
       generateCorrelationId: true,
     });
 
@@ -331,12 +338,19 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   app.post('/chat/stream', attachIdentity, async (req, res) => {
     const { id, message, history } = req.body;
     const identity = (req as any).identity as Identity;
+    const local = isLocalRequest(req);
+    const hasConfiguredToken = Boolean(process.env.AUTH_TOKEN || process.env.OPERATOR_TOKEN || process.env.OWNER_TOKEN);
+    const isLocalDirectOwner = local && !hasConfiguredToken;
+
+    const authenticated = identity?.authenticated || isLocalDirectOwner;
+    const serverRole = identity?.authenticated ? identity.role : (isLocalDirectOwner ? 'OWNER' : 'VIEWER');
 
     const mappingResult = mapRequestContext({
       ...req.body,
       id: id || req.body.companionId,
-      authenticated: identity?.authenticated ?? true,
-      source: identity?.source ?? 'local',
+      authenticated,
+      serverRole,
+      source: identity?.source ?? (local ? 'local' : 'external'),
       generateCorrelationId: true,
     });
 

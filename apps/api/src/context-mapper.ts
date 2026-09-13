@@ -17,6 +17,28 @@ export interface MapRequestContextResult {
   error?: ContextError;
 }
 
+export type CanonicalRole = 'administrator' | 'operator' | 'viewer';
+
+export const ROLE_CAPABILITIES: Record<CanonicalRole, string[]> = {
+  administrator: ['chat', 'memory:approve', 'action:execute', 'system'],
+  operator: ['chat', 'action:execute'],
+  viewer: ['chat'],
+};
+
+const ROLE_RANK: Record<CanonicalRole, number> = {
+  administrator: 3,
+  operator: 2,
+  viewer: 1,
+};
+
+export function normalizeRoleCeiling(role?: string): CanonicalRole {
+  if (!role) return 'viewer';
+  const r = role.toLowerCase().trim();
+  if (r === 'owner' || r === 'administrator' || r === 'admin') return 'administrator';
+  if (r === 'operator') return 'operator';
+  return 'viewer';
+}
+
 /**
  * Maps incoming HTTP requests to a canonical RequestContext.
  * In a single-owner, single-machine model:
@@ -43,7 +65,10 @@ export function mapRequestContext(
   if (input.context && typeof input.context === 'object') {
     const rawCtx = input.context;
     const companionId = input.companionId || rawCtx.companionId || input.id;
-    const correlationId = rawCtx.conversation?.correlationId || input.correlationId;
+    const correlationId =
+      rawCtx.conversation?.correlationId ||
+      input.correlationId ||
+      (input.generateCorrelationId ? `corr-${Date.now()}` : undefined);
 
     if (!companionId) {
       return {
@@ -80,19 +105,59 @@ export function mapRequestContext(
         },
       };
     }
-
     // Determine server-enforced authentication status
     const isAuthenticated = input.authenticated !== undefined
       ? Boolean(input.authenticated)
       : (actor.authenticated !== undefined ? Boolean(actor.authenticated) : true);
 
-    const safeCapabilities = isAuthenticated
-      ? (Array.isArray(actor.capabilities) ? actor.capabilities : ['chat'])
-      : ['chat'];
+    const serverRoleRaw = input.serverRole || (input.authenticated === false ? 'VIEWER' : undefined);
+    let ceiling: CanonicalRole;
+    if (!isAuthenticated) {
+      ceiling = 'viewer';
+    } else if (serverRoleRaw) {
+      const sCeiling = normalizeRoleCeiling(serverRoleRaw);
+      const rCeiling = input.role ? normalizeRoleCeiling(input.role) : sCeiling;
+      ceiling = ROLE_RANK[rCeiling] < ROLE_RANK[sCeiling] ? rCeiling : sCeiling;
+    } else if (input.role) {
+      ceiling = normalizeRoleCeiling(input.role);
+    } else {
+      ceiling = 'administrator';
+    }
 
-    const safeRole = isAuthenticated
-      ? actor.authorizationRole
-      : 'viewer';
+    let effectiveRole: CanonicalRole;
+
+    if (!isAuthenticated) {
+      effectiveRole = 'viewer';
+      if (actor.authorizationRole && normalizeRoleCeiling(actor.authorizationRole) !== 'viewer') {
+        diagnostics.push('role_escalation_attempt_suppressed');
+      }
+    } else {
+      const requestedRole = actor.authorizationRole ? normalizeRoleCeiling(actor.authorizationRole) : ceiling;
+      if (ROLE_RANK[requestedRole] > ROLE_RANK[ceiling]) {
+        effectiveRole = ceiling;
+        diagnostics.push('role_escalation_attempt_suppressed');
+      } else {
+        effectiveRole = requestedRole;
+      }
+    }
+
+    let safeCapabilities: string[];
+    const allowedCaps = new Set(ROLE_CAPABILITIES[effectiveRole]);
+
+    if (!isAuthenticated || effectiveRole === 'viewer') {
+      safeCapabilities = ['chat'];
+      if (Array.isArray(actor.capabilities) && actor.capabilities.some((c: string) => !allowedCaps.has(c))) {
+        diagnostics.push('capability_escalation_attempt_suppressed');
+      }
+    } else if (Array.isArray(actor.capabilities) && actor.capabilities.length > 0) {
+      const filtered = actor.capabilities.filter((c: string) => allowedCaps.has(c));
+      if (filtered.length < actor.capabilities.length) {
+        diagnostics.push('capability_escalation_attempt_suppressed');
+      }
+      safeCapabilities = filtered.length > 0 ? filtered : [...ROLE_CAPABILITIES[effectiveRole]];
+    } else {
+      safeCapabilities = [...ROLE_CAPABILITIES[effectiveRole]];
+    }
 
     const constructed: RequestContext = {
       companionId,
@@ -102,7 +167,7 @@ export function mapRequestContext(
         sessionId: actor.sessionId,
         capabilities: safeCapabilities,
         authenticated: isAuthenticated,
-        authorizationRole: safeRole,
+        authorizationRole: effectiveRole,
       },
       conversation: {
         correlationId,
@@ -167,20 +232,65 @@ export function mapRequestContext(
     };
   }
 
-  const actorId = input.actorId || input.actor?.actorId || 'local-user';
+  const isAuthenticated = input.authenticated !== undefined ? Boolean(input.authenticated) : true;
+  const actorId = input.actorId || input.actor?.actorId || (isAuthenticated ? 'local-user' : 'anonymous-session');
   const sessionId = input.sessionId || input.actor?.sessionId || `session-${Date.now()}`;
   if (!input.actorId && !input.actor?.actorId) {
     diagnostics.push('anonymous_session_generated');
   }
 
-  const isAuthenticated = input.authenticated !== undefined ? Boolean(input.authenticated) : true;
-  const capabilities = isAuthenticated
-    ? (Array.isArray(input.capabilities)
-        ? input.capabilities
-        : Array.isArray(input.actor?.capabilities)
-        ? input.actor.capabilities
-        : ['chat', 'system'])
-    : ['chat'];
+  const serverRoleRaw = input.serverRole || (input.authenticated === false ? 'VIEWER' : undefined);
+  let ceiling: CanonicalRole;
+  if (!isAuthenticated) {
+    ceiling = 'viewer';
+  } else if (serverRoleRaw) {
+    const sCeiling = normalizeRoleCeiling(serverRoleRaw);
+    const rCeiling = input.role ? normalizeRoleCeiling(input.role) : sCeiling;
+    ceiling = ROLE_RANK[rCeiling] < ROLE_RANK[sCeiling] ? rCeiling : sCeiling;
+  } else if (input.role) {
+    ceiling = normalizeRoleCeiling(input.role);
+  } else {
+    ceiling = 'administrator';
+  }
+
+  let effectiveRole: CanonicalRole;
+  if (!isAuthenticated) {
+    effectiveRole = 'viewer';
+    if (input.role && normalizeRoleCeiling(input.role) !== 'viewer') {
+      diagnostics.push('role_escalation_attempt_suppressed');
+    }
+  } else {
+    const requested = input.role ? normalizeRoleCeiling(input.role) : ceiling;
+    if (ROLE_RANK[requested] > ROLE_RANK[ceiling]) {
+      effectiveRole = ceiling;
+      diagnostics.push('role_escalation_attempt_suppressed');
+    } else {
+      effectiveRole = requested;
+    }
+  }
+
+  const allowedCaps = new Set(ROLE_CAPABILITIES[effectiveRole]);
+  const rawCaps = Array.isArray(input.capabilities)
+    ? input.capabilities
+    : Array.isArray(input.actor?.capabilities)
+    ? input.actor.capabilities
+    : undefined;
+
+  let capabilities: string[];
+  if (!isAuthenticated || effectiveRole === 'viewer') {
+    capabilities = ['chat'];
+    if (rawCaps && rawCaps.some((c: string) => !allowedCaps.has(c))) {
+      diagnostics.push('capability_escalation_attempt_suppressed');
+    }
+  } else if (rawCaps && rawCaps.length > 0) {
+    const filtered = rawCaps.filter((c: string) => allowedCaps.has(c));
+    if (filtered.length < rawCaps.length) {
+      diagnostics.push('capability_escalation_attempt_suppressed');
+    }
+    capabilities = filtered.length > 0 ? filtered : [...ROLE_CAPABILITIES[effectiveRole]];
+  } else {
+    capabilities = [...ROLE_CAPABILITIES[effectiveRole]];
+  }
 
   const mappedContext: RequestContext = {
     companionId,
@@ -189,7 +299,7 @@ export function mapRequestContext(
       sessionId,
       capabilities,
       authenticated: isAuthenticated,
-      authorizationRole: input.role ? (input.role.toLowerCase() === 'viewer' ? 'viewer' : 'administrator') : undefined,
+      authorizationRole: effectiveRole,
     },
     conversation: {
       channel: input.channel || input.conversation?.channel || 'direct',

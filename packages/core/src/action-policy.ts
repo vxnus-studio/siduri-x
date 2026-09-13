@@ -183,7 +183,10 @@ export class ActionPolicyEngine {
 
     // Role check if tool restricts roles (supports administrator/owner role parity)
     if (toolDef.allowedRoles && toolDef.allowedRoles.length > 0) {
-      const actorRole = (effectiveContext.actor.authorizationRole as string) || (effectiveContext.actor as any).role || 'owner';
+      const actorRole =
+        (effectiveContext.actor.authorizationRole as string) ||
+        (effectiveContext.actor as any).role ||
+        (effectiveContext.actor.authenticated === false ? 'viewer' : 'owner');
       const normalizedActorRoles = new Set<string>([actorRole.toLowerCase()]);
       if (actorRole.toLowerCase() === 'administrator' || actorRole.toLowerCase() === 'owner') {
         normalizedActorRoles.add('administrator');

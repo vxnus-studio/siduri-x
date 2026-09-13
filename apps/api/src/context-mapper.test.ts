@@ -176,5 +176,83 @@ describe('API Request Context Mapper (Single-Owner, Single-Machine)', () => {
     expect(result.context?.actor.capabilities).toEqual(['chat']);
     expect(result.context?.actor.authorizationRole).toBe('viewer');
     expect(result.context?.source).toBe('external');
+    expect(result.diagnostics).toContain('role_escalation_attempt_suppressed');
+    expect(result.diagnostics).toContain('capability_escalation_attempt_suppressed');
+  });
+
+  test('Prevents authenticated operator from escalating to administrator role or forging system capabilities', () => {
+    const operatorPayload = {
+      companionId: 'companion-a',
+      authenticated: true,
+      serverRole: 'OPERATOR',
+      source: 'external',
+      context: {
+        actor: {
+          actorId: 'operator-alice',
+          sessionId: 'session-op-1',
+          authorizationRole: 'administrator', // Forged owner/admin role
+          capabilities: ['chat', 'system', 'root:manage', 'action:execute'], // Forged system/root capabilities
+        },
+        conversation: {
+          correlationId: 'corr-op-escalate',
+        },
+      },
+    };
+
+    const result = mapRequestContext(operatorPayload);
+    expect(result.accepted).toBe(true);
+    expect(result.context?.actor.authenticated).toBe(true);
+    // Role is capped at operator
+    expect(result.context?.actor.authorizationRole).toBe('operator');
+    // Elevated capabilities stripped; only valid operator capabilities retained
+    expect(result.context?.actor.capabilities).toEqual(['chat', 'action:execute']);
+    expect(result.diagnostics).toContain('role_escalation_attempt_suppressed');
+    expect(result.diagnostics).toContain('capability_escalation_attempt_suppressed');
+  });
+
+  test('Flat envelope: suppresses role and capability escalation when serverRole is VIEWER', () => {
+    const viewerPayload = {
+      companionId: 'companion-a',
+      authenticated: false,
+      serverRole: 'VIEWER',
+      role: 'OWNER', // Forged in flat envelope
+      capabilities: ['chat', 'system', 'action:execute'],
+      generateCorrelationId: true,
+    };
+
+    const result = mapRequestContext(viewerPayload);
+    expect(result.accepted).toBe(true);
+    expect(result.context?.actor.authorizationRole).toBe('viewer');
+    expect(result.context?.actor.capabilities).toEqual(['chat']);
+    expect(result.diagnostics).toContain('role_escalation_attempt_suppressed');
+  });
+
+  test('Authenticated owner receives canonical administrator role and capabilities, and can safely attenuate to viewer', () => {
+    const ownerPayload = {
+      companionId: 'companion-a',
+      authenticated: true,
+      serverRole: 'OWNER',
+      generateCorrelationId: true,
+    };
+
+    const ownerResult = mapRequestContext(ownerPayload);
+    expect(ownerResult.accepted).toBe(true);
+    expect(ownerResult.context?.actor.authorizationRole).toBe('administrator');
+    expect(ownerResult.context?.actor.capabilities).toEqual([
+      'chat',
+      'memory:approve',
+      'action:execute',
+      'system',
+    ]);
+
+    // Attenuation to viewer
+    const attenuatedPayload = {
+      ...ownerPayload,
+      role: 'VIEWER',
+    };
+    const attenuatedResult = mapRequestContext(attenuatedPayload);
+    expect(attenuatedResult.accepted).toBe(true);
+    expect(attenuatedResult.context?.actor.authorizationRole).toBe('viewer');
+    expect(attenuatedResult.diagnostics).not.toContain('role_escalation_attempt_suppressed');
   });
 });

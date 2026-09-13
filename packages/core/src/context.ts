@@ -38,7 +38,9 @@ export type DiagnosticCode =
   | 'legacy_role_removed'
   | 'anonymous_session_generated'
   | 'companion_default_mapped_for_bootstrap'
-  | 'actor_scoped_subject_mapped';
+  | 'actor_scoped_subject_mapped'
+  | 'role_escalation_attempt_suppressed'
+  | 'capability_escalation_attempt_suppressed';
 
 export type ContextErrorCode =
   | 'MISSING_CONTEXT'

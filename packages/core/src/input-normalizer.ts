@@ -35,7 +35,11 @@ export async function normalizeUserInput(
 
   const isContextObject = typeof roleOrContext === 'object' && roleOrContext !== null;
   const role: 'OWNER' | 'VIEWER' | 'OPERATOR' = isContextObject
-    ? ((roleOrContext.actor?.authorizationRole === 'viewer' ? 'VIEWER' : 'OWNER') as any)
+    ? (roleOrContext.actor?.authorizationRole === 'viewer' || roleOrContext.actor?.authenticated === false
+        ? 'VIEWER'
+        : roleOrContext.actor?.authorizationRole === 'operator'
+        ? 'OPERATOR'
+        : 'OWNER')
     : (roleOrContext as any);
 
   const requestContext: RequestContext = isContextObject

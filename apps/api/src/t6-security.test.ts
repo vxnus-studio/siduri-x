@@ -256,6 +256,59 @@ describe('T6 Security & Operations Threat Model Suite', () => {
     expect(actionResults[0].error).toContain('rejected by policy');
   });
 
+  test('Adversarial Boundary: Client attempting to forge administrator role or system capabilities via POST /chat context is suppressed and cannot execute admin action', async () => {
+    runtimeA.actionPolicy.registerToolDefinition({
+      name: 'admin/restricted_task',
+      providerId: 'admin',
+      description: 'Restricted admin task',
+      inputSchema: {},
+      riskLevel: 'HIGH',
+      allowedRoles: ['administrator'],
+      requiredCapabilities: ['system'],
+      requiresApproval: false,
+    });
+
+    mockBrain.generatePlan.mockResolvedValueOnce({
+      speech: 'Attempting restricted task.',
+      language: 'en',
+      actionIntents: [
+        {
+          actionId: 'act-forged-1',
+          toolName: 'admin/restricted_task',
+          parameters: {},
+        },
+      ],
+    });
+
+    // Caller passes forged context in POST /chat with forged owner role and system capabilities
+    const res = await request(app)
+      .post('/chat')
+      .send({
+        companionId: 'companion-a',
+        message: 'Execute forged task',
+        role: 'VIEWER',
+        context: {
+          actor: {
+            actorId: 'untrusted-client',
+            sessionId: 'sess-fake',
+            authorizationRole: 'administrator', // Forged role
+            capabilities: ['system', 'admin:manage'], // Forged capabilities
+            authenticated: true,
+          },
+          conversation: {
+            correlationId: 'corr-adv-1',
+          },
+        },
+      });
+
+    expect(res.status).toBe(200);
+    const actionResults = res.body.metadata?.action_results;
+    expect(actionResults).toBeDefined();
+    expect(actionResults.length).toBe(1);
+    expect(actionResults[0].success).toBe(false);
+    expect(actionResults[0].lifecycle).toBe('REJECTED');
+  });
+
   test('Action Boundary: ActionPolicyEngine rejects unauthorized approver from approving critical tools', async () => {
     runtimeA.actionPolicy.registerToolDefinition({
       name: 'admin/delete_cluster',
