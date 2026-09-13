@@ -180,33 +180,55 @@ describe('API Request Context Mapper (Single-Owner, Single-Machine)', () => {
     expect(result.diagnostics).toContain('capability_escalation_attempt_suppressed');
   });
 
-  test('Prevents authenticated operator from escalating to administrator role or forging system capabilities', () => {
-    const operatorPayload = {
+  test('Prevents attenuated caller from escalating to administrator role or forging elevated capabilities', () => {
+    const attenuatedPayload = {
       companionId: 'companion-a',
       authenticated: true,
-      serverRole: 'OPERATOR',
+      role: 'VIEWER',
       source: 'external',
       context: {
         actor: {
-          actorId: 'operator-alice',
-          sessionId: 'session-op-1',
+          actorId: 'visitor-bob',
+          sessionId: 'session-vis-1',
           authorizationRole: 'administrator', // Forged owner/admin role
           capabilities: ['chat', 'system', 'root:manage', 'action:execute'], // Forged system/root capabilities
         },
         conversation: {
-          correlationId: 'corr-op-escalate',
+          correlationId: 'corr-att-escalate',
         },
       },
     };
 
-    const result = mapRequestContext(operatorPayload);
+    const result = mapRequestContext(attenuatedPayload);
     expect(result.accepted).toBe(true);
     expect(result.context?.actor.authenticated).toBe(true);
-    // Role is capped at operator
-    expect(result.context?.actor.authorizationRole).toBe('operator');
-    // Elevated capabilities stripped; only valid operator capabilities retained
-    expect(result.context?.actor.capabilities).toEqual(['chat', 'action:execute']);
+    expect(result.context?.actor.authorizationRole).toBe('viewer');
+    expect(result.context?.actor.capabilities).toEqual(['chat']);
     expect(result.diagnostics).toContain('role_escalation_attempt_suppressed');
+    expect(result.diagnostics).toContain('capability_escalation_attempt_suppressed');
+  });
+
+  test('Strips unknown capabilities for authenticated owner while preserving canonical companion capabilities', () => {
+    const ownerPayload = {
+      companionId: 'companion-a',
+      authenticated: true,
+      source: 'local',
+      context: {
+        actor: {
+          actorId: 'owner-user',
+          sessionId: 'session-owner-1',
+          capabilities: ['chat', 'system', 'root:unauthorized', 'arbitrary:hack'],
+        },
+        conversation: {
+          correlationId: 'corr-owner-caps',
+        },
+      },
+    };
+
+    const result = mapRequestContext(ownerPayload);
+    expect(result.accepted).toBe(true);
+    expect(result.context?.actor.authorizationRole).toBe('administrator');
+    expect(result.context?.actor.capabilities).toEqual(['chat', 'system']);
     expect(result.diagnostics).toContain('capability_escalation_attempt_suppressed');
   });
 
