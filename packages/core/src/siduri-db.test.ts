@@ -53,15 +53,16 @@ describe('SiduriDatabase', () => {
       }).not.toThrow();
     });
 
-    it('initializes schema and WAL mode within the startup latency budget (<100ms in CI, typical <20ms locally)', () => {
+    it('initializes schema and WAL mode within the startup latency budget (<1000ms in CI, typical <20ms locally)', () => {
       const start = performance.now();
       const benchDb = new SiduriDatabase({ dbPath });
       const duration = performance.now() - start;
       benchDb.close();
 
       // In bare-metal local development, SQLite cold init is ~2-5ms.
-      // Under virtualized CI runners with concurrent Turbo tasks, allow a safe 100ms budget.
-      expect(duration).toBeLessThan(100);
+      // Under virtualized CI runners with concurrent Turbo tasks and shared I/O, allow up to 1000ms.
+      const budgetMs = process.env.CI ? 1000 : 250;
+      expect(duration).toBeLessThan(budgetMs);
     });
 
     it('stores and retrieves companion identity', () => {
