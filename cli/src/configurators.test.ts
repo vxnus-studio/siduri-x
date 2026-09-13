@@ -396,12 +396,29 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.summary?.Provider).toBe('None (Hands disabled)');
     });
 
-    test('Behavior configurator configures active self personality preset', async () => {
-      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ preset: 'cheerful' });
+    test('Behavior configurator configures blank slate mode when later is chosen', async () => {
+      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ personaMode: 'later' });
 
       const result = await configureBehavior({ companionName: 'Sparkle', manifest: behaviorManifest });
       expect(result.config.provider).toBe('active_self');
-      expect(result.config.preset).toBe('cheerful');
+      expect(result.config.mode).toBe('blank_slate');
+      expect(result.summary?.Persona).toBe('Blank Slate (Evolve via interaction)');
+    });
+
+    test('Behavior configurator configures custom persona asset when now is chosen', async () => {
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ personaMode: 'now' })
+        .mockResolvedValueOnce({
+          archetype: 'System Sentinel',
+          ethos: 'Snarky and loyal',
+          directive: 'No sycophantic greetings',
+        });
+
+      const result = await configureBehavior({ companionName: 'Sparkle', manifest: behaviorManifest });
+      expect(result.config.provider).toBe('active_self');
+      expect(result.config.mode).toBe('custom');
+      expect(result.config.archetype).toBe('System Sentinel');
+      expect(result.config.selfPath).toBe('./assets/self/sparkle.self');
     });
 
     test('Vision configurator configures OpenRouter vision model', async () => {

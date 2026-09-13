@@ -11,6 +11,7 @@ export interface GeneratedInstanceFiles {
   'public/index.html': string;
   createAssetsBodyDir?: boolean;
   createAssetsDirs?: string[];
+  [key: string]: string | boolean | string[] | undefined;
 }
 
 export interface InstanceGeneratorOptions {
@@ -82,6 +83,7 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
+  const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^2.0.3';
   const manifests = options.selectedManifests;
@@ -193,7 +195,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   ];
   for (const m of manifests) {
     if (m.name === '@siduri-x/self') {
-      importLines.push(`import { ActiveSelfCompiler, SqliteSelfRepository } from '@siduri-x/self';`);
+      importLines.push(`import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser } from '@siduri-x/self';`);
     } else {
       importLines.push(`import { ${m.factory} } from '${m.name}';`);
     }
@@ -206,6 +208,19 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     if (m.name === '@siduri-x/self') {
       instantiationLines.push(`const self = new SqliteSelfRepository({ dbPath: path.resolve(rootDir, 'siduri.sqlite') });`);
       instantiationLines.push(`const behavior = new ActiveSelfCompiler(config.organs.behavior);`);
+      instantiationLines.push(`const selfFile = path.resolve(rootDir, config.organs.behavior?.selfPath || 'assets/self/${companionSlug}.self');`);
+      instantiationLines.push(`try {`);
+      instantiationLines.push(`  const selfRaw = await readFile(selfFile, 'utf8').catch(() => null);`);
+      instantiationLines.push(`  if (selfRaw) {`);
+      instantiationLines.push(`    const parsedSelf = SelfPackageParser.parse(selfRaw);`);
+      instantiationLines.push(`    if (parsedSelf.isValid && parsedSelf.manifest) {`);
+      instantiationLines.push(`      await self.setIdentity({ companionId: config.id || 'default', name: parsedSelf.manifest.identity?.name || config.name, archetype: parsedSelf.manifest.identity?.archetype, version: parsedSelf.manifest.version || '1.0.0', updatedAt: new Date().toISOString() });`);
+      instantiationLines.push(`      if (parsedSelf.manifest.directives) {`);
+      instantiationLines.push(`        await self.commitDirectives(config.id || 'default', parsedSelf.manifest.directives.map((d) => ({ id: d.id, companionId: config.id || 'default', directive: d.directive, category: (d.category || 'behavioral'), status: 'ACTIVE', priority: d.priority || 50, createdAt: new Date().toISOString() })));`);
+      instantiationLines.push(`      }`);
+      instantiationLines.push(`    }`);
+      instantiationLines.push(`  }`);
+      instantiationLines.push(`} catch {}`);
       organMapEntries.push(`  behavior,`);
       organMapEntries.push(`  self,`);
     } else if (m.name === '@siduri-x/memory') {
@@ -723,7 +738,6 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     'Then open `http://localhost:3000` in your browser.'
   );
 
-  const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const createAssetsDirs: string[] = [];
 
   if (hasBody) {
@@ -760,6 +774,43 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     );
   }
 
+  const behaviorConfig = options.organConfigs?.behavior || options.organConfigs?.['@siduri-x/self'];
+  let selfPersonaFile: { path: string; content: string } | null = null;
+  if (manifests.some((m) => m.organType === 'behavior')) {
+    createAssetsDirs.push('assets/self');
+    if (behaviorConfig?.mode === 'custom' || behaviorConfig?.archetype) {
+      const selfRelPath = `assets/self/${companionSlug}.self`;
+      const selfContent = [
+        `specVersion: "2.0.0"`,
+        `kind: "self"`,
+        `id: "${companionSlug}-self"`,
+        `name: "${instanceName} Persona"`,
+        `version: "1.0.0"`,
+        `author:`,
+        `  name: "Operator"`,
+        `license: "MIT"`,
+        ``,
+        `identity:`,
+        `  name: "${instanceName}"`,
+        `  archetype: "${(behaviorConfig.archetype || 'Knowledge Assistant & Research Partner').replace(/"/g, '\\"')}"`,
+        `  origin: "Constructed companion"`,
+        `  ethos: "${(behaviorConfig.ethos || 'Direct technical candor, thoughtful, concise, and loyal').replace(/"/g, '\\"')}"`,
+        ``,
+        `directives:`,
+        `  - id: "dir-01"`,
+        `    category: "behavioral"`,
+        `    directive: "${(behaviorConfig.directive || 'Speak concisely and stay in character without sycophantic filler').replace(/"/g, '\\"')}"`,
+        ``,
+      ].join('\n');
+      selfPersonaFile = { path: selfRelPath, content: selfContent };
+      readmeLines.push(
+        '',
+        '### Self & Persona Assets',
+        `Companion persona manifest resides in \`./${selfRelPath}\`.`
+      );
+    }
+  }
+
   readmeLines.push('');
   const readmeMd = readmeLines.join('\n');
 
@@ -776,6 +827,10 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     createAssetsBodyDir: hasBody,
     createAssetsDirs,
   };
+
+  if (selfPersonaFile) {
+    result[selfPersonaFile.path] = selfPersonaFile.content;
+  }
 
   return result;
 }

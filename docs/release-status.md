@@ -1,7 +1,7 @@
 # Prototype Verification Status: Siduri-X
 
 **Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
-**Verification Baseline**: `main` branch (v2.0.6 milestone) (Sequential Top-to-Downstream Organ Wizard Flow, Direct Engine Options & Clean Single-Pass Config, Sovereign Life DB Foundation & E Knowledge Hub Discovery, Clean Capability Manifests, 3 Interaction Modes [Casual, Teach, Hybrid] with 4-Tier Hierarchy, LLM-Native Self & Qualitative Relational Stances, Decoupled Perception Pipeline, Clean Architecture & Pure SQLite)  
+**Verification Baseline**: `main` branch (v2.0.7 milestone) (Custom Base Persona .self Generation & Blank Slate Flow, Sequential Top-to-Downstream Organ Wizard Flow, Direct Engine Options & Clean Single-Pass Config, Sovereign Life DB Foundation & E Knowledge Hub Discovery, Clean Capability Manifests, 3 Interaction Modes [Casual, Teach, Hybrid] with 4-Tier Hierarchy, LLM-Native Self & Qualitative Relational Stances, Decoupled Perception Pipeline, Clean Architecture & Pure SQLite)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 

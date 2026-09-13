@@ -5,8 +5,8 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     name: '@siduri-x/self',
     organType: 'behavior',
     version: '2.0.2',
-    displayName: 'Behavior & Self (Personality Directives)',
-    description: 'Atomic directive state machine and personality projection compiler',
+    displayName: 'Self & Persona (Identity & Directives)',
+    description: 'Autonomous persona compiler, relational stances, and .self asset loader',
     entrypoint: './dist/index.js',
     factory: 'ActiveSelfCompiler',
     configKey: 'behavior',
@@ -18,7 +18,20 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
           type: 'string',
           enum: ['active_self', 'none']
         },
-        preset: {
+        mode: {
+          type: 'string',
+          enum: ['blank_slate', 'custom']
+        },
+        archetype: {
+          type: 'string'
+        },
+        ethos: {
+          type: 'string'
+        },
+        directive: {
+          type: 'string'
+        },
+        selfPath: {
           type: 'string'
         }
       }
