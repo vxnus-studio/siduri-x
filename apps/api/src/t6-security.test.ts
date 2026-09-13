@@ -256,6 +256,77 @@ describe('T6 Security & Operations Threat Model Suite', () => {
     expect(actionResults[0].error).toContain('rejected by policy');
   });
 
+  test('Action Boundary: ActionPolicyEngine rejects unauthorized approver from approving critical tools', async () => {
+    runtimeA.actionPolicy.registerToolDefinition({
+      name: 'admin/delete_cluster',
+      providerId: 'admin',
+      description: 'Delete cluster',
+      inputSchema: {},
+      riskLevel: 'CRITICAL',
+      allowedRoles: ['administrator'],
+      requiresApproval: true,
+    });
+
+    const action = {
+      actionId: 'act-crit-1',
+      toolName: 'admin/delete_cluster',
+      parameters: {},
+      context: {
+        companionId: 'companion-a',
+        actor: {
+          actorId: 'admin-user',
+          sessionId: 'sess-1',
+          authorizationRole: 'administrator',
+          capabilities: ['admin:delete'],
+          authenticated: true,
+        },
+        conversation: { channel: 'direct', correlationId: 'corr-1' },
+      },
+      executionId: 'exec-crit-1',
+    };
+
+    // 1. Unapproved action evaluation fails
+    const eval1 = await runtimeA.actionPolicy.evaluateAction(action);
+    expect(eval1.decision.allowed).toBe(false);
+    expect(eval1.decision.decisionCode).toBe('REJECTED_HIGH_RISK_UNAPPROVED');
+
+    // 2. Viewer attempt to approve is rejected
+    const viewerApproval = await runtimeA.approveAction({
+      executionId: 'exec-crit-1',
+      approverActorId: 'viewer-attacker',
+      approverRole: 'viewer',
+    });
+    expect(viewerApproval.approved).toBe(false);
+    expect(viewerApproval.decisionCode).toBe('REJECTED_UNAUTHORIZED');
+
+    // 3. Operator attempt to approve administrator tool is rejected (role mismatch)
+    const operatorApproval = await runtimeA.approveAction({
+      executionId: 'exec-crit-1',
+      approverActorId: 'operator-alice',
+      approverRole: 'operator',
+    });
+    expect(operatorApproval.approved).toBe(false);
+    expect(operatorApproval.decisionCode).toBe('REJECTED_ROLE_MISMATCH');
+
+    // 4. Action evaluation remains denied
+    const evalStillDenied = await runtimeA.actionPolicy.evaluateAction(action);
+    expect(evalStillDenied.decision.allowed).toBe(false);
+
+    // 5. Authorized administrator approval succeeds
+    const adminApproval = await runtimeA.approveAction({
+      executionId: 'exec-crit-1',
+      approverActorId: 'admin-super',
+      approverRole: 'administrator',
+    });
+    expect(adminApproval.approved).toBe(true);
+    expect(adminApproval.decisionCode).toBe('APPROVED');
+
+    // 6. Action evaluation now succeeds and issues capability
+    const evalAllowed = await runtimeA.actionPolicy.evaluateAction(action);
+    expect(evalAllowed.decision.allowed).toBe(true);
+    expect(evalAllowed.capability).toBeDefined();
+  });
+
   test('Adversarial Boundary: Hostile prompt directive in Behavior is quarantined and does not execute tools', async () => {
     // Unsafe directive in memory
     mockMemory.getDirectives.mockResolvedValueOnce([

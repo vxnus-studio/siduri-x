@@ -64,6 +64,14 @@ export interface PersistentExecutionRecord {
   updatedAt: string;
 }
 
+export interface ActionApprovalRecord {
+  executionId: string;
+  approverActorId: string;
+  reason?: string;
+  approvedAt: string;
+  approverRole?: string;
+}
+
 export interface ActionStore {
   // Concurrency-safe execution reservation: returns true if reservation succeeded, false if executionId already exists
   reserveExecution(record: PersistentExecutionRecord): Promise<boolean>;
@@ -71,8 +79,9 @@ export interface ActionStore {
   getExecution(executionId: string): Promise<PersistentExecutionRecord | undefined>;
   
   // Durable approval persistence across process restarts
-  saveApproval(executionId: string, approverActorId: string, reason?: string): Promise<void>;
+  saveApproval(executionId: string, approverActorId: string, reason?: string, approverRole?: string): Promise<void>;
   isActionApproved(executionId: string): Promise<boolean>;
+  getApproval?(executionId: string): Promise<ActionApprovalRecord | undefined>;
 
   // Append-only tamper-evident audit log
   appendAudit(event: ActionAuditEvent): Promise<void>;
@@ -81,7 +90,7 @@ export interface ActionStore {
 
 export class InMemoryActionStore implements ActionStore {
   private readonly executions = new Map<string, PersistentExecutionRecord>();
-  private readonly approvals = new Map<string, { approverActorId: string; reason?: string; approvedAt: string }>();
+  private readonly approvals = new Map<string, ActionApprovalRecord>();
   private readonly auditLog: ActionAuditEvent[] = [];
   private lastAuditHash: string = '0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -102,16 +111,23 @@ export class InMemoryActionStore implements ActionStore {
     return rec ? { ...rec } : undefined;
   }
 
-  async saveApproval(executionId: string, approverActorId: string, reason?: string): Promise<void> {
+  async saveApproval(executionId: string, approverActorId: string, reason?: string, approverRole?: string): Promise<void> {
     this.approvals.set(executionId, {
+      executionId,
       approverActorId,
       reason,
+      approverRole,
       approvedAt: new Date().toISOString(),
     });
   }
 
   async isActionApproved(executionId: string): Promise<boolean> {
     return this.approvals.has(executionId);
+  }
+
+  async getApproval(executionId: string): Promise<ActionApprovalRecord | undefined> {
+    const record = this.approvals.get(executionId);
+    return record ? { ...record } : undefined;
   }
 
   async appendAudit(event: ActionAuditEvent): Promise<void> {

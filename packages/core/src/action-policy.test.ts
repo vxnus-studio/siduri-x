@@ -216,4 +216,123 @@ describe('ActionPolicyEngine Boundary', () => {
     expect(resOp.decision.allowed).toBe(false);
     expect(resOp.decision.decisionCode).toBe('REJECTED_UNAUTHORIZED');
   });
+
+  describe('Approval Authorization Semantics', () => {
+    const criticalAction: ActionIntent = {
+      actionId: 'act-sec-auth-1',
+      toolName: 'admin/delete_database',
+      parameters: {},
+      context: {
+        companionId: 'companion-1',
+        actor: {
+          actorId: 'admin-1',
+          sessionId: 'sess-1',
+          authorizationRole: 'administrator',
+          capabilities: ['admin:delete'],
+          authenticated: true,
+        },
+        conversation: { channel: 'direct', correlationId: 'corr-1' },
+      },
+      executionId: 'exec-sec-auth-1',
+    };
+
+    it('rejects action approval when approverActorId is empty', async () => {
+      await engine.evaluateAction(criticalAction);
+      const res = await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: '',
+      });
+      expect(res.approved).toBe(false);
+      expect(res.decisionCode).toBe('REJECTED_MISSING_APPROVER_ID');
+    });
+
+    it('rejects action approval from unauthenticated approver context', async () => {
+      await engine.evaluateAction(criticalAction);
+      const res = await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: 'fake-admin',
+        context: {
+          companionId: 'companion-1',
+          actor: {
+            actorId: 'fake-admin',
+            sessionId: 'sess-fake',
+            authorizationRole: 'administrator',
+            capabilities: ['admin:delete'],
+            authenticated: false, // Unauthenticated!
+          },
+          conversation: { channel: 'direct', correlationId: 'corr-fake' },
+        },
+      });
+      expect(res.approved).toBe(false);
+      expect(res.decisionCode).toBe('REJECTED_UNAUTHENTICATED');
+    });
+
+    it('rejects action approval from viewer role', async () => {
+      await engine.evaluateAction(criticalAction);
+      const res = await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: 'viewer-user',
+        approverRole: 'viewer',
+      });
+      expect(res.approved).toBe(false);
+      expect(res.decisionCode).toBe('REJECTED_UNAUTHORIZED');
+    });
+
+    it('rejects approval when approver role does not match tool requirements (operator cannot approve admin tool)', async () => {
+      // 1. Initial evaluation stages pending execution
+      const eval1 = await engine.evaluateAction(criticalAction);
+      expect(eval1.decision.allowed).toBe(false);
+      expect(eval1.decision.decisionCode).toBe('REJECTED_HIGH_RISK_UNAPPROVED');
+
+      // 2. Operator attempts to approve an administrator-only tool
+      const approvalRes = await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: 'operator-alice',
+        approverRole: 'operator',
+      });
+      expect(approvalRes.approved).toBe(false);
+      expect(approvalRes.decisionCode).toBe('REJECTED_ROLE_MISMATCH');
+
+      // 3. Action re-evaluation remains unapproved and denied
+      const eval2 = await engine.evaluateAction(criticalAction);
+      expect(eval2.decision.allowed).toBe(false);
+      expect(eval2.decision.decisionCode).toBe('REJECTED_HIGH_RISK_UNAPPROVED');
+    });
+
+    it('authorizes approval and emits capability when approver is administrator or owner', async () => {
+      await engine.evaluateAction(criticalAction);
+
+      const approvalRes = await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: 'admin-bob',
+        approverRole: 'administrator',
+        reason: 'Authorized scheduled database purge',
+      });
+      expect(approvalRes.approved).toBe(true);
+      expect(approvalRes.decisionCode).toBe('APPROVED');
+
+      const evalApproved = await engine.evaluateAction(criticalAction);
+      expect(evalApproved.decision.allowed).toBe(true);
+      expect(evalApproved.decision.decisionCode).toBe('ALLOWED_POLICY');
+      expect(evalApproved.capability).toBeDefined();
+    });
+
+    it('records structured tamper-evident audit logs for approval decisions', async () => {
+      await engine.evaluateAction(criticalAction);
+
+      await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: 'viewer-tamper',
+        approverRole: 'viewer',
+      });
+
+      const auditLogs = await engine.getAuditLog();
+      const rejectionEvent = auditLogs.find(
+        (l) => l.executionId === 'exec-sec-auth-1' && l.lifecycle === 'REJECTED' && l.toolName === 'action:approve'
+      );
+      expect(rejectionEvent).toBeDefined();
+      expect(rejectionEvent?.actorId).toBe('viewer-tamper');
+      expect(rejectionEvent?.decision?.decisionCode).toBe('REJECTED_UNAUTHORIZED');
+    });
+  });
 });

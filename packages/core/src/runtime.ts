@@ -14,6 +14,8 @@ import {
   Message,
   RequestContext,
   ActionPolicyEngine,
+  ApproveActionOptions,
+  ActionApprovalResult,
   ActionStore,
   SqliteActionStore,
   ResponseGatingEngine,
@@ -334,6 +336,10 @@ export class SiduriRuntime {
 
   rejectResponse(options: RejectResponseOptions): { success: boolean; reason?: string; plan?: StagedResponsePlan } {
     return this.gating.rejectResponse(options);
+  }
+
+  async approveAction(options: ApproveActionOptions): Promise<ActionApprovalResult> {
+    return this.actionPolicy.approveAction(options);
   }
 
   getStagedPlan(responseId: string): StagedResponsePlan | undefined {

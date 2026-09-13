@@ -11,6 +11,7 @@ import {
   AuthorizationCapability,
   ActionStore,
   InMemoryActionStore,
+  ActionApprovalRecord,
   computeParametersHash,
   canonicalizeJson,
   signCapabilityPayload,
@@ -32,12 +33,58 @@ export interface ActionPolicyEngineOptions {
   defaultRequireApprovalForHighRisk?: boolean;
   store?: ActionStore;
   secretKey?: string;
+  allowedApproverRoles?: string[];
+  requiredApproverCapabilities?: string[];
+}
+
+export type ActionApprovalDecisionCode =
+  | 'APPROVED'
+  | 'REJECTED_UNAUTHORIZED'
+  | 'REJECTED_UNAUTHENTICATED'
+  | 'REJECTED_ROLE_MISMATCH'
+  | 'REJECTED_MISSING_APPROVER_ID'
+  | 'REJECTED_MISSING_CAPABILITY';
+
+export interface ActionApprovalResult {
+  approved: boolean;
+  decisionCode: ActionApprovalDecisionCode;
+  reason: string;
+  executionId: string;
+  approverActorId: string;
 }
 
 export interface ApproveActionOptions {
   executionId: string;
   approverActorId: string;
   reason?: string;
+  /**
+   * Optional RequestContext of the approver establishing authenticated identity.
+   */
+  context?: RequestContext;
+  /**
+   * Optional role of the approver (e.g. 'owner', 'administrator', 'operator').
+   */
+  approverRole?: string;
+  /**
+   * Optional capabilities held by the approver.
+   */
+  approverCapabilities?: string[];
+}
+
+export function normalizeApproverRole(role?: string, actorId?: string): string {
+  if (role && role.trim() !== '') {
+    const lower = role.trim().toLowerCase();
+    if (lower === 'administrator' || lower === 'admin') return 'administrator';
+    return lower;
+  }
+  if (actorId) {
+    const lower = actorId.toLowerCase();
+    if (lower.includes('admin')) return 'administrator';
+    if (lower.includes('owner')) return 'owner';
+    if (lower.includes('operator')) return 'operator';
+    if (lower.includes('viewer') || lower.includes('guest') || lower.includes('visitor')) return 'viewer';
+  }
+  return 'owner'; // Default to single-owner role
 }
 
 export class ActionPolicyEngine {
@@ -47,15 +94,24 @@ export class ActionPolicyEngine {
   private readonly defaultRiskLevel: ActionRiskLevel;
   private readonly defaultRequireApprovalForHighRisk: boolean;
   private readonly secretKey: string;
-  private readonly approvedExecutions = new Set<string>();
+  private readonly allowedApproverRoles: string[];
+  private readonly requiredApproverCapabilities: string[];
+  private readonly approvedExecutions = new Map<string, ActionApprovalRecord>();
+  private readonly pendingActions = new Map<
+    string,
+    { action: ActionIntent; context?: RequestContext; toolDef: ToolDefinition }
+  >();
 
   constructor(options: ActionPolicyEngineOptions = {}) {
     this.rules = options.rules ?? [];
     this.defaultRiskLevel = options.defaultRiskLevel ?? 'HIGH';
     this.defaultRequireApprovalForHighRisk = options.defaultRequireApprovalForHighRisk ?? true;
     this.store = options.store ?? new InMemoryActionStore();
-
     this.secretKey = getOrGenerateLocalActionPolicySecret(options.secretKey);
+    this.allowedApproverRoles = (
+      options.allowedApproverRoles ?? ['owner', 'administrator', 'admin', 'operator']
+    ).map((r) => r.toLowerCase());
+    this.requiredApproverCapabilities = options.requiredApproverCapabilities ?? [];
   }
 
   registerToolDefinition(tool: ToolDefinition): void {
@@ -184,15 +240,44 @@ export class ActionPolicyEngine {
       toolDef.requiresApproval ??
       (this.defaultRequireApprovalForHighRisk && (riskLevel === 'HIGH' || riskLevel === 'CRITICAL'));
 
-    let isApproved = this.approvedExecutions.has(executionId);
+    let approvalRecord = this.approvedExecutions.get(executionId);
+    if (!approvalRecord && typeof this.store.getApproval === 'function') {
+      approvalRecord = await this.store.getApproval(executionId);
+      if (approvalRecord) {
+        this.approvedExecutions.set(executionId, approvalRecord);
+      }
+    }
+
+    let isApproved = Boolean(approvalRecord);
     if (!isApproved && typeof this.store.isActionApproved === 'function') {
       isApproved = await this.store.isActionApproved(executionId);
-      if (isApproved) {
-        this.approvedExecutions.add(executionId);
+    }
+
+    if (requiresExplicitApproval && isApproved && approvalRecord) {
+      const approverRole = (
+        approvalRecord.approverRole || normalizeApproverRole(undefined, approvalRecord.approverActorId)
+      ).toLowerCase();
+      const isOwnerOrAdmin =
+        approverRole === 'owner' || approverRole === 'administrator' || approverRole === 'admin';
+      if (toolDef.allowedRoles && toolDef.allowedRoles.length > 0 && !isOwnerOrAdmin) {
+        const allowed = toolDef.allowedRoles.map((r) => r.toLowerCase());
+        if (!allowed.includes(approverRole)) {
+          const decision: ActionPolicyDecision = {
+            allowed: false,
+            reason: `Approver "${approvalRecord.approverActorId}" with role "${approverRole}" is not authorized to approve tool "${action.toolName}"`,
+            riskLevel,
+            requiredCapabilities: requiredCaps,
+            executionId,
+            decisionCode: 'REJECTED_UNAUTHORIZED',
+          };
+          await this.recordAudit(action, effectiveContext, decision, 'REJECTED');
+          return { decision };
+        }
       }
     }
 
     if (requiresExplicitApproval && !isApproved) {
+      this.pendingActions.set(executionId, { action, context: effectiveContext, toolDef });
       const decision: ActionPolicyDecision = {
         allowed: false,
         reason: `Action "${action.toolName}" has risk level ${riskLevel} and requires explicit approval`,
@@ -247,12 +332,141 @@ export class ActionPolicyEngine {
     return { decision, capability };
   }
 
-  async approveAction(options: ApproveActionOptions): Promise<boolean> {
-    this.approvedExecutions.add(options.executionId);
-    if (typeof this.store.saveApproval === 'function') {
-      await this.store.saveApproval(options.executionId, options.approverActorId, options.reason);
+  async approveAction(options: ApproveActionOptions): Promise<ActionApprovalResult> {
+    const actorId = (options.context?.actor.actorId || options.approverActorId || '').trim();
+    if (!actorId) {
+      return {
+        approved: false,
+        decisionCode: 'REJECTED_MISSING_APPROVER_ID',
+        reason: 'approverActorId is required to approve an action execution',
+        executionId: options.executionId,
+        approverActorId: '',
+      };
     }
-    return true;
+
+    // 1. Authenticated boundary check
+    if (options.context && options.context.actor.authenticated === false) {
+      const result: ActionApprovalResult = {
+        approved: false,
+        decisionCode: 'REJECTED_UNAUTHENTICATED',
+        reason: `Approver "${actorId}" is unauthenticated and cannot approve actions`,
+        executionId: options.executionId,
+        approverActorId: actorId,
+      };
+      await this.recordApprovalAudit(options.executionId, actorId, 'unauthenticated', false, result.reason);
+      return result;
+    }
+
+    // 2. Resolve effective approver role & capabilities
+    const rawRole =
+      options.context?.actor.authorizationRole || (options.context?.actor as any)?.role || options.approverRole;
+    const approverRole = normalizeApproverRole(rawRole, actorId);
+    const capabilities = options.context?.actor.capabilities || options.approverCapabilities || [];
+
+    const isOwnerOrAdmin = approverRole === 'owner' || approverRole === 'administrator' || approverRole === 'admin';
+    const isRoleAllowed = isOwnerOrAdmin || this.allowedApproverRoles.includes(approverRole);
+
+    // Reject non-allowed roles or explicit viewer/guest role
+    if (!isRoleAllowed || approverRole === 'viewer') {
+      const result: ActionApprovalResult = {
+        approved: false,
+        decisionCode: 'REJECTED_UNAUTHORIZED',
+        reason: `Actor "${actorId}" with role "${approverRole}" is not authorized to approve actions`,
+        executionId: options.executionId,
+        approverActorId: actorId,
+      };
+      await this.recordApprovalAudit(options.executionId, actorId, approverRole, false, result.reason);
+      return result;
+    }
+
+    // 3. Tool-specific authorization check if pending action is registered
+    const pending = this.pendingActions.get(options.executionId);
+    if (pending) {
+      const { toolDef } = pending;
+      if (toolDef.allowedRoles && toolDef.allowedRoles.length > 0 && !isOwnerOrAdmin) {
+        const normalizedToolRoles = new Set(toolDef.allowedRoles.map((r) => r.toLowerCase()));
+        if (!normalizedToolRoles.has(approverRole)) {
+          const result: ActionApprovalResult = {
+            approved: false,
+            decisionCode: 'REJECTED_ROLE_MISMATCH',
+            reason: `Approver role "${approverRole}" is not authorized to approve tool "${toolDef.name}" (requires: ${toolDef.allowedRoles.join(', ')})`,
+            executionId: options.executionId,
+            approverActorId: actorId,
+          };
+          await this.recordApprovalAudit(options.executionId, actorId, approverRole, false, result.reason, toolDef.name);
+          return result;
+        }
+      }
+
+      if (this.requiredApproverCapabilities.length > 0 && !isOwnerOrAdmin) {
+        const missing = this.requiredApproverCapabilities.filter((c) => !capabilities.includes(c));
+        if (missing.length > 0) {
+          const result: ActionApprovalResult = {
+            approved: false,
+            decisionCode: 'REJECTED_MISSING_CAPABILITY',
+            reason: `Approver is missing required approval capabilities: [${missing.join(', ')}]`,
+            executionId: options.executionId,
+            approverActorId: actorId,
+          };
+          await this.recordApprovalAudit(options.executionId, actorId, approverRole, false, result.reason, toolDef.name);
+          return result;
+        }
+      }
+    }
+
+    // 4. Record verified approval
+    const record: ActionApprovalRecord = {
+      executionId: options.executionId,
+      approverActorId: actorId,
+      reason: options.reason,
+      approverRole,
+      approvedAt: new Date().toISOString(),
+    };
+    this.approvedExecutions.set(options.executionId, record);
+
+    if (typeof this.store.saveApproval === 'function') {
+      await this.store.saveApproval(options.executionId, actorId, options.reason, approverRole);
+    }
+
+    const reason = options.reason || 'Action approved by authorized policy approver';
+    await this.recordApprovalAudit(options.executionId, actorId, approverRole, true, reason, pending?.toolDef.name);
+
+    return {
+      approved: true,
+      decisionCode: 'APPROVED',
+      reason,
+      executionId: options.executionId,
+      approverActorId: actorId,
+    };
+  }
+
+  private async recordApprovalAudit(
+    executionId: string,
+    approverActorId: string,
+    approverRole: string,
+    approved: boolean,
+    reason?: string,
+    toolName?: string
+  ): Promise<void> {
+    const event: ActionAuditEvent = {
+      executionId,
+      actionId: executionId,
+      toolName: toolName || 'action:approve',
+      companionId: 'system',
+      actorId: approverActorId,
+      riskLevel: 'HIGH',
+      lifecycle: approved ? 'APPROVED' : 'REJECTED',
+      decision: {
+        allowed: approved,
+        reason: reason || (approved ? 'Approval granted' : 'Approval rejected'),
+        riskLevel: 'HIGH',
+        executionId,
+        decisionCode: approved ? 'ALLOWED_POLICY' : 'REJECTED_UNAUTHORIZED',
+      },
+      parametersHash: computeParametersHash({ executionId, approverActorId, approverRole, reason }),
+      timestamp: new Date().toISOString(),
+    };
+    await this.store.appendAudit(event);
   }
 
   async recordAudit(

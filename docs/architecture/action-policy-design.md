@@ -6,8 +6,8 @@
 > - **Action Policy Boundary**: Implemented via `ActionPolicyEngine` (`packages/core/src/action-policy.ts`) and wired into `SiduriRuntime`.
 > - **Cryptographic Capability Enforcement**: Actions require tamper-evident HMAC capability tokens signed by `ActionPolicyEngine` and verified by `HandsOrgan`.
 > - **Provenance Propagation**: `RequestContext` (actor, session, companion, channel, capabilities) is strictly propagated into `ActionExecutionRequest`.
-> - **Strict Schema & Lifecycle**: Tools validate parameters against `inputSchema`, and approvals are durably tracked via `SqliteActionStore` / `InMemoryActionStore`.
-> - **Tamper-Evident Audit Chaining**: Executed actions append to a SHA-256 hash chain over canonicalized payloads.
+> - **Strict Schema & Lifecycle**: Tools validate parameters against `inputSchema`, and approvals enforce verified authorization semantics (verifying authenticated provenance, approver role and capabilities against tool requirements) durably tracked via `SqliteActionStore` / `InMemoryActionStore`.
+> - **Tamper-Evident Audit Chaining**: Executed actions and approval decisions append to a SHA-256 hash chain over canonicalized payloads.
 > 
 > *This document is preserved as the original hardening architecture design and rationale for the active Action Policy Engine.*
 

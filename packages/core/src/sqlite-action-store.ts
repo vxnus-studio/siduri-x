@@ -1,5 +1,5 @@
 import { ActionAuditEvent } from './action';
-import { ActionStore, PersistentExecutionRecord, canonicalizeJson } from './capability';
+import { ActionStore, PersistentExecutionRecord, ActionApprovalRecord, canonicalizeJson } from './capability';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const crypto = require('crypto');
@@ -43,6 +43,7 @@ export class SqliteActionStore implements ActionStore {
         execution_id TEXT PRIMARY KEY,
         approver_actor_id TEXT NOT NULL,
         reason TEXT,
+        approver_role TEXT,
         approved_at TEXT NOT NULL
       );
 
@@ -69,6 +70,11 @@ export class SqliteActionStore implements ActionStore {
         timestamp TEXT NOT NULL
       );
     `);
+    try {
+      this.db.exec('ALTER TABLE action_approvals ADD COLUMN approver_role TEXT;');
+    } catch {
+      // Column already exists or table freshly created
+    }
   }
 
   private initLastAuditHash(): void {
@@ -163,22 +169,38 @@ export class SqliteActionStore implements ActionStore {
     };
   }
 
-  async saveApproval(executionId: string, approverActorId: string, reason?: string): Promise<void> {
+  async saveApproval(executionId: string, approverActorId: string, reason?: string, approverRole?: string): Promise<void> {
     const stmt = this.db.prepare(`
-      INSERT INTO action_approvals (execution_id, approver_actor_id, reason, approved_at)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO action_approvals (execution_id, approver_actor_id, reason, approver_role, approved_at)
+      VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(execution_id) DO UPDATE SET
         approver_actor_id = excluded.approver_actor_id,
         reason = excluded.reason,
+        approver_role = excluded.approver_role,
         approved_at = excluded.approved_at
     `);
-    stmt.run(executionId, approverActorId, reason ?? null, new Date().toISOString());
+    stmt.run(executionId, approverActorId, reason ?? null, approverRole ?? null, new Date().toISOString());
   }
 
   async isActionApproved(executionId: string): Promise<boolean> {
     const stmt = this.db.prepare('SELECT 1 FROM action_approvals WHERE execution_id = ?');
     const row = stmt.get(executionId);
     return !!row;
+  }
+
+  async getApproval(executionId: string): Promise<ActionApprovalRecord | undefined> {
+    const stmt = this.db.prepare('SELECT * FROM action_approvals WHERE execution_id = ?');
+    const row = stmt.get(executionId);
+    if (!row) {
+      return undefined;
+    }
+    return {
+      executionId: row.execution_id,
+      approverActorId: row.approver_actor_id,
+      reason: row.reason ?? undefined,
+      approverRole: row.approver_role ?? undefined,
+      approvedAt: row.approved_at,
+    };
   }
 
   async appendAudit(event: ActionAuditEvent): Promise<void> {
