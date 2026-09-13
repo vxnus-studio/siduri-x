@@ -92,6 +92,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const hasVoice = manifests.some((m) => m.organType === 'voice');
   const hasBody = manifests.some((m) => m.organType === 'body');
   const hasMouth = manifests.some((m) => m.organType === 'mouth');
+  const hasVision = manifests.some((m) => m.organType === 'vision');
 
   const voiceConfig = options.organConfigs?.voice || options.organConfigs?.['@siduri-x/voice'];
   const isVoicevox = hasVoice && (!voiceConfig || voiceConfig.provider === 'voicevox');
@@ -228,6 +229,10 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
       organMapEntries.push(`  ${m.configKey},`);
     } else if (m.name === '@siduri-x/knowledge') {
       instantiationLines.push(`const knowledge = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
+      organMapEntries.push(`  ${m.configKey},`);
+    } else if (m.name === '@siduri-x/observation') {
+      const visionArg = hasVision ? 'vision' : '{ analyze: async () => JSON.stringify({ readings: [] }) }';
+      instantiationLines.push(`const observation = new ${m.factory}(${visionArg});`);
       organMapEntries.push(`  ${m.configKey},`);
     } else {
       const varName = m.configKey;

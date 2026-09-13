@@ -7,10 +7,16 @@ export async function configureObservation(
   const { provider } = await inquirer.prompt<{ provider: string }>({
     type: 'list',
     name: 'provider',
-    message: 'Screen observation & frame capture?',
+    message: 'Screen observation & continuous frame ingest:',
     choices: [
-      { name: 'Frame Ingest (SHA-256 deduplicated visual grounding for vision)', value: 'fixture' },
-      { name: 'None (Skip / Disable screen observation)', value: 'none' },
+      {
+        name: 'None (Disabled as default - Work in progress)',
+        value: 'none',
+      },
+      {
+        name: 'Experimental Frame Ingest (Prototype - requires active vision)',
+        value: 'fixture',
+      },
     ],
     default: 'none',
   });
@@ -18,14 +24,14 @@ export async function configureObservation(
   if (provider === 'none') {
     return {
       config: { provider: 'none' },
-      summary: { Provider: 'None (Observation disabled)' },
+      summary: { Provider: 'Disabled (Work in progress)' },
     };
   }
 
   return {
     config: {},
     summary: {
-      Provider: 'Grounded Observation Ingest',
+      Provider: 'Experimental Frame Ingest (Work in progress)',
       Deduplication: 'Cryptographic SHA-256 Hashing',
     },
   };

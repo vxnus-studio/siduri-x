@@ -21,6 +21,8 @@ import { configureBody } from './configurators/body';
 import { configureHands } from './configurators/hands';
 import { configureBehavior } from './configurators/behavior';
 import { configureVision } from './configurators/vision';
+import { configureEar } from './configurators/ear';
+import { configureObservation } from './configurators/observation';
 import { configureOrgan } from './configurators';
 
 // Mock inquirer.prompt
@@ -39,6 +41,8 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
   const handsManifest = registry.get('hands')!;
   const behaviorManifest = registry.get('behavior')!;
   const visionManifest = registry.get('vision')!;
+  const earManifest = registry.get('ear')!;
+  const observationManifest = registry.get('observation')!;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -435,6 +439,39 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       const result = await configureVision({ companionName: 'Sparkle', manifest: visionManifest });
       expect(result.config.provider).toBe('none');
       expect(result.summary?.Provider).toBe('None (Vision disabled)');
+    });
+
+    test('Ear configurator enables sensory bounds by default', async () => {
+      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ choice: 'enabled' });
+
+      const result = await configureEar({ companionName: 'Sparkle', manifest: earManifest });
+      expect(result.config.defaultSource).toBe('text_chat');
+      expect(result.config.maxTextLength).toBe(4000);
+      expect(result.config.maxAudioBytes).toBe(10485760);
+      expect(result.summary?.Status).toContain('Enabled');
+    });
+
+    test('Ear configurator disables sensory ingress when none is selected', async () => {
+      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ choice: 'none' });
+
+      const result = await configureEar({ companionName: 'Sparkle', manifest: earManifest });
+      expect(result.config.provider).toBe('none');
+      expect(result.summary?.Provider).toBe('None (Ear disabled)');
+    });
+
+    test('Observation configurator disables observation by default as work in progress', async () => {
+      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ provider: 'none' });
+
+      const result = await configureObservation({ companionName: 'Sparkle', manifest: observationManifest });
+      expect(result.config.provider).toBe('none');
+      expect(result.summary?.Provider).toContain('Disabled (Work in progress)');
+    });
+
+    test('Observation configurator configures experimental fixture ingest when chosen', async () => {
+      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ provider: 'fixture' });
+
+      const result = await configureObservation({ companionName: 'Sparkle', manifest: observationManifest });
+      expect(result.summary?.Provider).toContain('Work in progress');
     });
   });
 

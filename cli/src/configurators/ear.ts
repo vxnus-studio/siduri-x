@@ -4,19 +4,24 @@ import { OrganConfiguratorContext, OrganConfigurationResult } from './types';
 export async function configureEar(
   _context: OrganConfiguratorContext
 ): Promise<OrganConfigurationResult> {
-  const { defaultSource } = await inquirer.prompt<{ defaultSource: string }>({
+  const { choice } = await inquirer.prompt<{ choice: string }>({
     type: 'list',
-    name: 'defaultSource',
-    message: 'Perception ingress channel:',
+    name: 'choice',
+    message: 'Ear (Sensory Input & Perception Ingress):',
     choices: [
-      { name: 'Text Chat (Standard multimodal chat ingress)', value: 'text_chat' },
-      { name: 'Audio Streaming Ingress', value: 'audio_stream' },
-      { name: 'None (Skip / Disable sensory ingress)', value: 'none' },
+      {
+        name: 'Enabled (Recommended: Active sensory bounds & audio/text ingress validation)',
+        value: 'enabled',
+      },
+      {
+        name: 'None (Skip / Disable sensory ingress)',
+        value: 'none',
+      },
     ],
-    default: 'none',
+    default: 'enabled',
   });
 
-  if (defaultSource === 'none') {
+  if (choice === 'none') {
     return {
       config: { provider: 'none' },
       summary: { Provider: 'None (Ear disabled)' },
@@ -25,12 +30,14 @@ export async function configureEar(
 
   return {
     config: {
-      defaultSource,
+      defaultSource: 'text_chat',
       maxTextLength: 4000,
       maxAudioBytes: 10485760,
     },
     summary: {
-      'Default Ingress': defaultSource === 'text_chat' ? 'Text Chat' : 'Audio Stream',
+      Status: 'Enabled (Active sensory guard & audio/text ingress)',
+      'Max Text': '4,000 characters',
+      'Max Audio': '10 MB',
     },
   };
 }
