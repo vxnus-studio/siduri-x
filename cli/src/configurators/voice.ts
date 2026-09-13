@@ -9,26 +9,14 @@ export async function configureVoice(
   const { provider } = await inquirer.prompt<{ provider: string }>({
     type: 'list',
     name: 'provider',
-    message: 'Voice provider?',
+    message: 'Voice engine?',
     choices: [
       {
-        name: 'Edge-TTS (Zero-setup cloud TTS, no downloads/no Python required)',
-        value: 'edge-tts',
-      },
-      {
-        name: 'VOICEVOX (Standard VOICEVOX stock character voice banks)',
+        name: 'VOICEVOX (Pre-trained character voice banks: Zundamon, Shikoku Metan, etc.)',
         value: 'voicevox',
       },
       {
-        name: 'Kokoro TTS (Fast lightweight neural TTS via HTTP/CLI)',
-        value: 'kokoro',
-      },
-      {
-        name: 'Piper TTS (Fast local neural TTS via HTTP/CLI)',
-        value: 'piper',
-      },
-      {
-        name: 'RVC (Custom user-owned voice model via .pth / .index weights)',
+        name: 'RVC (Custom character voice model via .pth / .index weights + Base TTS)',
         value: 'rvc',
       },
       {
@@ -42,116 +30,6 @@ export async function configureVoice(
     return {
       config: { provider: 'none' },
       summary: { Provider: 'None (Voice disabled)' },
-    };
-  }
-
-  if (provider === 'edge-tts') {
-    const edgeAnswers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'voice',
-        message: 'Edge-TTS Voice Identifier (e.g. ja-JP-NanamiNeural, en-US-AriaNeural):',
-        default: 'ja-JP-NanamiNeural',
-      },
-    ]);
-
-    const voice = edgeAnswers.voice.trim() || 'ja-JP-NanamiNeural';
-    return {
-      config: {
-        provider: 'edge-tts',
-        voice,
-        maxQueueDepth: 50,
-      },
-      summary: {
-        Provider: 'Edge-TTS (Cloud Neural)',
-        Voice: voice,
-      },
-    };
-  }
-
-  if (provider === 'kokoro') {
-    const kokoroAnswers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'baseUrl',
-        message: 'Kokoro HTTP Base URL (leave empty if using local kokoro-tts CLI):',
-        default: 'http://localhost:8880',
-      },
-      {
-        type: 'input',
-        name: 'voice',
-        message: 'Kokoro Voice Name (e.g. af_bella, af_heart):',
-        default: 'af_bella',
-      },
-      {
-        type: 'input',
-        name: 'speed',
-        message: 'Speech Speed multiplier (e.g. 1.0):',
-        default: '1.0',
-      },
-    ]);
-
-    const baseUrl = kokoroAnswers.baseUrl.trim() || undefined;
-    const voice = kokoroAnswers.voice.trim() || 'af_bella';
-    const speed = parseFloat(kokoroAnswers.speed) || 1.0;
-
-    return {
-      config: {
-        provider: 'kokoro',
-        baseUrl,
-        voice,
-        speed,
-        maxQueueDepth: 50,
-      },
-      summary: {
-        Provider: 'Kokoro TTS (Local / Server)',
-        Mode: baseUrl ? `HTTP (${baseUrl})` : 'CLI (kokoro-tts)',
-        Voice: voice,
-        Speed: speed,
-      },
-    };
-  }
-
-  if (provider === 'piper') {
-    const piperAnswers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'baseUrl',
-        message: 'Piper HTTP Base URL (leave empty if using local piper CLI):',
-        default: 'http://localhost:5000',
-      },
-      {
-        type: 'input',
-        name: 'model',
-        message: 'Piper Model Path or Name (.onnx, optional):',
-        default: '',
-      },
-      {
-        type: 'input',
-        name: 'speakerId',
-        message: 'Piper Speaker ID (optional):',
-        default: '',
-      },
-    ]);
-
-    const baseUrl = piperAnswers.baseUrl.trim() || undefined;
-    const model = piperAnswers.model.trim() || undefined;
-    const speakerId = piperAnswers.speakerId.trim() ? parseInt(piperAnswers.speakerId.trim(), 10) : undefined;
-
-    return {
-      config: {
-        provider: 'piper',
-        baseUrl,
-        model,
-        speakerId,
-        maxQueueDepth: 50,
-      },
-      summary: {
-        Provider: 'Piper TTS (Local / Server)',
-        Mode: baseUrl ? `HTTP (${baseUrl})` : 'CLI (piper)',
-        Model: model || 'default',
-        'Speaker ID': speakerId !== undefined ? speakerId : 'default',
-      },
     };
   }
 

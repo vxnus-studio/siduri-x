@@ -381,7 +381,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     organType: 'voice',
     version: '2.0.2',
     displayName: 'Voice (Speech Synthesis & Voice Conversion)',
-    description: 'Queued speech synthesis and audio rendering lifecycle adapter (Edge-TTS, Kokoro, Piper, VOICEVOX, RVC)',
+    description: 'Queued speech synthesis and audio rendering lifecycle adapter (VOICEVOX, RVC)',
     entrypoint: './dist/index.js',
     factory: 'VoicevoxAdapter',
     configKey: 'voice',
@@ -391,7 +391,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
       properties: {
         provider: {
           type: 'string',
-          enum: ['voicevox', 'none']
+          enum: ['voicevox', 'edge-tts', 'kokoro', 'piper', 'none']
         },
         speakerId: {
           type: 'number',

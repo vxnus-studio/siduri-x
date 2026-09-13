@@ -316,42 +316,50 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.summary?.['Base TTS']).toBe('edge-tts');
     });
 
-    test('Voice configurator configures standalone Edge-TTS', async () => {
+    test('Voice configurator disables voice when none is selected', async () => {
       (inquirer.prompt as unknown as jest.Mock)
-        .mockResolvedValueOnce({ provider: 'edge-tts' })
-        .mockResolvedValueOnce({ voice: 'en-US-AriaNeural' });
+        .mockResolvedValueOnce({ provider: 'none' });
 
       const result = await configureVoice({ companionName: 'Sparkle', manifest: voiceManifest });
-      expect(result.config.provider).toBe('edge-tts');
-      expect(result.config.voice).toBe('en-US-AriaNeural');
-      expect(result.summary?.Provider).toBe('Edge-TTS (Cloud Neural)');
-      expect(result.summary?.Voice).toBe('en-US-AriaNeural');
+      expect(result.config.provider).toBe('none');
+      expect(result.summary?.Provider).toBe('None (Voice disabled)');
     });
 
-    test('Voice configurator configures standalone Kokoro TTS', async () => {
+    test('Voice configurator configures RVC with Kokoro as Base TTS Engine', async () => {
       (inquirer.prompt as unknown as jest.Mock)
-        .mockResolvedValueOnce({ provider: 'kokoro' })
-        .mockResolvedValueOnce({ baseUrl: 'http://localhost:8880', voice: 'af_heart', speed: '1.2' });
+        .mockResolvedValueOnce({ provider: 'rvc' })
+        .mockResolvedValueOnce({
+          modelPath: './assets/voice/sparkle/sparkle.pth',
+          indexPath: './assets/voice/sparkle/sparkle.index',
+          pitchShift: '0',
+          f0Method: 'pm',
+          baseTts: 'kokoro',
+          serviceUrl: 'http://localhost:50055',
+        });
 
       const result = await configureVoice({ companionName: 'Sparkle', manifest: voiceManifest });
       expect(result.config.provider).toBe('kokoro');
-      expect(result.config.baseUrl).toBe('http://localhost:8880');
-      expect(result.config.voice).toBe('af_heart');
-      expect(result.config.speed).toBe(1.2);
-      expect(result.summary?.Provider).toBe('Kokoro TTS (Local / Server)');
+      expect((result.config as any).rvc.enabled).toBe(true);
+      expect(result.summary?.['Base TTS']).toBe('kokoro');
     });
 
-    test('Voice configurator configures standalone Piper TTS', async () => {
+    test('Voice configurator configures RVC with Piper as Base TTS Engine', async () => {
       (inquirer.prompt as unknown as jest.Mock)
-        .mockResolvedValueOnce({ provider: 'piper' })
-        .mockResolvedValueOnce({ baseUrl: 'http://localhost:5000', model: 'en_US-lessac', speakerId: '2' });
+        .mockResolvedValueOnce({ provider: 'rvc' })
+        .mockResolvedValueOnce({
+          modelPath: './assets/voice/sparkle/sparkle.pth',
+          indexPath: '',
+          pitchShift: '-6',
+          f0Method: 'harvest',
+          baseTts: 'piper',
+          serviceUrl: 'http://localhost:50055',
+        });
 
       const result = await configureVoice({ companionName: 'Sparkle', manifest: voiceManifest });
       expect(result.config.provider).toBe('piper');
-      expect(result.config.baseUrl).toBe('http://localhost:5000');
-      expect(result.config.model).toBe('en_US-lessac');
-      expect(result.config.speakerId).toBe(2);
-      expect(result.summary?.Provider).toBe('Piper TTS (Local / Server)');
+      expect((result.config as any).rvc.enabled).toBe(true);
+      expect((result.config as any).rvc.pitchShift).toBe(-6);
+      expect(result.summary?.['Base TTS']).toBe('piper');
     });
 
     test('Body configurator configures Live2D, custom model path, and expression', async () => {

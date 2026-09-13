@@ -3,7 +3,7 @@
   "organType": "voice",
   "version": "2.0.2",
   "displayName": "Voice (Speech Synthesis & Voice Conversion)",
-  "description": "Queued speech synthesis and audio rendering lifecycle adapter (Edge-TTS, Kokoro, Piper, VOICEVOX, RVC)",
+  "description": "Queued speech synthesis and audio rendering lifecycle adapter (VOICEVOX, RVC)",
   "entrypoint": "./dist/index.js",
   "factory": "VoiceAdapter",
   "configKey": "voice",

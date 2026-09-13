@@ -23,7 +23,7 @@ npx @vxnus/siduri create [directory]
 5. **Zero External Database Setup**: Storage is powered by SQLite with WAL mode and built-in FTS5 (`siduri.sqlite`). No PostgreSQL containers or migration databases needed.
 6. **Hierarchical Wizard Flow (`organ > option > config`)**:
    - **Organ Selection**: Upfront selection of capability organs with clean capability titles (Brain required, core recommended organs pre-selected).
-   - **Organ Options**: Selects the specific provider/engine for the chosen organ (e.g. Voice: Edge-TTS, Kokoro, Piper, VOICEVOX, RVC).
+   - **Organ Options**: Selects the specific provider/engine for the chosen organ (e.g. Voice: VOICEVOX character voice banks, or RVC custom model with Edge-TTS/Kokoro/Piper base driver).
    - **Configuration**: Prompts only for parameters relevant to that option. Knowledge enables sovereign Life DB by default, queries E Knowledge Hub for optional packs, and automatically downloads archives to `./assets/knowledge/<pack-slug>` without manual path input.
 
 ### Generated Output Structure:
