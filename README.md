@@ -46,7 +46,7 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 ### Core Domain Substrates (Persistent Continuity)
 | Package | Version | Description | Status |
 | :--- | :---: | :--- | :--- |
-| **`@siduri-x/core`** | `^2.0.1` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
+| **`@siduri-x/core`** | `^2.0.2` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
 | **`@siduri-x/self`** | `^2.0.1` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
 | **`@siduri-x/knowledge`** | `^2.0.1` | Internal sovereign Life Database (Inventory, Finance, Schedule, Preferences) | **Implemented** |
 | **`@siduri-x/memory`** | `^2.0.1` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |

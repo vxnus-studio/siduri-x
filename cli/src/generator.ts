@@ -81,7 +81,7 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.1';
+  const coreVersion = options.coreVersion || '^2.0.2';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -288,7 +288,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `  // API: Version info`,
     `  if (pathname === '/version' && req.method === 'GET') {`,
     `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
-    `    res.end(JSON.stringify({ version: '2.0.1', name: config.name, id: config.id }));`,
+    `    res.end(JSON.stringify({ version: '2.0.2', name: config.name, id: config.id }));`,
     `    return;`,
     `  }`,
     '',

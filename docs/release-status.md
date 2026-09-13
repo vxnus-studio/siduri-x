@@ -1,7 +1,7 @@
 # Prototype Verification Status: Siduri-X
 
 **Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
-**Verification Baseline**: `main` branch (v2.0.0 milestone) (Clean Architecture, SQLite FTS5, Security Hardening, SSRF Streaming Limits & Node 22 Compatibility)  
+**Verification Baseline**: `main` branch (v2.0.2 milestone) (Decoupled Companion Container & Perception Pipeline, Canonical Boot Module, Action Policy Hardening, Clean Architecture & Pure SQLite)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 
