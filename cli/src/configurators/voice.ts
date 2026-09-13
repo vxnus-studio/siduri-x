@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import { OrganConfiguratorContext, OrganConfigurationResult } from './types';
+import { colors } from '../colors';
 
 export async function configureVoice(
   _context: OrganConfiguratorContext
@@ -34,6 +35,11 @@ export async function configureVoice(
   }
 
   if (provider === 'rvc') {
+    console.log(`\n  ${colors.cyan}ℹ RVC Voice Model Setup:${colors.reset}`);
+    console.log(`  • ${colors.dim}Voice Weights:${colors.reset} Place your trained weights (.pth) in: ${colors.green}./assets/voice/${companionSlug}/${companionSlug}.pth${colors.reset}`);
+    console.log(`  • ${colors.dim}Feature Index:${colors.reset} Place optional .index in: ${colors.green}./assets/voice/${companionSlug}/${companionSlug}.index${colors.reset}`);
+    console.log(`  • ${colors.dim}RVC Service:${colors.reset}   Ensure your headless RVC microservice is running before voice inference.\n`);
+
     const rvcAnswers = await inquirer.prompt([
       {
         type: 'input',
@@ -66,9 +72,9 @@ export async function configureVoice(
         name: 'baseTts',
         message: 'Base TTS Engine for RVC (Generates initial audio):',
         choices: [
-          { name: 'Edge-TTS (Cloud API, 0MB)', value: 'edge-tts' },
-          { name: 'Kokoro TTS (Local, ~80MB)', value: 'kokoro' },
-          { name: 'Piper TTS (Local, ~20MB)', value: 'piper' },
+          { name: 'Edge-TTS (Cloud API, 0MB - streams over network, zero local binary)', value: 'edge-tts' },
+          { name: 'Kokoro TTS (Connects to existing local Kokoro server or CLI)', value: 'kokoro' },
+          { name: 'Piper TTS (Connects to existing local Piper server or CLI)', value: 'piper' },
         ],
         default: 'edge-tts',
       },
@@ -326,7 +332,13 @@ function buildSpeakerChoices(speakers: VoicevoxSpeaker[]): { name: string; value
   return choices;
 }
 
-// provider === 'voicevox'
+  // provider === 'voicevox'
+  console.log(`\n  ${colors.cyan}ℹ VOICEVOX Engine Runtime:${colors.reset}`);
+  console.log(`  • ${colors.dim}Download timing:${colors.reset}    Automatically downloaded on first companion run (${colors.green}npm start${colors.reset}).`);
+  console.log(`  • ${colors.dim}Install path:${colors.reset}       ~/.voicevox/engine/ (~1.5GB CPU binary, verified SHA-256).`);
+  console.log(`  • ${colors.dim}Engine execution:${colors.reset}   Siduri auto-spawns and manages the engine in background on port 50021.`);
+  console.log(`  • ${colors.dim}Pre-existing check:${colors.reset} If you already run VOICEVOX (desktop/docker), Siduri connects directly without downloading.\n`);
+
   const urlAnswer = await inquirer.prompt([
     {
       type: 'input',
@@ -378,6 +390,7 @@ function buildSpeakerChoices(speakers: VoicevoxSpeaker[]): { name: string; value
     'Voice Bank': speakerLabel,
     'Speaker ID': speakerId,
     'Base URL': baseUrl,
+    'Engine Runtime': 'Auto-downloads to ~/.voicevox/engine/ on first npm start (if port free)',
   };
 
   return {

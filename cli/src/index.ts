@@ -13,16 +13,10 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.7';
+export const CLI_VERSION = '2.0.8';
 
-export const colors = {
-  cyan: '\u001b[36m',
-  dim: '\u001b[2m',
-  green: '\u001b[32m',
-  yellow: '\u001b[33m',
-  bold: '\u001b[1m',
-  reset: '\u001b[0m',
-};
+import { colors } from './colors';
+export { colors };
 
 export function printHeader(): void {
   console.log(`\n${colors.cyan}◈ SIDURI${colors.reset} ${colors.dim}companion setup (manifest-driven)${colors.reset}`);
@@ -326,6 +320,13 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   console.log(`  cp .env.example .env          ${colors.dim}# Fill in required API keys/credentials${colors.reset}`);
   console.log(`  npm run doctor                ${colors.dim}# Run diagnostic health probes${colors.reset}`);
   console.log(`  npm start                     ${colors.dim}# Start Web Companion & Memory Console at http://localhost:3000${colors.reset}\n`);
+
+  const voiceConfig = organConfigs.voice || organConfigs['@siduri-x/voice'];
+  if (voiceConfig?.provider === 'voicevox') {
+    console.log(`  ${colors.cyan}ℹ Voice Runtime:${colors.reset} ${colors.dim}VOICEVOX engine (~1.5GB) will auto-download to ~/.voicevox/engine/ and launch on port 50021 on first 'npm start' (if not already running).${colors.reset}\n`);
+  } else if (voiceConfig?.rvc?.enabled) {
+    console.log(`  ${colors.cyan}ℹ Voice Model:${colors.reset} ${colors.dim}Place your RVC weights (.pth) in ${voiceConfig.rvc.modelPath} before starting voice synthesis.${colors.reset}\n`);
+  }
 }
 
 export async function runCliDoctor(targetDir?: string): Promise<void> {
