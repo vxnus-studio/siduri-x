@@ -4,88 +4,18 @@ dotenv.config();
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Express } from 'express';
-import { createApp, AppInstance, AppBrainConfig, AppBehaviorConfig } from './app';
+import { createApp, AppInstance } from './app';
 import { SiduriRuntime } from './runtime';
-import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
-import { SqliteMemoryStore } from '@siduri-x/memory';
-import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
-import { UnifiedKnowledgeOrgan, UnifiedKnowledgeConfig } from '@siduri-x/knowledge';
-import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
-import { ActiveSelfCompiler, SqliteSelfRepository } from '@siduri-x/self';
-import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
-import { FixtureObservationOrgan } from '@siduri-x/observation';
+import { bootCompanion, createVision, createObservation } from './boot';
 
 export { createApp, AppInstance };
 export * from './context-mapper';
+export * from './boot';
 
 const runtimes = new Map<string, SiduriRuntime>();
 const instance: AppInstance = createApp(runtimes);
 export const app: Express = instance.app;
 export default app;
-
-function createBrain(config?: AppBrainConfig) {
-  const provider = config?.provider || 'openrouter';
-  const defaultKeyEnv = provider === 'openai-compatible' ? 'OPENAI_COMPATIBLE_API_KEY' : 'OPENROUTER_API_KEY';
-  const apiKey = config?.apiKey || process.env[config?.apiKeyEnv || defaultKeyEnv] || '';
-  if (provider === 'openai-compatible') {
-    return new OpenAICompatibleBrain({
-      apiKey,
-      model: config?.model || 'local-model',
-      baseUrl: config?.baseUrl || 'http://127.0.0.1:1234/v1',
-    });
-  }
-  return new OpenRouterBrain({ apiKey, model: config?.model || 'gpt-4o-mini' });
-}
-
-function isDisabled(config?: { provider?: string }): boolean {
-  return !config || config.provider === 'none';
-}
-
-function createVoice(config?: VoiceConfig) {
-  return isDisabled(config)
-    ? undefined
-    : new VoiceAdapter({
-        provider: (config?.provider as any) || 'voicevox',
-        baseUrl: config?.baseUrl || process.env.VOICEVOX_URL || 'http://localhost:50021',
-        speakerId: config?.speakerId || 1,
-        ...config,
-      });
-}
-
-function createKnowledge(config?: UnifiedKnowledgeConfig) {
-  if (isDisabled(config)) return undefined;
-  const dbPath = (config?.dbPath as string) || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite';
-  return new UnifiedKnowledgeOrgan({
-    ...config,
-    dbPath,
-    lifeDatabase: config?.lifeDatabase ?? true,
-  });
-}
-
-function createVision(config?: OpenRouterVisionConfig & { provider?: string }) {
-  return isDisabled(config)
-    ? undefined
-    : new OpenRouterVisionAdapter({
-        apiKey: config?.apiKey || process.env.OPENROUTER_API_KEY || '',
-        model: config?.model || 'gpt-4-vision',
-        ...config,
-      });
-}
-
-function createBehavior(config?: AppBehaviorConfig) {
-  return isDisabled(config) ? undefined : new ActiveSelfCompiler();
-}
-
-function createBody(config?: Live2DAdapterConfig & { provider?: string }) {
-  return isDisabled(config)
-    ? undefined
-    : new Live2DAdapter(config);
-}
-
-function createMemory(config?: { provider?: string; connectionString?: string; maxConnections?: number; dbPath?: string }) {
-  if (isDisabled(config)) return undefined;
-  return new SqliteMemoryStore({ dbPath: config?.dbPath || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
-}
 
 const PORT = process.env.PORT || 3001;
 
@@ -149,37 +79,12 @@ async function bootDefaultCompanion() {
   if (runtimes.has('default')) return;
   console.log("Booting default companion...");
   const config: any = await loadCompanionConfig();
-  
-  const brain = createBrain(config.brain);
-  const memory = createMemory(config.memory);
-  const voice = createVoice(config.voice);
-  const knowledge = createKnowledge(config.knowledge);
+
   const vision = createVision(config.vision);
-  const observation = new FixtureObservationOrgan(
-    vision ?? { analyze: async () => JSON.stringify({ readings: [] }) },
-  );
+  const observation = createObservation(vision);
   instance.setObservationOrgan(observation);
-  const selfRepo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
-  const behavior = createBehavior(config.behavior);
-  const body = createBody(config.body);
 
-  if (memory && typeof (memory as any).runMigrations === 'function') {
-    await (memory as any).runMigrations().catch((e: any) => console.warn("Migrations warning:", e.message));
-  }
-
-  const runtime = new SiduriRuntime('default', config as any, { 
-    brain, 
-    memory, 
-    voice, 
-    knowledge, 
-    vision, 
-    behavior, 
-    body,
-    self: selfRepo,
-    externalKnowledge: (knowledge as any)?.eAdapter ?? knowledge
-  });
-  await runtime.initialize();
-
+  const runtime = await bootCompanion('default', config, { observationOrgan: observation });
   runtimes.set('default', runtime);
   console.log("Default companion booted successfully.");
 }
