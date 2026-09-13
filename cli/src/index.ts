@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.3';
+export const CLI_VERSION = '2.0.4';
 
 export const colors = {
   cyan: '\u001b[36m',
@@ -128,24 +128,10 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   const companionName = basicAnswers.name;
   const projectDir = targetDir ? path.resolve(process.cwd(), targetDir) : path.resolve(process.cwd(), projectDirectoryName(companionName));
 
-  printSection('Organ Configuration');
-  console.log(`${colors.dim}Configure each capability organ for your standalone companion instance.${colors.reset}\n`);
-
-  const selectedManifests: OrganManifest[] = [];
-  const organConfigs: Record<string, any> = {};
-  const organSummaries: Record<string, Record<string, unknown>> = {};
-
-  // Brain is required by architecture contract for cognition
-  const brainManifest = registry.get('brain') || availableManifests.find((m) => m.organType === 'brain');
-  if (brainManifest) {
-    selectedManifests.push(brainManifest);
-    printSection('Brain · required');
-    const res: OrganConfigurationResult = await configureOrgan(brainManifest, {
-      companionName,
-    });
-    organConfigs[brainManifest.configKey] = res.config;
-    organSummaries[brainManifest.configKey] = res.summary || {};
-  }
+  printSection('Organ Selection');
+  console.log(`${colors.dim}In Siduri, a companion is assembled from modular capability organs:${colors.reset}`);
+  console.log(`${colors.dim}• Brain provides central cognition and LLM reasoning (required).${colors.reset}`);
+  console.log(`${colors.dim}• Select any capability organs below to attach to ${companionName}.${colors.reset}\n`);
 
   // Canonical organ presentation order
   const canonicalOrder = ['memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
@@ -159,21 +145,42 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
       return valA - valB;
     });
 
-  for (const m of nonBrainManifests) {
-    const isRecommended = ['memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth'].includes(m.organType);
-    const { enableOrgan } = await inquirer.prompt<{ enableOrgan: boolean }>({
-      type: 'confirm',
-      name: 'enableOrgan',
-      message: `Enable ${m.displayName}?`,
-      default: isRecommended,
-    });
+  const isRecommendedType = (type: string) => ['memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth'].includes(type);
 
-    if (!enableOrgan) {
-      continue;
-    }
+  const organChoices = nonBrainManifests.map((m) => ({
+    name: `${m.displayName} ${colors.dim}— ${m.description}${colors.reset}`,
+    value: m.organType,
+    checked: isRecommendedType(m.organType),
+  }));
 
-    selectedManifests.push(m);
-    const sectionTitle = m.displayName.split(' ')[0] || m.organType;
+  const { selectedOrganTypes } = await inquirer.prompt<{ selectedOrganTypes: string[] }>({
+    type: 'checkbox',
+    name: 'selectedOrganTypes',
+    message: 'Select capability organs to enable:',
+    choices: organChoices,
+  });
+
+  const selectedManifests: OrganManifest[] = [];
+  const organConfigs: Record<string, any> = {};
+  const organSummaries: Record<string, Record<string, unknown>> = {};
+
+  // Brain is required by architecture contract for cognition
+  const brainManifest = registry.get('brain') || availableManifests.find((m) => m.organType === 'brain');
+  if (brainManifest) {
+    selectedManifests.push(brainManifest);
+  }
+  for (const organType of selectedOrganTypes) {
+    const m = registry.get(organType) || availableManifests.find((item) => item.organType === organType);
+    if (m) selectedManifests.push(m);
+  }
+
+  // 2. Interactive Organ Configuration Stage
+  printSection('Organ Configuration');
+  console.log(`${colors.dim}Configure each enabled organ for ${companionName}.${colors.reset}\n`);
+
+  for (const m of selectedManifests) {
+    const isRequired = m.organType === 'brain';
+    const sectionTitle = isRequired ? `${m.displayName.split(' ')[0] || m.organType} · required` : m.displayName.split(' ')[0] || m.organType;
     printSection(sectionTitle);
 
     const res: OrganConfigurationResult = await configureOrgan(m, {
@@ -288,6 +295,27 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
     }
   } else if (files.createAssetsBodyDir) {
     await mkdir(path.join(projectDir, 'assets/body'), { recursive: true });
+  }
+
+  // If local knowledge archive is configured with a download URL, automatically fetch and unpack it
+  const knowledgeConfig = organConfigs.knowledge || organConfigs['@siduri-x/knowledge'];
+  if (knowledgeConfig?.pack?.mode === 'local' && knowledgeConfig?.pack?.archiveUrl) {
+    const packRelDir = (knowledgeConfig.packPath || 'assets/knowledge/pack').replace(/^\.\//, '');
+    const packDest = path.join(projectDir, packRelDir);
+    try {
+      await withTask(`Downloading knowledge archive (${knowledgeConfig.pack.packId || 'pack'})`, async () => {
+        const res = await fetch(knowledgeConfig.pack.archiveUrl);
+        if (res.ok) {
+          const tarPath = path.join(packDest, 'pack.tar.gz');
+          const buffer = Buffer.from(await res.arrayBuffer());
+          await writeFile(tarPath, buffer);
+          await execFile('tar', ['-xzf', tarPath, '-C', packDest]);
+          await fs.promises.unlink(tarPath).catch(() => {});
+        }
+      });
+    } catch (err: any) {
+      console.warn(`${colors.yellow}!${colors.reset} Notice: Could not download or unpack knowledge archive: ${err.message}`);
+    }
   }
 
   printSuccess(`Generated standalone files at ${projectDir}`);

@@ -150,19 +150,21 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
   });
 
   describe('Discrepancy #2 & #3: Knowledge Choices & Manifest Metadata Confirmation', () => {
-    test('Selecting "Do not use knowledge" sets provider: none and skips discovery', async () => {
-      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ source: 'none' });
+    test('Declining external pack uses sovereign Life Database by default and skips discovery', async () => {
+      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ useExternalPack: false });
 
       const result = await configureKnowledge({
         companionName: 'Sparkle',
         manifest: knowledgeManifest,
       });
 
-      expect(result.config.provider).toBe('none');
-      expect(result.summary?.Source).toBe('Do not use knowledge');
+      expect(result.config.provider).toBe('unified');
+      expect(result.config.lifeDatabase).toBe(true);
+      expect(result.summary?.['Life Database']).toBe('Enabled (siduri.sqlite)');
+      expect(result.summary?.['E-Pack']).toBe('None');
     });
 
-    test('Selecting "E Knowledge Hub" discovers manifest, extracts capabilities, and confirms provider', async () => {
+    test('Attaching E Knowledge Hub pack discovers manifest and configures remote provider automatically', async () => {
       const mockClient = {
         resolveProvider: jest.fn().mockResolvedValue({
           name: 'e-teyvat',
@@ -171,14 +173,18 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
           version: '1.2.0',
           description: 'Teyvat knowledge provider for Siduri.',
           capabilities: ['Search', 'Retrieval', 'Context injection'],
+          distributionType: 'remote',
+          distribution: {
+            kind: 'provider',
+            url: 'https://teyvat.e.vxnus.xyz',
+          },
           source: 'E Knowledge Hub',
         }),
       } as unknown as KnowledgeHubClient;
 
       (inquirer.prompt as unknown as jest.Mock)
-        .mockResolvedValueOnce({ source: 'e-hub' }) // Knowledge source
-        .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' }) // Package ID
-        .mockResolvedValueOnce({ confirmProvider: 'yes' }); // Confirm provider
+        .mockResolvedValueOnce({ useExternalPack: true }) // Attach external pack
+        .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' }); // Package ID
 
       const result = await configureKnowledge(
         { companionName: 'Sparkle', manifest: knowledgeManifest },
@@ -191,6 +197,40 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.summary?.Provider).toBe('E Teyvat');
       expect(result.summary?.Package).toBe('@vxnus/e-teyvat');
       expect(result.summary?.Version).toBe('1.2.0');
+      expect(result.summary?.['E-Pack']).toContain('Remote');
+    });
+
+    test('Attaching hybrid pack allows choosing between remote and local with automated path', async () => {
+      const mockClient = {
+        resolveProvider: jest.fn().mockResolvedValue({
+          name: 'e-teyvat',
+          displayName: 'E Teyvat',
+          package: '@vxnus/e-teyvat',
+          version: '1.2.0',
+          description: 'Teyvat knowledge provider for Siduri.',
+          capabilities: ['Search', 'Retrieval', 'Context injection'],
+          distributionType: 'both',
+          distribution: {
+            kind: 'archive',
+            url: 'https://knowledge.e.vxnus.xyz/archives/teyvat.tar.gz',
+          },
+          source: 'E Knowledge Hub',
+        }),
+      } as unknown as KnowledgeHubClient;
+
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ useExternalPack: true })
+        .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' })
+        .mockResolvedValueOnce({ selectedMode: 'local' });
+
+      const result = await configureKnowledge(
+        { companionName: 'Sparkle', manifest: knowledgeManifest },
+        { client: mockClient }
+      );
+
+      expect(result.config.provider).toBe('e-knowledge');
+      expect(result.config.packPath).toBe('./assets/knowledge/vxnus-e-teyvat');
+      expect(result.summary?.['E-Pack']).toContain('Local @ ./assets/knowledge/vxnus-e-teyvat');
     });
 
     test('Knowledge manifest validation enforces name and version', () => {

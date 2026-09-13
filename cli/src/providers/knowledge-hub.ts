@@ -17,10 +17,17 @@ export interface KnowledgeHubManifest {
   version: string;
   description?: string;
   capabilities?: KnowledgeHubCapabilities | string[];
+  distributionType?: 'local' | 'remote' | 'both';
   distribution?: {
-    kind?: string;
+    kind?: 'archive' | 'provider' | string;
     url?: string;
+    checksum?: string;
   };
+  distributions?: Array<{
+    kind?: 'archive' | 'provider' | string;
+    url?: string;
+    checksum?: string;
+  }>;
   source?: string;
   environment?: Array<{
     name: string;
@@ -38,6 +45,7 @@ export const KNOWN_KNOWLEDGE_PACKS: Record<string, KnowledgeHubManifest> = {
     version: '1.2.0',
     description: 'Teyvat knowledge provider for Siduri.',
     capabilities: ['Search', 'Retrieval', 'Context injection'],
+    distributionType: 'remote',
     distribution: {
       kind: 'provider',
       url: 'https://teyvat.e.vxnus.xyz',
@@ -59,6 +67,16 @@ export function validateKnowledgeManifest(raw: unknown, packId?: string): Knowle
     throw new Error(`Invalid knowledge manifest: missing 'version' field.`);
   }
 
+  const distributions = m.distributions || (m.distribution ? [m.distribution] : []);
+  let distributionType: 'local' | 'remote' | 'both' = m.distributionType as any;
+  if (!distributionType) {
+    const hasArchive = distributions.some((d) => d.kind === 'archive');
+    const hasProvider = distributions.some((d) => d.kind === 'provider');
+    if (hasArchive && hasProvider) distributionType = 'both';
+    else if (hasProvider) distributionType = 'remote';
+    else distributionType = 'local';
+  }
+
   return {
     name: m.name,
     displayName: m.displayName || m.name,
@@ -67,7 +85,9 @@ export function validateKnowledgeManifest(raw: unknown, packId?: string): Knowle
     version: m.version,
     description: m.description || 'Knowledge pack provider',
     capabilities: m.capabilities || ['Search', 'Retrieval'],
+    distributionType,
     distribution: m.distribution,
+    distributions: m.distributions,
     source: m.source || 'E Knowledge Hub',
     environment: m.environment || [],
   };
@@ -159,6 +179,14 @@ export function displayKnowledgeProviderSummary(manifest: KnowledgeHubManifest, 
   console.log(`  ${dim}Name:${reset}        ${manifest.displayName || manifest.name}`);
   console.log(`  ${dim}Package:${reset}     ${packId}`);
   console.log(`  ${dim}Version:${reset}     ${manifest.version}`);
+
+  const typeLabel = manifest.distributionType === 'both'
+    ? 'Hybrid (Available as Remote Provider & Local Archive)'
+    : manifest.distributionType === 'remote'
+      ? 'Remote Provider'
+      : 'Local Archive';
+  console.log(`  ${dim}Distribution:${reset} ${typeLabel}`);
+
   if (manifest.description) {
     console.log(`\n  ${dim}Description:${reset}`);
     console.log(`  ${manifest.description}`);

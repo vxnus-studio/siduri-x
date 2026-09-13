@@ -17,96 +17,40 @@ export async function configureKnowledge(
 ): Promise<OrganConfigurationResult> {
   const client = options.client || new KnowledgeHubClient();
 
-  // 1. Ask Knowledge source / mode
-  const { source } = await inquirer.prompt<{ source: string }>({
-    type: 'list',
-    name: 'source',
-    message: 'Select knowledge configuration:',
-    choices: [
-      { name: 'E Knowledge Hub / Portable Pack (with Life Database)', value: 'e-hub' },
-      { name: 'Life Database Only (SQLite personal state, schedule, preferences)', value: 'life-only' },
-      { name: 'Do not use knowledge', value: 'none' },
-    ],
-  });
-
-  if (source === 'none') {
-    return {
-      config: {
-        provider: 'none',
-        lifeDatabase: false,
-      },
-      summary: {
-        Source: 'Do not use knowledge',
-        Knowledge: 'Disabled',
-      },
-    };
-  }
-
-  const summary: Record<string, unknown> = {};
   const config: Record<string, any> = {
+    provider: 'unified',
     dbPath: 'siduri.sqlite',
     lifeDatabase: true,
   };
+  const summary: Record<string, unknown> = {
+    'Life Database': 'Enabled (siduri.sqlite)',
+  };
 
-  if (source === 'life-only') {
-    config.provider = 'unified';
-    summary.Source = 'Life Database';
-    summary['Life Database'] = 'Enabled (siduri.sqlite)';
+  // 1. Life Database is the sovereign default. Ask whether to attach an external knowledge pack
+  const { useExternalPack } = await inquirer.prompt<{ useExternalPack: boolean }>({
+    type: 'confirm',
+    name: 'useExternalPack',
+    message: 'Attach an external knowledge pack from E Knowledge Hub?',
+    default: false,
+  });
+
+  if (!useExternalPack) {
     summary['E-Pack'] = 'None';
     return { config, summary };
   }
 
-  // 2. Discovery-First E-Knowledge Resolution Flow
+  // 2. Discover and resolve E Knowledge Hub package
   while (true) {
     const promptRes = await inquirer.prompt<{ packId?: string; query?: string }>({
       type: 'input',
       name: 'packId',
-      message: 'Enter package ID (@publisher/name), local pack path, or remote URL:',
+      message: 'Enter package ID (@publisher/name):',
       default: '@vxnus/e-teyvat',
-      validate: (val) => val.trim().length > 0 || 'Please enter a package ID, path, or URL.',
+      validate: (val) => val.trim().length > 0 || 'Please enter a package ID.',
     });
 
     const target = (promptRes.packId || promptRes.query || '').trim();
 
-    // Case A: Remote HTTP endpoint
-    if (target.startsWith('http://') || target.startsWith('https://')) {
-      console.log(`\n\x1b[36m── Knowledge Provider ────────────────────────\x1b[0m\n`);
-      console.log(`  \x1b[2mType:\x1b[0m        Remote E-Provider`);
-      console.log(`  \x1b[2mEndpoint:\x1b[0m    ${target}`);
-      console.log(`  \x1b[2mConnectors:\x1b[0m  Remote only (HTTP stream)\n`);
-
-      config.provider = 'e-remote';
-      config.baseUrl = target;
-      config.pack = {
-        mode: 'remote',
-        baseUrl: target,
-      };
-      summary.Source = 'Remote E-Provider';
-      summary.Provider = target;
-      summary['E-Pack'] = `Remote (${target})`;
-      return { config, summary };
-    }
-
-    // Case B: Local path / file
-    if (target.startsWith('./') || target.startsWith('/') || fs.existsSync(target)) {
-      console.log(`\n\x1b[36m── Knowledge Provider ────────────────────────\x1b[0m\n`);
-      console.log(`  \x1b[2mType:\x1b[0m        Local Knowledge Pack`);
-      console.log(`  \x1b[2mPath:\x1b[0m        ${target}`);
-      console.log(`  \x1b[2mConnectors:\x1b[0m  Local only (Filesystem)\n`);
-
-      config.provider = 'e-knowledge';
-      config.packPath = target;
-      config.pack = {
-        mode: 'local',
-        packPath: target,
-      };
-      summary.Source = 'Local Knowledge Pack';
-      summary.Provider = target;
-      summary['E-Pack'] = `Local (${target})`;
-      return { config, summary };
-    }
-
-    // Case C: E Knowledge Hub package ID (@publisher/name)
     let manifest: KnowledgeHubManifest;
     try {
       process.stdout.write('\x1b[2mResolving knowledge metadata...\x1b[0m');
@@ -121,89 +65,92 @@ export async function configureKnowledge(
         name: 'failureAction',
         message: 'What would you like to do?',
         choices: [
-          { name: 'Try again / Enter another package ID or path', value: 'retry' },
-          { name: 'Skip attaching E-pack (keep Life DB only)', value: 'skip' },
+          { name: 'Try again / Enter another package ID', value: 'retry' },
+          { name: 'Continue without external pack (Life DB only)', value: 'skip' },
           { name: 'Cancel', value: 'cancel' },
         ],
       });
 
       if (failureAction === 'retry') continue;
       if (failureAction === 'skip') {
-        config.provider = 'unified';
-        summary.Source = 'Life Database';
         summary['E-Pack'] = 'None';
         return { config, summary };
       }
       throw new Error('Knowledge configuration cancelled.');
     }
 
-    // Display metadata
+    // Display provider summary
     displayKnowledgeProviderSummary(manifest, target);
 
-    // Inspect supported connectors
-    const hasRemoteUrl = Boolean(manifest.distribution?.url);
-    const connectorChoices = [];
+    // Determine connection type: User selects strictly 1 mode (Remote OR Local)
+    let connectionType: 'remote' | 'local';
 
-    if (hasRemoteUrl) {
-      connectorChoices.push({
-        name: `Remote (Stream directly from ${manifest.distribution?.url} without local storage)`,
-        value: 'remote',
+    const isHybrid = manifest.distributionType === 'both';
+    const isLocalOnly = manifest.distributionType === 'local' || manifest.distribution?.kind === 'archive';
+
+    if (isHybrid) {
+      const { selectedMode } = await inquirer.prompt<{ selectedMode: 'remote' | 'local' }>({
+        type: 'list',
+        name: 'selectedMode',
+        message: 'This pack offers both remote and local options. Select connection type:',
+        choices: [
+          {
+            name: `Remote (Stream directly from ${manifest.distribution?.url || 'provider'} without local storage)`,
+            value: 'remote',
+          },
+          {
+            name: 'Local (Download archive and run offline on this machine)',
+            value: 'local',
+          },
+        ],
       });
-      connectorChoices.push({
-        name: 'Local (Download and run offline pack files on this machine)',
-        value: 'local',
-      });
-      connectorChoices.push({
-        name: 'Hybrid (Local pack cache with remote provider fallback/sync)',
-        value: 'hybrid',
-      });
+      connectionType = selectedMode;
+    } else if (isLocalOnly) {
+      connectionType = 'local';
     } else {
-      connectorChoices.push({
-        name: 'Local (Offline pack files on this machine)',
-        value: 'local',
-      });
-    }
-    connectorChoices.push({
-      name: 'Choose another provider',
-      value: 'retry',
-    });
-
-    const choiceRes = await inquirer.prompt<{ connectorMode?: string; confirmProvider?: string }>({
-      type: 'list',
-      name: 'connectorMode',
-      message: 'Choose connection type for this pack:',
-      choices: connectorChoices,
-    });
-
-    const rawChoice = choiceRes.connectorMode ?? choiceRes.confirmProvider;
-    if (rawChoice === 'retry') {
-      continue;
+      connectionType = 'remote';
     }
 
-    const connectorMode = (rawChoice === 'yes'
-      ? (hasRemoteUrl ? 'remote' : 'local')
-      : (['remote', 'local', 'hybrid'].includes(rawChoice || '') ? rawChoice : 'local')) as 'remote' | 'local' | 'hybrid';
-
-    config.provider = 'e-hub';
-    config.registryUrl = 'https://e.vxnus.xyz/api/v1/knowledge';
-    config.packId = target;
-    config.pack = {
-      mode: connectorMode,
-      packId: target,
-      registryUrl: 'https://e.vxnus.xyz/api/v1/knowledge',
-      baseUrl: manifest.distribution?.url,
-      preferredMode: 'lexical',
-    };
-    if (manifest.distribution?.url) {
-      config.baseUrl = manifest.distribution.url;
+    if (connectionType === 'remote') {
+      config.provider = 'e-hub';
+      config.registryUrl = 'https://e.vxnus.xyz/api/v1/knowledge';
+      config.packId = target;
+      config.pack = {
+        mode: 'remote',
+        packId: target,
+        registryUrl: 'https://e.vxnus.xyz/api/v1/knowledge',
+        baseUrl: manifest.distribution?.url,
+        preferredMode: 'lexical',
+      };
+      if (manifest.distribution?.url) {
+        config.baseUrl = manifest.distribution.url;
+      }
+      summary.Source = 'E Knowledge Hub';
+      summary.Provider = manifest.displayName || manifest.name;
+      summary.Package = target;
+      summary.Version = manifest.version;
+      summary['E-Pack'] = `${manifest.displayName || manifest.name} (Remote)`;
+    } else {
+      // Local archive: stored in our defined path inside companion assets (user doesn't type path)
+      const packSlug = target.replace(/^@/, '').replace(/[/_]/g, '-');
+      const packDir = `./assets/knowledge/${packSlug}`;
+      config.provider = 'e-knowledge';
+      config.packPath = packDir;
+      config.packId = target;
+      config.pack = {
+        mode: 'local',
+        packId: target,
+        packPath: packDir,
+        archiveUrl: manifest.distribution?.url,
+        checksum: (manifest.distribution as any)?.checksum,
+        preferredMode: 'lexical',
+      };
+      summary.Source = 'E Knowledge Hub';
+      summary.Provider = manifest.displayName || manifest.name;
+      summary.Package = target;
+      summary.Version = manifest.version;
+      summary['E-Pack'] = `${manifest.displayName || manifest.name} (Local @ ${packDir})`;
     }
-
-    summary.Source = 'E Knowledge Hub';
-    summary.Provider = manifest.displayName || manifest.name;
-    summary.Package = target;
-    summary.Version = manifest.version;
-    summary['Life Database'] = 'Enabled (siduri.sqlite)';
-    summary['E-Pack'] = `${manifest.displayName || manifest.name} (${connectorMode})`;
 
     return {
       config,

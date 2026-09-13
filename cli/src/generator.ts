@@ -64,7 +64,9 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
     config.defaultTimeoutMs = config.defaultTimeoutMs || 10000;
     config.providers = config.providers || [];
   } else if (manifest.organType === 'knowledge') {
-    config.provider = config.provider || 'none';
+    config.provider = config.provider || 'unified';
+    config.lifeDatabase = config.lifeDatabase ?? true;
+    config.dbPath = config.dbPath || 'siduri.sqlite';
   } else if (manifest.organType === 'behavior') {
     config.provider = config.provider || 'active_self';
   } else if (manifest.organType === 'vision') {
@@ -744,6 +746,17 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
       `Place your character RVC voice models into \`./assets/voice/${companionSlug}/\`:`,
       `- \`${companionSlug}.pth\` (Target voice weights)`,
       `- \`${companionSlug}.index\` (Feature index file)`
+    );
+  }
+
+  const knowledgeConfig = options.organConfigs?.knowledge || options.organConfigs?.['@siduri-x/knowledge'];
+  if (manifests.some((m) => m.organType === 'knowledge') && knowledgeConfig?.packPath) {
+    const cleanPackDir = String(knowledgeConfig.packPath).replace(/^\.\//, '');
+    createAssetsDirs.push(cleanPackDir);
+    readmeLines.push(
+      '',
+      '### Knowledge Pack Assets',
+      `Local knowledge pack files reside in \`./${cleanPackDir}/\`.`
     );
   }
 
