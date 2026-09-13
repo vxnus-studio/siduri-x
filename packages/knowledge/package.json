@@ -10,15 +10,25 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    }
+    },
+    "./organ-manifest.json": "./organ-manifest.json"
   },
+  "files": [
+    "dist",
+    "organ-manifest.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
-    "test": "jest --config jest.config.json"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-x/core": "workspace:*"
+    "@siduri-x/core": "workspace:*",
+    "@vxnus/e": "^0.1.5",
+    "@vxnus/e-knowledge": "^0.1.5",
+    "undici": "^8.10.2"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

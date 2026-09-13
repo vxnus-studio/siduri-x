@@ -433,5 +433,21 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       expect(searched.length).toBeGreaterThan(0);
       expect(searched[0].sourceEventId).toBe('event-origin-123');
     });
+
+    it('records and retrieves source events via addSourceEvent and getSourceEvent', async () => {
+      const sourceEvent = await store.addSourceEvent({
+        id: 'source-evt-999',
+        sourceType: 'chat_turn',
+        occurredAt: new Date().toISOString(),
+        payload: { companionId, message: 'Hello from user' },
+      });
+      expect(sourceEvent.id).toBe('source-evt-999');
+
+      const retrieved = await store.getSourceEvent('source-evt-999');
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.id).toBe('source-evt-999');
+      expect(retrieved?.sourceType).toBe('chat_turn');
+      expect((retrieved?.payload as any)?.message).toBe('Hello from user');
+    });
   });
 });

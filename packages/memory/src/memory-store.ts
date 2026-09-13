@@ -7,6 +7,7 @@ import {
   BehaviorDirective,
   MemoryScope,
   MemoryQueryOptions,
+  SourceEvent,
 } from '@siduri-x/core';
 import {
   EpisodicMemoryStore,
@@ -54,6 +55,37 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
 
   async getRecentEvents(companionId: string, limit: number = 50): Promise<EpisodicEvent[]> {
     return this.db.getRecentEvents(companionId, limit);
+  }
+
+  async addSourceEvent(event: SourceEvent): Promise<SourceEvent> {
+    const episodicEvent: EpisodicEvent = {
+      id: event.id || crypto.randomUUID(),
+      companionId: (event.payload?.companionId as string) || this.activeCompanionId,
+      sourceType: (event.sourceType as any) || 'chat_turn',
+      occurredAt: event.occurredAt || new Date().toISOString(),
+      payload: event.payload || {},
+    };
+    this.db.recordEvent(episodicEvent);
+    return {
+      id: episodicEvent.id,
+      sourceType: episodicEvent.sourceType,
+      occurredAt: episodicEvent.occurredAt,
+      payload: episodicEvent.payload,
+      schemaVersion: event.schemaVersion,
+    };
+  }
+
+  async getSourceEvent(id: string): Promise<SourceEvent | undefined> {
+    const event = typeof (this.db as any).getEvent === 'function'
+      ? (this.db as any).getEvent(id)
+      : undefined;
+    if (!event) return undefined;
+    return {
+      id: event.id,
+      sourceType: event.sourceType,
+      occurredAt: event.occurredAt,
+      payload: event.payload,
+    };
   }
 
   async proposeClaim(

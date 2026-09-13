@@ -1,0 +1,98 @@
+{
+  "name": "@siduri-x/knowledge",
+  "organType": "knowledge",
+  "version": "2.0.0",
+  "displayName": "Knowledge (Sovereign Life DB & Portable E-Packs)",
+  "description": "Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs",
+  "entrypoint": "./dist/index.js",
+  "factory": "UnifiedKnowledgeOrgan",
+  "configKey": "knowledge",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "lifeDatabase": {
+        "type": "boolean",
+        "default": true
+      },
+      "dbPath": {
+        "type": "string",
+        "default": "siduri.sqlite"
+      },
+      "provider": {
+        "type": "string",
+        "enum": [
+          "unified",
+          "e-knowledge",
+          "e-remote",
+          "e-hub",
+          "none"
+        ],
+        "default": "unified"
+      },
+      "pack": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["local", "remote", "hybrid"]
+          },
+          "packPath": { "type": "string" },
+          "baseUrl": { "type": "string" },
+          "registryUrl": { "type": "string" },
+          "packId": { "type": "string" }
+        }
+      },
+      "packPath": {
+        "type": "string"
+      },
+      "baseUrl": {
+        "type": "string"
+      },
+      "registryUrl": {
+        "type": "string"
+      },
+      "packId": {
+        "type": "string"
+      },
+      "timeoutMs": {
+        "type": "number",
+        "default": 5000
+      },
+      "preferredMode": {
+        "type": "string",
+        "enum": [
+          "lexical",
+          "semantic",
+          "hybrid"
+        ],
+        "default": "lexical"
+      }
+    }
+  },
+  "environment": [
+    {
+      "name": "SIDURI_KNOWLEDGE_PACK",
+      "required": false,
+      "secret": false,
+      "description": "Path to local E knowledge pack"
+    },
+    {
+      "name": "SIDURI_KNOWLEDGE_REGISTRY_URL",
+      "required": false,
+      "secret": false,
+      "default": "https://e.vxnus.xyz/api/v1/knowledge",
+      "description": "URL of the E Knowledge Hub registry"
+    }
+  ],
+  "services": [
+    {
+      "name": "E Knowledge Hub",
+      "kind": "http_service",
+      "optional": true
+    }
+  ],
+  "database": {
+    "engine": "sqlite"
+  },
+  "healthCheck": null
+}

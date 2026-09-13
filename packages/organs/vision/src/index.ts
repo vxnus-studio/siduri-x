@@ -2,7 +2,8 @@ import { VisionOrgan } from '@siduri-x/core';
 import { spawn } from 'child_process';
 
 export interface OpenRouterVisionConfig {
-  apiKey: string;
+  apiKey?: string;
+  apiKeyEnv?: string;
   model?: string;
   baseUrl?: string;
   timeoutMs?: number;
@@ -10,18 +11,22 @@ export interface OpenRouterVisionConfig {
 }
 
 export class OpenRouterVisionAdapter implements VisionOrgan {
-  private config: Required<Omit<OpenRouterVisionConfig, 'timeoutMs' | 'maxResponseBytes'>> & {
+  private config: Required<Omit<OpenRouterVisionConfig, 'timeoutMs' | 'maxResponseBytes' | 'apiKeyEnv'>> & {
+    apiKeyEnv?: string;
     timeoutMs: number;
     maxResponseBytes: number;
   };
 
   constructor(config: OpenRouterVisionConfig) {
+    const apiKeyEnv = config?.apiKeyEnv || 'OPENROUTER_API_KEY';
+    const apiKey = config?.apiKey || (typeof process !== 'undefined' && process.env ? (process.env[apiKeyEnv] || process.env.OPENROUTER_API_KEY || '') : '') || '';
     this.config = {
-      apiKey: config.apiKey,
-      model: config.model || 'google/gemini-pro-vision',
-      baseUrl: config.baseUrl || 'https://openrouter.ai/api/v1',
-      timeoutMs: config.timeoutMs || 15_000,
-      maxResponseBytes: config.maxResponseBytes || 1024 * 1024,
+      apiKey,
+      apiKeyEnv,
+      model: config?.model || 'google/gemini-pro-vision',
+      baseUrl: config?.baseUrl || 'https://openrouter.ai/api/v1',
+      timeoutMs: config?.timeoutMs || 15_000,
+      maxResponseBytes: config?.maxResponseBytes || 1024 * 1024,
     };
   }
 
@@ -372,3 +377,20 @@ export class MultiPassVisionAdapter implements VisionOrgan {
     return JSON.stringify(usable.length > 0 ? usable : combined);
   }
 }
+
+export function probeVisionHealth(context: { config?: any; env?: Record<string, string | undefined> }): { ok: boolean; message?: string } {
+  const provider = context?.config?.provider || 'openrouter';
+  if (provider === 'none') {
+    return { ok: true, message: 'Vision disabled' };
+  }
+  const apiKeyEnv = context?.config?.apiKeyEnv || 'OPENROUTER_API_KEY';
+  const apiKey = context?.config?.apiKey || (context?.env !== undefined ? context.env[apiKeyEnv] : process.env[apiKeyEnv]);
+  if (!apiKey) {
+    return {
+      ok: false,
+      message: `Missing API key for Vision. Set ${apiKeyEnv} in environment.`,
+    };
+  }
+  return { ok: true, message: `Vision configured with ${provider}` };
+}
+

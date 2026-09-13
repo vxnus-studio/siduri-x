@@ -128,42 +128,52 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   const companionName = basicAnswers.name;
   const projectDir = targetDir ? path.resolve(process.cwd(), targetDir) : path.resolve(process.cwd(), projectDirectoryName(companionName));
 
-  printSection('Organ Selection');
-  console.log(`${colors.dim}Select any combination of organs to compose into your standalone instance.${colors.reset}\n`);
-
-  // Brain is required by architecture contract for cognition
-  const brainManifest = registry.get('brain');
-  const nonBrainManifests = availableManifests.filter((m) => m.organType !== 'brain');
-
-  const organChoices = nonBrainManifests.map((m) => ({
-    name: `${m.displayName} (${m.name})`,
-    value: m.organType,
-    checked: m.organType === 'memory', // default memory checked
-  }));
-
-  const { selectedOrganTypes } = await inquirer.prompt<{ selectedOrganTypes: string[] }>({
-    type: 'checkbox',
-    name: 'selectedOrganTypes',
-    message: 'Select organs to install:',
-    choices: organChoices,
-  });
+  printSection('Organ Configuration');
+  console.log(`${colors.dim}Configure each capability organ for your standalone companion instance.${colors.reset}\n`);
 
   const selectedManifests: OrganManifest[] = [];
-  if (brainManifest) {
-    selectedManifests.push(brainManifest);
-  }
-  for (const organType of selectedOrganTypes) {
-    const m = registry.get(organType);
-    if (m) selectedManifests.push(m);
-  }
-
-  // 2. Interactive Organ Configuration Stage
   const organConfigs: Record<string, any> = {};
   const organSummaries: Record<string, Record<string, unknown>> = {};
 
-  for (const m of selectedManifests) {
-    const isRequired = m.organType === 'brain';
-    const sectionTitle = isRequired ? `${m.displayName.split(' ')[0] || m.organType} · required` : m.displayName.split(' ')[0] || m.organType;
+  // Brain is required by architecture contract for cognition
+  const brainManifest = registry.get('brain') || availableManifests.find((m) => m.organType === 'brain');
+  if (brainManifest) {
+    selectedManifests.push(brainManifest);
+    printSection('Brain · required');
+    const res: OrganConfigurationResult = await configureOrgan(brainManifest, {
+      companionName,
+    });
+    organConfigs[brainManifest.configKey] = res.config;
+    organSummaries[brainManifest.configKey] = res.summary || {};
+  }
+
+  // Canonical organ presentation order
+  const canonicalOrder = ['memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
+  const nonBrainManifests = availableManifests
+    .filter((m) => m.organType !== 'brain')
+    .sort((a, b) => {
+      const idxA = canonicalOrder.indexOf(a.organType);
+      const idxB = canonicalOrder.indexOf(b.organType);
+      const valA = idxA === -1 ? 99 : idxA;
+      const valB = idxB === -1 ? 99 : idxB;
+      return valA - valB;
+    });
+
+  for (const m of nonBrainManifests) {
+    const isRecommended = ['memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth'].includes(m.organType);
+    const { enableOrgan } = await inquirer.prompt<{ enableOrgan: boolean }>({
+      type: 'confirm',
+      name: 'enableOrgan',
+      message: `Enable ${m.displayName}?`,
+      default: isRecommended,
+    });
+
+    if (!enableOrgan) {
+      continue;
+    }
+
+    selectedManifests.push(m);
+    const sectionTitle = m.displayName.split(' ')[0] || m.organType;
     printSection(sectionTitle);
 
     const res: OrganConfigurationResult = await configureOrgan(m, {

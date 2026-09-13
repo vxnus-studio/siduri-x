@@ -3,7 +3,8 @@ import { PromptAssembler } from './prompt';
 import { z } from 'zod';
 
 export interface OpenAICompatibleBrainConfig {
-  apiKey: string;
+  apiKey?: string;
+  apiKeyEnv?: string;
   model: string;
   baseUrl: string;
   timeoutMs?: number;
@@ -13,7 +14,8 @@ export interface OpenAICompatibleBrainConfig {
 }
 
 export interface OpenRouterBrainConfig {
-  apiKey: string;
+  apiKey?: string;
+  apiKeyEnv?: string;
   model: string;
   timeoutMs?: number;
   maxRetries?: number;
@@ -53,10 +55,19 @@ const ResponsePlanSchema = z.object({
 export class OpenAICompatibleBrain implements BrainOrgan {
   private config: OpenAICompatibleBrainConfig;
   private assembler: PromptAssembler;
+  protected resolvedApiKey: string;
   
   constructor(config: OpenAICompatibleBrainConfig) {
     this.config = config;
     this.assembler = new PromptAssembler();
+    const defaultEnv = config.baseUrl && !config.baseUrl.includes('openrouter.ai')
+      ? 'OPENAI_COMPATIBLE_API_KEY'
+      : 'OPENROUTER_API_KEY';
+    const envKey = config.apiKeyEnv || defaultEnv;
+    this.resolvedApiKey = config.apiKey || (typeof process !== 'undefined' && process.env ? (process.env[envKey] || '') : '') || '';
+    if (!this.config.apiKey && this.resolvedApiKey) {
+      this.config = { ...this.config, apiKey: this.resolvedApiKey };
+    }
   }
   
   async generatePlan(context: BrainContext): Promise<ResponsePlan> {
@@ -143,7 +154,7 @@ export class OpenAICompatibleBrain implements BrainOrgan {
           const response = await fetch(`${this.config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${this.config.apiKey}`,
+              "Authorization": `Bearer ${this.resolvedApiKey || this.config.apiKey}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -221,7 +232,9 @@ export class OpenAICompatibleBrain implements BrainOrgan {
 
 export class OpenRouterBrain extends OpenAICompatibleBrain {
   constructor(config: OpenRouterBrainConfig) {
-    super({ ...config, baseUrl: 'https://openrouter.ai/api/v1' });
+    const apiKeyEnv = config.apiKeyEnv || 'OPENROUTER_API_KEY';
+    const apiKey = config.apiKey || (typeof process !== 'undefined' && process.env ? (process.env[apiKeyEnv] || process.env.OPENROUTER_API_KEY || '') : '') || '';
+    super({ ...config, baseUrl: 'https://openrouter.ai/api/v1', apiKey, apiKeyEnv });
   }
 }
 

@@ -48,5 +48,5 @@
     }
   ],
   "database": null,
-  "healthCheck": null
+  "healthCheck": "probeVisionHealth"
 }

@@ -190,16 +190,33 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `import { SiduriRuntime, dispatchCompanionChat, validateCompanionConfig } from '@siduri-x/core';`,
   ];
   for (const m of manifests) {
-    importLines.push(`import { ${m.factory} } from '${m.name}';`);
+    if (m.name === '@siduri-x/self') {
+      importLines.push(`import { ActiveSelfCompiler, SqliteSelfRepository } from '@siduri-x/self';`);
+    } else {
+      importLines.push(`import { ${m.factory} } from '${m.name}';`);
+    }
   }
 
   const instantiationLines: string[] = [];
   const organMapEntries: string[] = [];
 
   for (const m of manifests) {
-    const varName = m.configKey;
-    instantiationLines.push(`const ${varName} = new ${m.factory}(config.organs.${m.configKey});`);
-    organMapEntries.push(`  ${varName},`);
+    if (m.name === '@siduri-x/self') {
+      instantiationLines.push(`const self = new SqliteSelfRepository({ dbPath: path.resolve(rootDir, 'siduri.sqlite') });`);
+      instantiationLines.push(`const behavior = new ActiveSelfCompiler(config.organs.behavior);`);
+      organMapEntries.push(`  behavior,`);
+      organMapEntries.push(`  self,`);
+    } else if (m.name === '@siduri-x/memory') {
+      instantiationLines.push(`const memory = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
+      organMapEntries.push(`  ${m.configKey},`);
+    } else if (m.name === '@siduri-x/knowledge') {
+      instantiationLines.push(`const knowledge = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
+      organMapEntries.push(`  ${m.configKey},`);
+    } else {
+      const varName = m.configKey;
+      instantiationLines.push(`const ${varName} = new ${m.factory}(config.organs.${m.configKey});`);
+      organMapEntries.push(`  ${varName},`);
+    }
   }
 
   if (hasMouth && hasVoice) {
@@ -258,6 +275,51 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `      status: 'ok',`,
     `      uptime: process.uptime(),`,
     `    }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Ready probe`,
+    `  if (pathname === '/ready' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({ status: 'ready', companionId: config.id }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Version info`,
+    `  if (pathname === '/version' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({ version: '2.0.0', name: config.name, id: config.id }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Identity info`,
+    `  if (pathname === '/me' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({`,
+    `      id: config.id,`,
+    `      name: config.name,`,
+    `      organs: Object.keys(config.organs || {}),`,
+    `    }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Voice & Observation health probes`,
+    `  if (pathname === '/voice/health' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({ provider: config.organs?.voice?.provider || 'none', configured: Boolean(runtime.voice) }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  if (pathname === '/obs/health' && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({ provider: config.organs?.vision?.provider || 'none', configured: Boolean(runtime.vision) }));`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Evidence & observations`,
+    `  if ((pathname === '/evidence' || pathname === '/observations') && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    res.end(JSON.stringify({ items: [] }));`,
     `    return;`,
     `  }`,
     '',

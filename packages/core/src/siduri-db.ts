@@ -699,6 +699,19 @@ export class SiduriDatabase {
     }));
   }
 
+  public getEvent(id: string): EpisodicEvent | undefined {
+    const stmt = this.db.prepare('SELECT * FROM memory_events WHERE id = ?');
+    const row = stmt.get(id) as any;
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      companionId: row.companion_id,
+      sourceType: row.source_type,
+      occurredAt: row.occurred_at,
+      payload: JSON.parse(row.payload)
+    };
+  }
+
   public proposeClaim(
     claim: Omit<MemoryClaim, 'status' | 'confidence' | 'assertedAt'> & {
       confidence?: number;

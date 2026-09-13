@@ -207,18 +207,29 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     name: '@siduri-x/knowledge',
     organType: 'knowledge',
     version: '2.0.0',
-    displayName: 'Knowledge (E-Compatible Cited Facts)',
-    description: 'Factual context retrieval from local or hosted E Knowledge packs',
+    displayName: 'Knowledge (Life DB & Portable E-Packs)',
+    description: 'Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs',
     entrypoint: './dist/index.js',
-    factory: 'EKnowledgeAdapter',
+    factory: 'UnifiedKnowledgeOrgan',
     configKey: 'knowledge',
     configSchema: {
       type: 'object',
-      required: ['provider'],
       properties: {
+        lifeDatabase: {
+          type: 'boolean',
+          default: true
+        },
+        dbPath: {
+          type: 'string',
+          default: 'siduri.sqlite'
+        },
         provider: {
           type: 'string',
-          enum: ['e-knowledge', 'e-remote', 'e-hub', 'none']
+          enum: ['unified', 'e-knowledge', 'e-remote', 'e-hub', 'none'],
+          default: 'unified'
+        },
+        pack: {
+          type: 'object'
         },
         packPath: {
           type: 'string'
@@ -265,7 +276,9 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
         optional: true
       }
     ],
-    database: null,
+    database: {
+      engine: 'sqlite'
+    },
     healthCheck: null
   },
   {
@@ -361,7 +374,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
       }
     ],
     database: null,
-    healthCheck: null
+    healthCheck: 'probeVisionHealth'
   },
   {
     name: '@siduri-x/voice',
