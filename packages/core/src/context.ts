@@ -19,6 +19,8 @@ export interface ConversationContext {
 
 export type SubjectKind = 'actor' | 'companion' | 'configured';
 
+export type InteractionMode = 'casual' | 'teach' | 'hybrid';
+
 export interface SubjectRef {
   subjectId: string;
   kind: SubjectKind;
@@ -31,6 +33,7 @@ export interface RequestContext {
   conversation: ConversationContext;
   source?: 'local' | 'external' | string;
   subject?: SubjectRef;
+  mode?: InteractionMode;
   metadata?: Record<string, unknown>;
 }
 
@@ -115,6 +118,20 @@ export function validateRequestContext(context: unknown): RequestContextValidati
       if (!isValidSubjectKind(ctx.subject.kind)) {
         missingFields.push('subject.kind');
       }
+    }
+  }
+
+  if (ctx.mode !== undefined) {
+    if (ctx.mode !== 'casual' && ctx.mode !== 'teach' && ctx.mode !== 'hybrid') {
+      return {
+        accepted: false,
+        error: {
+          code: 'INVALID_CONTEXT',
+          message: `Invalid interaction mode: '${ctx.mode}' (expected 'casual', 'teach', or 'hybrid')`,
+          field: 'mode',
+          correlationId: ctx.conversation?.correlationId,
+        },
+      };
     }
   }
 

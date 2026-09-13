@@ -54,7 +54,7 @@ export async function postAction(path: string, body?: any): Promise<void> {
 }
 
 export interface StreamChatHandlers {
-  onStaged?: (data: { response_id?: string; correlation_id?: string; status?: string }) => void;
+  onStaged?: (data: { response_id?: string; correlation_id?: string; status?: string; mode?: string }) => void;
   onChunk?: (chunk: { utteranceId: string; index: number; deltaText: string; isComplete: boolean; visemes?: any[]; expression?: string; action?: string; interrupted?: boolean }) => void;
   onAvatar?: (event: { event_id: string; expression?: string; action?: string; durationMs?: number }) => void;
   onDone?: (fullResponse: any) => void;

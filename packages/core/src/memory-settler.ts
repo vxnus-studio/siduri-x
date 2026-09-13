@@ -4,6 +4,7 @@ import {
   SourceEvent,
   ResponsePlan,
   RequestContext,
+  InteractionMode,
 } from './index';
 import { extractDeterministicTeaching } from './teaching';
 
@@ -15,6 +16,7 @@ export interface MemorySettlementParams {
   memory?: MemoryOrgan;
   explicitTeaching: ReturnType<typeof extractDeterministicTeaching>;
   plan: ResponsePlan;
+  effectiveMode?: InteractionMode;
 }
 
 export interface MemoryProposalReceipt {
@@ -45,7 +47,17 @@ export async function settleMemoryProposals(
     memory,
     explicitTeaching,
     plan,
+    effectiveMode,
   } = params;
+
+  // Zero Memory Drift: Casual mode completely suppresses all proposal generation
+  const mode = effectiveMode || requestContext.mode || 'hybrid';
+  if (mode === 'casual') {
+    return {
+      createdMemoryProposals: [],
+      memoryProposalReceipts: [],
+    };
+  }
 
   const createdMemoryProposals: Claim[] = [];
   let sourceEventId: string | undefined;

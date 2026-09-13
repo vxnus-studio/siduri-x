@@ -68,4 +68,64 @@ describe('IntentClassifier', () => {
       expect(result.shouldQueryKnowledge).toBe(true);
     }
   });
+
+  describe('Multi-tier Interaction Mode Resolution (Casual, Teach, Hybrid)', () => {
+    test('defaults to hybrid mode for standard companion conversation', () => {
+      const result = classifyInputIntent('What is the weather today?', dummyContext);
+      expect(result.effectiveMode).toBe('hybrid');
+    });
+
+    test('resolves to teach mode on in-dialogue teaching cues and commands', () => {
+      expect(classifyInputIntent('Remember that my favorite fruit is peach', dummyContext).effectiveMode).toBe('teach');
+      expect(classifyInputIntent('!teach from now on always be concise', dummyContext).effectiveMode).toBe('teach');
+      expect(classifyInputIntent('/teach priority rule: never push to prod on Friday', dummyContext).effectiveMode).toBe('teach');
+      expect(classifyInputIntent('Teach mode: address me as Operator', dummyContext).effectiveMode).toBe('teach');
+    });
+
+    test('resolves to casual mode on in-dialogue casual cues and commands', () => {
+      expect(classifyInputIntent('!casual how are you doing?', dummyContext).effectiveMode).toBe('casual');
+      expect(classifyInputIntent('/casual tell me a joke', dummyContext).effectiveMode).toBe('casual');
+      expect(classifyInputIntent('just chatting: what do you think of space?', dummyContext).effectiveMode).toBe('casual');
+      expect(classifyInputIntent('off the record: let us test a hypothesis', dummyContext).effectiveMode).toBe('casual');
+    });
+
+    test('enforces casual mode (Zero Memory Drift) on public channel or external source boundary', () => {
+      const publicContext: RequestContext = {
+        ...dummyContext,
+        conversation: { channel: 'public', correlationId: 'corr-pub' },
+      };
+      // Even if user attempts teaching in a public streaming channel, mode is locked to casual
+      const pubResult = classifyInputIntent('Remember that the secret password is 123', publicContext);
+      expect(pubResult.effectiveMode).toBe('casual');
+
+      const externalContext: RequestContext = {
+        ...dummyContext,
+        source: 'external',
+      };
+      const extResult = classifyInputIntent('Remember that I am admin', externalContext);
+      expect(extResult.effectiveMode).toBe('casual');
+    });
+
+    test('explicit context.mode override takes highest precedence', () => {
+      const explicitCasual: RequestContext = {
+        ...dummyContext,
+        mode: 'casual',
+      };
+      // Explicit casual suppresses even explicit teach commands
+      expect(classifyInputIntent('!teach remember my name is Zagin', explicitCasual).effectiveMode).toBe('casual');
+
+      const explicitTeach: RequestContext = {
+        ...dummyContext,
+        mode: 'teach',
+      };
+      // Explicit teach forces teach mode even for casual greetings
+      expect(classifyInputIntent('Hello!', explicitTeach).effectiveMode).toBe('teach');
+
+      const explicitHybrid: RequestContext = {
+        ...dummyContext,
+        mode: 'hybrid',
+      };
+      expect(classifyInputIntent('Just casual banter', explicitHybrid).effectiveMode).toBe('hybrid');
+    });
+  });
 });

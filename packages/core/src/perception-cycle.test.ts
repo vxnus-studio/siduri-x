@@ -173,4 +173,156 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
     expect(response.status).toBe('APPROVED');
     expect(response.metadata.evidence_ids).toContain('ev-native-provenance-100');
   });
+
+  describe('Three Interaction Modes Execution (Casual, Teach, Hybrid)', () => {
+    test('Casual Mode enforces Zero Memory Drift: suppresses all memory/directive proposals', async () => {
+      const mockMemory = {
+        proposeClaim: jest.fn(),
+        proposeDirective: jest.fn(),
+        addSourceEvent: jest.fn(),
+      };
+
+      const mockBrain = {
+        generatePlan: jest.fn().mockResolvedValue({
+          speech: 'Got it, Alice.',
+          language: 'en',
+          memoryProposals: [
+            { subject: 'actor:alice', predicate: 'mood', value: 'happy' },
+          ],
+        }),
+      };
+
+      const runtime = new SiduriRuntime('comp-casual', { name: 'CasualBot' } as any, {
+        memory: mockMemory as any,
+        brain: mockBrain as any,
+      });
+
+      const casualContext: RequestContext = {
+        companionId: 'comp-casual',
+        mode: 'casual',
+        actor: {
+          actorId: 'alice',
+          sessionId: 'sess-casual',
+          authenticated: true,
+        },
+        conversation: {
+          channel: 'direct',
+          correlationId: 'corr-casual-1',
+        },
+      };
+
+      // User says a teaching statement in Casual mode
+      const response = await runtime.processPerception({
+        source: 'text_chat',
+        text: 'Remember that my name is Alice and I love coffee',
+        context: casualContext,
+      });
+
+      expect(response.status).toBe('APPROVED');
+      expect(response.metadata.mode).toBe('casual');
+      // ZERO writes to memory: no source events, no proposed claims
+      expect(mockMemory.addSourceEvent).not.toHaveBeenCalled();
+      expect(mockMemory.proposeClaim).not.toHaveBeenCalled();
+      expect(mockMemory.proposeDirective).not.toHaveBeenCalled();
+      expect(response.metadata.proposals).toHaveLength(0);
+      expect(response.metadata.memory_proposals).toHaveLength(0);
+    });
+
+    test('Teach Mode persists proposals and reflects mode in metadata', async () => {
+      const mockMemory = {
+        proposeClaim: jest.fn().mockImplementation(async (c) => ({
+          id: 'claim-prop-1',
+          ...c,
+          status: 'PENDING',
+        })),
+        proposeDirective: jest.fn().mockResolvedValue(undefined),
+        addSourceEvent: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const mockBrain = {
+        generatePlan: jest.fn().mockResolvedValue({
+          speech: 'I have recorded your preferred title as Chief Engineer.',
+          language: 'en',
+        }),
+      };
+
+      const runtime = new SiduriRuntime('comp-teach', { name: 'TeachBot' } as any, {
+        memory: mockMemory as any,
+        brain: mockBrain as any,
+      });
+
+      const teachContext: RequestContext = {
+        companionId: 'comp-teach',
+        mode: 'teach',
+        actor: {
+          actorId: 'alice',
+          sessionId: 'sess-teach',
+          authenticated: true,
+        },
+        conversation: {
+          channel: 'direct',
+          correlationId: 'corr-teach-1',
+        },
+      };
+
+      const response = await runtime.processPerception({
+        source: 'text_chat',
+        text: 'From now on, call me Chief Engineer',
+        context: teachContext,
+      });
+
+      expect(response.status).toBe('APPROVED');
+      expect(response.metadata.mode).toBe('teach');
+      expect(mockMemory.proposeClaim).toHaveBeenCalled();
+      expect(response.metadata.proposals).toHaveLength(1);
+    });
+
+    test('Infers Teach Mode semantically when user uses in-dialogue teaching command', async () => {
+      const mockMemory = {
+        proposeClaim: jest.fn().mockImplementation(async (c) => ({
+          id: 'claim-prop-2',
+          ...c,
+          status: 'PENDING',
+        })),
+        proposeDirective: jest.fn().mockResolvedValue(undefined),
+        addSourceEvent: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const mockBrain = {
+        generatePlan: jest.fn().mockResolvedValue({
+          speech: 'Recorded the command.',
+          language: 'en',
+        }),
+      };
+
+      const runtime = new SiduriRuntime('comp-infer', { name: 'InferBot' } as any, {
+        memory: mockMemory as any,
+        brain: mockBrain as any,
+      });
+
+      // No explicit mode override in context
+      const defaultContext: RequestContext = {
+        companionId: 'comp-infer',
+        actor: {
+          actorId: 'alice',
+          sessionId: 'sess-infer',
+          authenticated: true,
+        },
+        conversation: {
+          channel: 'direct',
+          correlationId: 'corr-infer-1',
+        },
+      };
+
+      const response = await runtime.processPerception({
+        source: 'text_chat',
+        text: '!teach remember that your name is Atlas',
+        context: defaultContext,
+      });
+
+      expect(response.status).toBe('APPROVED');
+      expect(response.metadata.mode).toBe('teach');
+      expect(mockMemory.proposeClaim).toHaveBeenCalled();
+    });
+  });
 });

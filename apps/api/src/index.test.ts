@@ -155,4 +155,24 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
     expect(res.body.interrupted).toBe(true);
     expect(fakeRuntime.mouth.interrupt).toHaveBeenCalledWith('user_barge_in');
   });
+
+  test('POST /chat passes explicit interaction mode (casual, teach, hybrid) to runtime', async () => {
+    const res = await request(app)
+      .post('/chat')
+      .send({
+        id: 'companion-a',
+        message: 'Casual banter',
+        mode: 'casual',
+      });
+
+    expect(res.status).toBe(200);
+    expect(fakeRuntime.handleUserMessage).toHaveBeenCalledWith(
+      'Casual banter',
+      expect.objectContaining({
+        companionId: 'companion-a',
+        mode: 'casual',
+      }),
+      []
+    );
+  });
 });

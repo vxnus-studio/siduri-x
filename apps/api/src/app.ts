@@ -281,7 +281,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         signal: abortController.signal,
       });
 
-      res.write(`event: staged\ndata: ${JSON.stringify({ response_id: response.response_id, correlation_id: response.correlation_id, status: response.status })}\n\n`);
+      res.write(`event: staged\ndata: ${JSON.stringify({ response_id: response.response_id, correlation_id: response.correlation_id, status: response.status, mode: response.metadata?.mode })}\n\n`);
 
       const avatarEvent = response.metadata?.events?.find(
         (e: any) => (e.kind === 'avatar' || e.kind === 'body') && (e.approval === 'APPROVED' || !e.approval)

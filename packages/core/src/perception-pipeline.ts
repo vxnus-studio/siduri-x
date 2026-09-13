@@ -186,6 +186,7 @@ export const promptCompilationStage: PerceptionPipelineStage = async (context) =
     knowledgeData: context.contextRetrieval.knowledgeData,
     memoryData: context.contextRetrieval.memoryData,
     lifeContext: context.contextRetrieval.lifeContext,
+    effectiveMode: context.intent?.effectiveMode,
   });
   context.prompts = prompts;
 };
@@ -243,6 +244,7 @@ export const memorySettlementStage: PerceptionPipelineStage = async (context) =>
     memory: context.organs.memory,
     explicitTeaching: context.intent.explicitTeaching,
     plan: context.plan,
+    effectiveMode: context.intent.effectiveMode,
   });
   context.memorySettlement = memorySettlement;
 };
@@ -328,6 +330,7 @@ export const envelopeAssemblyStage: PerceptionPipelineStage = async (context) =>
     subsystemDiagnostics: context.contextRetrieval.subsystemDiagnostics,
     experienceEvents: context.experienceEmission?.experienceEvents || [],
     mouthDelivery: context.mouthDelivery,
+    effectiveMode: context.intent?.effectiveMode,
   });
   context.responseEnvelope = envelope;
 };

@@ -122,6 +122,8 @@ export default function ChatClient() {
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [activeAvatarEvent, setActiveAvatarEvent] = useState<ActiveAvatarEvent | null>(null);
   const [avatarModelUrl, setAvatarModelUrl] = useState<string | undefined>(undefined);
+  const [selectedMode, setSelectedMode] = useState<'auto' | 'casual' | 'teach' | 'hybrid'>('auto');
+  const [effectiveMode, setEffectiveMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const messagesRef = useRef<HTMLDivElement>(null);
   const avatarTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -303,12 +305,18 @@ export default function ChatClient() {
           id: "default",
           message: content,
           medium: "web",
+          mode: selectedMode !== "auto" ? selectedMode : undefined,
           history: conversation.messages.slice(-20).map((item) => ({
             role: item.role,
             content: item.content,
           })),
         },
         {
+          onStaged: (stagedData) => {
+            if (stagedData?.mode && (stagedData.mode === "casual" || stagedData.mode === "teach" || stagedData.mode === "hybrid")) {
+              setEffectiveMode(stagedData.mode);
+            }
+          },
           onAvatar: (latest) => {
             const speechId = (latest as any).speech_id;
             if (avatarTimerRef.current) {
@@ -361,6 +369,9 @@ export default function ChatClient() {
             }
           },
           onDone: (data) => {
+            if (data?.metadata?.mode && (data.metadata.mode === "casual" || data.metadata.mode === "teach" || data.metadata.mode === "hybrid")) {
+              setEffectiveMode(data.metadata.mode);
+            }
             const plan = data.response || {};
             const proposals = data.metadata?.memory_proposals;
             const behavioralProposals = data.metadata?.behavioral_proposals;
@@ -607,6 +618,20 @@ export default function ChatClient() {
             />
             {status}
           </span>
+          <div className="connection-pill flex items-center gap-1.5" title="Operating interaction mode: Auto (inferred), Casual (zero drift), Teach (strict human-in-the-loop), or Hybrid (default)">
+            <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">Mode:</span>
+            <select
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value as any)}
+              className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0"
+              aria-label="Select interaction mode"
+            >
+              <option value="auto" className="bg-[#121214] text-white">Auto ({effectiveMode})</option>
+              <option value="casual" className="bg-[#121214] text-white">Casual (Zero Drift)</option>
+              <option value="teach" className="bg-[#121214] text-white">Teach (Human-in-Loop)</option>
+              <option value="hybrid" className="bg-[#121214] text-white">Hybrid (Default)</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex flex-col flex-1 min-h-0 w-full overflow-hidden relative">

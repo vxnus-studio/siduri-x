@@ -4,6 +4,7 @@ import {
   KnowledgeItem,
   Claim,
   RequestContext,
+  InteractionMode,
 } from './index';
 
 export interface PromptCompilationParams {
@@ -17,6 +18,7 @@ export interface PromptCompilationParams {
   knowledgeData: KnowledgeItem[];
   memoryData: Claim[];
   lifeContext?: string[];
+  effectiveMode?: InteractionMode;
 }
 
 export interface CompiledPrompts {
@@ -41,6 +43,7 @@ export async function compilePrompts(
     knowledgeData,
     memoryData,
     lifeContext,
+    effectiveMode,
   } = params;
 
   let contextPrompt = '';
@@ -83,8 +86,16 @@ export async function compilePrompts(
         })
       : '';
 
+  const modeInstruction =
+    effectiveMode === 'casual'
+      ? 'Operating Mode: Casual (Zero memory drift - do not attempt to persist personal claims or directives).'
+      : effectiveMode === 'teach'
+      ? 'Operating Mode: Teach Mode (Active learning session - accurately capture user preferences and proposed boundaries for operator review).'
+      : undefined;
+
   const systemPrompt = [
     `You are ${companionName}.`,
+    modeInstruction,
     'This is a neutral conversation context.',
     'Use only approved, permitted memory as factual personal context.',
     'Do not claim prior personal knowledge when no approved memory supports it.',

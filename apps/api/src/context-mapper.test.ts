@@ -277,4 +277,43 @@ describe('API Request Context Mapper (Single-Owner, Single-Machine)', () => {
     expect(attenuatedResult.context?.actor.authorizationRole).toBe('viewer');
     expect(attenuatedResult.diagnostics).not.toContain('role_escalation_attempt_suppressed');
   });
+
+  describe('Mode Mapping (Casual, Teach, Hybrid)', () => {
+    test('maps explicit mode parameter to RequestContext', () => {
+      const casualResult = mapRequestContext({
+        companionId: 'comp-1',
+        mode: 'casual',
+        generateCorrelationId: true,
+      });
+      expect(casualResult.accepted).toBe(true);
+      expect(casualResult.context?.mode).toBe('casual');
+
+      const teachResult = mapRequestContext({
+        companionId: 'comp-1',
+        mode: 'teach',
+        generateCorrelationId: true,
+      });
+      expect(teachResult.accepted).toBe(true);
+      expect(teachResult.context?.mode).toBe('teach');
+
+      const hybridResult = mapRequestContext({
+        companionId: 'comp-1',
+        mode: 'hybrid',
+        generateCorrelationId: true,
+      });
+      expect(hybridResult.accepted).toBe(true);
+      expect(hybridResult.context?.mode).toBe('hybrid');
+    });
+
+    test('rejects invalid interaction mode', () => {
+      const invalidResult = mapRequestContext({
+        companionId: 'comp-1',
+        mode: 'super_turbo',
+        generateCorrelationId: true,
+      });
+      expect(invalidResult.accepted).toBe(false);
+      expect(invalidResult.error?.code).toBe('INVALID_CONTEXT');
+      expect(invalidResult.error?.field).toBe('mode');
+    });
+  });
 });

@@ -5,6 +5,7 @@ import {
   ResponseCitation,
   ExperienceEvent,
   ActionExecutionResult,
+  InteractionMode,
 } from './index';
 import { MemoryProposalReceipt } from './memory-settler';
 import { FormattedMouthOutput } from './mouth-types';
@@ -22,6 +23,7 @@ export interface AssembleResponseEnvelopeParams {
   subsystemDiagnostics: Record<string, string>;
   experienceEvents: ExperienceEvent[];
   mouthDelivery?: FormattedMouthOutput;
+  effectiveMode?: InteractionMode;
 }
 
 /**
@@ -70,6 +72,7 @@ export function assembleResponseEnvelope(
     subsystemDiagnostics,
     experienceEvents,
     mouthDelivery,
+    effectiveMode,
   } = params;
 
   return {
@@ -84,6 +87,7 @@ export function assembleResponseEnvelope(
     },
     delivery: mouthDelivery,
     metadata: {
+      mode: effectiveMode ?? 'hybrid',
       language,
       proposals: createdMemoryProposals,
       memory_proposals: memoryProposalReceipts,

@@ -145,6 +145,7 @@ export function mapRequestContext(
       },
       source: input.source || rawCtx.source || (isAuthenticated ? 'local' : 'external'),
       subject: rawCtx.subject,
+      mode: rawCtx.mode || input.mode,
     };
 
     const validated = validateRequestContext(constructed);
@@ -262,6 +263,7 @@ export function mapRequestContext(
     },
     source: input.source || (isAuthenticated ? 'local' : 'external'),
     subject: input.subject,
+    mode: input.mode || input.conversation?.mode,
   };
 
   const validated = validateRequestContext(mappedContext);
