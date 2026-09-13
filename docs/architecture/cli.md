@@ -26,6 +26,22 @@ npx @vxnus/siduri create [directory]
    - **Zero Upfront Checklists**: Foundational organs (Brain, Memory, Knowledge, Behavior) go straight to their engine and configuration. Peripheral organs (Voice, Body, Mouth, Hands, Vision, Ear, Observation) prompt directly for their engine choice with a clean `None (Skip)` option.
    - **No Redundant Questions**: Completely eliminates separate boolean `? Enable <Organ>?` questions. Selecting `None` skips the organ cleanly in a single pass.
 
+### Organ Behavior & Defaults:
+
+| Organ | Default / Choices | Behavior & Runtime Details |
+| :--- | :--- | :--- |
+| **Brain** | OpenRouter / OpenAI Compatible | Cognitive planner. Required. Configures API key and model selection. |
+| **Memory** | SQLite (WAL + FTS5) | Sovereign episodic memory store. Configures database file path (`siduri.sqlite`). |
+| **Knowledge** | Sovereign Life DB / Hub Pack | Structured inventory/finance/schedule data or verified external lore pack (`@vxnus/e-teyvat`). |
+| **Behavior** | Later (Blank Slate) / Now (.self) | Defines archetype, ethos, and directives. Blank slate evolutive mode by default. |
+| **Voice** | VOICEVOX / RVC / None | VOICEVOX engine auto-downloads on first `npm start` to `~/.voicevox/engine/` if port 50021 is free; RVC pairs with Base TTS (Edge-TTS 0MB cloud, Kokoro, Piper). |
+| **Body** | Live2D Cubism / None | Configures `.model3.json` path; automatically defaults to resting neutral expression. |
+| **Mouth** | Web Streaming / None | Generates SSML and Live2D viseme cues for SSE output streaming. |
+| **Hands** | MCP Client / None | Tool execution engine. Configures timeout; MCP servers registered in `siduri.config.json`. |
+| **Vision** | OpenRouter Vision / None | Multimodal vision model configuration for OCR and image inspection. |
+| **Ear** | **Enabled (Default)** / None | Sensory input guard enforcing 4KB text length limits, 10MB audio validation, and anti-spoofing. |
+| **Observation**| **Disabled (Default)** / Fixture | Experimental screen frame ingest prototype (work in progress). |
+
 ### Generated Output Structure:
 
 ```text

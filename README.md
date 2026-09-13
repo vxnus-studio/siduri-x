@@ -61,7 +61,7 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 | **`@siduri-x/vision`** | `^2.0.1` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
 | **`@siduri-x/body`** | `^2.0.1` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
 | **`@siduri-x/voice`** | `^2.0.2` | Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC voice conversion | **Implemented** |
-| **`@siduri-x/observation`** | `^2.0.1` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Implemented** |
+| **`@siduri-x/observation`** | `^2.0.1` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Experimental Prototype** |
 | **`@siduri-x/mouth`** | `^2.0.1` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
 | ~~`@siduri-x/behavior`~~ | `^1.0.6` | *Legacy compatibility package* (superseded by `@siduri-x/self`) | **Legacy / Deprecated** |
 
