@@ -5,7 +5,7 @@ import { SiduriRuntime, dispatchCompanionChat } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
 import { SqliteMemoryStore } from '@siduri-x/memory';
 import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
-import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/eknowledge';
+import { UnifiedKnowledgeOrgan, UnifiedKnowledgeConfig } from '@siduri-x/knowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
 import { ActiveSelfCompiler, SelfPackageParser, SqliteSelfRepository, scanDirective } from '@siduri-x/self';
 import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
@@ -36,7 +36,7 @@ export interface AppBootCompanionConfig {
   name: string;
   brain?: AppBrainConfig;
   voice?: VoiceConfig;
-  knowledge?: EKnowledgeConfig;
+  knowledge?: UnifiedKnowledgeConfig;
   vision?: OpenRouterVisionConfig;
   behavior?: AppBehaviorConfig;
   body?: Live2DAdapterConfig;
@@ -88,8 +88,14 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         });
   }
 
-  function createKnowledge(config?: EKnowledgeConfig) {
-    return isDisabled(config) ? undefined : new EKnowledgeAdapter(config || {});
+  function createKnowledge(config?: UnifiedKnowledgeConfig) {
+    if (isDisabled(config)) return undefined;
+    const dbPath = (config?.dbPath as string) || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite';
+    return new UnifiedKnowledgeOrgan({
+      ...config,
+      dbPath,
+      lifeDatabase: config?.lifeDatabase ?? true,
+    });
   }
 
   function createVision(config?: OpenRouterVisionConfig & { provider?: string }) {
@@ -163,7 +169,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         mouth,
         observation: observationOrgan,
         self: selfRepo,
-        externalKnowledge: knowledge,
+        externalKnowledge: (knowledge as any)?.eAdapter ?? knowledge,
       });
       await runtime.initialize();
 
@@ -501,6 +507,89 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     try {
       const directives = await runtime.getDirectives();
       res.json({ directives });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // KNOWLEDGE / LIFE DB GETTERS
+  app.get('/knowledge/life', requireAuth, async (req, res) => {
+    const id = req.query.id as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    const query = (req.query.q as string) || '';
+    if (!runtime.knowledge || typeof (runtime.knowledge as any).queryLifeContext !== 'function') {
+      return res.json({ matchedInventory: [], recentFinances: [], upcomingSchedule: [], preferences: [], formattedContext: '' });
+    }
+    try {
+      const result = await (runtime.knowledge as any).queryLifeContext(id, query);
+      res.json(result);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/knowledge/inventory', requireAuth, async (req, res) => {
+    const id = req.query.id as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    const domain = req.query.domain as string | undefined;
+    if (!runtime.knowledge || !(runtime.knowledge as any).inventory) {
+      return res.json({ items: [] });
+    }
+    try {
+      const items = await (runtime.knowledge as any).inventory.getItems(id, domain);
+      res.json({ items });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/knowledge/finance', requireAuth, async (req, res) => {
+    const id = req.query.id as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.knowledge || !(runtime.knowledge as any).finance) {
+      return res.json({ summary: null, entries: [] });
+    }
+    try {
+      const limit = Number(req.query.limit || 20);
+      const [summary, entries] = await Promise.all([
+        (runtime.knowledge as any).finance.getSummary(id),
+        (runtime.knowledge as any).finance.getEntries(id, limit),
+      ]);
+      res.json({ summary, entries });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/knowledge/schedule', requireAuth, async (req, res) => {
+    const id = req.query.id as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.knowledge || !(runtime.knowledge as any).schedule) {
+      return res.json({ items: [] });
+    }
+    try {
+      const items = await (runtime.knowledge as any).schedule.getUpcoming(id);
+      res.json({ items });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/knowledge/preferences', requireAuth, async (req, res) => {
+    const id = req.query.id as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    const category = req.query.category as string | undefined;
+    if (!runtime.knowledge || !(runtime.knowledge as any).preferences) {
+      return res.json({ preferences: [] });
+    }
+    try {
+      const preferences = await (runtime.knowledge as any).preferences.getPreferences(id, category);
+      res.json({ preferences });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }

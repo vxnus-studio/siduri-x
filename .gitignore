@@ -38,4 +38,7 @@ dist/
 # cli e2e test artifacts
 cli/temp-*/
 
+# sqlite databases
+*.sqlite*
+
 

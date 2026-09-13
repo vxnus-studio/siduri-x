@@ -9,7 +9,7 @@ import { SiduriRuntime } from './runtime';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
 import { SqliteMemoryStore } from '@siduri-x/memory';
 import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
-import { EKnowledgeAdapter, EKnowledgeConfig } from '@siduri-x/eknowledge';
+import { UnifiedKnowledgeOrgan, UnifiedKnowledgeConfig } from '@siduri-x/knowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
 import { ActiveSelfCompiler, SqliteSelfRepository } from '@siduri-x/self';
 import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
@@ -52,12 +52,14 @@ function createVoice(config?: VoiceConfig) {
       });
 }
 
-function createKnowledge(config?: EKnowledgeConfig) {
+function createKnowledge(config?: UnifiedKnowledgeConfig) {
   if (isDisabled(config)) return undefined;
-  if (!config?.packPath && !config?.registryUrl && !config?.baseUrl) {
-    return undefined;
-  }
-  return new EKnowledgeAdapter(config || {});
+  const dbPath = (config?.dbPath as string) || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite';
+  return new UnifiedKnowledgeOrgan({
+    ...config,
+    dbPath,
+    lifeDatabase: config?.lifeDatabase ?? true,
+  });
 }
 
 function createVision(config?: OpenRouterVisionConfig & { provider?: string }) {
@@ -94,7 +96,9 @@ const defaultCompanionConfig = {
   voice: { provider: 'voicevox', speakerId: 1 },
   memory: { provider: 'sqlite' },
   knowledge: {
-    provider: (process.env.SIDURI_KNOWLEDGE_PROVIDER as 'e-knowledge' | 'e-remote' | 'e-hub') || 'e-knowledge',
+    provider: (process.env.SIDURI_KNOWLEDGE_PROVIDER as any) || 'unified',
+    lifeDatabase: true,
+    dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite',
     packPath: process.env.SIDURI_KNOWLEDGE_PACK || '',
     registryUrl: process.env.SIDURI_KNOWLEDGE_REGISTRY_URL || '',
     packId: process.env.SIDURI_KNOWLEDGE_PACK_ID || '',
@@ -137,6 +141,7 @@ async function loadCompanionConfig() {
   if (process.env.SIDURI_KNOWLEDGE_REGISTRY_URL) config.knowledge.registryUrl = process.env.SIDURI_KNOWLEDGE_REGISTRY_URL;
   if (process.env.SIDURI_KNOWLEDGE_PACK_ID) config.knowledge.packId = process.env.SIDURI_KNOWLEDGE_PACK_ID;
   if (process.env.SIDURI_KNOWLEDGE_MODE) config.knowledge.preferredMode = process.env.SIDURI_KNOWLEDGE_MODE;
+  if (process.env.SIDURI_KNOWLEDGE_DB_PATH) config.knowledge.dbPath = process.env.SIDURI_KNOWLEDGE_DB_PATH;
   return config;
 }
 
@@ -171,7 +176,7 @@ async function bootDefaultCompanion() {
     behavior, 
     body,
     self: selfRepo,
-    externalKnowledge: knowledge
+    externalKnowledge: (knowledge as any)?.eAdapter ?? knowledge
   });
   await runtime.initialize();
 
