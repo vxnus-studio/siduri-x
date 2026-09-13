@@ -44,7 +44,11 @@ export class SqliteActionStore implements ActionStore {
         approver_actor_id TEXT NOT NULL,
         reason TEXT,
         approver_role TEXT,
-        approved_at TEXT NOT NULL
+        approved_at TEXT NOT NULL,
+        tool_name TEXT,
+        parameters_hash TEXT,
+        companion_id TEXT,
+        actor_id TEXT
       );
 
       CREATE TABLE IF NOT EXISTS action_audit_log (
@@ -75,6 +79,18 @@ export class SqliteActionStore implements ActionStore {
     } catch {
       // Column already exists or table freshly created
     }
+    try {
+      this.db.exec('ALTER TABLE action_approvals ADD COLUMN tool_name TEXT;');
+    } catch {}
+    try {
+      this.db.exec('ALTER TABLE action_approvals ADD COLUMN parameters_hash TEXT;');
+    } catch {}
+    try {
+      this.db.exec('ALTER TABLE action_approvals ADD COLUMN companion_id TEXT;');
+    } catch {}
+    try {
+      this.db.exec('ALTER TABLE action_approvals ADD COLUMN actor_id TEXT;');
+    } catch {}
   }
 
   private initLastAuditHash(): void {
@@ -169,17 +185,43 @@ export class SqliteActionStore implements ActionStore {
     };
   }
 
-  async saveApproval(executionId: string, approverActorId: string, reason?: string, approverRole?: string): Promise<void> {
+  async saveApproval(
+    executionId: string,
+    approverActorId: string,
+    reason?: string,
+    approverRole?: string,
+    toolName?: string,
+    parametersHash?: string,
+    companionId?: string,
+    actorId?: string
+  ): Promise<void> {
     const stmt = this.db.prepare(`
-      INSERT INTO action_approvals (execution_id, approver_actor_id, reason, approver_role, approved_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO action_approvals (
+        execution_id, approver_actor_id, reason, approver_role, approved_at,
+        tool_name, parameters_hash, companion_id, actor_id
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(execution_id) DO UPDATE SET
         approver_actor_id = excluded.approver_actor_id,
         reason = excluded.reason,
         approver_role = excluded.approver_role,
-        approved_at = excluded.approved_at
+        approved_at = excluded.approved_at,
+        tool_name = excluded.tool_name,
+        parameters_hash = excluded.parameters_hash,
+        companion_id = excluded.companion_id,
+        actor_id = excluded.actor_id
     `);
-    stmt.run(executionId, approverActorId, reason ?? null, approverRole ?? null, new Date().toISOString());
+    stmt.run(
+      executionId,
+      approverActorId,
+      reason ?? null,
+      approverRole ?? null,
+      new Date().toISOString(),
+      toolName ?? null,
+      parametersHash ?? null,
+      companionId ?? null,
+      actorId ?? null
+    );
   }
 
   async isActionApproved(executionId: string): Promise<boolean> {
@@ -200,6 +242,10 @@ export class SqliteActionStore implements ActionStore {
       reason: row.reason ?? undefined,
       approverRole: row.approver_role ?? undefined,
       approvedAt: row.approved_at,
+      toolName: row.tool_name ?? undefined,
+      parametersHash: row.parameters_hash ?? undefined,
+      companionId: row.companion_id ?? undefined,
+      actorId: row.actor_id ?? undefined,
     };
   }
 

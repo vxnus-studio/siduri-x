@@ -144,9 +144,10 @@ describe('ActionPolicyEngine Boundary', () => {
     expect(res1.capability).toBeUndefined();
 
     // Grant explicit approval
-    engine.approveAction({
+    await engine.approveAction({
       executionId: 'exec-admin-delete-1',
       approverActorId: 'admin-super-user',
+      approverRole: 'administrator',
     });
 
     // Second attempt: approved
@@ -333,6 +334,78 @@ describe('ActionPolicyEngine Boundary', () => {
       expect(rejectionEvent).toBeDefined();
       expect(rejectionEvent?.actorId).toBe('viewer-tamper');
       expect(rejectionEvent?.decision?.decisionCode).toBe('REJECTED_UNAUTHORIZED');
+    });
+
+    it('rejects approval attempt for arbitrary unknown execution ID', async () => {
+      const res = await engine.approveAction({
+        executionId: 'arbitrary-unregistered-id',
+        approverActorId: 'admin-bob',
+        approverRole: 'administrator',
+      });
+      expect(res.approved).toBe(false);
+      expect(res.decisionCode).toBe('REJECTED_UNKNOWN_EXECUTION');
+    });
+
+    it('rejects privilege escalation from actorId strings (attacker-admin is not an administrator without explicit role)', async () => {
+      await engine.evaluateAction(criticalAction);
+      const res = await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: 'attacker-admin-user',
+        // Notice no approverRole is provided!
+      });
+      expect(res.approved).toBe(false);
+      expect(res.decisionCode).toBe('REJECTED_UNAUTHORIZED');
+    });
+
+    it('rejects action evaluation if parameters are tampered after approval (REJECTED_APPROVAL_MISMATCH)', async () => {
+      await engine.evaluateAction(criticalAction);
+      const approval = await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: 'admin-bob',
+        approverRole: 'administrator',
+      });
+      expect(approval.approved).toBe(true);
+
+      // Attacker re-evaluates the same approved executionId but with injected dangerous parameters
+      const tamperedAction: ActionIntent = {
+        ...criticalAction,
+        parameters: { injected: 'malicious-payload' },
+      };
+      const evalTampered = await engine.evaluateAction(tamperedAction);
+      expect(evalTampered.decision.allowed).toBe(false);
+      expect(evalTampered.decision.decisionCode).toBe('REJECTED_APPROVAL_MISMATCH');
+      expect(evalTampered.capability).toBeUndefined();
+    });
+
+    it('rejects action evaluation if tool name is swapped after approval (REJECTED_APPROVAL_MISMATCH)', async () => {
+      await engine.evaluateAction(criticalAction);
+      const approval = await engine.approveAction({
+        executionId: 'exec-sec-auth-1',
+        approverActorId: 'admin-bob',
+        approverRole: 'administrator',
+      });
+      expect(approval.approved).toBe(true);
+
+      // Register another tool
+      engine.registerToolDefinition({
+        name: 'admin/format_drive',
+        providerId: 'admin',
+        description: 'Format drive',
+        inputSchema: {},
+        riskLevel: 'CRITICAL',
+        allowedRoles: ['administrator'],
+        requiresApproval: true,
+      });
+
+      // Attacker re-uses the executionId on a different tool
+      const swappedAction: ActionIntent = {
+        ...criticalAction,
+        toolName: 'admin/format_drive',
+      };
+      const evalSwapped = await engine.evaluateAction(swappedAction);
+      expect(evalSwapped.decision.allowed).toBe(false);
+      expect(evalSwapped.decision.decisionCode).toBe('REJECTED_APPROVAL_MISMATCH');
+      expect(evalSwapped.capability).toBeUndefined();
     });
   });
 });

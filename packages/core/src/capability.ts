@@ -70,6 +70,10 @@ export interface ActionApprovalRecord {
   reason?: string;
   approvedAt: string;
   approverRole?: string;
+  toolName?: string;
+  parametersHash?: string;
+  companionId?: string;
+  actorId?: string;
 }
 
 export interface ActionStore {
@@ -78,8 +82,17 @@ export interface ActionStore {
   updateExecution(record: PersistentExecutionRecord): Promise<void>;
   getExecution(executionId: string): Promise<PersistentExecutionRecord | undefined>;
   
-  // Durable approval persistence across process restarts
-  saveApproval(executionId: string, approverActorId: string, reason?: string, approverRole?: string): Promise<void>;
+  // Durable approval persistence across process restarts, binding tool and parameters
+  saveApproval(
+    executionId: string,
+    approverActorId: string,
+    reason?: string,
+    approverRole?: string,
+    toolName?: string,
+    parametersHash?: string,
+    companionId?: string,
+    actorId?: string
+  ): Promise<void>;
   isActionApproved(executionId: string): Promise<boolean>;
   getApproval?(executionId: string): Promise<ActionApprovalRecord | undefined>;
 
@@ -111,13 +124,26 @@ export class InMemoryActionStore implements ActionStore {
     return rec ? { ...rec } : undefined;
   }
 
-  async saveApproval(executionId: string, approverActorId: string, reason?: string, approverRole?: string): Promise<void> {
+  async saveApproval(
+    executionId: string,
+    approverActorId: string,
+    reason?: string,
+    approverRole?: string,
+    toolName?: string,
+    parametersHash?: string,
+    companionId?: string,
+    actorId?: string
+  ): Promise<void> {
     this.approvals.set(executionId, {
       executionId,
       approverActorId,
       reason,
       approverRole,
       approvedAt: new Date().toISOString(),
+      toolName,
+      parametersHash,
+      companionId,
+      actorId,
     });
   }
 

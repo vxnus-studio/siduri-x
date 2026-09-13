@@ -331,6 +331,7 @@ describe('AuthorizationCapability Cryptographic & Tamper Review', () => {
       await engine1.approveAction({
         executionId: 'exec-restart-1',
         approverActorId: 'operator-1',
+        approverRole: 'operator',
         reason: 'Scheduled maintenance',
       });
 

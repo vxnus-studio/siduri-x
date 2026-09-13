@@ -226,6 +226,7 @@ describe('SqliteActionStore Implementation & Durability', () => {
     await engine1.approveAction({
       executionId: 'exec-danger-1',
       approverActorId: 'local-owner',
+      approverRole: 'owner',
       reason: 'Owner confirmed cleanup',
     });
 
@@ -247,6 +248,15 @@ describe('SqliteActionStore Implementation & Durability', () => {
     expect(eval2.decision.decisionCode).toBe('ALLOWED_POLICY');
     expect(eval2.capability).toBeDefined();
     expect(verifyCapabilitySignature(eval2.capability!, secretKey)).toBe(true);
+
+    // 5. Tampered action after restart -> rejected due to approval parameter mismatch
+    const tamperedAction: ActionIntent = {
+      ...action,
+      parameters: { force: true, dropDatabase: true },
+    };
+    const evalTampered = await engine2.evaluateAction(tamperedAction);
+    expect(evalTampered.decision.allowed).toBe(false);
+    expect(evalTampered.decision.decisionCode).toBe('REJECTED_APPROVAL_MISMATCH');
 
     store2.close();
   });

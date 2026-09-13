@@ -43,7 +43,8 @@ export type ActionApprovalDecisionCode =
   | 'REJECTED_UNAUTHENTICATED'
   | 'REJECTED_ROLE_MISMATCH'
   | 'REJECTED_MISSING_APPROVER_ID'
-  | 'REJECTED_MISSING_CAPABILITY';
+  | 'REJECTED_MISSING_CAPABILITY'
+  | 'REJECTED_UNKNOWN_EXECUTION';
 
 export interface ActionApprovalResult {
   approved: boolean;
@@ -69,6 +70,13 @@ export interface ApproveActionOptions {
    * Optional capabilities held by the approver.
    */
   approverCapabilities?: string[];
+  /**
+   * Optional explicit action binding parameters when pre-authorizing a known action
+   */
+  toolName?: string;
+  parametersHash?: string;
+  companionId?: string;
+  actorId?: string;
 }
 
 export function normalizeApproverRole(role?: string, actorId?: string): string {
@@ -77,14 +85,10 @@ export function normalizeApproverRole(role?: string, actorId?: string): string {
     if (lower === 'administrator' || lower === 'admin') return 'administrator';
     return lower;
   }
-  if (actorId) {
-    const lower = actorId.toLowerCase();
-    if (lower.includes('admin')) return 'administrator';
-    if (lower.includes('owner')) return 'owner';
-    if (lower.includes('operator')) return 'operator';
-    if (lower.includes('viewer') || lower.includes('guest') || lower.includes('visitor')) return 'viewer';
-  }
-  return 'owner'; // Default to single-owner role
+  // Principle of least privilege: Never derive privileged roles (administrator, owner, operator)
+  // from arbitrary substring matching on unverified actorId strings.
+  // When an explicit authorization role is not provided, default to 'viewer'.
+  return 'viewer';
 }
 
 export class ActionPolicyEngine {
@@ -248,6 +252,28 @@ export class ActionPolicyEngine {
       }
     }
 
+    // Cryptographic / structural binding verification:
+    // Ensure the approval record matches the exact tool, parameters, companion, and actor
+    if (approvalRecord) {
+      const toolMatch = !approvalRecord.toolName || approvalRecord.toolName === action.toolName;
+      const paramsMatch = !approvalRecord.parametersHash || approvalRecord.parametersHash === paramsHash;
+      const companionMatch = !approvalRecord.companionId || approvalRecord.companionId === effectiveContext.companionId;
+      const actorMatch = !approvalRecord.actorId || approvalRecord.actorId === effectiveContext.actor.actorId;
+
+      if (!toolMatch || !paramsMatch || !companionMatch || !actorMatch) {
+        const decision: ActionPolicyDecision = {
+          allowed: false,
+          reason: `Approval record for execution "${executionId}" does not match the requested tool, parameters, companion, or actor`,
+          riskLevel,
+          requiredCapabilities: requiredCaps,
+          executionId,
+          decisionCode: 'REJECTED_APPROVAL_MISMATCH',
+        };
+        await this.recordAudit(action, effectiveContext, decision, 'REJECTED');
+        return { decision };
+      }
+    }
+
     let isApproved = Boolean(approvalRecord);
     if (!isApproved && typeof this.store.isActionApproved === 'function') {
       isApproved = await this.store.isActionApproved(executionId);
@@ -278,6 +304,27 @@ export class ActionPolicyEngine {
 
     if (requiresExplicitApproval && !isApproved) {
       this.pendingActions.set(executionId, { action, context: effectiveContext, toolDef });
+      if (typeof this.store.reserveExecution === 'function') {
+        const record = {
+          executionId,
+          actionId: action.actionId,
+          toolName: action.toolName,
+          providerId: toolDef.providerId || 'builtin',
+          parametersHash: paramsHash,
+          lifecycle: 'POLICY_CHECKED' as const,
+          decision: {
+            allowed: false,
+            reason: `Action "${action.toolName}" has risk level ${riskLevel} and requires explicit approval`,
+            riskLevel,
+            requiredCapabilities: requiredCaps,
+            executionId,
+            decisionCode: 'REJECTED_HIGH_RISK_UNAPPROVED' as const,
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await this.store.reserveExecution(record).catch(() => {});
+      }
       const decision: ActionPolicyDecision = {
         allowed: false,
         reason: `Action "${action.toolName}" has risk level ${riskLevel} and requires explicit approval`,
@@ -379,21 +426,48 @@ export class ActionPolicyEngine {
       return result;
     }
 
-    // 3. Tool-specific authorization check if pending action is registered
+    // 3. Locate pending in-memory action or persisted execution record
     const pending = this.pendingActions.get(options.executionId);
-    if (pending) {
-      const { toolDef } = pending;
-      if (toolDef.allowedRoles && toolDef.allowedRoles.length > 0 && !isOwnerOrAdmin) {
-        const normalizedToolRoles = new Set(toolDef.allowedRoles.map((r) => r.toLowerCase()));
+    let executionRecord: any;
+    if (!pending && typeof this.store.getExecution === 'function') {
+      executionRecord = await this.store.getExecution(options.executionId);
+    }
+
+    if (!pending && !executionRecord && !options.toolName) {
+      const result: ActionApprovalResult = {
+        approved: false,
+        decisionCode: 'REJECTED_UNKNOWN_EXECUTION',
+        reason: `Cannot approve execution "${options.executionId}": execution is not pending or recognized`,
+        executionId: options.executionId,
+        approverActorId: actorId,
+      };
+      await this.recordApprovalAudit(options.executionId, actorId, approverRole, false, result.reason);
+      return result;
+    }
+
+    const targetToolName = pending?.action.toolName || executionRecord?.toolName || options.toolName || '';
+    const targetToolDef = pending?.toolDef || (targetToolName ? this.findToolDefinition(targetToolName) : undefined);
+    const targetParamsHash =
+      (pending ? computeParametersHash(pending.action.parameters) : undefined) ||
+      executionRecord?.parametersHash ||
+      options.parametersHash;
+    const targetCompanionId =
+      pending?.context?.companionId || pending?.action.context?.companionId || options.companionId;
+    const targetActorId =
+      pending?.context?.actor.actorId || pending?.action.context?.actor.actorId || options.actorId;
+
+    if (targetToolDef) {
+      if (targetToolDef.allowedRoles && targetToolDef.allowedRoles.length > 0 && !isOwnerOrAdmin) {
+        const normalizedToolRoles = new Set(targetToolDef.allowedRoles.map((r) => r.toLowerCase()));
         if (!normalizedToolRoles.has(approverRole)) {
           const result: ActionApprovalResult = {
             approved: false,
             decisionCode: 'REJECTED_ROLE_MISMATCH',
-            reason: `Approver role "${approverRole}" is not authorized to approve tool "${toolDef.name}" (requires: ${toolDef.allowedRoles.join(', ')})`,
+            reason: `Approver role "${approverRole}" is not authorized to approve tool "${targetToolDef.name}" (requires: ${targetToolDef.allowedRoles.join(', ')})`,
             executionId: options.executionId,
             approverActorId: actorId,
           };
-          await this.recordApprovalAudit(options.executionId, actorId, approverRole, false, result.reason, toolDef.name);
+          await this.recordApprovalAudit(options.executionId, actorId, approverRole, false, result.reason, targetToolDef.name);
           return result;
         }
       }
@@ -408,28 +482,41 @@ export class ActionPolicyEngine {
             executionId: options.executionId,
             approverActorId: actorId,
           };
-          await this.recordApprovalAudit(options.executionId, actorId, approverRole, false, result.reason, toolDef.name);
+          await this.recordApprovalAudit(options.executionId, actorId, approverRole, false, result.reason, targetToolDef.name);
           return result;
         }
       }
     }
 
-    // 4. Record verified approval
+    // 4. Record verified approval with exact tool, parameter, companion, and actor binding
     const record: ActionApprovalRecord = {
       executionId: options.executionId,
       approverActorId: actorId,
       reason: options.reason,
       approverRole,
       approvedAt: new Date().toISOString(),
+      toolName: targetToolName,
+      parametersHash: targetParamsHash,
+      companionId: targetCompanionId,
+      actorId: targetActorId,
     };
     this.approvedExecutions.set(options.executionId, record);
 
     if (typeof this.store.saveApproval === 'function') {
-      await this.store.saveApproval(options.executionId, actorId, options.reason, approverRole);
+      await this.store.saveApproval(
+        options.executionId,
+        actorId,
+        options.reason,
+        approverRole,
+        targetToolName,
+        targetParamsHash,
+        targetCompanionId,
+        targetActorId
+      );
     }
 
     const reason = options.reason || 'Action approved by authorized policy approver';
-    await this.recordApprovalAudit(options.executionId, actorId, approverRole, true, reason, pending?.toolDef.name);
+    await this.recordApprovalAudit(options.executionId, actorId, approverRole, true, reason, targetToolName);
 
     return {
       approved: true,
