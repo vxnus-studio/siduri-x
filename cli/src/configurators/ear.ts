@@ -11,8 +11,17 @@ export async function configureEar(
     choices: [
       { name: 'Text Chat (Standard multimodal chat ingress)', value: 'text_chat' },
       { name: 'Audio Streaming Ingress', value: 'audio_stream' },
+      { name: 'None (Skip / Disable sensory ingress)', value: 'none' },
     ],
+    default: 'none',
   });
+
+  if (defaultSource === 'none') {
+    return {
+      config: { provider: 'none' },
+      summary: { Provider: 'None (Ear disabled)' },
+    };
+  }
 
   return {
     config: {

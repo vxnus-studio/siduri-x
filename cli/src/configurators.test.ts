@@ -379,10 +379,21 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
     });
 
     test('Hands configurator configures MCP tool execution timeout', async () => {
-      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ timeoutSeconds: '15' });
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ provider: 'mcp' })
+        .mockResolvedValueOnce({ timeoutSeconds: '15' });
 
       const result = await configureHands({ companionName: 'Sparkle', manifest: handsManifest });
       expect(result.config.defaultTimeoutMs).toBe(15000);
+      expect(result.summary?.Provider).toBeUndefined();
+    });
+
+    test('Hands configurator disables tool execution when none is selected', async () => {
+      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ provider: 'none' });
+
+      const result = await configureHands({ companionName: 'Sparkle', manifest: handsManifest });
+      expect(result.config.provider).toBe('none');
+      expect(result.summary?.Provider).toBe('None (Hands disabled)');
     });
 
     test('Behavior configurator configures active self personality preset', async () => {
@@ -399,6 +410,14 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       const result = await configureVision({ companionName: 'Sparkle', manifest: visionManifest });
       expect(result.config.provider).toBe('openrouter');
       expect(result.config.model).toBe('gpt-4-vision');
+    });
+
+    test('Vision configurator disables vision when none is selected', async () => {
+      (inquirer.prompt as unknown as jest.Mock).mockResolvedValueOnce({ model: 'none' });
+
+      const result = await configureVision({ companionName: 'Sparkle', manifest: visionManifest });
+      expect(result.config.provider).toBe('none');
+      expect(result.summary?.Provider).toBe('None (Vision disabled)');
     });
   });
 

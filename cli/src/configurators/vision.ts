@@ -12,8 +12,17 @@ export async function configureVision(
       { name: 'GPT-4 Vision / GPT-4o (Multimodal OCR & Object Inspection)', value: 'gpt-4-vision' },
       { name: 'Claude 3.5 Sonnet Vision', value: 'anthropic/claude-3.5-sonnet' },
       { name: 'Custom Vision Model', value: 'custom' },
+      { name: 'None (Skip / Disable visual perception)', value: 'none' },
     ],
+    default: 'none',
   });
+
+  if (model === 'none') {
+    return {
+      config: { provider: 'none' },
+      summary: { Provider: 'None (Vision disabled)' },
+    };
+  }
 
   let selectedModel = model;
   if (model === 'custom') {

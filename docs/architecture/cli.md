@@ -21,10 +21,10 @@ npx @vxnus/siduri create [directory]
 3. **No Monolithic Bundling**: Scaffolds a clean project containing only the selected organ dependencies and standard Node.js ESM imports.
 4. **Blank-Slate Neutrality**: Generates purely neutral configuration without embedding predeclared personas or private memories (per [`BLANK_SLATE_CONTRACT.md`](../contracts/blank-slate-contract.md)).
 5. **Zero External Database Setup**: Storage is powered by SQLite with WAL mode and built-in FTS5 (`siduri.sqlite`). No PostgreSQL containers or migration databases needed.
-6. **Hierarchical Wizard Flow (`organ > option > config`)**:
-   - **Organ Selection**: Upfront selection of capability organs with clean capability titles (Brain required, core recommended organs pre-selected).
-   - **Organ Options**: Selects the specific provider/engine for the chosen organ (e.g. Voice: VOICEVOX character voice banks, or RVC custom model with Edge-TTS/Kokoro/Piper base driver).
-   - **Configuration**: Prompts only for parameters relevant to that option. Knowledge enables sovereign Life DB by default, queries E Knowledge Hub for optional packs, and automatically downloads archives to `./assets/knowledge/<pack-slug>` without manual path input.
+6. **Sequential Organ Flow (`organ > option > config`)**:
+   - **Top-to-Downstream Progression**: Directly traverses capability organs from central cognition (Brain required) to memory, sovereign knowledge, identity, and downstream embodiment/perception.
+   - **Zero Upfront Checklists**: Foundational organs (Brain, Memory, Knowledge, Behavior) go straight to their engine and configuration. Peripheral organs (Voice, Body, Mouth, Hands, Vision, Ear, Observation) prompt directly for their engine choice with a clean `None (Skip)` option.
+   - **No Redundant Questions**: Completely eliminates separate boolean `? Enable <Organ>?` questions. Selecting `None` skips the organ cleanly in a single pass.
 
 ### Generated Output Structure:
 

@@ -34,13 +34,16 @@ Next steps for technical developers:
     purpose:
       "Interactive prototype wizard. Dynamically discovers organ manifests and scaffolds an isolated test instance for local experimentation.",
     outputSnippet: `? Companion name: test-companion
-? Select capability organs to enable:
-  ❯ ◉ Memory (Long-term Recall & State)
-    ◉ Knowledge (Sovereign Life DB & Knowledge Packs)
-    ◉ Behavior & Self (Personality Directives)
-    ◉ Voice (Speech Synthesis & Voice Conversion)
-    ◉ Body (Live2D & Avatar State)
-    ◉ Mouth (Communication & UI Delivery)
+── Brain · required ──────────────────────────
+? Brain provider? OpenRouter (Managed Routing)
+? Select model: OpenAI: GPT-4o Mini
+── Memory ────────────────────────────────────
+? Memory storage engine? SQLite (Unified WAL + FTS5)
+── Voice ─────────────────────────────────────
+? Voice engine? VOICEVOX (Character voice banks)
+? Character voice bank: 四国めたん - ノーマル (ID: 2)
+── Body ──────────────────────────────────────
+? Body avatar provider? Live2D Cubism
 
 ✔ Generated testbed companion in ./test-companion
 ✔ Composed siduri.schema.json from active organ manifests

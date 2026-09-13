@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.4';
+export const CLI_VERSION = '2.0.6';
 
 export const colors = {
   cyan: '\u001b[36m',
@@ -128,57 +128,24 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
   const companionName = basicAnswers.name;
   const projectDir = targetDir ? path.resolve(process.cwd(), targetDir) : path.resolve(process.cwd(), projectDirectoryName(companionName));
 
-  printSection('Organ Selection');
-  console.log(`${colors.dim}In Siduri, a companion is assembled from modular capability organs:${colors.reset}`);
-  console.log(`${colors.dim}• Brain provides central cognition and LLM reasoning (required).${colors.reset}`);
-  console.log(`${colors.dim}• Select any capability organs below to attach to ${companionName}.${colors.reset}\n`);
+  printSection('Organ Configuration');
+  console.log(`${colors.dim}Configuring capability organs for ${companionName} sequentially from cognition to physical embodiment.${colors.reset}\n`);
 
-  // Canonical organ presentation order
-  const canonicalOrder = ['memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
-  const nonBrainManifests = availableManifests
-    .filter((m) => m.organType !== 'brain')
-    .sort((a, b) => {
-      const idxA = canonicalOrder.indexOf(a.organType);
-      const idxB = canonicalOrder.indexOf(b.organType);
-      const valA = idxA === -1 ? 99 : idxA;
-      const valB = idxB === -1 ? 99 : idxB;
-      return valA - valB;
-    });
-
-  const isRecommendedType = (type: string) => ['memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth'].includes(type);
-
-  const organChoices = nonBrainManifests.map((m) => ({
-    name: `${m.displayName} ${colors.dim}— ${m.description}${colors.reset}`,
-    value: m.organType,
-    checked: isRecommendedType(m.organType),
-  }));
-
-  const { selectedOrganTypes } = await inquirer.prompt<{ selectedOrganTypes: string[] }>({
-    type: 'checkbox',
-    name: 'selectedOrganTypes',
-    message: 'Select capability organs to enable:',
-    choices: organChoices,
+  // Canonical organ presentation order: Cognition -> Memory/State -> Identity -> Embodiment & Peripheral
+  const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
+  const orderedManifests = [...availableManifests].sort((a, b) => {
+    const idxA = canonicalOrder.indexOf(a.organType);
+    const idxB = canonicalOrder.indexOf(b.organType);
+    const valA = idxA === -1 ? 99 : idxA;
+    const valB = idxB === -1 ? 99 : idxB;
+    return valA - valB;
   });
 
   const selectedManifests: OrganManifest[] = [];
   const organConfigs: Record<string, any> = {};
   const organSummaries: Record<string, Record<string, unknown>> = {};
 
-  // Brain is required by architecture contract for cognition
-  const brainManifest = registry.get('brain') || availableManifests.find((m) => m.organType === 'brain');
-  if (brainManifest) {
-    selectedManifests.push(brainManifest);
-  }
-  for (const organType of selectedOrganTypes) {
-    const m = registry.get(organType) || availableManifests.find((item) => item.organType === organType);
-    if (m) selectedManifests.push(m);
-  }
-
-  // 2. Interactive Organ Configuration Stage
-  printSection('Organ Configuration');
-  console.log(`${colors.dim}Configure each enabled organ for ${companionName}.${colors.reset}\n`);
-
-  for (const m of selectedManifests) {
+  for (const m of orderedManifests) {
     const isRequired = m.organType === 'brain';
     const sectionTitle = isRequired ? `${m.displayName.split(' ')[0] || m.organType} · required` : m.displayName.split(' ')[0] || m.organType;
     printSection(sectionTitle);
@@ -188,11 +155,16 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
       existingConfig: organConfigs[m.configKey],
     });
 
+    if (res.config?.provider === 'none') {
+      continue;
+    }
+
+    selectedManifests.push(m);
     organConfigs[m.configKey] = res.config;
     organSummaries[m.configKey] = res.summary || {};
   }
 
-  // 3. Final Review and Edit Loop
+  // 2. Final Review and Edit Loop
   while (true) {
     console.log(formatReviewSummary(companionName, selectedManifests, organSummaries));
 
@@ -217,10 +189,13 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
     }
 
     if (reviewAction === 'edit') {
-      const editChoices = selectedManifests.map((m) => ({
-        name: `Edit ${m.displayName}`,
-        value: m.configKey,
-      }));
+      const editChoices = orderedManifests.map((m) => {
+        const isSelected = selectedManifests.some((sm) => sm.organType === m.organType);
+        return {
+          name: `${m.displayName} (${isSelected ? 'Enabled' : 'Disabled / Skipped'})`,
+          value: m.configKey,
+        };
+      });
       editChoices.push({ name: 'Edit all organs in sequence', value: '__ALL__' });
       editChoices.push({ name: 'Back to review', value: '__BACK__' });
 
@@ -236,8 +211,8 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
       }
 
       const organsToReconfigure = organToEdit === '__ALL__'
-        ? selectedManifests
-        : selectedManifests.filter((m) => m.configKey === organToEdit);
+        ? orderedManifests
+        : orderedManifests.filter((m) => m.configKey === organToEdit);
 
       for (const m of organsToReconfigure) {
         const isRequired = m.organType === 'brain';
@@ -249,8 +224,23 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
           existingConfig: organConfigs[m.configKey],
         });
 
-        organConfigs[m.configKey] = res.config;
-        organSummaries[m.configKey] = res.summary || {};
+        if (res.config?.provider === 'none') {
+          const idx = selectedManifests.findIndex((sm) => sm.organType === m.organType);
+          if (idx !== -1) selectedManifests.splice(idx, 1);
+          delete organConfigs[m.configKey];
+          delete organSummaries[m.configKey];
+        } else {
+          if (!selectedManifests.some((sm) => sm.organType === m.organType)) {
+            selectedManifests.push(m);
+            selectedManifests.sort((a, b) => {
+              const idxA = canonicalOrder.indexOf(a.organType);
+              const idxB = canonicalOrder.indexOf(b.organType);
+              return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+            });
+          }
+          organConfigs[m.configKey] = res.config;
+          organSummaries[m.configKey] = res.summary || {};
+        }
       }
     }
   }
