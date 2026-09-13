@@ -110,6 +110,9 @@ describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
         '@siduri-x/core': `file:${getTarPath('@siduri-x/core')}`,
         '@siduri-x/brain': `file:${getTarPath('@siduri-x/brain')}`,
       };
+      pkgObj.devDependencies = {
+        '@vxnus/siduri': `file:${getTarPath('@vxnus/siduri')}`,
+      };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
       fs.writeFileSync(path.join(instanceDir, 'siduri.config.json'), files['siduri.config.json']);
@@ -151,6 +154,9 @@ describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
         '@siduri-x/core': `file:${getTarPath('@siduri-x/core')}`,
         '@siduri-x/brain': `file:${getTarPath('@siduri-x/brain')}`,
         '@siduri-x/hands': `file:${getTarPath('@siduri-x/hands')}`,
+      };
+      pkgObj.devDependencies = {
+        '@vxnus/siduri': `file:${getTarPath('@vxnus/siduri')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');

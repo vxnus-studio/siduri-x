@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/eknowledge",
   "organType": "eknowledge",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "displayName": "E-Knowledge (External Cited Facts & Packs)",
   "description": "Factual context retrieval from local or hosted E Knowledge packs",
   "entrypoint": "./dist/index.js",

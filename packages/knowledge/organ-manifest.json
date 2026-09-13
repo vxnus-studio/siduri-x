@@ -1,7 +1,7 @@
 {
   "name": "@siduri-x/knowledge",
   "organType": "knowledge",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "displayName": "Knowledge (Sovereign Life DB & Portable E-Packs)",
   "description": "Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs",
   "entrypoint": "./dist/index.js",
@@ -34,12 +34,24 @@
         "properties": {
           "mode": {
             "type": "string",
-            "enum": ["local", "remote", "hybrid"]
+            "enum": [
+              "local",
+              "remote",
+              "hybrid"
+            ]
           },
-          "packPath": { "type": "string" },
-          "baseUrl": { "type": "string" },
-          "registryUrl": { "type": "string" },
-          "packId": { "type": "string" }
+          "packPath": {
+            "type": "string"
+          },
+          "baseUrl": {
+            "type": "string"
+          },
+          "registryUrl": {
+            "type": "string"
+          },
+          "packId": {
+            "type": "string"
+          }
         }
       },
       "packPath": {

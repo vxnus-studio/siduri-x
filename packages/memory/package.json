@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/memory",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Siduri Memory domain: Pure SQLite FTS5 Episodic Memory Store and Claim Verification",
   "license": "Apache-2.0",
   "main": "dist/index.js",

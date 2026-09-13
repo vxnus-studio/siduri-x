@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/self',
     organType: 'behavior',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Behavior / Self (Active Self Directives)',
     description: 'Atomic directive state machine and personality projection compiler',
     entrypoint: './dist/index.js',
@@ -31,7 +31,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/body',
     organType: 'body',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Body (Live2D & Avatar State)',
     description: 'Renderer-agnostic avatar expression and embodiment event adapter',
     entrypoint: './dist/index.js',
@@ -65,7 +65,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/brain',
     organType: 'brain',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Brain (Cognition & Planning)',
     description: 'Provider-neutral LLM reasoning, response planning, and proposal generation',
     entrypoint: './dist/index.js',
@@ -121,7 +121,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/ear',
     organType: 'ear',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Ear (Perception Ingress)',
     description: 'Multi-modal sensory input ingestion, transcription bounds, and mime validation',
     entrypoint: './dist/index.js',
@@ -152,7 +152,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/hands',
     organType: 'hands',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Hands (MCP Tool Execution)',
     description: 'Model Context Protocol tool management and cryptographically authorized action execution',
     entrypoint: './dist/index.js',
@@ -206,7 +206,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/knowledge',
     organType: 'knowledge',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Knowledge (Life DB & Portable E-Packs)',
     description: 'Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs',
     entrypoint: './dist/index.js',
@@ -284,7 +284,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/memory',
     organType: 'memory',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Memory (SQLite FTS5 Claims)',
     description: 'Relational semantic claims with Full-Text Search (FTS5) and companion isolation',
     entrypoint: './dist/index.js',
@@ -314,7 +314,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/observation',
     organType: 'observation',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Observation (Screen Perception & Frame Ingest)',
     description: 'Screen capture frame ingest, SHA-256 deduplication, and visual grounding for Eyes/Vision',
     entrypoint: './dist/index.js',
@@ -332,7 +332,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/vision',
     organType: 'vision',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Vision (Visual Perception & OCR)',
     description: 'Image inspection, cropping, and multi-pass OCR perception adapter',
     entrypoint: './dist/index.js',
@@ -379,7 +379,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/voice',
     organType: 'voice',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Voice (VOICEVOX Speech Synthesis)',
     description: 'Queued speech synthesis and audio rendering lifecycle adapter',
     entrypoint: './dist/index.js',
@@ -454,7 +454,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/mouth',
     organType: 'mouth',
-    version: '2.0.0',
+    version: '2.0.1',
     displayName: 'Mouth (Communication & UI Delivery)',
     description: 'Decoupled output delivery organ formatting cognitive decisions for web interfaces',
     entrypoint: './dist/index.js',

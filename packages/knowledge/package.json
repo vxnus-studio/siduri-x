@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/knowledge",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Siduri Knowledge domain: Internal Sovereign Life DB (Inventory, Finance, Schedule, Preferences)",
   "license": "Apache-2.0",
   "main": "dist/index.js",
