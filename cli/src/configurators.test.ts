@@ -366,19 +366,18 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.summary?.['Base TTS']).toBe('piper');
     });
 
-    test('Body configurator configures Live2D, custom model path, and expression', async () => {
+    test('Body configurator configures Live2D and custom model path', async () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ provider: 'live2d' })
         .mockResolvedValueOnce({
           modelSource: './assets/body/sparkle/model.model3.json',
-          initialExpression: 'happy',
         });
 
       const result = await configureBody({ companionName: 'Sparkle', manifest: bodyManifest });
       expect(result.config.provider).toBe('live2d');
       expect(result.config.modelPath).toBe('./assets/body/sparkle/model.model3.json');
       expect(result.config.modelUrl).toBe('/assets/body/sparkle/model.model3.json');
-      expect(result.config.initialExpression).toBe('happy');
+      expect(result.config.initialExpression).toBe('neutral');
       expect(result.summary?.['Model Path']).toBe('./assets/body/sparkle/model.model3.json');
     });
 

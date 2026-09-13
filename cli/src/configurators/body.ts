@@ -23,26 +23,14 @@ export async function configureBody(
 
   const companionSlug = _context.companionName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
 
-  const { modelSource, initialExpression } = await inquirer.prompt<{
+  const { modelSource } = await inquirer.prompt<{
     modelSource: string;
-    initialExpression: string;
   }>([
     {
       type: 'input',
       name: 'modelSource',
       message: 'Live2D Model path / URL (.model3.json):',
       default: `./assets/body/${companionSlug}/model.model3.json`,
-    },
-    {
-      type: 'list',
-      name: 'initialExpression',
-      message: 'Initial avatar expression:',
-      choices: [
-        { name: 'Neutral', value: 'neutral' },
-        { name: 'Happy / Cheerful', value: 'happy' },
-        { name: 'Calm', value: 'calm' },
-      ],
-      default: 'neutral',
     },
   ]);
 
@@ -55,12 +43,11 @@ export async function configureBody(
       provider: 'live2d',
       modelPath,
       modelUrl: webModelUrl,
-      initialExpression,
+      initialExpression: 'neutral',
     },
     summary: {
       Provider: 'Live2D',
       'Model Path': modelPath,
-      Expression: initialExpression,
     },
   };
 }
