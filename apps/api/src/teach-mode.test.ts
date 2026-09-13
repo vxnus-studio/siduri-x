@@ -10,6 +10,8 @@ jest.mock('@siduri-x/self', () => {
     SqliteSelfRepository: jest.fn().mockImplementation(() => ({
       setIdentity: jest.fn().mockResolvedValue(undefined),
       setPersonality: jest.fn().mockResolvedValue(undefined),
+      updateRelationship: jest.fn().mockResolvedValue(undefined),
+      setExemplars: jest.fn().mockResolvedValue(undefined),
       commitDirectives: jest.fn().mockResolvedValue(undefined),
       close: jest.fn(),
     })),
@@ -148,5 +150,80 @@ kind: "other"
     // Verify repo was never instantiated or written to for unsafe manifest
     const MockRepo = SqliteSelfRepository as jest.MockedClass<typeof SqliteSelfRepository>;
     expect(MockRepo.mock.instances.length).toBe(0);
+  });
+
+  it('POST /teach/install-self installs v2.0 manifest with ethos, relationships, and exemplars', async () => {
+    const v2Manifest = {
+      specVersion: '2.0.0',
+      identity: {
+        name: 'Siduri',
+        archetype: 'System Sentinel',
+        origin: 'Ancient mythos',
+        ethos: 'Protector of the realm and loyal companion to creator',
+      },
+      version: '2.0.0',
+      relationships: [
+        {
+          entityId: 'actor:zagin',
+          role: 'creator',
+          stance: 'familiar_loyal',
+          conventions: ['Direct communication', 'Highest administrative trust'],
+        },
+      ],
+      dialogueExamples: [
+        {
+          user: 'Deploy current branch',
+          assistant: 'Deploying to staging now, boss.',
+        },
+      ],
+      directives: [
+        { id: 'dir-rel-1', directive: 'Honor creator root privileges' },
+      ],
+    };
+
+    const res = await request(app)
+      .post('/teach/install-self')
+      .set(mockAuthHeader)
+      .send({
+        companionId: 'comp-v2',
+        manifest: v2Manifest,
+        approvedDirectiveIds: ['dir-rel-1'],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const MockRepo = SqliteSelfRepository as jest.MockedClass<typeof SqliteSelfRepository>;
+    const repoInstance = MockRepo.mock.results[MockRepo.mock.results.length - 1].value;
+
+    expect(repoInstance.setIdentity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companionId: 'comp-v2',
+        name: 'Siduri',
+        archetype: 'System Sentinel',
+        origin: 'Ancient mythos',
+        ethos: 'Protector of the realm and loyal companion to creator',
+      })
+    );
+
+    expect(repoInstance.updateRelationship).toHaveBeenCalledWith('comp-v2', {
+      companionId: 'comp-v2',
+      entityId: 'actor:zagin',
+      entityType: 'human',
+      role: 'creator',
+      stance: 'familiar_loyal',
+      interactionConventions: ['Direct communication', 'Highest administrative trust'],
+    });
+
+    expect(repoInstance.setExemplars).toHaveBeenCalledWith('comp-v2', [
+      {
+        user: 'Deploy current branch',
+        assistant: 'Deploying to staging now, boss.',
+      },
+    ]);
+
+    expect(repoInstance.commitDirectives).toHaveBeenCalledWith('comp-v2', [
+      { id: 'dir-rel-1', directive: 'Honor creator root privileges' },
+    ]);
   });
 });

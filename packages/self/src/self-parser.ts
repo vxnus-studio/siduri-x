@@ -152,8 +152,8 @@ export class SelfPackageParser {
     }
 
     // 1. Spec & Kind
-    if (data.specVersion !== '1.0.0') {
-      errors.push(`Unsupported or missing specVersion: "${data.specVersion}" (expected "1.0.0")`);
+    if (data.specVersion !== '1.0.0' && data.specVersion !== '2.0.0') {
+      errors.push(`Unsupported or missing specVersion: "${data.specVersion}" (expected "1.0.0" or "2.0.0")`);
     }
     if (data.kind !== 'self') {
       errors.push(`Invalid kind: "${data.kind}" (expected "self")`);
@@ -178,30 +178,51 @@ export class SelfPackageParser {
       errors.push('Missing required field: "identity" with "name"');
     }
 
-    // 4. Personality validation
+    // 4. Personality validation (Optional in v2.0 / LLM-native mode)
     const p = data.personality;
-    const traits: PersonalityTraits = {
-      warmth: 0.5,
-      formality: 0.5,
-      sarcasm: 0.5,
-      verbosity: 0.5,
-      curiosity: 0.5,
-    };
+    let traits: PersonalityTraits | undefined;
 
-    if (!p || typeof p !== 'object') {
-      errors.push('Missing required object field: "personality"');
-    } else {
-      const keys: Array<keyof PersonalityTraits> = ['warmth', 'formality', 'sarcasm', 'verbosity', 'curiosity'];
-      for (const k of keys) {
-        if (typeof p[k] !== 'number' || p[k] < 0.0 || p[k] > 1.0) {
-          errors.push(`Personality trait "${k}" must be a number between 0.0 and 1.0`);
-        } else {
-          traits[k] = p[k];
+    if (p !== undefined && p !== null) {
+      if (typeof p !== 'object') {
+        errors.push('Field "personality" must be an object if provided');
+      } else {
+        traits = {};
+        const keys: Array<keyof PersonalityTraits> = ['warmth', 'formality', 'sarcasm', 'verbosity', 'curiosity'];
+        for (const k of keys) {
+          if (p[k] !== undefined) {
+            if (typeof p[k] !== 'number' || p[k] < 0.0 || p[k] > 1.0) {
+              errors.push(`Personality trait "${k}" must be a number between 0.0 and 1.0`);
+            } else {
+              traits[k] = p[k];
+            }
+          }
         }
       }
     }
 
-    // 5. Directives validation & scanning
+    // 5. Relationships validation (Optional)
+    const relationships = Array.isArray(data.relationships)
+      ? data.relationships
+          .filter((r: any) => r && typeof r === 'object' && r.entityId)
+          .map((r: any) => ({
+            entityId: String(r.entityId),
+            role: String(r.role || 'user'),
+            stance: String(r.stance || 'neutral'),
+            conventions: Array.isArray(r.conventions) ? r.conventions.map(String) : undefined,
+          }))
+      : undefined;
+
+    // 6. Dialogue Examples validation (Optional)
+    const dialogueExamples = Array.isArray(data.dialogueExamples)
+      ? data.dialogueExamples
+          .filter((ex: any) => ex && typeof ex === 'object' && ex.user && ex.assistant)
+          .map((ex: any) => ({
+            user: String(ex.user),
+            assistant: String(ex.assistant),
+          }))
+      : undefined;
+
+    // 7. Directives validation & scanning
     const scannedDirectives: ScannedDirective[] = [];
     if (!Array.isArray(data.directives)) {
       errors.push('Missing required array field: "directives"');
@@ -219,6 +240,8 @@ export class SelfPackageParser {
           priority: typeof d.priority === 'number' ? d.priority : 50,
           directive: d.directive,
           category: d.category || 'behavioral',
+          scopeActor: d.scopeActor,
+          supersedesId: d.supersedesId,
           scanResult: scan,
           approvedByDefault: scan.safe,
         });
@@ -245,16 +268,20 @@ export class SelfPackageParser {
           name: data.identity.name,
           archetype: data.identity.archetype,
           origin: data.identity.origin,
+          ethos: data.identity.ethos,
         },
         personality: traits,
+        relationships,
         directives: scannedDirectives.map((sd) => ({
           id: sd.id,
           priority: sd.priority,
           directive: sd.directive,
           category: sd.category,
+          scopeActor: sd.scopeActor,
+          supersedesId: sd.supersedesId,
         })),
         guardrails: Array.isArray(data.guardrails) ? data.guardrails : undefined,
-        dialogueExamples: Array.isArray(data.dialogueExamples) ? data.dialogueExamples : undefined,
+        dialogueExamples,
       };
     }
 

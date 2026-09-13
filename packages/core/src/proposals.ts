@@ -23,7 +23,10 @@ export interface MemoryProposal {
 
 export interface BehaviorProposal {
   directive: string;
-  priority: number;
+  priority?: number;
+  category?: 'guardrail' | 'relational' | 'behavioral' | string;
+  scopeActor?: string;
+  supersedesId?: string;
   subject?: string;
   predicate?: string;
   value?: string;

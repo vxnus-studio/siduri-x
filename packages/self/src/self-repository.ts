@@ -4,6 +4,7 @@ import {
   PersonalityTraits,
   SelfDirective,
   SelfRelationship,
+  SelfDialogueExample,
 } from '@siduri-x/core';
 import { SelfRepository } from './types';
 
@@ -84,6 +85,10 @@ export class SqliteSelfRepository implements SelfRepository {
     this.db.disableDirective(id, companionId);
   }
 
+  async getRelationships(companionId: string): Promise<SelfRelationship[]> {
+    return this.db.getRelationships(companionId);
+  }
+
   async getRelationship(companionId: string, entityId: string): Promise<SelfRelationship | null> {
     const rel = this.db.getRelationship(companionId, entityId);
     return rel ?? null;
@@ -94,6 +99,14 @@ export class SqliteSelfRepository implements SelfRepository {
       ...rel,
       companionId,
     });
+  }
+
+  async getExemplars(companionId: string): Promise<SelfDialogueExample[]> {
+    return this.db.getExemplars(companionId);
+  }
+
+  async setExemplars(companionId: string, exemplars: SelfDialogueExample[]): Promise<void> {
+    this.db.setExemplars(companionId, exemplars);
   }
 
   close(): void {

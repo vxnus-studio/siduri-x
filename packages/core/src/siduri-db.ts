@@ -13,25 +13,28 @@ export interface SelfIdentity {
   companionId: string;
   name: string;
   archetype?: string;
+  origin?: string;
+  ethos?: string;
   version: string;
   updatedAt: string;
 }
 
 export interface PersonalityTraits {
-  warmth: number;
-  formality: number;
-  sarcasm: number;
-  verbosity: number;
-  curiosity: number;
+  warmth?: number;
+  formality?: number;
+  sarcasm?: number;
+  verbosity?: number;
+  curiosity?: number;
 }
 
 export interface SelfDirective {
   id: string;
   companionId: string;
-  priority: number;
+  priority?: number;
   directive: string;
   status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
   category: 'behavioral' | 'guardrail' | 'relational' | string;
+  scopeActor?: string;
   supersedesId?: string;
   createdAt?: string;
 }
@@ -39,10 +42,21 @@ export interface SelfDirective {
 export interface SelfRelationship {
   companionId: string;
   entityId: string;
-  entityType: 'human' | 'companion' | 'system';
-  trustScore: number;
-  familiarity: number;
+  entityType?: 'human' | 'companion' | 'system';
+  role?: string;
+  stance?: string;
+  trustScore?: number;
+  familiarity?: number;
   interactionConventions: string[];
+  updatedAt?: string;
+}
+
+export interface SelfDialogueExample {
+  id?: string;
+  companionId?: string;
+  user: string;
+  assistant: string;
+  createdAt?: string;
 }
 
 // --- Knowledge Domain Types ---
@@ -134,6 +148,8 @@ export class SiduriDatabase {
         companion_id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         archetype TEXT,
+        origin TEXT,
+        ethos TEXT,
         version TEXT NOT NULL,
         updated_at TEXT DEFAULT (datetime('now'))
       );
@@ -155,6 +171,7 @@ export class SiduriDatabase {
         directive TEXT NOT NULL,
         status TEXT DEFAULT 'ACTIVE',
         category TEXT DEFAULT 'behavioral',
+        scope_actor TEXT,
         supersedes_id TEXT,
         created_at TEXT DEFAULT (datetime('now'))
       );
@@ -162,11 +179,22 @@ export class SiduriDatabase {
       CREATE TABLE IF NOT EXISTS self_relationships (
         companion_id TEXT NOT NULL,
         entity_id TEXT NOT NULL,
-        entity_type TEXT NOT NULL,
+        entity_type TEXT NOT NULL DEFAULT 'human',
+        role TEXT DEFAULT 'user',
+        stance TEXT DEFAULT 'neutral',
         trust_score REAL DEFAULT 0.5,
         familiarity REAL DEFAULT 0.5,
         interaction_conventions TEXT,
+        updated_at TEXT DEFAULT (datetime('now')),
         PRIMARY KEY(companion_id, entity_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS self_exemplars (
+        id TEXT PRIMARY KEY,
+        companion_id TEXT NOT NULL,
+        user_prompt TEXT NOT NULL,
+        companion_response TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now'))
       );
 
       -- Knowledge Tables
@@ -272,6 +300,36 @@ export class SiduriDatabase {
     } catch {
       // Column already exists
     }
+    try {
+      this.db.exec("ALTER TABLE self_identity ADD COLUMN origin TEXT");
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE self_identity ADD COLUMN ethos TEXT");
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE self_directives ADD COLUMN scope_actor TEXT");
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE self_relationships ADD COLUMN role TEXT DEFAULT 'user'");
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE self_relationships ADD COLUMN stance TEXT DEFAULT 'neutral'");
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE self_relationships ADD COLUMN updated_at TEXT");
+    } catch {
+      // Column already exists
+    }
   }
 
   public close(): void {
@@ -284,12 +342,14 @@ export class SiduriDatabase {
 
   public getIdentity(companionId: string): SelfIdentity | undefined {
     const stmt = this.db.prepare('SELECT * FROM self_identity WHERE companion_id = ?');
-    const row = stmt.get(companionId);
+    const row = stmt.get(companionId) as any;
     if (!row) return undefined;
     return {
       companionId: row.companion_id,
       name: row.name,
       archetype: row.archetype || undefined,
+      origin: row.origin || undefined,
+      ethos: row.ethos || undefined,
       version: row.version,
       updatedAt: row.updated_at
     };
@@ -297,15 +357,17 @@ export class SiduriDatabase {
 
   public setIdentity(identity: SelfIdentity): void {
     const stmt = this.db.prepare(`
-      INSERT INTO self_identity (companion_id, name, archetype, version, updated_at)
-      VALUES (?, ?, ?, ?, datetime('now'))
+      INSERT INTO self_identity (companion_id, name, archetype, origin, ethos, version, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(companion_id) DO UPDATE SET
         name = excluded.name,
         archetype = excluded.archetype,
+        origin = excluded.origin,
+        ethos = excluded.ethos,
         version = excluded.version,
         updated_at = datetime('now')
     `);
-    stmt.run(identity.companionId, identity.name, identity.archetype || null, identity.version);
+    stmt.run(identity.companionId, identity.name, identity.archetype || null, identity.origin || null, identity.ethos || null, identity.version);
   }
 
   public getPersonality(companionId: string): PersonalityTraits | undefined {
@@ -356,6 +418,7 @@ export class SiduriDatabase {
       directive: row.directive,
       status: row.status,
       category: row.category,
+      scopeActor: row.scope_actor || undefined,
       supersedesId: row.supersedes_id || undefined,
       createdAt: row.created_at
     }));
@@ -363,16 +426,17 @@ export class SiduriDatabase {
 
   public commitDirective(directive: SelfDirective): void {
     const stmt = this.db.prepare(`
-      INSERT INTO self_directives (id, companion_id, priority, directive, status, category, supersedes_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO self_directives (id, companion_id, priority, directive, status, category, scope_actor, supersedes_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     stmt.run(
       directive.id,
       directive.companionId,
-      directive.priority,
+      directive.priority !== undefined ? directive.priority : 50,
       directive.directive,
       directive.status,
-      directive.category,
+      directive.category || 'behavioral',
+      directive.scopeActor || null,
       directive.supersedesId || null,
       directive.createdAt || new Date().toISOString()
     );
@@ -391,6 +455,7 @@ export class SiduriDatabase {
       directive: row.directive,
       status: row.status,
       category: row.category,
+      scopeActor: row.scope_actor || undefined,
       supersedesId: row.supersedes_id || undefined,
       createdAt: row.created_at,
     };
@@ -499,36 +564,85 @@ export class SiduriDatabase {
 
   public getRelationship(companionId: string, entityId: string): SelfRelationship | undefined {
     const stmt = this.db.prepare('SELECT * FROM self_relationships WHERE companion_id = ? AND entity_id = ?');
-    const row = stmt.get(companionId, entityId);
+    const row = stmt.get(companionId, entityId) as any;
     if (!row) return undefined;
     return {
       companionId: row.companion_id,
       entityId: row.entity_id,
-      entityType: row.entity_type,
-      trustScore: row.trust_score,
-      familiarity: row.familiarity,
-      interactionConventions: row.interaction_conventions ? JSON.parse(row.interaction_conventions) : []
+      entityType: row.entity_type || 'human',
+      role: row.role || 'user',
+      stance: row.stance || 'neutral',
+      trustScore: row.trust_score !== undefined && row.trust_score !== null ? row.trust_score : 0.5,
+      familiarity: row.familiarity !== undefined && row.familiarity !== null ? row.familiarity : 0.5,
+      interactionConventions: row.interaction_conventions ? JSON.parse(row.interaction_conventions) : [],
+      updatedAt: row.updated_at || undefined,
     };
+  }
+
+  public getRelationships(companionId: string): SelfRelationship[] {
+    const stmt = this.db.prepare('SELECT * FROM self_relationships WHERE companion_id = ? ORDER BY entity_id ASC');
+    return stmt.all(companionId).map((row: any) => ({
+      companionId: row.companion_id,
+      entityId: row.entity_id,
+      entityType: row.entity_type || 'human',
+      role: row.role || 'user',
+      stance: row.stance || 'neutral',
+      trustScore: row.trust_score !== undefined && row.trust_score !== null ? row.trust_score : 0.5,
+      familiarity: row.familiarity !== undefined && row.familiarity !== null ? row.familiarity : 0.5,
+      interactionConventions: row.interaction_conventions ? JSON.parse(row.interaction_conventions) : [],
+      updatedAt: row.updated_at || undefined,
+    }));
   }
 
   public upsertRelationship(rel: SelfRelationship): void {
     const stmt = this.db.prepare(`
-      INSERT INTO self_relationships (companion_id, entity_id, entity_type, trust_score, familiarity, interaction_conventions)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO self_relationships (companion_id, entity_id, entity_type, role, stance, trust_score, familiarity, interaction_conventions, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(companion_id, entity_id) DO UPDATE SET
         entity_type = excluded.entity_type,
+        role = excluded.role,
+        stance = excluded.stance,
         trust_score = excluded.trust_score,
         familiarity = excluded.familiarity,
-        interaction_conventions = excluded.interaction_conventions
+        interaction_conventions = excluded.interaction_conventions,
+        updated_at = datetime('now')
     `);
     stmt.run(
       rel.companionId,
       rel.entityId,
-      rel.entityType,
-      rel.trustScore,
-      rel.familiarity,
+      rel.entityType || 'human',
+      rel.role || 'user',
+      rel.stance || 'neutral',
+      rel.trustScore !== undefined && rel.trustScore !== null ? rel.trustScore : 0.5,
+      rel.familiarity !== undefined && rel.familiarity !== null ? rel.familiarity : 0.5,
       JSON.stringify(rel.interactionConventions || [])
     );
+  }
+
+  public getExemplars(companionId: string): SelfDialogueExample[] {
+    const stmt = this.db.prepare('SELECT * FROM self_exemplars WHERE companion_id = ? ORDER BY created_at ASC');
+    return stmt.all(companionId).map((row: any) => ({
+      id: row.id,
+      companionId: row.companion_id,
+      user: row.user_prompt,
+      assistant: row.companion_response,
+      createdAt: row.created_at,
+    }));
+  }
+
+  public setExemplars(companionId: string, exemplars: SelfDialogueExample[]): void {
+    const delStmt = this.db.prepare('DELETE FROM self_exemplars WHERE companion_id = ?');
+    delStmt.run(companionId);
+
+    const insertStmt = this.db.prepare(`
+      INSERT INTO self_exemplars (id, companion_id, user_prompt, companion_response, created_at)
+      VALUES (?, ?, ?, ?, datetime('now'))
+    `);
+    for (let i = 0; i < exemplars.length; i++) {
+      const ex = exemplars[i];
+      const id = ex.id || `ex-${i + 1}-${Date.now()}`;
+      insertStmt.run(id, companionId, ex.user, ex.assistant);
+    }
   }
 
   // ==========================================

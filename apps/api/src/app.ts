@@ -136,12 +136,33 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
           companionId,
           name: manifest.identity.name,
           archetype: manifest.identity.archetype,
+          origin: manifest.identity.origin,
+          ethos: manifest.identity.ethos,
           version: manifest.version || '1.0.0',
           updatedAt: new Date().toISOString(),
         });
 
         if (manifest.personality) {
           await repo.setPersonality(companionId, manifest.personality);
+        }
+
+        if (Array.isArray(manifest.relationships)) {
+          for (const rel of manifest.relationships) {
+            if (rel && rel.entityId) {
+              await repo.updateRelationship(companionId, {
+                companionId,
+                entityId: rel.entityId,
+                entityType: 'human',
+                role: rel.role || 'user',
+                stance: rel.stance || 'neutral',
+                interactionConventions: rel.conventions || [],
+              });
+            }
+          }
+        }
+
+        if (Array.isArray(manifest.dialogueExamples) && repo.setExemplars) {
+          await repo.setExemplars(companionId, manifest.dialogueExamples);
         }
 
         if (directivesToCommit.length > 0) {

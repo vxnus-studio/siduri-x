@@ -3,6 +3,7 @@ import {
   PersonalityTraits,
   SelfDirective,
   SelfRelationship,
+  SelfDialogueExample,
 } from '@siduri-x/core';
 
 export type {
@@ -10,13 +11,14 @@ export type {
   PersonalityTraits,
   SelfDirective,
   SelfRelationship,
+  SelfDialogueExample,
 };
 
 export interface SelfRepository {
   getIdentity(companionId: string): Promise<SelfIdentity | undefined>;
   setIdentity(identity: SelfIdentity): Promise<void>;
-  getPersonality(companionId: string): Promise<PersonalityTraits>;
-  setPersonality(companionId: string, traits: PersonalityTraits): Promise<void>;
+  getPersonality?(companionId: string): Promise<PersonalityTraits>;
+  setPersonality?(companionId: string, traits: PersonalityTraits): Promise<void>;
   getActiveDirectives(companionId: string): Promise<SelfDirective[]>;
   commitDirectives(companionId: string, directives: SelfDirective[]): Promise<void>;
   disableDirective(id: string, companionId?: string): Promise<void>;
@@ -25,7 +27,10 @@ export interface SelfRepository {
   revokeDirective?(id: string, companionId?: string): Promise<void>;
   expireDirective?(id: string, companionId?: string): Promise<void>;
   getRelationship(companionId: string, entityId: string): Promise<SelfRelationship | null>;
+  getRelationships?(companionId: string): Promise<SelfRelationship[]>;
   updateRelationship(companionId: string, rel: SelfRelationship): Promise<void>;
+  getExemplars?(companionId: string): Promise<SelfDialogueExample[]>;
+  setExemplars?(companionId: string, exemplars: SelfDialogueExample[]): Promise<void>;
 }
 
 export interface SelfPackageAuthor {
@@ -36,14 +41,18 @@ export interface SelfPackageAuthor {
 
 export interface SelfPackageDirective {
   id: string;
-  priority: number;
+  priority?: number;
   directive: string;
   category?: 'behavioral' | 'guardrail' | 'relational';
+  scopeActor?: string;
+  supersedesId?: string;
 }
 
-export interface SelfDialogueExample {
-  user: string;
-  assistant: string;
+export interface SelfPackageRelationship {
+  entityId: string;
+  role: string;
+  stance: string;
+  conventions?: string[];
 }
 
 export interface SelfPackageManifest {
@@ -58,8 +67,10 @@ export interface SelfPackageManifest {
     name: string;
     archetype?: string;
     origin?: string;
+    ethos?: string;
   };
-  personality: PersonalityTraits;
+  personality?: PersonalityTraits;
+  relationships?: SelfPackageRelationship[];
   directives: SelfPackageDirective[];
   guardrails?: string[];
   dialogueExamples?: SelfDialogueExample[];
@@ -90,6 +101,7 @@ export interface SelfCompilationContext {
   interlocutorEntityId?: string;
   relationship?: SelfRelationship | null;
   guardrails?: string[];
+  dialogueExamples?: SelfDialogueExample[];
   now?: string;
 }
 
@@ -99,6 +111,8 @@ export interface ActiveSelfProjection {
   winningDirectives: SelfDirective[];
   relationshipBlock?: string;
   guardrailsBlock?: string;
+  behavioralBlock?: string;
+  exemplarsBlock?: string;
   identityFacts: string[];
   relationshipFacts: string[];
   behavioralRules: string[];

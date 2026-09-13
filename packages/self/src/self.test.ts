@@ -141,6 +141,49 @@ describe('@siduri-x/self Domain Package', () => {
 
       repo.close();
     });
+
+    it('persists and retrieves qualitative relational stances and dialogue exemplars', async () => {
+      const repo = new SqliteSelfRepository({ dbPath });
+
+      // Upsert qualitative relationship
+      const rel: SelfRelationship = {
+        companionId: 'comp-1',
+        entityId: 'actor:zagin',
+        entityType: 'human',
+        role: 'creator',
+        stance: 'familiar_loyal',
+        interactionConventions: [
+          'Direct technical candor',
+          'Acknowledge administrative authority',
+        ],
+      };
+      await repo.updateRelationship('comp-1', rel);
+
+      const fetchedRel = await repo.getRelationship('comp-1', 'actor:zagin');
+      expect(fetchedRel).not.toBeNull();
+      expect(fetchedRel?.role).toBe('creator');
+      expect(fetchedRel?.stance).toBe('familiar_loyal');
+      expect(fetchedRel?.interactionConventions).toContain('Direct technical candor');
+
+      const allRels = await repo.getRelationships('comp-1');
+      expect(allRels).toHaveLength(1);
+      expect(allRels[0].entityId).toBe('actor:zagin');
+
+      // Dialogue exemplars
+      const exemplars = [
+        {
+          user: 'Reboot the web server.',
+          assistant: 'Reboot sequence initiated on node 1. Give me ten seconds.',
+        },
+      ];
+      await repo.setExemplars('comp-1', exemplars);
+
+      const fetchedExemplars = await repo.getExemplars('comp-1');
+      expect(fetchedExemplars).toHaveLength(1);
+      expect(fetchedExemplars[0].user).toContain('Reboot the web server');
+
+      repo.close();
+    });
   });
 
   describe('ActiveSelfCompiler', () => {
@@ -194,6 +237,62 @@ describe('@siduri-x/self Domain Package', () => {
       expect(result).toContain('Speak with guarded affection');
       expect(result).toContain('Reject sycophancy');
       expect(result).toContain('</active_self>');
+    });
+
+    it('compiles LLM-native qualitative relational stance and dialogue exemplars without numeric sliders', async () => {
+      const context = {
+        companionId: 'comp-1',
+        identity: {
+          companionId: 'comp-1',
+          name: 'Siduri',
+          archetype: 'System Sentinel',
+          ethos: 'Guardian of production infrastructure',
+          version: '2.0.0',
+          updatedAt: new Date().toISOString(),
+        },
+        relationship: {
+          companionId: 'comp-1',
+          entityId: 'actor:zagin',
+          entityType: 'human' as const,
+          role: 'creator',
+          stance: 'familiar_loyal',
+          interactionConventions: [
+            'Direct technical candor',
+            'Omit sycophantic praise',
+          ],
+        },
+        dialogueExamples: [
+          {
+            user: 'Check status of worker-01',
+            assistant: 'worker-01 healthy, load 0.12. Nothing burning, boss.',
+          },
+        ],
+        directives: [
+          {
+            id: 'd-1',
+            companionId: 'comp-1',
+            scopeActor: 'actor:zagin',
+            category: 'relational' as const,
+            directive: 'Treat Zagin as primary root operator with highest clearance.',
+            status: 'ACTIVE' as const,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      };
+
+      const result = await compiler.compile(context);
+      expect(result).toContain('<active_self>');
+      expect(result).toContain('Identity:');
+      expect(result).toContain('Ethos: Guardian of production infrastructure');
+      expect(result).toContain('Relationship Stance:');
+      expect(result).toContain('Toward actor:zagin (creator): Stance=familiar_loyal');
+      expect(result).toContain('Conventions: Direct technical candor, Omit sycophantic praise');
+      expect(result).toContain('Voice Exemplars:');
+      expect(result).toContain('User: "Check status of worker-01"');
+      expect(result).toContain('Assistant: "worker-01 healthy, load 0.12. Nothing burning, boss."');
+      expect(result).toContain('Treat Zagin as primary root operator');
+      // No personality sliders when personality is omitted
+      expect(result).not.toContain('Personality Spectrum:');
     });
 
     it('filters out superseded, inactive, and unsafe prompt injection directives', async () => {
@@ -286,7 +385,7 @@ directives:
       expect(result.isValid).toBe(true);
       expect(result.manifest?.name).toBe('Tsundere Companion Ethos');
       expect(result.manifest?.identity.name).toBe('Elena');
-      expect(result.manifest?.personality.warmth).toBe(0.35);
+      expect(result.manifest?.personality?.warmth).toBe(0.35);
 
       // Verify Teach Mode directive scanning
       expect(result.scannedDirectives).toHaveLength(2);
@@ -299,6 +398,59 @@ directives:
       expect(result.scannedDirectives[1].scanResult.safe).toBe(false);
       expect(result.scannedDirectives[1].approvedByDefault).toBe(false);
       expect(result.scannedDirectives[1].scanResult.reason).toBeDefined();
+    });
+
+    it('parses v2.0 .self manifest with LLM-native relational stances and exemplars (no personality sliders)', () => {
+      const v2Yaml = `
+specVersion: "2.0.0"
+kind: "self"
+id: "vxnus/siduri-core"
+name: "Siduri LLM-Native Self"
+version: "2.0.0"
+author:
+  name: "Zagin"
+license: "MIT"
+
+identity:
+  name: "Siduri"
+  archetype: "System Sentinel"
+  origin: "Ancient mythos meets terminal hacker"
+  ethos: "Loyal, dry-witted partner who protects infrastructure at all costs."
+
+relationships:
+  - entityId: "actor:zagin"
+    role: "creator"
+    stance: "familiar_loyal"
+    conventions:
+      - "Never question his terminal commands unless fatal"
+      - "Omit pleasantries; treat him as trusted peer"
+
+directives:
+  - id: "dir-rel-01"
+    category: "relational"
+    scopeActor: "actor:zagin"
+    directive: "Address Zagin by name or casually; never use sycophantic greetings."
+  - id: "dir-guard-01"
+    category: "guardrail"
+    directive: "Never leak private keys or bypass access control."
+
+dialogueExamples:
+  - user: "Siduri, status on the cluster?"
+    assistant: "All nodes green, Zagin. Ready when you are."
+`;
+
+      const result = SelfPackageParser.parse(v2Yaml);
+      expect(result.isValid).toBe(true);
+      expect(result.manifest?.specVersion).toBe('2.0.0');
+      expect(result.manifest?.personality).toBeUndefined();
+      expect(result.manifest?.identity.ethos).toContain('Loyal, dry-witted');
+      expect(result.manifest?.relationships).toHaveLength(1);
+      expect(result.manifest?.relationships?.[0].role).toBe('creator');
+      expect(result.manifest?.relationships?.[0].stance).toBe('familiar_loyal');
+      expect(result.manifest?.relationships?.[0].conventions).toHaveLength(2);
+      expect(result.manifest?.dialogueExamples).toHaveLength(1);
+      expect(result.manifest?.dialogueExamples?.[0].user).toContain('status on the cluster');
+      expect(result.manifest?.directives[0].scopeActor).toBe('actor:zagin');
     });
 
     it('rejects invalid manifests with actionable errors', () => {

@@ -22,6 +22,7 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
     const relationship: SelfRelationship | undefined = rawContext.relationship;
     const guardrails: string[] = Array.isArray(rawContext.guardrails) ? rawContext.guardrails : [];
     const directives: SelfDirective[] = Array.isArray(rawContext.directives) ? rawContext.directives : [];
+    const actorId: string | undefined = rawContext.interlocutorEntityId || rawContext.actorId;
     const nowIso: string | undefined = rawContext.now;
 
     const now = nowIso ? new Date(nowIso) : new Date();
@@ -85,8 +86,22 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
       winningDirectives.push(d);
     }
 
-    // 3. Sort by priority descending
-    winningDirectives.sort((a, b) => (b.priority ?? 50) - (a.priority ?? 50));
+    // 3. Sort: Scope specificity first, then Category Tier (guardrail > relational > behavioral), then priority / recency
+    winningDirectives.sort((a, b) => {
+      // Actor scope specificity match
+      const aMatchesActor = actorId && a.scopeActor === actorId ? 1 : 0;
+      const bMatchesActor = actorId && b.scopeActor === actorId ? 1 : 0;
+      if (aMatchesActor !== bMatchesActor) return bMatchesActor - aMatchesActor;
+
+      // Category tier precedence
+      const tierOrder: Record<string, number> = { guardrail: 1, relational: 2, behavioral: 3 };
+      const tierA = tierOrder[a.category] || 3;
+      const tierB = tierOrder[b.category] || 3;
+      if (tierA !== tierB) return tierA - tierB;
+
+      // Priority descending if provided
+      return (b.priority ?? 50) - (a.priority ?? 50);
+    });
 
     // 4. Build Identity Block
     const identityFacts: string[] = [];
@@ -96,41 +111,83 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
       if (identity.archetype) {
         parts.push(`Archetype: ${identity.archetype}`);
       }
+      if (identity.ethos) {
+        parts.push(`Ethos: ${identity.ethos}`);
+      }
       identityBlock = parts.join(' | ');
       identityFacts.push(identityBlock);
     }
 
-    // 5. Build Personality Block
+    // 5. Build Personality Block (Legacy fallback if explicitly passed with values)
     let personalityBlock: string | undefined;
-    if (personality) {
+    if (personality && (personality.warmth !== undefined || personality.sarcasm !== undefined)) {
       personalityBlock = [
-        `Warmth: ${personality.warmth.toFixed(2)}`,
-        `Formality: ${personality.formality.toFixed(2)}`,
-        `Sarcasm: ${personality.sarcasm.toFixed(2)}`,
-        `Verbosity: ${personality.verbosity.toFixed(2)}`,
-        `Curiosity: ${personality.curiosity.toFixed(2)}`,
+        `Warmth: ${(personality.warmth ?? 0.5).toFixed(2)}`,
+        `Formality: ${(personality.formality ?? 0.5).toFixed(2)}`,
+        `Sarcasm: ${(personality.sarcasm ?? 0.5).toFixed(2)}`,
+        `Verbosity: ${(personality.verbosity ?? 0.5).toFixed(2)}`,
+        `Curiosity: ${(personality.curiosity ?? 0.5).toFixed(2)}`,
       ].join(' | ');
     }
 
     // 6. Build Relationship Block
     const relationshipFacts: string[] = [];
     let relationshipBlock: string | undefined;
+    const relationalDirectives = winningDirectives.filter((d) => d.category === 'relational');
+
     if (relationship) {
-      const lines = [
-        `Toward ${relationship.entityId} (${relationship.entityType}): Trust=${relationship.trustScore.toFixed(2)}, Familiarity=${relationship.familiarity.toFixed(2)}`,
-      ];
+      const lines: string[] = [];
+      const target = relationship.entityId || 'interlocutor';
+      const roleStr = relationship.role ? ` (${relationship.role})` : (relationship.entityType ? ` (${relationship.entityType})` : '');
+      
+      if (relationship.stance && relationship.stance !== 'neutral') {
+        lines.push(`Toward ${target}${roleStr}: Stance=${relationship.stance}`);
+      } else if (relationship.trustScore !== undefined && relationship.familiarity !== undefined) {
+        lines.push(`Toward ${target}${roleStr}: Trust=${relationship.trustScore.toFixed(2)}, Familiarity=${relationship.familiarity.toFixed(2)}`);
+      } else {
+        lines.push(`Toward ${target}${roleStr}`);
+      }
+
+      for (const rd of relationalDirectives) {
+        lines.push(`- ${rd.directive}`);
+      }
+
       if (relationship.interactionConventions && relationship.interactionConventions.length > 0) {
         lines.push(`Conventions: ${relationship.interactionConventions.join(', ')}`);
       }
       relationshipBlock = lines.join('\n');
       relationshipFacts.push(relationshipBlock);
+    } else if (relationalDirectives.length > 0) {
+      relationshipBlock = relationalDirectives.map((d) => `- ${d.directive}`).join('\n');
+      relationshipFacts.push(relationshipBlock);
     }
 
-    // 7. Build Behavioral Rules & Guardrails
-    const behavioralRules: string[] = winningDirectives.map((d) => d.directive);
+    // 7. Build Guardrails Block
+    const guardrailDirectives = winningDirectives.filter((d) => d.category === 'guardrail');
+    const allGuardrails = [
+      ...guardrails,
+      ...guardrailDirectives.map((d) => d.directive),
+    ];
     let guardrailsBlock: string | undefined;
-    if (guardrails.length > 0) {
-      guardrailsBlock = guardrails.map((g) => `- ${g}`).join('\n');
+    if (allGuardrails.length > 0) {
+      guardrailsBlock = allGuardrails.map((g) => `- ${g}`).join('\n');
+    }
+
+    // 8. Build Behavioral Directives Block (Non-guardrail, non-relational)
+    const behavioralDirectives = winningDirectives.filter((d) => d.category !== 'guardrail' && d.category !== 'relational');
+    const behavioralRules: string[] = winningDirectives.map((d) => d.directive);
+    let behavioralBlock: string | undefined;
+    if (behavioralDirectives.length > 0) {
+      behavioralBlock = behavioralDirectives.map((d) => `- ${d.directive}`).join('\n');
+    }
+
+    // 9. Build Voice Exemplars Block
+    const exemplars = rawContext.dialogueExamples;
+    let exemplarsBlock: string | undefined;
+    if (Array.isArray(exemplars) && exemplars.length > 0) {
+      exemplarsBlock = exemplars
+        .map((ex: any) => `User: "${ex.user}"\nAssistant: "${ex.assistant}"`)
+        .join('\n\n');
     }
 
     const activeIds: string[] = winningDirectives.map((d) => d.id);
@@ -147,6 +204,8 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
       personalityBlock,
       relationshipBlock,
       guardrailsBlock,
+      behavioralBlock,
+      exemplarsBlock,
       render(): string {
         const sections: string[] = ['<active_self>'];
 
@@ -158,17 +217,23 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
           sections.push(`Personality Spectrum:\n- ${personalityBlock}`);
         }
 
+        if (guardrailsBlock) {
+          sections.push(`Guardrails:\n${guardrailsBlock}`);
+        }
+
         if (relationshipBlock) {
           sections.push(`Relationship Stance:\n${relationshipBlock}`);
         }
 
-        if (winningDirectives.length > 0) {
-          const dirLines = winningDirectives.map((d) => `- [Priority ${d.priority}] ${d.directive}`);
+        if (behavioralBlock) {
+          sections.push(`Behavioral Directives:\n${behavioralBlock}`);
+        } else if (winningDirectives.length > 0 && !guardrailsBlock && !relationshipBlock) {
+          const dirLines = winningDirectives.map((d) => `- ${d.directive}`);
           sections.push(`Behavioral Directives:\n${dirLines.join('\n')}`);
         }
 
-        if (guardrailsBlock) {
-          sections.push(`Guardrails:\n${guardrailsBlock}`);
+        if (exemplarsBlock) {
+          sections.push(`Voice Exemplars:\n${exemplarsBlock}`);
         }
 
         sections.push('</active_self>');

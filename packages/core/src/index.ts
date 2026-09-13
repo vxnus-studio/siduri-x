@@ -318,6 +318,7 @@ import type {
   PersonalityTraits,
   SelfDirective,
   SelfRelationship,
+  SelfDialogueExample,
   LifeInventoryItem,
   LifeScheduleItem,
   LifePreference,
@@ -325,18 +326,36 @@ import type {
   EpisodicEvent,
 } from './siduri-db';
 
+export type {
+  SelfIdentity,
+  PersonalityTraits,
+  SelfDirective,
+  SelfRelationship,
+  SelfDialogueExample,
+  LifeInventoryItem,
+  LifeScheduleItem,
+  LifePreference,
+  MemoryClaim,
+  EpisodicEvent,
+};
+
 export interface SelfRepository {
   getIdentity(companionId: string): Promise<SelfIdentity | undefined>;
-  getPersonality(companionId: string): Promise<PersonalityTraits>;
+  getPersonality?(companionId: string): Promise<PersonalityTraits>;
   getActiveDirectives(companionId: string): Promise<SelfDirective[]>;
   getRelationship(companionId: string, entityId: string): Promise<SelfRelationship | null>;
+  getRelationships?(companionId: string): Promise<SelfRelationship[]>;
+  getExemplars?(companionId: string): Promise<SelfDialogueExample[]>;
+  setExemplars?(companionId: string, exemplars: SelfDialogueExample[]): Promise<void>;
   commitDirectives(companionId: string, directives: SelfDirective[]): Promise<void>;
   updateRelationship(companionId: string, rel: SelfRelationship): Promise<void>;
   disableDirective?(id: string): Promise<void>;
   getActiveSelf?(companionId: string): Promise<{
     identity?: SelfIdentity;
-    personality: PersonalityTraits;
+    personality?: PersonalityTraits;
     directives: SelfDirective[];
+    relationships?: SelfRelationship[];
+    exemplars?: SelfDialogueExample[];
   }>;
 }
 

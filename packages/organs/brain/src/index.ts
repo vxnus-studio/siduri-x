@@ -31,7 +31,10 @@ const MemoryProposalSchema = z.object({
 
 const BehaviorProposalSchema = z.object({
   directive: z.string(),
-  priority: z.number(),
+  category: z.enum(['guardrail', 'relational', 'behavioral']).optional(),
+  scopeActor: z.string().optional(),
+  supersedesId: z.string().optional(),
+  priority: z.number().optional(),
 });
 
 const ActionIntentSchema = z.object({
@@ -102,10 +105,13 @@ export class OpenAICompatibleBrain implements BrainOrgan {
                 items: {
                   type: "object",
                   properties: {
-                    directive: { type: "string" },
-                    priority: { type: "number" }
+                    directive: { type: "string", description: "The natural language behavioral, guardrail, or relational rule." },
+                    category: { type: "string", enum: ["guardrail", "relational", "behavioral"], description: "Category tier of the directive." },
+                    scopeActor: { type: "string", description: "Optional specific actor this rule applies to (e.g. 'actor:zagin')." },
+                    supersedesId: { type: "string", description: "Optional ID of an older directive this rule replaces." },
+                    priority: { type: "number", description: "Optional legacy priority rank." }
                   },
-                  required: ["directive", "priority"]
+                  required: ["directive"]
                 }
               },
               actionIntents: {
