@@ -26,6 +26,8 @@ export * from './session-history';
 export * from './schema-validator';
 export * from './siduri-db';
 export * from './database';
+export * from './container';
+export * from './perception-pipeline';
 
 import { EvidenceRecord } from './evidence';
 import { ActionIntent } from './action';

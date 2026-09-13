@@ -70,12 +70,13 @@ The runtime exposes `processPerception(perception: CompanionPerception)`:
 - Attaches sensory observation data from the `Observation` organ.
 - Legacy `handleUserMessage` acts as a thin wrapper over `processPerception`.
 
-## Cohesive Facade Architecture
+## Decoupled Container & Perception Pipeline Architecture
 
-To prevent Law of Demeter violations across consuming applications (such as `apps/api`), `SiduriRuntime` exposes direct facade methods for memory operations and response staging:
-- Memory Facades: `getClaims()`, `getPendingClaims()`, `getDirectives()`, `updateClaim()`, `approveClaim()`, `rejectClaim()`, `approveDirective()`, `rejectDirective()`, `revokeDirective()`, `disableDirective()`, `resetMemory()`.
-- Gating Facades: `stageResponse()`, `findStagedPlanByCorrelation()`, `getStagedPlan()`, `approveResponse()`, `rejectResponse()`, `evaluateGate()`.
-- Observation Management: `setObservationOrgan()`.
+To maintain strict boundaries and permanently prevent God-object / God-container anti-patterns:
+- **`CompanionContainer`** (`packages/core/src/container.ts`): Manages organ discovery, lifecycle (`initialize()`), tool registration, and adapter binding. It serves as the sovereign dependency container.
+- **`PerceptionPipeline`** (`packages/core/src/perception-pipeline.ts`): Formalizes the perception cycle into 12 composable, individually testable Pipes & Filters stages (`earTranscriptionStage`, `inputNormalizationStage`, `intentClassificationStage`, `contextRetrievalStage`, `promptCompilationStage`, `cognitionPlanningStage`, `responseGatingStage`, `memorySettlementStage`, `actionExecutionStage`, `experienceEmissionStage`, `mouthDeliveryStage`, `envelopeAssemblyStage`).
+- **`SiduriRuntime`** (`packages/core/src/runtime.ts`): Serves strictly as the lean perception execution runner (~100 LOC), delegating execution to the pipeline and lifecycle to the container.
+- **Direct Domain Access**: Consuming applications (such as `apps/api` and CLI) interact directly with their required organ domains (`companion.memory`, `companion.knowledge`, `companion.mouth`, `companion.gating`, `companion.actionPolicy`) rather than relying on bloated pass-through facade methods on the runtime orchestrator.
 
 ## Neutral Contracts Parity
 

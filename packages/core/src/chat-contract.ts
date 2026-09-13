@@ -87,9 +87,12 @@ export interface ChatResponse {
  * Guarantees a 1:1 identical response structure for localweb (apps/api) and standalone CLI.
  */
 export async function dispatchCompanionChat(
-  runtime: SiduriRuntime,
+  runtime: SiduriRuntime | { runtime: SiduriRuntime },
   payload: ChatRequest
 ): Promise<ChatResponse> {
+  const runner = 'runtime' in runtime && typeof (runtime as any).handleUserMessage !== 'function'
+    ? (runtime as { runtime: SiduriRuntime }).runtime
+    : (runtime as SiduriRuntime);
   const userMessage = payload.message || payload.text || '';
   const history = Array.isArray(payload.history) ? payload.history : [];
 
@@ -103,14 +106,14 @@ export async function dispatchCompanionChat(
   }
 
   const runtimeResult = (payload.medium || payload.signal)
-    ? await runtime.handleUserMessage(
+    ? await runner.handleUserMessage(
         userMessage,
         roleOrContext,
         history,
         payload.medium,
         payload.signal
       )
-    : await runtime.handleUserMessage(userMessage, roleOrContext, history);
+    : await runner.handleUserMessage(userMessage, roleOrContext, history);
 
   const delivery: FormattedMouthOutput | undefined = runtimeResult?.delivery;
 

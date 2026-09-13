@@ -344,7 +344,7 @@ describe('T6 Security & Operations Threat Model Suite', () => {
     expect(eval1.decision.decisionCode).toBe('REJECTED_HIGH_RISK_UNAPPROVED');
 
     // 2. Viewer attempt to approve is rejected
-    const viewerApproval = await runtimeA.approveAction({
+    const viewerApproval = await runtimeA.actionPolicy.approveAction({
       executionId: 'exec-crit-1',
       approverActorId: 'viewer-attacker',
       approverRole: 'viewer',
@@ -353,7 +353,7 @@ describe('T6 Security & Operations Threat Model Suite', () => {
     expect(viewerApproval.decisionCode).toBe('REJECTED_UNAUTHORIZED');
 
     // 3. Operator attempt to approve administrator tool is rejected (role mismatch)
-    const operatorApproval = await runtimeA.approveAction({
+    const operatorApproval = await runtimeA.actionPolicy.approveAction({
       executionId: 'exec-crit-1',
       approverActorId: 'operator-alice',
       approverRole: 'operator',
@@ -366,7 +366,7 @@ describe('T6 Security & Operations Threat Model Suite', () => {
     expect(evalStillDenied.decision.allowed).toBe(false);
 
     // 5. Authorized administrator approval succeeds
-    const adminApproval = await runtimeA.approveAction({
+    const adminApproval = await runtimeA.actionPolicy.approveAction({
       executionId: 'exec-crit-1',
       approverActorId: 'admin-super',
       approverRole: 'administrator',

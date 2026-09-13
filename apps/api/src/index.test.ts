@@ -127,7 +127,7 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
   });
 
   test('handles barge-in interruption via POST /chat/interrupt', async () => {
-    fakeRuntime.interruptMouth = jest.fn();
+    fakeRuntime.mouth = { interrupt: jest.fn() };
 
     const res = await request(app)
       .post('/chat/interrupt')
@@ -138,11 +138,11 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.interrupted).toBe(true);
-    expect(fakeRuntime.interruptMouth).toHaveBeenCalledWith('user_stop');
+    expect(fakeRuntime.mouth.interrupt).toHaveBeenCalledWith('user_stop');
   });
 
   test('handles mouth interruption via POST /mouth/interrupt', async () => {
-    fakeRuntime.interruptMouth = jest.fn();
+    fakeRuntime.mouth = { interrupt: jest.fn() };
 
     const res = await request(app)
       .post('/mouth/interrupt')
@@ -153,6 +153,6 @@ describe('API Boundary Context Validation (P2 Route Integration)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.interrupted).toBe(true);
-    expect(fakeRuntime.interruptMouth).toHaveBeenCalledWith('user_barge_in');
+    expect(fakeRuntime.mouth.interrupt).toHaveBeenCalledWith('user_barge_in');
   });
 });
