@@ -165,18 +165,19 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return replacement;
   }
 
-  async getDirectives(): Promise<BehaviorDirective[]> {
-    return this.db.getActiveDirectives(this.activeCompanionId) as any;
+  async getDirectives(companionId?: string): Promise<BehaviorDirective[]> {
+    const targetCompanionId = companionId || this.activeCompanionId;
+    return this.db.getActiveDirectives(targetCompanionId) as any;
   }
 
   async proposeDirective(
-    directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'>
+    directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'> & { companionId?: string }
   ): Promise<BehaviorDirective> {
     const raw = directiveData as any;
     const id = crypto.randomUUID();
     const directive: BehaviorDirective = {
       id,
-      companionId: this.activeCompanionId,
+      companionId: raw.companionId || this.activeCompanionId,
       directive: raw.directive || '',
       priority: raw.priority ?? 50,
       status: 'PENDING',
@@ -187,24 +188,34 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return directive;
   }
 
-  async approveDirective(id: string): Promise<void> {
-    this.db.approveDirective(id);
+  async approveDirective(id: string, companionId?: string): Promise<void> {
+    const existing = (this.db as any).getDirective ? (this.db as any).getDirective(id) : undefined;
+    const targetCompanionId = companionId || existing?.companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined);
+    this.db.approveDirective(id, targetCompanionId);
   }
 
-  async rejectDirective(id: string): Promise<void> {
-    this.db.rejectDirective(id);
+  async rejectDirective(id: string, companionId?: string): Promise<void> {
+    const existing = (this.db as any).getDirective ? (this.db as any).getDirective(id) : undefined;
+    const targetCompanionId = companionId || existing?.companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined);
+    this.db.rejectDirective(id, targetCompanionId);
   }
 
-  async revokeDirective(id: string): Promise<void> {
-    this.db.revokeDirective(id);
+  async revokeDirective(id: string, companionId?: string): Promise<void> {
+    const existing = (this.db as any).getDirective ? (this.db as any).getDirective(id) : undefined;
+    const targetCompanionId = companionId || existing?.companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined);
+    this.db.revokeDirective(id, targetCompanionId);
   }
 
-  async expireDirective(id: string): Promise<void> {
-    this.db.expireDirective(id);
+  async expireDirective(id: string, companionId?: string): Promise<void> {
+    const existing = (this.db as any).getDirective ? (this.db as any).getDirective(id) : undefined;
+    const targetCompanionId = companionId || existing?.companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined);
+    this.db.expireDirective(id, targetCompanionId);
   }
 
-  async disableDirective(id: string): Promise<void> {
-    this.db.disableDirective(id);
+  async disableDirective(id: string, companionId?: string): Promise<void> {
+    const existing = (this.db as any).getDirective ? (this.db as any).getDirective(id) : undefined;
+    const targetCompanionId = companionId || existing?.companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined);
+    this.db.disableDirective(id, targetCompanionId);
   }
 
   async runMigrations(): Promise<void> {

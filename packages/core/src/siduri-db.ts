@@ -378,29 +378,123 @@ export class SiduriDatabase {
     );
   }
 
-  public approveDirective(id: string): void {
-    const stmt = this.db.prepare("UPDATE self_directives SET status = 'ACTIVE' WHERE id = ?");
-    stmt.run(id);
+  public getDirective(id: string, companionId?: string): SelfDirective | undefined {
+    const stmt = companionId
+      ? this.db.prepare('SELECT * FROM self_directives WHERE id = ? AND companion_id = ?')
+      : this.db.prepare('SELECT * FROM self_directives WHERE id = ?');
+    const row = (companionId ? stmt.get(id, companionId) : stmt.get(id)) as any;
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      companionId: row.companion_id,
+      priority: row.priority,
+      directive: row.directive,
+      status: row.status,
+      category: row.category,
+      supersedesId: row.supersedes_id || undefined,
+      createdAt: row.created_at,
+    };
   }
 
-  public rejectDirective(id: string): void {
-    const stmt = this.db.prepare("UPDATE self_directives SET status = 'REJECTED' WHERE id = ?");
-    stmt.run(id);
+  public approveDirective(id: string, companionId?: string): void {
+    const findStmt = companionId
+      ? this.db.prepare("SELECT id, companion_id, status, supersedes_id FROM self_directives WHERE id = ? AND companion_id = ?")
+      : this.db.prepare("SELECT id, companion_id, status, supersedes_id FROM self_directives WHERE id = ?");
+    const row = (companionId ? findStmt.get(id, companionId) : findStmt.get(id)) as any;
+    if (!row) {
+      return;
+    }
+
+    if (row.status !== 'PENDING') {
+      throw new Error(
+        `Cannot approve directive '${id}': invalid transition from status '${row.status}' to 'ACTIVE' (only PENDING directives can be approved)`
+      );
+    }
+
+    // If this directive supersedes an earlier directive, transition that prior directive to SUPERSEDED
+    if (row.supersedes_id) {
+      const supersededId = row.supersedes_id;
+      const effectiveCompanionId = companionId || row.companion_id;
+      if (effectiveCompanionId) {
+        const supersedeStmt = this.db.prepare(
+          "UPDATE self_directives SET status = 'SUPERSEDED' WHERE id = ? AND companion_id = ?"
+        );
+        supersedeStmt.run(supersededId, effectiveCompanionId);
+      } else {
+        const supersedeStmt = this.db.prepare("UPDATE self_directives SET status = 'SUPERSEDED' WHERE id = ?");
+        supersedeStmt.run(supersededId);
+      }
+    }
+
+    if (companionId) {
+      const stmt = this.db.prepare(
+        "UPDATE self_directives SET status = 'ACTIVE' WHERE id = ? AND companion_id = ? AND status = 'PENDING'"
+      );
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare(
+        "UPDATE self_directives SET status = 'ACTIVE' WHERE id = ? AND status = 'PENDING'"
+      );
+      stmt.run(id);
+    }
   }
 
-  public revokeDirective(id: string): void {
-    const stmt = this.db.prepare("UPDATE self_directives SET status = 'REVOKED' WHERE id = ?");
-    stmt.run(id);
+  public rejectDirective(id: string, companionId?: string): void {
+    const findStmt = companionId
+      ? this.db.prepare("SELECT id, companion_id, status FROM self_directives WHERE id = ? AND companion_id = ?")
+      : this.db.prepare("SELECT id, companion_id, status FROM self_directives WHERE id = ?");
+    const row = (companionId ? findStmt.get(id, companionId) : findStmt.get(id)) as any;
+    if (!row) {
+      return;
+    }
+
+    if (row.status !== 'PENDING') {
+      throw new Error(
+        `Cannot reject directive '${id}': invalid transition from status '${row.status}' to 'REJECTED' (only PENDING directives can be rejected)`
+      );
+    }
+
+    if (companionId) {
+      const stmt = this.db.prepare(
+        "UPDATE self_directives SET status = 'REJECTED' WHERE id = ? AND companion_id = ? AND status = 'PENDING'"
+      );
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare(
+        "UPDATE self_directives SET status = 'REJECTED' WHERE id = ? AND status = 'PENDING'"
+      );
+      stmt.run(id);
+    }
   }
 
-  public expireDirective(id: string): void {
-    const stmt = this.db.prepare("UPDATE self_directives SET status = 'EXPIRED' WHERE id = ?");
-    stmt.run(id);
+  public revokeDirective(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'REVOKED' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'REVOKED' WHERE id = ?");
+      stmt.run(id);
+    }
   }
 
-  public disableDirective(id: string): void {
-    const stmt = this.db.prepare("UPDATE self_directives SET status = 'DISABLED' WHERE id = ?");
-    stmt.run(id);
+  public expireDirective(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'EXPIRED' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'EXPIRED' WHERE id = ?");
+      stmt.run(id);
+    }
+  }
+
+  public disableDirective(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'DISABLED' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'DISABLED' WHERE id = ?");
+      stmt.run(id);
+    }
   }
 
   public getRelationship(companionId: string, entityId: string): SelfRelationship | undefined {

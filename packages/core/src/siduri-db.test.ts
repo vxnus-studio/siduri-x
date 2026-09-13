@@ -802,6 +802,112 @@ describe('SiduriDatabase', () => {
       expect(db.getActiveDirectives(cId)).toHaveLength(0);
     });
 
+    it('rejects invalid directive state transitions (throws when approving non-PENDING directive)', () => {
+      db = new SiduriDatabase({ dbPath });
+      const cId = 'directive-invalid-transition-test';
+
+      // 1. Commit directive in REJECTED state
+      db.commitDirective({
+        id: 'dir-rejected-1',
+        companionId: cId,
+        priority: 50,
+        directive: 'Rejected directive',
+        status: 'REJECTED',
+        category: 'behavioral',
+      });
+
+      expect(() => db.approveDirective('dir-rejected-1')).toThrow(
+        /invalid transition from status 'REJECTED' to 'ACTIVE'/
+      );
+
+      // 2. Commit directive in ACTIVE state
+      db.commitDirective({
+        id: 'dir-active-1',
+        companionId: cId,
+        priority: 50,
+        directive: 'Already active directive',
+        status: 'ACTIVE',
+        category: 'behavioral',
+      });
+
+      expect(() => db.approveDirective('dir-active-1')).toThrow(
+        /invalid transition from status 'ACTIVE' to 'ACTIVE'/
+      );
+
+      // 3. Rejecting an already ACTIVE directive throws
+      expect(() => db.rejectDirective('dir-active-1')).toThrow(
+        /invalid transition from status 'ACTIVE' to 'REJECTED'/
+      );
+    });
+
+    it('automatically marks prior directive as SUPERSEDED when approving superseding directive', () => {
+      db = new SiduriDatabase({ dbPath });
+      const cId = 'directive-supersede-test';
+
+      // 1. Initial directive active
+      db.commitDirective({
+        id: 'dir-original-1',
+        companionId: cId,
+        priority: 50,
+        directive: 'Original rule',
+        status: 'ACTIVE',
+        category: 'behavioral',
+      });
+      expect(db.getActiveDirectives(cId)).toHaveLength(1);
+
+      // 2. Propose a superseding directive
+      db.commitDirective({
+        id: 'dir-replacement-1',
+        companionId: cId,
+        priority: 55,
+        directive: 'Updated replacement rule',
+        status: 'PENDING',
+        category: 'behavioral',
+        supersedesId: 'dir-original-1',
+      });
+
+      // Original is still active, replacement is pending
+      expect(db.getActiveDirectives(cId)).toHaveLength(1);
+      expect(db.getActiveDirectives(cId)[0].id).toBe('dir-original-1');
+
+      // 3. Approve replacement directive
+      db.approveDirective('dir-replacement-1', cId);
+
+      const active = db.getActiveDirectives(cId);
+      expect(active).toHaveLength(1);
+      expect(active[0].id).toBe('dir-replacement-1');
+
+      const original = db.getDirective('dir-original-1', cId);
+      expect(original?.status).toBe('SUPERSEDED');
+    });
+
+    it('enforces companion isolation on directive approval', () => {
+      db = new SiduriDatabase({ dbPath });
+      const cIdA = 'companion-alpha';
+      const cIdB = 'companion-beta';
+
+      db.commitDirective({
+        id: 'dir-beta-1',
+        companionId: cIdB,
+        priority: 50,
+        directive: 'Beta private rule',
+        status: 'PENDING',
+        category: 'behavioral',
+      });
+
+      // Alpha attempts to approve Beta's directive scoped to Alpha
+      db.approveDirective('dir-beta-1', cIdA);
+
+      // Beta's directive must remain PENDING and unapproved
+      const betaDirective = db.getDirective('dir-beta-1', cIdB);
+      expect(betaDirective?.status).toBe('PENDING');
+      expect(db.getActiveDirectives(cIdB)).toHaveLength(0);
+
+      // Beta approves its own directive successfully
+      db.approveDirective('dir-beta-1', cIdB);
+      expect(db.getActiveDirectives(cIdB)).toHaveLength(1);
+    });
+
     it('enforces claim state transitions (pending -> approved -> revoked/expired/session_only)', () => {
       db = new SiduriDatabase({ dbPath });
       const cId = 'claim-state-test';

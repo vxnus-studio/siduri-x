@@ -272,6 +272,40 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       expect(directives.some((d) => d.id === dir.id)).toBe(false);
     });
 
+    it('enforces directive lifecycle transitions, supersession, and companion scoping', async () => {
+      // 1. Propose directive
+      const dir1 = await store.proposeDirective({
+        directive: 'Initial directive',
+        priority: 10,
+        companionId: 'comp-A',
+      });
+      expect(dir1.status).toBe('PENDING');
+
+      // 2. Rejecting from another companion should NOT reject comp-A's directive
+      await store.rejectDirective(dir1.id, 'comp-B');
+
+      // 3. Approving with correct companion succeeds
+      await store.approveDirective(dir1.id, 'comp-A');
+
+      // 4. Cannot re-approve an ACTIVE directive
+      await expect(store.approveDirective(dir1.id, 'comp-A')).rejects.toThrow(/invalid transition/);
+
+      // 5. Propose superseding directive
+      const dir2 = await store.proposeDirective({
+        directive: 'Superseding directive',
+        priority: 20,
+        supersedesId: dir1.id,
+        companionId: 'comp-A',
+      });
+
+      // 6. Approve dir2, which should auto-supersede dir1
+      await store.approveDirective(dir2.id, 'comp-A');
+
+      const directives = await store.getDirectives('comp-A');
+      expect(directives.some((d) => d.id === dir2.id && d.status === 'ACTIVE')).toBe(true);
+      expect(directives.some((d) => d.id === dir1.id)).toBe(false);
+    });
+
     it('proposes, approves, revokes, and expires claims', async () => {
       const claim = await store.proposeClaim({
         id: 'claim-fsm',

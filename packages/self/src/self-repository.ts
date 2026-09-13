@@ -64,24 +64,24 @@ export class SqliteSelfRepository implements SelfRepository {
     }
   }
 
-  async approveDirective(id: string): Promise<void> {
-    this.db.approveDirective(id);
+  async approveDirective(id: string, companionId?: string): Promise<void> {
+    this.db.approveDirective(id, companionId);
   }
 
-  async rejectDirective(id: string): Promise<void> {
-    this.db.rejectDirective(id);
+  async rejectDirective(id: string, companionId?: string): Promise<void> {
+    this.db.rejectDirective(id, companionId);
   }
 
-  async revokeDirective(id: string): Promise<void> {
-    this.db.revokeDirective(id);
+  async revokeDirective(id: string, companionId?: string): Promise<void> {
+    this.db.revokeDirective(id, companionId);
   }
 
-  async expireDirective(id: string): Promise<void> {
-    this.db.expireDirective(id);
+  async expireDirective(id: string, companionId?: string): Promise<void> {
+    this.db.expireDirective(id, companionId);
   }
 
-  async disableDirective(id: string): Promise<void> {
-    this.db.disableDirective(id);
+  async disableDirective(id: string, companionId?: string): Promise<void> {
+    this.db.disableDirective(id, companionId);
   }
 
   async getRelationship(companionId: string, entityId: string): Promise<SelfRelationship | null> {

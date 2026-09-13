@@ -285,32 +285,40 @@ export class SiduriRuntime {
     return this.memory.updateClaim(id, updates);
   }
 
-  async approveDirective(id: string): Promise<void> {
+  async approveDirective(id: string, companionId?: string): Promise<void> {
     if (!this.memory || typeof this.memory.approveDirective !== 'function') {
       throw new Error('Memory organ not configured');
     }
-    return this.memory.approveDirective(id);
+    return companionId !== undefined
+      ? this.memory.approveDirective(id, companionId)
+      : this.memory.approveDirective(id);
   }
 
-  async rejectDirective(id: string): Promise<void> {
+  async rejectDirective(id: string, companionId?: string): Promise<void> {
     if (!this.memory || typeof this.memory.rejectDirective !== 'function') {
       throw new Error('Memory organ not configured');
     }
-    return this.memory.rejectDirective(id);
+    return companionId !== undefined
+      ? this.memory.rejectDirective(id, companionId)
+      : this.memory.rejectDirective(id);
   }
 
-  async revokeDirective(id: string): Promise<void> {
+  async revokeDirective(id: string, companionId?: string): Promise<void> {
     if (!this.memory || typeof this.memory.revokeDirective !== 'function') {
       throw new Error('Memory organ not configured');
     }
-    return this.memory.revokeDirective(id);
+    return companionId !== undefined
+      ? this.memory.revokeDirective(id, companionId)
+      : this.memory.revokeDirective(id);
   }
 
-  async disableDirective(id: string): Promise<void> {
+  async disableDirective(id: string, companionId?: string): Promise<void> {
     if (!this.memory || typeof this.memory.disableDirective !== 'function') {
       throw new Error('Memory organ not configured');
     }
-    return this.memory.disableDirective(id);
+    return companionId !== undefined
+      ? this.memory.disableDirective(id, companionId)
+      : this.memory.disableDirective(id);
   }
 
   async resetMemory(): Promise<void> {

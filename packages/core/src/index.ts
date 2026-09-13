@@ -149,13 +149,13 @@ export interface MemoryOrgan {
   expireClaim?(id: string): Promise<void>;
   revokeClaim?(id: string, reason?: string): Promise<void>;
 
-  getDirectives(): Promise<BehaviorDirective[]>;
-  proposeDirective(directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'>): Promise<BehaviorDirective>;
-  approveDirective(id: string): Promise<void>;
-  rejectDirective(id: string): Promise<void>;
-  revokeDirective(id: string): Promise<void>;
-  disableDirective(id: string): Promise<void>;
-  expireDirective?(id: string): Promise<void>;
+  getDirectives(companionId?: string): Promise<BehaviorDirective[]>;
+  proposeDirective(directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'> & { companionId?: string }): Promise<BehaviorDirective>;
+  approveDirective(id: string, companionId?: string): Promise<void>;
+  rejectDirective(id: string, companionId?: string): Promise<void>;
+  revokeDirective(id: string, companionId?: string): Promise<void>;
+  disableDirective(id: string, companionId?: string): Promise<void>;
+  expireDirective?(id: string, companionId?: string): Promise<void>;
   supersedeClaim?(id: string, replacement: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
   updateClaim?(
     id: string,
