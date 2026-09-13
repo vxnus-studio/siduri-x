@@ -74,6 +74,7 @@ Architectural proposals, design explorations, and prospective specifications:
 | **[`rfc-siduri-self-organ-knowledge.md`](./rfc/rfc-siduri-self-organ-knowledge.md)** | Core Self, Organs, Knowledge, and Memory Architecture | **Implemented** (Adopted in `self-organ-knowledge/`) |
 | **[`rfc-dynamic-behavior-self.md`](./rfc/rfc-dynamic-behavior-self.md)** | Dynamic Behavior Delivery & The `.self` Asset Specification | **Implemented** (`@siduri-x/self` + Teach Mode) |
 | **[`rfc-life-database.md`](./rfc/rfc-life-database.md)** | The Life Database Specification & User Data Sovereignty | **Implemented** (`@siduri-x/knowledge`) |
+| **[`rfc-llm-native-self-and-relationship.md`](./rfc/rfc-llm-native-self-and-relationship.md)** | LLM-Native Self Domain & Qualitative Relational Stances | **Implemented** (`@siduri-x/self`) |
 | **[`rfc-benchmarking-framework.md`](./rfc/rfc-benchmarking-framework.md)** | Performance SLA Budgets, Scaling & Microbenchmarks | **Planned** (Upcoming Benchmark Suite) |
 
 ---

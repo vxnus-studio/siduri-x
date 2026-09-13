@@ -1,7 +1,7 @@
 # Prototype Verification Status: Siduri-X
 
 **Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
-**Verification Baseline**: `main` branch (v2.0.2 milestone) (Decoupled Companion Container & Perception Pipeline, Canonical Boot Module, Action Policy Hardening, Clean Architecture & Pure SQLite)  
+**Verification Baseline**: `main` branch (v2.0.3 milestone) (3 Interaction Modes [Casual, Teach, Hybrid] with 4-Tier Hierarchy, LLM-Native Self & Qualitative Relational Stances, Decoupled Perception Pipeline, Clean Architecture & Pure SQLite)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 
@@ -38,6 +38,10 @@ The following invariants have been verified in unit test suites and mock fixture
     Audit events separate `previousEventHash`, `eventHash`, and `resultHash` into a SHA-256 hash chain over canonicalized payloads.
 11. **Clean Distribution Packaging & Smoke Test**:
     `npm run release:check` passes on all 14 packages (13 canonical `@siduri-x/*` domain and organ packages + `@vxnus/siduri` CLI; zero leaking `workspace:` references). `clean-machine-smoke.test.ts` validates that tarballs unpack and scaffold an empty project in an isolated temp folder (packaging smoke test).
+12. **3 Interaction Modes & Multi-Source Resolution (P0)**:
+    Runtime implements Casual Mode (Zero Memory Drift: short-circuits proposals, zero SQLite or source event writes), Teach Mode (strict HITL staged proposal creation), and Hybrid Mode (default companion salience filtering), resolved deterministically via a 4-tier hierarchy (request context override -> public security channel boundary -> in-dialogue cues -> hybrid default).
+13. **LLM-Native Self & Relational Stance Substrate (P0)**:
+    Replaces numeric pseudo-math sliders with qualitative personality traits and directional relational stances (affinity, trust, dynamic interpersonal posture), compiled into clean inference frames via `ActiveSelfCompiler`.
 
 ---
 

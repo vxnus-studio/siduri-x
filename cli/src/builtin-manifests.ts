@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/self',
     organType: 'behavior',
-    version: '2.0.1',
+    version: '2.0.2',
     displayName: 'Behavior / Self (Active Self Directives)',
     description: 'Atomic directive state machine and personality projection compiler',
     entrypoint: './dist/index.js',
