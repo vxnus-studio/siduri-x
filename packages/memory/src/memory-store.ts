@@ -138,8 +138,21 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     arg3?: number
   ): Promise<any[]> {
     // Support overload: searchClaims(companionId: string, query: string, limit?: number)
-    // AND overload: searchClaims(query: string, scopeOrOptions?: any, limit?: number)
-    if (typeof arg2 === 'string' && !['companion', 'user'].includes(arg2)) {
+    const KNOWN_ROLES_AND_SCOPES = new Set([
+      'companion',
+      'user',
+      'owner',
+      'viewer',
+      'operator',
+      'master_private',
+      'master_stream',
+      'viewer_direct',
+      'audience_general',
+      'silent_operator_note',
+    ]);
+    const isRoleOrScope = typeof arg2 === 'string' && KNOWN_ROLES_AND_SCOPES.has(arg2.toLowerCase());
+
+    if (typeof arg2 === 'string' && !isRoleOrScope) {
       const companionId = arg1;
       const query = arg2;
       const limit = arg3 ?? 20;

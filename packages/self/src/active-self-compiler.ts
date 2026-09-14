@@ -141,13 +141,18 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
       const lines: string[] = [];
       const target = relationship.entityId || 'interlocutor';
       const roleStr = relationship.role ? ` (${relationship.role})` : (relationship.entityType ? ` (${relationship.entityType})` : '');
+      const affilStr = (relationship as any).affiliation ? ` [${(relationship as any).affiliation}]` : '';
       
       if (relationship.stance && relationship.stance !== 'neutral') {
-        lines.push(`Toward ${target}${roleStr}: Stance=${relationship.stance}`);
+        lines.push(`Toward ${target}${roleStr}${affilStr}: Stance=${relationship.stance}`);
       } else if (relationship.trustScore !== undefined && relationship.familiarity !== undefined) {
-        lines.push(`Toward ${target}${roleStr}: Trust=${relationship.trustScore.toFixed(2)}, Familiarity=${relationship.familiarity.toFixed(2)}`);
+        lines.push(`Toward ${target}${roleStr}${affilStr}: Trust=${relationship.trustScore.toFixed(2)}, Familiarity=${relationship.familiarity.toFixed(2)}`);
       } else {
-        lines.push(`Toward ${target}${roleStr}`);
+        lines.push(`Toward ${target}${roleStr}${affilStr}`);
+      }
+
+      if ((relationship as any).name) {
+        lines.push(`- Interlocutor Name: ${(relationship as any).name}`);
       }
 
       for (const rd of relationalDirectives) {

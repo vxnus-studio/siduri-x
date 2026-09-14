@@ -46,6 +46,8 @@ export interface SelfRelationship {
   companionId: string;
   entityId: string;
   entityType?: 'human' | 'companion' | 'system';
+  name?: string;
+  affiliation?: string;
   role?: string;
   stance?: string;
   trustScore?: number;
@@ -190,6 +192,8 @@ export class SiduriDatabase {
         companion_id TEXT NOT NULL,
         entity_id TEXT NOT NULL,
         entity_type TEXT NOT NULL DEFAULT 'human',
+        name TEXT,
+        affiliation TEXT,
         role TEXT DEFAULT 'user',
         stance TEXT DEFAULT 'neutral',
         trust_score REAL DEFAULT 0.5,
@@ -342,6 +346,16 @@ export class SiduriDatabase {
     }
     try {
       this.db.exec("ALTER TABLE self_identity ADD COLUMN role TEXT");
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE self_relationships ADD COLUMN name TEXT");
+    } catch {
+      // Column already exists
+    }
+    try {
+      this.db.exec("ALTER TABLE self_relationships ADD COLUMN affiliation TEXT");
     } catch {
       // Column already exists
     }
@@ -606,6 +620,8 @@ export class SiduriDatabase {
       companionId: row.companion_id,
       entityId: row.entity_id,
       entityType: row.entity_type || 'human',
+      name: row.name || undefined,
+      affiliation: row.affiliation || undefined,
       role: row.role || 'user',
       stance: row.stance || 'neutral',
       trustScore: row.trust_score !== undefined && row.trust_score !== null ? row.trust_score : 0.5,
@@ -621,6 +637,8 @@ export class SiduriDatabase {
       companionId: row.companion_id,
       entityId: row.entity_id,
       entityType: row.entity_type || 'human',
+      name: row.name || undefined,
+      affiliation: row.affiliation || undefined,
       role: row.role || 'user',
       stance: row.stance || 'neutral',
       trustScore: row.trust_score !== undefined && row.trust_score !== null ? row.trust_score : 0.5,
@@ -632,12 +650,14 @@ export class SiduriDatabase {
 
   public upsertRelationship(rel: SelfRelationship): void {
     const stmt = this.db.prepare(`
-      INSERT INTO self_relationships (companion_id, entity_id, entity_type, role, stance, trust_score, familiarity, interaction_conventions, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO self_relationships (companion_id, entity_id, entity_type, name, affiliation, role, stance, trust_score, familiarity, interaction_conventions, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(companion_id, entity_id) DO UPDATE SET
         entity_type = excluded.entity_type,
-        role = excluded.role,
-        stance = excluded.stance,
+        name = COALESCE(excluded.name, self_relationships.name),
+        affiliation = COALESCE(excluded.affiliation, self_relationships.affiliation),
+        role = COALESCE(excluded.role, self_relationships.role),
+        stance = COALESCE(excluded.stance, self_relationships.stance),
         trust_score = excluded.trust_score,
         familiarity = excluded.familiarity,
         interaction_conventions = excluded.interaction_conventions,
@@ -647,6 +667,8 @@ export class SiduriDatabase {
       rel.companionId,
       rel.entityId,
       rel.entityType || 'human',
+      rel.name || null,
+      rel.affiliation || null,
       rel.role || 'user',
       rel.stance || 'neutral',
       rel.trustScore !== undefined && rel.trustScore !== null ? rel.trustScore : 0.5,
@@ -1018,27 +1040,56 @@ export class SiduriDatabase {
       return;
     }
 
-    // 2. Relationship mutations: creator or user stated relationship
+    // 2. Relationship mutations: creator or user stated relationship, name, or affiliation
     if (
       claim.claimType === 'relationship' ||
       predicate === 'stated_relationship' ||
       predicate === 'relationship' ||
-      predicate === 'relationship_to_siduri'
+      predicate === 'relationship_to_siduri' ||
+      (predicate === 'name' && (subject.startsWith('actor:') || subject === 'user' || subject === 'primary_user')) ||
+      predicate === 'preferred_address' ||
+      predicate === 'affiliation'
     ) {
       const rawSubject = (claim.subject || 'actor:user').replace(/^actor:actor:/, 'actor:');
       const isCreator = value.toLowerCase() === 'creator';
+      const isName = predicate === 'name' || predicate === 'preferred_address';
+      const isAffil = predicate === 'affiliation';
+
+      const existingRel = this.getRelationship(companionId, rawSubject);
+      const role = isCreator ? value : (existingRel?.role || (isName || isAffil ? existingRel?.role : value));
+      const name = isName ? value : existingRel?.name;
+      const affiliation = isAffil ? value : existingRel?.affiliation;
+      const stance = isCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
+      const trustScore = isCreator ? 1.0 : (existingRel?.trustScore ?? 0.8);
+      const familiarity = isCreator ? 0.9 : (existingRel?.familiarity ?? 0.5);
+      const interactionConventions = isCreator
+        ? Array.from(new Set([...(existingRel?.interactionConventions || []), 'Direct communication', 'Highest administrative trust']))
+        : (existingRel?.interactionConventions || []);
+
       this.upsertRelationship({
         companionId,
         entityId: rawSubject,
         entityType: 'human',
-        role: value,
-        stance: isCreator ? 'familiar_loyal' : 'neutral',
-        trustScore: isCreator ? 1.0 : 0.8,
-        familiarity: isCreator ? 0.9 : 0.5,
-        interactionConventions: isCreator
-          ? ['Direct communication', 'Highest administrative trust']
-          : [],
+        name,
+        affiliation,
+        role,
+        stance,
+        trustScore,
+        familiarity,
+        interactionConventions,
       });
+
+      if (isName) {
+        this.commitDirective({
+          id: `dir-name-${claim.id || Date.now()}`,
+          companionId,
+          priority: 75,
+          directive: `Address ${rawSubject} as ${value}`,
+          status: 'active' as any,
+          category: 'relational',
+          createdAt: new Date().toISOString(),
+        });
+      }
       return;
     }
 

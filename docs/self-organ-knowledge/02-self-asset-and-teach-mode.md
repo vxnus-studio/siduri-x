@@ -167,27 +167,31 @@ In addition to batch `.self` file installation, Siduri supports **Conversational
 sequenceDiagram
     autonumber
     actor Owner as Owner (Teach Mode)
-    participant Core as Runtime / Teaching Extractor
+    participant Core as Runtime / Perception Pipeline
+    participant Brain as Brain Organ (LLM / submitResponsePlan)
     participant Settler as Memory Settler
     participant Gate as Truth Gate (/memory/proposals/approve)
     participant SelfDB as SqliteSelfRepository (siduri.sqlite)
     participant Compiler as ActiveSelfCompiler
 
-    Owner->>Core: "Your role is Lead Architect" / "I am your creator, Kur Zagin"
-    Core->>Core: Extract deterministic teaching claims & behavioral rules
-    Core->>Settler: Create PENDING claims and directives
-    Settler-->>Owner: Emit behavioral_proposals & memory proposals receipt
-    Owner->>Gate: Approve proposal (explicit confirmation)
+    Owner->>Core: "She was VXNUS Studio Staff" / "My name is Kur Zagin"
+    Core->>Brain: Generate response plan with system context & teach cues
+    Brain-->>Core: Response plan containing memoryProposals & behaviorProposals
+    Core->>Settler: Stage candidates as PENDING (Zero active drift)
+    Settler-->>Owner: Emit interactive proposal cards in chat stream
+    Owner->>Gate: Approve proposal (explicit human confirmation)
     Gate->>SelfDB: promoteClaimToSelf() commits to self_identity / self_relationships / self_directives
-    SelfDB-->>Compiler: Active Self updated immediately
-    Note over Compiler: Future conversation turns retrieve learned identity & directives
+    SelfDB-->>Compiler: Active Self updated immediately with interlocutor name & affiliation
+    Note over Compiler: Future conversation turns retrieve learned identity & directives directly in <active_self>
 ```
 
 #### Invariants & Safety Guarantees:
-1. **Casual Mode Isolation (Zero Drift)**: Casual banter (e.g. "you are probably the funniest AI...") never creates identity claims. Teaching extraction is strictly bounded to deliberate Teach Mode or explicit teaching cues.
-2. **Deterministic Extraction**: Strips companion name prefixes, articles (`a`, `an`, `the`), and handles actor prefix normalization cleanly.
-3. **Approval Idempotency**: Repeatedly approving a proposal is a safe no-op that never creates duplicate rows in `siduri.sqlite`.
-4. **Crash & Restart Durability**: Learned identity, relationships, and active directives reside in persistent SQLite tables (`self_identity`, `self_relationships`, `self_directives`) and survive runtime teardown and restart without state loss.
+1. **Casual Mode Isolation (Zero Drift)**: Casual banter (e.g. "you are probably the funniest AI...") suppresses proposal generation entirely.
+2. **Pure LLM Cognitive Proposer**: Conversational proposals are formulated directly by the Brain organ via structured JSON tool-calling (`submitResponsePlan`), handling multi-lingual input, indirect phrasing, past tense, and natural dialogue without rigid regex restrictions.
+3. **Quarantined Staging**: Unconfirmed proposals carry zero privilege (`status: 'pending'`). They are excluded from prompt compilation until the owner clicks "Approve".
+4. **Living Self Relationships**: Approving an interlocutor's identity (`name`, `affiliation`, `stated_relationship`) canonically updates `SelfRelationship` and renders resident in `<active_self>`, eliminating colloquial BM25/FTS5 recall misses.
+5. **Approval Idempotency**: Repeatedly approving a proposal is a safe no-op that never creates duplicate rows in `siduri.sqlite`.
+6. **Crash & Restart Durability**: Learned identity, relationships, and active directives reside in persistent SQLite tables (`self_identity`, `self_relationships`, `self_directives`) and survive runtime teardown and restart without state loss.
 
 ---
 

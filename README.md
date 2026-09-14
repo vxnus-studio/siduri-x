@@ -46,15 +46,15 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 ### Core Domain Substrates (Persistent Continuity)
 | Package | Version | Description | Status |
 | :--- | :---: | :--- | :--- |
-| **`@siduri-x/core`** | `^2.0.5` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
-| **`@siduri-x/self`** | `^2.0.3` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
+| **`@siduri-x/core`** | `^2.0.6` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
+| **`@siduri-x/self`** | `^2.0.4` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
 | **`@siduri-x/knowledge`** | `^2.0.3` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
-| **`@siduri-x/memory`** | `^2.0.3` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
+| **`@siduri-x/memory`** | `^2.0.4` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
 
 ### Pluggable Peripheral Organs
 | Package | Version | Description | Status |
 | :--- | :---: | :--- | :--- |
-| **`@siduri-x/brain`** | `^2.0.2` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
+| **`@siduri-x/brain`** | `^2.0.3` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
 | **`@siduri-x/hands`** | `^2.0.1` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
 | **`@siduri-x/eknowledge`** | `^2.0.1` | External E-compatible lore / documentation client with cited context & SSRF defense | **Implemented** |
 | **`@siduri-x/ear`** | `^2.0.1` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |

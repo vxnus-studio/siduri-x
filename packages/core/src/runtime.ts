@@ -341,27 +341,61 @@ export async function promoteApprovedClaimToSelf(
     return;
   }
 
-  // 2. Relationship mutations: creator or user stated relationship
+  // 2. Relationship mutations: creator or user stated relationship, name, or affiliation
   if (
     claim.claimType === 'relationship' ||
     predicate === 'stated_relationship' ||
     predicate === 'relationship' ||
-    predicate === 'relationship_to_siduri'
+    predicate === 'relationship_to_siduri' ||
+    (predicate === 'name' && (subject.startsWith('actor:') || subject === 'user' || subject === 'primary_user')) ||
+    predicate === 'preferred_address' ||
+    predicate === 'affiliation'
   ) {
     const rawSubject = (claim.subject || 'actor:user').replace(/^actor:actor:/, 'actor:');
     const isCreator = value.toLowerCase() === 'creator';
+    const isName = predicate === 'name' || predicate === 'preferred_address';
+    const isAffil = predicate === 'affiliation';
+
+    const existingRel = typeof self.getRelationship === 'function'
+      ? await self.getRelationship(targetCompanionId, rawSubject)
+      : null;
+
+    const role = isCreator ? value : (existingRel?.role || (isName || isAffil ? existingRel?.role : value));
+    const name = isName ? value : existingRel?.name;
+    const affiliation = isAffil ? value : existingRel?.affiliation;
+    const stance = isCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
+    const trustScore = isCreator ? 1.0 : (existingRel?.trustScore ?? 0.8);
+    const familiarity = isCreator ? 0.9 : (existingRel?.familiarity ?? 0.5);
+    const interactionConventions = isCreator
+      ? Array.from(new Set([...(existingRel?.interactionConventions || []), 'Direct communication', 'Highest administrative trust']))
+      : (existingRel?.interactionConventions || []);
+
     await self.updateRelationship(targetCompanionId, {
       companionId: targetCompanionId,
       entityId: rawSubject,
       entityType: 'human',
-      role: value,
-      stance: isCreator ? 'familiar_loyal' : 'neutral',
-      trustScore: isCreator ? 1.0 : 0.8,
-      familiarity: isCreator ? 0.9 : 0.5,
-      interactionConventions: isCreator
-        ? ['Direct communication', 'Highest administrative trust']
-        : [],
+      name,
+      affiliation,
+      role,
+      stance,
+      trustScore,
+      familiarity,
+      interactionConventions,
     });
+
+    if (isName) {
+      await self.commitDirectives(targetCompanionId, [
+        {
+          id: `dir-name-${claim.id || Date.now()}`,
+          companionId: targetCompanionId,
+          priority: 75,
+          directive: `Address ${rawSubject} as ${value}`,
+          status: 'active' as any,
+          category: 'relational',
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    }
     return;
   }
 

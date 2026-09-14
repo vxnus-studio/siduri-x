@@ -115,8 +115,9 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
           }
         }
         if (ctx.relationship) {
+          const nameStr = ctx.relationship.name ? ` [Name: ${ctx.relationship.name}]` : '';
           parts.push(
-            `Relationship Stance:\n- Stance toward ${ctx.relationship.entityId}: ${ctx.relationship.stance} (Role: ${ctx.relationship.role})`
+            `Relationship Stance:\n- Stance toward ${ctx.relationship.entityId}${nameStr}: ${ctx.relationship.stance} (Role: ${ctx.relationship.role})`
           );
         }
         if (ctx.directives && ctx.directives.length > 0) {
@@ -151,6 +152,108 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     };
   }
 
+  function createCognitiveMockBrain(companionId: string) {
+    return {
+      generatePlan: jest.fn().mockImplementation(async (brainCtx: any) => {
+        const lastMsg = brainCtx.recentMessages?.[brainCtx.recentMessages.length - 1]?.content || '';
+        const memoryProposals: any[] = [];
+        const behaviorProposals: any[] = [];
+
+        if (/AI researcher at VXNUS Studio/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: `companion:${companionId}`,
+            predicate: 'role',
+            value: 'AI researcher at VXNUS Studio',
+          });
+          behaviorProposals.push({
+            directive: 'Acknowledge role as AI researcher at VXNUS Studio',
+            category: 'relational',
+            subject: `companion:${companionId}`,
+            predicate: 'role',
+            value: 'AI researcher at VXNUS Studio',
+          });
+        } else if (/Lead Architect at VXNUS Studio/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: `companion:${companionId}`,
+            predicate: 'role',
+            value: 'Lead Architect at VXNUS Studio',
+          });
+        } else if (/Research Specialist/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: `companion:${companionId}`,
+            predicate: 'role',
+            value: 'Research Specialist',
+          });
+        } else if (/Security Officer/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: `companion:${companionId}`,
+            predicate: 'role',
+            value: 'Security Officer',
+          });
+        } else if (/VXNUS Studio Staff/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: `companion:${companionId}`,
+            predicate: 'role',
+            value: 'VXNUS Studio Staff',
+          });
+        }
+
+        if (/\bcreator\b/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: 'actor:kur-zagin',
+            predicate: 'stated_relationship',
+            value: 'creator',
+            claimType: 'relationship',
+          });
+          behaviorProposals.push({
+            directive: 'Recognize actor:kur-zagin stated relationship as creator',
+            category: 'relational',
+            subject: 'actor:kur-zagin',
+            predicate: 'stated_relationship',
+            value: 'creator',
+          });
+        }
+
+        if (/Kur Zagin/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: 'actor:kur-zagin',
+            predicate: 'name',
+            value: 'Kur Zagin',
+            claimType: 'preference',
+          });
+          behaviorProposals.push({
+            directive: 'Address actor:kur-zagin as Kur Zagin',
+            category: 'relational',
+            subject: 'actor:kur-zagin',
+            predicate: 'name',
+            value: 'Kur Zagin',
+          });
+        }
+
+        if (/be concise when answering technical questions/i.test(lastMsg)) {
+          behaviorProposals.push({
+            directive: 'Be concise when answering technical questions',
+            category: 'behavioral',
+            priority: 60,
+          });
+          memoryProposals.push({
+            subject: 'actor:kur-zagin',
+            predicate: 'rule',
+            value: 'Be concise when answering technical questions',
+          });
+        }
+
+        return {
+          speech: 'Understood, I have acknowledged your input.',
+          language: 'en',
+          memoryProposals: memoryProposals.length > 0 ? memoryProposals : undefined,
+          behaviorProposals: behaviorProposals.length > 0 ? behaviorProposals : undefined,
+          _receivedSystemPrompt: brainCtx.systemPrompt,
+        };
+      }),
+    };
+  }
+
   // =========================================================================
   // Test A: Conversational role teaching in Teach mode
   // =========================================================================
@@ -161,16 +264,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     const memory = createMemoryOrgan(db);
     const behavior = createBehaviorCompiler();
 
-    const mockBrain = {
-      generatePlan: jest.fn().mockImplementation(async (brainCtx: any) => {
-        return {
-          speech: 'Understood, I have acknowledged my role.',
-          language: 'en',
-          // Brain context should have received the system prompt
-          _receivedSystemPrompt: brainCtx.systemPrompt,
-        };
-      }),
-    };
+    const mockBrain = createCognitiveMockBrain(companionId);
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
       brain: mockBrain as any,
@@ -247,12 +341,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     const memory = createMemoryOrgan(db);
     const behavior = createBehaviorCompiler();
 
-    const mockBrain = {
-      generatePlan: jest.fn().mockResolvedValue({
-        speech: 'Greetings, Creator.',
-        language: 'en',
-      }),
-    };
+    const mockBrain = createCognitiveMockBrain(companionId);
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
       brain: mockBrain as any,
@@ -316,12 +405,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     const memory = createMemoryOrgan(db);
     const behavior = createBehaviorCompiler();
 
-    const mockBrain = {
-      generatePlan: jest.fn().mockResolvedValue({
-        speech: 'Rule noted.',
-        language: 'en',
-      }),
-    };
+    const mockBrain = createCognitiveMockBrain(companionId);
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
       brain: mockBrain as any,
@@ -427,12 +511,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     const self = createSelfRepository(db);
     const memory = createMemoryOrgan(db);
 
-    const mockBrain = {
-      generatePlan: jest.fn().mockResolvedValue({
-        speech: 'Understood.',
-        language: 'en',
-      }),
-    };
+    const mockBrain = createCognitiveMockBrain(companionId);
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
       brain: mockBrain as any,
@@ -474,12 +553,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
       const self1 = createSelfRepository(db1);
       const memory1 = createMemoryOrgan(db1);
 
-      const mockBrain1 = {
-        generatePlan: jest.fn().mockResolvedValue({
-          speech: 'I have recorded my new role as Lead Architect.',
-          language: 'en',
-        }),
-      };
+      const mockBrain1 = createCognitiveMockBrain(companionId);
 
       const runtime1 = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
         brain: mockBrain1 as any,
@@ -514,12 +588,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
       const memory2 = createMemoryOrgan(db2);
       const behavior2 = createBehaviorCompiler();
 
-      const mockBrain2 = {
-        generatePlan: jest.fn().mockResolvedValue({
-          speech: 'Ready to build architecture.',
-          language: 'en',
-        }),
-      };
+      const mockBrain2 = createCognitiveMockBrain(companionId);
 
       const runtime2 = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
         brain: mockBrain2 as any,
@@ -558,12 +627,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     const self = createSelfRepository(db);
     const memory = createMemoryOrgan(db);
 
-    const mockBrain = {
-      generatePlan: jest.fn().mockResolvedValue({
-        speech: 'Understood.',
-        language: 'en',
-      }),
-    };
+    const mockBrain = createCognitiveMockBrain(companionId);
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
       brain: mockBrain as any,
@@ -595,6 +659,84 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     const directives = await self.getActiveDirectives(companionId);
     const roleDirectives = directives.filter((d) => d.directive.includes('Research Specialist'));
     expect(roleDirectives).toHaveLength(1);
+
+    db.close();
+  });
+
+  // =========================================================================
+  // Test H: Natural conversational teaching (past-tense role, user name, creator)
+  // =========================================================================
+  it('Test H: teaches companion past role ("she was VXNUS Studio Staff"), creator, and name, then recognizes user on subsequent turn', async () => {
+    const db = new SiduriDatabase({ dbPath });
+    const companionId = 'comp-test-h';
+    const self = createSelfRepository(db);
+    const memory = createMemoryOrgan(db);
+    const behavior = createBehaviorCompiler();
+
+    const mockBrain = createCognitiveMockBrain(companionId);
+
+    const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
+      brain: mockBrain as any,
+      memory,
+      self,
+      behavior,
+    });
+    await runtime.initialize();
+
+    // 1. "she was VXNUS Studio Staff" in Teach mode
+    const resRole = await runtime.processPerception({
+      source: 'text_chat',
+      text: 'She was VXNUS Studio Staff.',
+      context: createRequestContext(companionId, 'teach', 'actor:kur-zagin'),
+    });
+    expect(resRole.status).toBe('APPROVED');
+    const roleProp = resRole.metadata?.proposals?.find((p: any) => p.predicate === 'role');
+    expect(roleProp).toBeDefined();
+    expect(roleProp.value).toBe('VXNUS Studio Staff');
+    await runtime.approveProposal(roleProp.id, { companionId });
+
+    // 2. "my name is Kur Zagin" in Teach mode
+    const resName = await runtime.processPerception({
+      source: 'text_chat',
+      text: 'My name is Kur Zagin.',
+      context: createRequestContext(companionId, 'teach', 'actor:kur-zagin'),
+    });
+    expect(resName.status).toBe('APPROVED');
+    const nameProp = resName.metadata?.proposals?.find((p: any) => p.predicate === 'name');
+    expect(nameProp).toBeDefined();
+    expect(nameProp.value).toBe('Kur Zagin');
+    await runtime.approveProposal(nameProp.id, { companionId });
+
+    // 3. "I am your creator" in Teach mode
+    const resRel = await runtime.processPerception({
+      source: 'text_chat',
+      text: 'I am your creator.',
+      context: createRequestContext(companionId, 'teach', 'actor:kur-zagin'),
+    });
+    expect(resRel.status).toBe('APPROVED');
+    const relProp = resRel.metadata?.proposals?.find((p: any) => p.predicate === 'stated_relationship');
+    expect(relProp).toBeDefined();
+    await runtime.approveProposal(relProp.id, { companionId });
+
+    // 4. Verify Self relationship has both creator stance AND user name preserved
+    const rel = await self.getRelationship?.(companionId, 'actor:kur-zagin');
+    expect(rel).toBeDefined();
+    expect(rel?.role).toBe('creator');
+    expect(rel?.stance).toBe('familiar_loyal');
+    expect(rel?.name).toBe('Kur Zagin');
+
+    // 5. Subsequent conversation turn: "do you know me?"
+    await runtime.processPerception({
+      source: 'text_chat',
+      text: 'do you know me?',
+      context: createRequestContext(companionId, 'hybrid', 'actor:kur-zagin'),
+    });
+
+    const lastCallCtx = mockBrain.generatePlan.mock.calls[mockBrain.generatePlan.mock.calls.length - 1][0];
+    // Active Self contains both the creator stance and the user's name
+    expect(lastCallCtx.systemPrompt).toContain('Role: VXNUS Studio Staff');
+    expect(lastCallCtx.systemPrompt).toContain('familiar_loyal');
+    expect(lastCallCtx.systemPrompt).toContain('Kur Zagin');
 
     db.close();
   });

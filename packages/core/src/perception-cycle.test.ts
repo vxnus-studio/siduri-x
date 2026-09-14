@@ -243,6 +243,13 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
         generatePlan: jest.fn().mockResolvedValue({
           speech: 'I have recorded your preferred title as Chief Engineer.',
           language: 'en',
+          memoryProposals: [
+            {
+              subject: 'actor:alice',
+              predicate: 'preferred_address',
+              value: 'Chief Engineer',
+            },
+          ],
         }),
       };
 
@@ -292,6 +299,13 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
         generatePlan: jest.fn().mockResolvedValue({
           speech: 'Recorded the command.',
           language: 'en',
+          memoryProposals: [
+            {
+              subject: 'companion:comp-infer',
+              predicate: 'name',
+              value: 'Atlas',
+            },
+          ],
         }),
       };
 

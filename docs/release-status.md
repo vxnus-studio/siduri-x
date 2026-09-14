@@ -1,7 +1,7 @@
 # Prototype Verification Status: Siduri-X
 
 **Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
-**Verification Baseline**: `main` branch (v2.0.15 milestone) (Conversational Teach Mode End-to-End Self Persistence & Truth Gate Bridge, Custom Base Persona .self Generation & Blank Slate Flow, Sequential Top-to-Downstream Organ Wizard Flow, Direct Engine Options & Clean Single-Pass Config, Sovereign Life DB Foundation & E Knowledge Hub Discovery, Clean Capability Manifests, 3 Interaction Modes [Casual, Teach, Hybrid] with 4-Tier Hierarchy, LLM-Native Self & Qualitative Relational Stances, Decoupled Perception Pipeline, Clean Architecture & Pure SQLite)  
+**Verification Baseline**: `main` branch (v2.0.16 milestone) (Pure LLM Cognitive Proposer for Teach Mode, Enriched SelfRelationship with Interlocutor Name & Affiliation, Conversational Teach Mode End-to-End Self Persistence & Truth Gate Bridge, Custom Base Persona .self Generation & Blank Slate Flow, Sequential Top-to-Downstream Organ Wizard Flow, Direct Engine Options & Clean Single-Pass Config, Sovereign Life DB Foundation & E Knowledge Hub Discovery, Clean Capability Manifests, 3 Interaction Modes [Casual, Teach, Hybrid] with 4-Tier Hierarchy, LLM-Native Self & Qualitative Relational Stances, Decoupled Perception Pipeline, Clean Architecture & Pure SQLite)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 
@@ -42,8 +42,8 @@ The following invariants have been verified in unit test suites and mock fixture
     Runtime implements Casual Mode (Zero Memory Drift: short-circuits proposals, zero SQLite or source event writes), Teach Mode (strict HITL staged proposal creation), and Hybrid Mode (default companion salience filtering), resolved deterministically via a 4-tier hierarchy (request context override -> public security channel boundary -> in-dialogue cues -> hybrid default).
 13. **LLM-Native Self & Relational Stance Substrate (P0)**:
     Replaces numeric pseudo-math sliders with qualitative personality traits and directional relational stances (affinity, trust, dynamic interpersonal posture), compiled into clean inference frames via `ActiveSelfCompiler`.
-14. **Conversational Teach Mode End-to-End Self Persistence (P0)**:
-    Deterministic natural language teaching extraction (identity/role, creator relationship, behavioral rules) produces structured mutation proposals. Approved proposals promote automatically to `SqliteSelfRepository` (`self_identity`, `self_relationships`, `self_directives`), reflecting immediately in `ActiveSelfCompiler` and persisting durably across runtime restarts and destruction without duplicate drift.
+14. **Conversational Teach Mode: Pure LLM Proposer & Enriched Self Relationship (P0)**:
+    Replaced rigid regex slot-matching with pure LLM cognitive candidate proposal generation via structured response planning (`submitResponsePlan`: `memoryProposals`, `behaviorProposals`). All candidates enter `pending` status for owner review. Approved interlocutor claims (name, affiliation, creator stance) canonically enrich `SelfRelationship` and render resident in `<active_self>`, eliminating colloquial BM25 retrieval failures on turn 1. Persists durably across runtime restarts and destruction without duplicate drift.
 
 ---
 

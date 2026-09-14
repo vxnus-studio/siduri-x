@@ -101,7 +101,7 @@ export async function compilePrompts(
     effectiveMode === 'casual'
       ? 'Operating Mode: Casual (Zero memory drift - do not attempt to persist personal claims or directives).'
       : effectiveMode === 'teach'
-      ? 'Operating Mode: Teach Mode (Active learning session - accurately capture user preferences and proposed boundaries for operator review).'
+      ? 'Operating Mode: Teach Mode (Active learning session - listen attentively to what the user shares about their identity, affiliations, relationship, or preferences, and companion identity/role. Accurately formulate candidate memoryProposals and behaviorProposals for review).'
       : undefined;
 
   const subtitleInstruction =
