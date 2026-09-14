@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import dns from 'node:dns/promises';
 import { UnifiedKnowledgeOrgan } from './unified-knowledge';
 
 describe('UnifiedKnowledgeOrgan Unit Tests', () => {
@@ -49,6 +50,50 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
   });
 
   test('configures e-hub remote pack without throwing unhandled rejection on 404 manifest', async () => {
+    const dnsSpy = jest.spyOn(dns, 'lookup').mockImplementation(async () => {
+      return [{ address: '93.184.216.34', family: 4 }] as any;
+    });
+
+    const fetchMock = jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/api/v1/knowledge/vxnus/e-teyvat')) {
+        const payload = {
+          id: '@vxnus/e-teyvat',
+          name: 'e-teyvat',
+          publisher: 'vxnus',
+          distribution: { kind: 'provider', url: 'https://provider.example/api/e' },
+        };
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify(payload),
+          json: async () => payload,
+          headers: new Headers(),
+        } as Response;
+      }
+      if (url.endsWith('/manifest')) {
+        return {
+          ok: false,
+          status: 404,
+          statusText: 'Not Found',
+          text: async () => 'Not Found',
+          json: async () => ({ error: 'Not Found' }),
+          headers: new Headers(),
+        } as Response;
+      }
+      const searchPayload = {
+        revision: 'rev-mock-1',
+        results: [{ id: 'chunk-1', content: 'Mock Furina fact', revision: 'rev-mock-1', citations: [{ sourceId: 'mock-src', chunkId: 'c-1' }] }],
+      };
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify(searchPayload),
+        json: async () => searchPayload,
+        headers: new Headers(),
+      } as Response;
+    });
+
     const organ = new UnifiedKnowledgeOrgan({
       lifeDatabase: true,
       dbPath: testDbPath,
@@ -65,10 +110,11 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
     });
 
     expect(organ.eAdapter).toBeDefined();
-    // search should not crash even if backend endpoint is unavailable
     const results = await organ.search('Furina');
     expect(Array.isArray(results)).toBe(true);
 
     organ.close();
+    fetchMock.mockRestore();
+    dnsSpy.mockRestore();
   });
 });
