@@ -198,7 +198,7 @@ export default function OperatorClient() {
         ]);
       setProposals(
         (proposalsData.proposals ?? []).filter(
-          (item: Proposal) => item.status === "pending",
+          (item: Proposal) => (item.status || "").toLowerCase().replace(/_/g, "-") === "pending",
         ),
       );
       setItems(itemsData.items ?? []);
@@ -571,13 +571,13 @@ function MemoryView({
                       </span>
                     </td>
                     <td>
-                      <span className={`tag status-${d.status}`}>
+                      <span className={`tag status-${(d.status || "").toLowerCase().replace(/_/g, "-")}`}>
                         {d.status}
                       </span>
                     </td>
                     <td>
                       <div className="table-actions">
-                        {d.status === "pending" && (
+                        {(d.status || "").toLowerCase() === "pending" && (
                           <>
                             <button
                               className="tiny-button approve-button"
@@ -603,7 +603,7 @@ function MemoryView({
                             </button>
                           </>
                         )}
-                        {d.status === "confirmed" && (
+                        {((d.status || "").toLowerCase() === "active" || (d.status || "").toLowerCase() === "confirmed") && (
                           <>
                             <button
                               className="tiny-button danger-button"

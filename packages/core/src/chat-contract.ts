@@ -14,6 +14,7 @@ export interface ChatRequest {
   history?: Message[];
   medium?: MouthMedium;
   signal?: AbortSignal;
+  subtitleLanguage?: string;
   [key: string]: any;
 }
 
@@ -33,6 +34,9 @@ export interface ChatResponsePlan {
   subtitle_ja: string;
   subtitle_en: string;
   spoken_ja?: string;
+  subtitle?: string;
+  subtitle_language?: string;
+  subtitles?: Record<string, string>;
   evidence_ids?: string[];
 }
 
@@ -105,13 +109,15 @@ export async function dispatchCompanionChat(
     roleOrContext = 'OWNER';
   }
 
-  const runtimeResult = (payload.medium || payload.signal)
+  const requestedSubtitleLang = payload.subtitleLanguage || payload.subtitle_language;
+  const runtimeResult = (payload.medium || payload.signal || requestedSubtitleLang)
     ? await runner.handleUserMessage(
         userMessage,
         roleOrContext,
         history,
         payload.medium,
-        payload.signal
+        payload.signal,
+        requestedSubtitleLang
       )
     : await runner.handleUserMessage(userMessage, roleOrContext, history);
 
@@ -138,6 +144,21 @@ export async function dispatchCompanionChat(
     }
   }
 
+  const resolvedSubtitles: Record<string, string> = {
+    ...(runtimeResult?.response?.subtitles || {}),
+    ...(delivery?.subtitles as Record<string, string> || {}),
+  };
+
+  const subtitle =
+    (requestedSubtitleLang && resolvedSubtitles[requestedSubtitleLang]) ||
+    runtimeResult?.response?.subtitle ||
+    (requestedSubtitleLang === 'ja' ? (delivery?.subtitles?.ja ?? runtimeResult?.response?.subtitle_ja) : undefined) ||
+    (requestedSubtitleLang === 'en' ? (delivery?.subtitles?.en ?? runtimeResult?.response?.subtitle_en) : undefined);
+
+  if (subtitle && requestedSubtitleLang) {
+    resolvedSubtitles[requestedSubtitleLang] = subtitle;
+  }
+
   // Ensure both spoken_ja and subtitle_en are accessible alongside speech_id and evidence_ids
   const responsePlan: ChatResponsePlan = {
     speech_id: runtimeResult?.response?.speech_id,
@@ -145,6 +166,9 @@ export async function dispatchCompanionChat(
     subtitle_ja: delivery?.subtitles?.ja ?? runtimeResult?.response?.subtitle_ja ?? speech,
     subtitle_en: delivery?.subtitles?.en ?? runtimeResult?.response?.subtitle_en ?? speech,
     spoken_ja: delivery?.subtitles?.spoken ?? runtimeResult?.response?.spoken_ja ?? runtimeResult?.response?.subtitle_ja ?? speech,
+    subtitle,
+    subtitle_language: requestedSubtitleLang,
+    subtitles: resolvedSubtitles,
     evidence_ids: runtimeResult?.metadata?.evidence_ids ?? runtimeResult?.response?.evidence_ids ?? [],
   };
 

@@ -4,6 +4,8 @@ const crypto = require('crypto');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { DatabaseSync } = require('node:sqlite');
 
+import { ClaimStatus, DirectiveStatus } from './proposals';
+
 // ==========================================
 // Type Definitions
 // ==========================================
@@ -32,7 +34,7 @@ export interface SelfDirective {
   companionId: string;
   priority?: number;
   directive: string;
-  status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
+  status: DirectiveStatus;
   category: 'behavioral' | 'guardrail' | 'relational' | string;
   scopeActor?: string;
   supersedesId?: string;
@@ -113,7 +115,7 @@ export interface MemoryClaim {
   subject: string;
   predicate: string;
   value: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SESSION_ONLY' | 'SUPERSEDED' | 'REVOKED' | 'EXPIRED';
+  status: ClaimStatus;
   confidence: number;
   validFrom?: string;
   validUntil?: string;
@@ -122,6 +124,12 @@ export interface MemoryClaim {
   supersedes?: string;
   sourceEventId?: string;
 }
+
+export function normalizeStatus(status?: string, defaultStatus: string = 'pending'): string {
+  if (!status) return defaultStatus;
+  return status.toLowerCase().replace(/_/g, '-');
+}
+
 
 // ==========================================
 // Database Class
@@ -169,7 +177,7 @@ export class SiduriDatabase {
         companion_id TEXT NOT NULL,
         priority INTEGER DEFAULT 50,
         directive TEXT NOT NULL,
-        status TEXT DEFAULT 'ACTIVE',
+        status TEXT DEFAULT 'active',
         category TEXT DEFAULT 'behavioral',
         scope_actor TEXT,
         supersedes_id TEXT,
@@ -251,7 +259,7 @@ export class SiduriDatabase {
         subject TEXT NOT NULL,
         predicate TEXT NOT NULL,
         value TEXT NOT NULL,
-        status TEXT DEFAULT 'PENDING',
+        status TEXT DEFAULT 'pending',
         confidence REAL DEFAULT 1.0,
         valid_from TEXT,
         valid_until TEXT,
@@ -405,23 +413,36 @@ export class SiduriDatabase {
     );
   }
 
-  public getActiveDirectives(companionId: string): SelfDirective[] {
-    const stmt = this.db.prepare(`
-      SELECT * FROM self_directives 
-      WHERE companion_id = ? AND status = 'ACTIVE'
-      ORDER BY priority DESC, created_at ASC
-    `);
-    return stmt.all(companionId).map((row: any) => ({
+  private rowToSelfDirective(row: any): SelfDirective {
+    return {
       id: row.id,
       companionId: row.companion_id,
       priority: row.priority,
       directive: row.directive,
-      status: row.status,
+      status: normalizeStatus(row.status, 'active') as any,
       category: row.category,
       scopeActor: row.scope_actor || undefined,
       supersedesId: row.supersedes_id || undefined,
-      createdAt: row.created_at
-    }));
+      createdAt: row.created_at,
+    };
+  }
+
+  public getActiveDirectives(companionId: string): SelfDirective[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM self_directives 
+      WHERE companion_id = ? AND LOWER(status) = 'active'
+      ORDER BY priority DESC, created_at ASC
+    `);
+    return stmt.all(companionId).map((row: any) => this.rowToSelfDirective(row));
+  }
+
+  public getAllDirectives(companionId: string): SelfDirective[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM self_directives 
+      WHERE companion_id = ?
+      ORDER BY priority DESC, created_at ASC
+    `);
+    return stmt.all(companionId).map((row: any) => this.rowToSelfDirective(row));
   }
 
   public commitDirective(directive: SelfDirective): void {
@@ -434,7 +455,7 @@ export class SiduriDatabase {
       directive.companionId,
       directive.priority !== undefined ? directive.priority : 50,
       directive.directive,
-      directive.status,
+      normalizeStatus(directive.status, 'active'),
       directive.category || 'behavioral',
       directive.scopeActor || null,
       directive.supersedesId || null,
@@ -448,17 +469,7 @@ export class SiduriDatabase {
       : this.db.prepare('SELECT * FROM self_directives WHERE id = ?');
     const row = (companionId ? stmt.get(id, companionId) : stmt.get(id)) as any;
     if (!row) return undefined;
-    return {
-      id: row.id,
-      companionId: row.companion_id,
-      priority: row.priority,
-      directive: row.directive,
-      status: row.status,
-      category: row.category,
-      scopeActor: row.scope_actor || undefined,
-      supersedesId: row.supersedes_id || undefined,
-      createdAt: row.created_at,
-    };
+    return this.rowToSelfDirective(row);
   }
 
   public approveDirective(id: string, companionId?: string): void {
@@ -470,35 +481,35 @@ export class SiduriDatabase {
       return;
     }
 
-    if (row.status !== 'PENDING') {
+    if (normalizeStatus(row.status) !== 'pending') {
       throw new Error(
-        `Cannot approve directive '${id}': invalid transition from status '${row.status}' to 'ACTIVE' (only PENDING directives can be approved)`
+        `Cannot approve directive '${id}': invalid transition from status '${row.status}' to 'active' (only pending directives can be approved)`
       );
     }
 
-    // If this directive supersedes an earlier directive, transition that prior directive to SUPERSEDED
+    // If this directive supersedes an earlier directive, transition that prior directive to superseded
     if (row.supersedes_id) {
       const supersededId = row.supersedes_id;
       const effectiveCompanionId = companionId || row.companion_id;
       if (effectiveCompanionId) {
         const supersedeStmt = this.db.prepare(
-          "UPDATE self_directives SET status = 'SUPERSEDED' WHERE id = ? AND companion_id = ?"
+          "UPDATE self_directives SET status = 'superseded' WHERE id = ? AND companion_id = ?"
         );
         supersedeStmt.run(supersededId, effectiveCompanionId);
       } else {
-        const supersedeStmt = this.db.prepare("UPDATE self_directives SET status = 'SUPERSEDED' WHERE id = ?");
+        const supersedeStmt = this.db.prepare("UPDATE self_directives SET status = 'superseded' WHERE id = ?");
         supersedeStmt.run(supersededId);
       }
     }
 
     if (companionId) {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'ACTIVE' WHERE id = ? AND companion_id = ? AND status = 'PENDING'"
+        "UPDATE self_directives SET status = 'active' WHERE id = ? AND companion_id = ? AND LOWER(status) = 'pending'"
       );
       stmt.run(id, companionId);
     } else {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'ACTIVE' WHERE id = ? AND status = 'PENDING'"
+        "UPDATE self_directives SET status = 'active' WHERE id = ? AND LOWER(status) = 'pending'"
       );
       stmt.run(id);
     }
@@ -513,20 +524,20 @@ export class SiduriDatabase {
       return;
     }
 
-    if (row.status !== 'PENDING') {
+    if (normalizeStatus(row.status) !== 'pending') {
       throw new Error(
-        `Cannot reject directive '${id}': invalid transition from status '${row.status}' to 'REJECTED' (only PENDING directives can be rejected)`
+        `Cannot reject directive '${id}': invalid transition from status '${row.status}' to 'rejected' (only pending directives can be rejected)`
       );
     }
 
     if (companionId) {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'REJECTED' WHERE id = ? AND companion_id = ? AND status = 'PENDING'"
+        "UPDATE self_directives SET status = 'rejected' WHERE id = ? AND companion_id = ? AND LOWER(status) = 'pending'"
       );
       stmt.run(id, companionId);
     } else {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'REJECTED' WHERE id = ? AND status = 'PENDING'"
+        "UPDATE self_directives SET status = 'rejected' WHERE id = ? AND LOWER(status) = 'pending'"
       );
       stmt.run(id);
     }
@@ -534,33 +545,34 @@ export class SiduriDatabase {
 
   public revokeDirective(id: string, companionId?: string): void {
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE self_directives SET status = 'REVOKED' WHERE id = ? AND companion_id = ?");
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'revoked' WHERE id = ? AND companion_id = ?");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE self_directives SET status = 'REVOKED' WHERE id = ?");
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'revoked' WHERE id = ?");
       stmt.run(id);
     }
   }
 
   public expireDirective(id: string, companionId?: string): void {
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE self_directives SET status = 'EXPIRED' WHERE id = ? AND companion_id = ?");
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'expired' WHERE id = ? AND companion_id = ?");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE self_directives SET status = 'EXPIRED' WHERE id = ?");
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'expired' WHERE id = ?");
       stmt.run(id);
     }
   }
 
   public disableDirective(id: string, companionId?: string): void {
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE self_directives SET status = 'DISABLED' WHERE id = ? AND companion_id = ?");
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'disabled' WHERE id = ? AND companion_id = ?");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE self_directives SET status = 'DISABLED' WHERE id = ?");
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'disabled' WHERE id = ?");
       stmt.run(id);
     }
   }
+
 
   public getRelationship(companionId: string, entityId: string): SelfRelationship | undefined {
     const stmt = this.db.prepare('SELECT * FROM self_relationships WHERE companion_id = ? AND entity_id = ?');
@@ -826,16 +838,35 @@ export class SiduriDatabase {
     };
   }
 
+  private rowToMemoryClaim(row: any): MemoryClaim {
+    return {
+      id: row.id,
+      companionId: row.companion_id,
+      subject: row.subject,
+      predicate: row.predicate,
+      value: row.value,
+      status: normalizeStatus(row.status, 'pending') as any,
+      confidence: row.confidence,
+      validFrom: row.valid_from || undefined,
+      validUntil: row.valid_until || undefined,
+      evidence: row.evidence ? (typeof row.evidence === 'string' ? JSON.parse(row.evidence) : row.evidence) : undefined,
+      assertedAt: row.asserted_at,
+      supersedes: row.supersedes || undefined,
+      sourceEventId: row.source_event_id || undefined,
+    };
+  }
+
   public proposeClaim(
     claim: Omit<MemoryClaim, 'status' | 'confidence' | 'assertedAt'> & {
       confidence?: number;
       assertedAt?: string;
       supersedes?: string;
       sourceEventId?: string;
+      status?: string;
     }
   ): MemoryClaim {
     const id = claim.id || crypto.randomUUID();
-    const status = 'PENDING';
+    const status = normalizeStatus(claim.status, 'pending');
     const confidence = claim.confidence ?? 1.0;
     const assertedAt = claim.assertedAt || new Date().toISOString();
     const stmt = this.db.prepare(`
@@ -861,7 +892,7 @@ export class SiduriDatabase {
     return {
       ...claim,
       id,
-      status,
+      status: status as any,
       confidence,
       assertedAt,
       supersedes: claim.supersedes,
@@ -878,67 +909,67 @@ export class SiduriDatabase {
       return;
     }
 
-    if (row.status !== 'PENDING') {
-      throw new Error(`Cannot approve claim '${id}': invalid transition from status '${row.status}' to 'APPROVED' (only PENDING claims can be approved)`);
+    if (normalizeStatus(row.status) !== 'pending') {
+      throw new Error(`Cannot approve claim '${id}': invalid transition from status '${row.status}' to 'approved' (only pending claims can be approved)`);
     }
 
-    // If this claim supersedes an earlier claim, transition that prior claim to SUPERSEDED
+    // If this claim supersedes an earlier claim, transition that prior claim to superseded
     if (row.supersedes) {
       const supersededId = row.supersedes;
       if (companionId) {
-        const supersedeStmt = this.db.prepare("UPDATE memory_claims SET status = 'SUPERSEDED' WHERE id = ? AND companion_id = ?");
+        const supersedeStmt = this.db.prepare("UPDATE memory_claims SET status = 'superseded' WHERE id = ? AND companion_id = ?");
         supersedeStmt.run(supersededId, companionId);
       } else {
-        const supersedeStmt = this.db.prepare("UPDATE memory_claims SET status = 'SUPERSEDED' WHERE id = ?");
+        const supersedeStmt = this.db.prepare("UPDATE memory_claims SET status = 'superseded' WHERE id = ?");
         supersedeStmt.run(supersededId);
       }
     }
 
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ? AND companion_id = ? AND status = 'PENDING'");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'approved' WHERE id = ? AND companion_id = ? AND LOWER(status) = 'pending'");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'APPROVED' WHERE id = ? AND status = 'PENDING'");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'approved' WHERE id = ? AND LOWER(status) = 'pending'");
       stmt.run(id);
     }
   }
 
   public rejectClaim(id: string, companionId?: string): void {
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REJECTED' WHERE id = ? AND companion_id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'rejected' WHERE id = ? AND companion_id = ?");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REJECTED' WHERE id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'rejected' WHERE id = ?");
       stmt.run(id);
     }
   }
 
   public revokeClaim(id: string, companionId?: string): void {
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REVOKED' WHERE id = ? AND companion_id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'revoked' WHERE id = ? AND companion_id = ?");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'REVOKED' WHERE id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'revoked' WHERE id = ?");
       stmt.run(id);
     }
   }
 
   public expireClaim(id: string, companionId?: string): void {
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'EXPIRED' WHERE id = ? AND companion_id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'expired' WHERE id = ? AND companion_id = ?");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'EXPIRED' WHERE id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'expired' WHERE id = ?");
       stmt.run(id);
     }
   }
 
   public markClaimSessionOnly(id: string, companionId?: string): void {
     if (companionId) {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = ? AND companion_id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'session-only' WHERE id = ? AND companion_id = ?");
       stmt.run(id, companionId);
     } else {
-      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'SESSION_ONLY' WHERE id = ?");
+      const stmt = this.db.prepare("UPDATE memory_claims SET status = 'session-only' WHERE id = ?");
       stmt.run(id);
     }
   }
@@ -947,84 +978,36 @@ export class SiduriDatabase {
     const stmt = this.db.prepare(`
       SELECT c.* FROM memory_claims c
       JOIN memory_search s ON c.rowid = s.rowid
-      WHERE c.companion_id = ? AND c.status = 'APPROVED' AND memory_search MATCH ?
+      WHERE c.companion_id = ? AND LOWER(c.status) = 'approved' AND memory_search MATCH ?
       ORDER BY rank
       LIMIT ?
     `);
-    return stmt.all(companionId, query, limit).map((row: any) => ({
-      id: row.id,
-      companionId: row.companion_id,
-      subject: row.subject,
-      predicate: row.predicate,
-      value: row.value,
-      status: row.status,
-      confidence: row.confidence,
-      validFrom: row.valid_from || undefined,
-      validUntil: row.valid_until || undefined,
-      evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
-      assertedAt: row.asserted_at,
-      supersedes: row.supersedes || undefined,
-      sourceEventId: row.source_event_id || undefined,
-    }));
+    return stmt.all(companionId, query, limit).map((row: any) => this.rowToMemoryClaim(row));
   }
 
   public getPendingClaims(companionId: string, limit: number = 50): MemoryClaim[] {
-    const stmt = this.db.prepare("SELECT * FROM memory_claims WHERE companion_id = ? AND status = 'PENDING' ORDER BY asserted_at DESC LIMIT ?");
-    return stmt.all(companionId, limit).map((row: any) => ({
-      id: row.id,
-      companionId: row.companion_id,
-      subject: row.subject,
-      predicate: row.predicate,
-      value: row.value,
-      status: row.status,
-      confidence: row.confidence,
-      validFrom: row.valid_from || undefined,
-      validUntil: row.valid_until || undefined,
-      evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
-      assertedAt: row.asserted_at,
-      supersedes: row.supersedes || undefined,
-      sourceEventId: row.source_event_id || undefined,
-    }));
+    const stmt = this.db.prepare("SELECT * FROM memory_claims WHERE companion_id = ? AND LOWER(status) = 'pending' ORDER BY asserted_at DESC LIMIT ?");
+    return stmt.all(companionId, limit).map((row: any) => this.rowToMemoryClaim(row));
   }
 
   public getApprovedClaims(companionId: string, limit: number = 50): MemoryClaim[] {
-    const stmt = this.db.prepare("SELECT * FROM memory_claims WHERE companion_id = ? AND status = 'APPROVED' ORDER BY asserted_at DESC LIMIT ?");
-    return stmt.all(companionId, limit).map((row: any) => ({
-      id: row.id,
-      companionId: row.companion_id,
-      subject: row.subject,
-      predicate: row.predicate,
-      value: row.value,
-      status: row.status,
-      confidence: row.confidence,
-      validFrom: row.valid_from || undefined,
-      validUntil: row.valid_until || undefined,
-      evidence: row.evidence ? JSON.parse(row.evidence) : undefined,
-      assertedAt: row.asserted_at,
-      supersedes: row.supersedes || undefined,
-      sourceEventId: row.source_event_id || undefined,
-    }));
+    const stmt = this.db.prepare("SELECT * FROM memory_claims WHERE companion_id = ? AND LOWER(status) = 'approved' ORDER BY asserted_at DESC LIMIT ?");
+    return stmt.all(companionId, limit).map((row: any) => this.rowToMemoryClaim(row));
+  }
+
+  public getAllClaims(companionId?: string, limit: number = 100): MemoryClaim[] {
+    const stmt = companionId
+      ? this.db.prepare("SELECT * FROM memory_claims WHERE companion_id = ? ORDER BY asserted_at DESC LIMIT ?")
+      : this.db.prepare("SELECT * FROM memory_claims ORDER BY asserted_at DESC LIMIT ?");
+    const rows = companionId ? stmt.all(companionId, limit) : stmt.all(limit);
+    return rows.map((row: any) => this.rowToMemoryClaim(row));
   }
 
   public getClaim(id: string): MemoryClaim | undefined {
     const stmt = this.db.prepare("SELECT * FROM memory_claims WHERE id = ?");
     const row = stmt.get(id);
     if (!row) return undefined;
-    return {
-      id: (row as any).id,
-      companionId: (row as any).companion_id,
-      subject: (row as any).subject,
-      predicate: (row as any).predicate,
-      value: (row as any).value,
-      status: (row as any).status,
-      confidence: (row as any).confidence,
-      validFrom: (row as any).valid_from || undefined,
-      validUntil: (row as any).valid_until || undefined,
-      evidence: (row as any).evidence ? JSON.parse((row as any).evidence) : undefined,
-      assertedAt: (row as any).asserted_at,
-      supersedes: (row as any).supersedes || undefined,
-      sourceEventId: (row as any).source_event_id || undefined,
-    };
+    return this.rowToMemoryClaim(row);
   }
 
   public resetMemory(companionId: string): void {

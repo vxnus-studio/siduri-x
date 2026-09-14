@@ -78,7 +78,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/brain',
     organType: 'brain',
-    version: '2.0.1',
+    version: '2.0.2',
     displayName: 'Brain (Cognition & Planning)',
     description: 'Provider-neutral LLM reasoning, response planning, and proposal generation',
     entrypoint: './dist/index.js',
@@ -297,7 +297,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/memory',
     organType: 'memory',
-    version: '2.0.1',
+    version: '2.0.2',
     displayName: 'Memory (Long-term Recall & State)',
     description: 'Relational semantic claims with Full-Text Search (FTS5) and companion isolation',
     entrypoint: './dist/index.js',
@@ -467,7 +467,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/mouth',
     organType: 'mouth',
-    version: '2.0.1',
+    version: '2.0.2',
     displayName: 'Mouth (Communication & UI Delivery)',
     description: 'Decoupled output delivery organ formatting cognitive decisions for web interfaces',
     entrypoint: './dist/index.js',

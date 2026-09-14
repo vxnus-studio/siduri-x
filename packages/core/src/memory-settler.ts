@@ -149,7 +149,7 @@ export async function settleMemoryProposals(
       subject: p.subject,
       predicate: p.predicate,
       value: p.value,
-      status: p.status,
+      status: (p.status || 'pending').toLowerCase().replace(/_/g, '-') as any,
     })
   );
 

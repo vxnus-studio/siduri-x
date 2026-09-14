@@ -1,6 +1,37 @@
 export type ClaimType = 'semantic' | 'preference' | 'episodic' | 'relationship';
 export type ClaimAuthority = 'user_explicit' | 'user_correction' | 'import' | 'repeated_dialogue' | 'inference' | 'observation';
-export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SESSION_ONLY' | 'EXPIRED' | 'SUPERSEDED' | 'REVOKED';
+export type ClaimStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'session-only'
+  | 'expired'
+  | 'superseded'
+  | 'revoked'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'SESSION_ONLY'
+  | 'EXPIRED'
+  | 'SUPERSEDED'
+  | 'REVOKED';
+
+export type DirectiveStatus =
+  | 'pending'
+  | 'active'
+  | 'disabled'
+  | 'superseded'
+  | 'rejected'
+  | 'revoked'
+  | 'expired'
+  | 'confirmed'
+  | 'PENDING'
+  | 'ACTIVE'
+  | 'DISABLED'
+  | 'SUPERSEDED'
+  | 'REJECTED'
+  | 'REVOKED'
+  | 'EXPIRED';
 
 export interface SourceEvent {
   id: string;

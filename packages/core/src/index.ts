@@ -37,6 +37,7 @@ import {
   ClaimType,
   ClaimAuthority,
   ClaimStatus,
+  DirectiveStatus,
   SourceEvent,
   MemoryProposal,
   BehaviorProposal,
@@ -77,6 +78,8 @@ export interface BrainContext {
 export interface ResponsePlan {
   speech: string;
   language: string;
+  subtitle?: string;
+  subtitles?: Record<string, string>;
   memoryProposals?: MemoryProposal[];
   behaviorProposals?: BehaviorProposal[];
   actionIntents?: ActionIntent[];
@@ -120,7 +123,7 @@ export interface BehaviorDirective {
   companionId: string; // Strict isolation boundary
   directive: string;
   priority: number;
-  status: 'PENDING' | 'ACTIVE' | 'DISABLED' | 'SUPERSEDED' | 'REJECTED' | 'REVOKED' | 'EXPIRED';
+  status: DirectiveStatus;
   supersedesId?: string;
   memoryClass?: 'identity' | 'relationship' | 'behavioral';
   subject?: string;

@@ -20,6 +20,9 @@ export interface MouthUtterance {
   subtitleJa?: string;
   subtitleEn?: string;
   spokenJa?: string;
+  subtitle?: string;
+  subtitleLanguage?: string;
+  subtitles?: Record<string, string>;
   expression?: string;
   action?: string;
   medium?: MouthMedium;
@@ -39,10 +42,12 @@ export interface FormattedMouthOutput {
   ssml?: string;
   visemes?: MouthVisemeCue[];
   subtitles?: {
-    ja: string;
-    en: string;
+    ja?: string;
+    en?: string;
     spoken?: string;
+    [lang: string]: string | undefined;
   };
+  subtitle?: string;
   audioUrl?: string;
   audioBuffer?: Uint8Array;
   expression?: string;

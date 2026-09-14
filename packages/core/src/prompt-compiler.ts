@@ -19,6 +19,7 @@ export interface PromptCompilationParams {
   memoryData: Claim[];
   lifeContext?: string[];
   effectiveMode?: InteractionMode;
+  subtitleLanguage?: string;
 }
 
 export interface CompiledPrompts {
@@ -44,6 +45,7 @@ export async function compilePrompts(
     memoryData,
     lifeContext,
     effectiveMode,
+    subtitleLanguage,
   } = params;
 
   let contextPrompt = '';
@@ -93,9 +95,15 @@ export async function compilePrompts(
       ? 'Operating Mode: Teach Mode (Active learning session - accurately capture user preferences and proposed boundaries for operator review).'
       : undefined;
 
+  const subtitleInstruction =
+    subtitleLanguage && subtitleLanguage !== 'off'
+      ? `Requested Subtitle Language: "${subtitleLanguage}". Along with your primary speech, provide a natural subtitle translation in "${subtitleLanguage}" in the subtitle field.`
+      : undefined;
+
   const systemPrompt = [
     `You are ${companionName}.`,
     modeInstruction,
+    subtitleInstruction,
     'This is a neutral conversation context.',
     'Use only approved, permitted memory as factual personal context.',
     'Do not claim prior personal knowledge when no approved memory supports it.',

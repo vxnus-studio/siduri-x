@@ -95,7 +95,7 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
 
       const created = await store.proposeClaim(proposal);
       expect(created.id).toBe('claim-1');
-      expect(created.status).toBe('PENDING');
+      expect(created.status).toBe('pending');
       expect(created.confidence).toBe(0.95);
 
       // Pending claims do NOT show up in approved claims list
@@ -118,7 +118,7 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       const approved = await store.getApprovedClaims(companionId);
       expect(approved).toHaveLength(1);
       expect(approved[0].id).toBe('claim-approved');
-      expect(approved[0].status).toBe('APPROVED');
+      expect(approved[0].status).toBe('approved');
     });
 
     it('rejects unverified claims and prevents recall', async () => {
@@ -255,7 +255,7 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
         priority: 70,
         category: 'behavioral',
       });
-      expect(dir.status).toBe('PENDING');
+      expect(dir.status).toBe('pending');
 
       // Before approval, active directives must not include it
       let directives = await store.getDirectives();
@@ -264,7 +264,7 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       // Approve directive
       await store.approveDirective(dir.id);
       directives = await store.getDirectives();
-      expect(directives.some((d) => d.id === dir.id && d.status === 'ACTIVE')).toBe(true);
+      expect(directives.some((d) => d.id === dir.id && d.status === 'active')).toBe(true);
 
       // Revoke directive
       await store.revokeDirective(dir.id);
@@ -279,7 +279,7 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
         priority: 10,
         companionId: 'comp-A',
       });
-      expect(dir1.status).toBe('PENDING');
+      expect(dir1.status).toBe('pending');
 
       // 2. Rejecting from another companion should NOT reject comp-A's directive
       await store.rejectDirective(dir1.id, 'comp-B');
@@ -302,7 +302,7 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       await store.approveDirective(dir2.id, 'comp-A');
 
       const directives = await store.getDirectives('comp-A');
-      expect(directives.some((d) => d.id === dir2.id && d.status === 'ACTIVE')).toBe(true);
+      expect(directives.some((d) => d.id === dir2.id && d.status === 'active')).toBe(true);
       expect(directives.some((d) => d.id === dir1.id)).toBe(false);
     });
 
@@ -314,7 +314,7 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
         predicate: 'condition',
         value: 'rainy',
       });
-      expect(claim.status).toBe('PENDING');
+      expect(claim.status).toBe('pending');
 
       await store.approveClaim('claim-fsm');
       let approved = await store.getApprovedClaims(companionId);
@@ -388,7 +388,7 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       const updated = await store.updateClaim('claim-to-update', {
         value: 'LeadArchitect',
       });
-      expect(updated.status).toBe('PENDING');
+      expect(updated.status).toBe('pending');
       expect(updated.value).toBe('LeadArchitect');
       expect((updated as any).supersedes).toBe('claim-to-update');
 

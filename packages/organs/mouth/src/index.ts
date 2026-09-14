@@ -210,15 +210,22 @@ export class DefaultMouthOrgan implements MouthOrgan, ExperienceAdapter {
     const visemes = generateVisemeCues(spokenJa || cleanText);
     const ssml = generateSsml(spokenJa || cleanText, language, utterance.expression);
 
+    const subtitles: Record<string, string> = {
+      ja: subtitleJa,
+      en: subtitleEn,
+      spoken: spokenJa,
+      ...(utterance.subtitles || {}),
+    };
+    if (utterance.subtitle && utterance.subtitleLanguage) {
+      subtitles[utterance.subtitleLanguage] = utterance.subtitle;
+    }
+
     return {
       medium: 'web',
       text: cleanText,
       displayText: cleanText,
-      subtitles: {
-        ja: subtitleJa,
-        en: subtitleEn,
-        spoken: spokenJa,
-      },
+      subtitle: utterance.subtitle,
+      subtitles,
       ssml,
       visemes,
       audioUrl: utterance.audioUrl,

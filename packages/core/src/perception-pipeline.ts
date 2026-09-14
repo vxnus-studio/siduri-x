@@ -48,6 +48,7 @@ export interface CompanionPerception {
   context?: RequestContext;
   history?: Message[];
   medium?: MouthMedium;
+  subtitleLanguage?: string;
   metadata?: Record<string, unknown>;
   signal?: AbortSignal;
 }
@@ -187,6 +188,7 @@ export const promptCompilationStage: PerceptionPipelineStage = async (context) =
     memoryData: context.contextRetrieval.memoryData,
     lifeContext: context.contextRetrieval.lifeContext,
     effectiveMode: context.intent?.effectiveMode,
+    subtitleLanguage: context.perception.subtitleLanguage,
   });
   context.prompts = prompts;
 };
@@ -295,6 +297,9 @@ export const mouthDeliveryStage: PerceptionPipelineStage = async (context) => {
         subtitleJa: context.plan.speech,
         subtitleEn: context.plan.speech,
         spokenJa: context.plan.speech,
+        subtitle: context.plan.subtitle,
+        subtitles: context.plan.subtitles,
+        subtitleLanguage: context.perception.subtitleLanguage,
         expression: avatarEvent?.expression,
         medium: context.perception.medium,
         signal: context.perception.signal,
@@ -321,6 +326,9 @@ export const envelopeAssemblyStage: PerceptionPipelineStage = async (context) =>
     stagedPlan: context.stagedPlan,
     speech: context.plan.speech,
     language: context.plan.language,
+    subtitle: context.plan.subtitle,
+    subtitles: context.plan.subtitles,
+    subtitleLanguage: context.perception.subtitleLanguage,
     speechId: context.experienceEmission?.speechId,
     createdMemoryProposals: context.memorySettlement.createdMemoryProposals,
     memoryProposalReceipts: context.memorySettlement.memoryProposalReceipts,

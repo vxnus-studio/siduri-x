@@ -171,6 +171,13 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return this.db.getApprovedClaims(this.activeCompanionId, limit) as any;
   }
 
+  async getAllClaims(limit: number = 100): Promise<Claim[]> {
+    if (typeof (this.db as any).getAllClaims === 'function') {
+      return (this.db as any).getAllClaims(this.activeCompanionId, limit) as any;
+    }
+    return this.getClaims(limit);
+  }
+
   async getPendingClaims(limit: number = 50): Promise<Claim[]> {
     return this.db.getPendingClaims(this.activeCompanionId, limit) as any;
   }
@@ -202,6 +209,14 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return this.db.getActiveDirectives(targetCompanionId) as any;
   }
 
+  async getAllDirectives(companionId?: string): Promise<BehaviorDirective[]> {
+    const targetCompanionId = companionId || this.activeCompanionId;
+    if (typeof (this.db as any).getAllDirectives === 'function') {
+      return (this.db as any).getAllDirectives(targetCompanionId) as any;
+    }
+    return this.db.getActiveDirectives(targetCompanionId) as any;
+  }
+
   async proposeDirective(
     directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'> & { companionId?: string }
   ): Promise<BehaviorDirective> {
@@ -212,7 +227,7 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
       companionId: raw.companionId || this.activeCompanionId,
       directive: raw.directive || '',
       priority: raw.priority ?? 50,
-      status: 'PENDING',
+      status: 'pending',
       category: raw.category || 'behavioral',
       supersedesId: raw.supersedesId,
     } as any;

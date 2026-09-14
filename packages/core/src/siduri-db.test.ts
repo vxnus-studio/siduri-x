@@ -407,7 +407,7 @@ describe('SiduriDatabase', () => {
         assertedAt: new Date().toISOString(),
       });
 
-      expect(claim.status).toBe('PENDING');
+      expect(claim.status).toBe('pending');
       expect(claim.subject).toBe('Kur');
       expect(claim.predicate).toBe('is');
       expect(claim.value).toBe('a dark entity from the underworld');
@@ -443,7 +443,7 @@ describe('SiduriDatabase', () => {
       const approved = db.getApprovedClaims('siduri-test');
       expect(approved).toHaveLength(1);
       expect(approved[0].id).toBe(claim1.id);
-      expect(approved[0].status).toBe('APPROVED');
+      expect(approved[0].status).toBe('approved');
     });
 
     it('searches claims using FTS5 full-text search', () => {
@@ -697,7 +697,7 @@ describe('SiduriDatabase', () => {
       expect(db2.getInventory(cId)[0].entityName).toBe('Aged Wine');
 
       const claims = db2.searchClaims(cId, 'wine');
-      expect(claims.some((c) => c.id === claim.id && c.status === 'APPROVED')).toBe(true);
+      expect(claims.some((c) => c.id === claim.id && c.status === 'approved')).toBe(true);
 
       db2.close();
       // Prevent afterEach from double-closing
@@ -783,7 +783,7 @@ describe('SiduriDatabase', () => {
       const active = db.getActiveDirectives(cId);
       expect(active).toHaveLength(1);
       expect(active[0].id).toBe(dId);
-      expect(active[0].status).toBe('ACTIVE');
+      expect(active[0].status).toBe('active');
 
       // 3. Revoke directive
       db.revokeDirective(dId);
@@ -796,7 +796,7 @@ describe('SiduriDatabase', () => {
         companionId: cId,
         priority: 50,
         directive: 'Unsafe rule',
-        status: 'PENDING',
+        status: 'pending',
         category: 'behavioral',
       });
       db.rejectDirective(d2Id);
@@ -813,12 +813,12 @@ describe('SiduriDatabase', () => {
         companionId: cId,
         priority: 50,
         directive: 'Rejected directive',
-        status: 'REJECTED',
+        status: 'rejected',
         category: 'behavioral',
       });
 
       expect(() => db.approveDirective('dir-rejected-1')).toThrow(
-        /invalid transition from status 'REJECTED' to 'ACTIVE'/
+        /invalid transition from status 'rejected' to 'active'/i
       );
 
       // 2. Commit directive in ACTIVE state
@@ -827,17 +827,17 @@ describe('SiduriDatabase', () => {
         companionId: cId,
         priority: 50,
         directive: 'Already active directive',
-        status: 'ACTIVE',
+        status: 'active',
         category: 'behavioral',
       });
 
       expect(() => db.approveDirective('dir-active-1')).toThrow(
-        /invalid transition from status 'ACTIVE' to 'ACTIVE'/
+        /invalid transition from status 'active' to 'active'/i
       );
 
       // 3. Rejecting an already ACTIVE directive throws
       expect(() => db.rejectDirective('dir-active-1')).toThrow(
-        /invalid transition from status 'ACTIVE' to 'REJECTED'/
+        /invalid transition from status 'active' to 'rejected'/i
       );
     });
 
@@ -879,7 +879,7 @@ describe('SiduriDatabase', () => {
       expect(active[0].id).toBe('dir-replacement-1');
 
       const original = db.getDirective('dir-original-1', cId);
-      expect(original?.status).toBe('SUPERSEDED');
+      expect(original?.status).toBe('superseded');
     });
 
     it('enforces companion isolation on directive approval', () => {
@@ -892,16 +892,16 @@ describe('SiduriDatabase', () => {
         companionId: cIdB,
         priority: 50,
         directive: 'Beta private rule',
-        status: 'PENDING',
+        status: 'pending',
         category: 'behavioral',
       });
 
       // Alpha attempts to approve Beta's directive scoped to Alpha
       db.approveDirective('dir-beta-1', cIdA);
 
-      // Beta's directive must remain PENDING and unapproved
+      // Beta's directive must remain pending and unapproved
       const betaDirective = db.getDirective('dir-beta-1', cIdB);
-      expect(betaDirective?.status).toBe('PENDING');
+      expect(betaDirective?.status).toBe('pending');
       expect(db.getActiveDirectives(cIdB)).toHaveLength(0);
 
       // Beta approves its own directive successfully
@@ -920,7 +920,7 @@ describe('SiduriDatabase', () => {
         predicate: 'likes',
         value: 'matcha',
       });
-      expect(claim.status).toBe('PENDING');
+      expect(claim.status).toBe('pending');
       expect(db.getApprovedClaims(cId)).toHaveLength(0);
 
       // Approve
@@ -962,7 +962,7 @@ describe('SiduriDatabase', () => {
       db.rejectClaim(rejectedClaim.id);
 
       // Attempting to approve a REJECTED claim must throw
-      expect(() => db.approveClaim(rejectedClaim.id)).toThrow(/invalid transition from status 'REJECTED' to 'APPROVED'/);
+      expect(() => db.approveClaim(rejectedClaim.id)).toThrow(/invalid transition from status 'rejected' to 'approved'/i);
 
       // 2. Propose and approve claim, then revoke
       const revokedClaim = db.proposeClaim({
@@ -976,7 +976,7 @@ describe('SiduriDatabase', () => {
       db.revokeClaim(revokedClaim.id);
 
       // Attempting to approve a REVOKED claim must throw
-      expect(() => db.approveClaim(revokedClaim.id)).toThrow(/invalid transition from status 'REVOKED' to 'APPROVED'/);
+      expect(() => db.approveClaim(revokedClaim.id)).toThrow(/invalid transition from status 'revoked' to 'approved'/i);
 
       // 3. Propose and expire claim
       const expiredClaim = db.proposeClaim({
@@ -989,7 +989,7 @@ describe('SiduriDatabase', () => {
       db.expireClaim(expiredClaim.id);
 
       // Attempting to approve an EXPIRED claim must throw
-      expect(() => db.approveClaim(expiredClaim.id)).toThrow(/invalid transition from status 'EXPIRED' to 'APPROVED'/);
+      expect(() => db.approveClaim(expiredClaim.id)).toThrow(/invalid transition from status 'expired' to 'approved'/i);
     });
   });
 });

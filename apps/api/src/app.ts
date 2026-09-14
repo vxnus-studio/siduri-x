@@ -218,6 +218,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         context: mappingResult.context,
         history,
         ...(req.body?.medium ? { medium: req.body.medium } : {}),
+        subtitleLanguage: req.body?.subtitleLanguage || req.body?.subtitle_language,
       });
       res.json(response);
     } catch (e: any) {
@@ -279,12 +280,13 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
         history,
         medium: 'web',
         signal: abortController.signal,
+        subtitleLanguage: req.body?.subtitleLanguage || req.body?.subtitle_language,
       });
 
       res.write(`event: staged\ndata: ${JSON.stringify({ response_id: response.response_id, correlation_id: response.correlation_id, status: response.status, mode: response.metadata?.mode })}\n\n`);
 
       const avatarEvent = response.metadata?.events?.find(
-        (e: any) => (e.kind === 'avatar' || e.kind === 'body') && (e.approval === 'APPROVED' || !e.approval)
+        (e: any) => (e.kind === 'avatar' || e.kind === 'body') && (e.approval?.toLowerCase() === 'approved' || e.approval === 'APPROVED' || !e.approval)
       );
       if (avatarEvent) {
         res.write(`event: avatar\ndata: ${JSON.stringify(avatarEvent)}\n\n`);
@@ -405,7 +407,9 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
     if (!runtime.memory) return res.json({ claims: [] });
     try {
-      const claims = await runtime.memory.getClaims();
+      const claims = typeof (runtime.memory as any).getAllClaims === 'function'
+        ? await (runtime.memory as any).getAllClaims()
+        : await runtime.memory.getClaims();
       res.json({ claims });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -418,7 +422,9 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
     if (!runtime.memory) return res.json({ directives: [] });
     try {
-      const directives = await runtime.memory.getDirectives();
+      const directives = typeof (runtime.memory as any).getAllDirectives === 'function'
+        ? await (runtime.memory as any).getAllDirectives()
+        : await runtime.memory.getDirectives();
       res.json({ directives });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -535,7 +541,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.approveClaim(req.body.id);
-      res.json({ approved: true });
+      res.json({ approved: true, status: 'approved' });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -548,7 +554,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.rejectClaim(req.body.id);
-      res.json({ rejected: true });
+      res.json({ rejected: true, status: 'rejected' });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -562,7 +568,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.approveDirective(req.body.id);
-      res.json({ approved: true });
+      res.json({ approved: true, status: 'active' });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -575,7 +581,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.rejectDirective(req.body.id);
-      res.json({ rejected: true });
+      res.json({ rejected: true, status: 'rejected' });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -588,7 +594,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.revokeDirective(req.body.id);
-      res.json({ revoked: true });
+      res.json({ revoked: true, status: 'revoked' });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -601,7 +607,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
       await runtime.memory.disableDirective(req.body.id);
-      res.json({ disabled: true });
+      res.json({ disabled: true, status: 'disabled' });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }

@@ -35,12 +35,21 @@ export function formatClaimReceipt(item: ClaimLike): string {
 
   if (!subject || !predicate || !value) return sentence(item.content ?? value);
 
-  if (SELF_SUBJECTS.has(normalizedSubject)) {
+  if (
+    SELF_SUBJECTS.has(normalizedSubject) ||
+    normalizedSubject.startsWith("companion:") ||
+    normalizedSubject.startsWith("companion.") ||
+    normalizedSubject.startsWith("self.")
+  ) {
     if (normalizedPredicate === "name") return sentence(`Companion name is ${value}`);
     return sentence(`Companion ${words(predicate)} is ${value}`);
   }
 
-  if (USER_SUBJECTS.has(normalizedSubject)) {
+  if (
+    USER_SUBJECTS.has(normalizedSubject) ||
+    normalizedSubject.startsWith("actor:") ||
+    normalizedSubject.startsWith("user:")
+  ) {
     if (normalizedPredicate === "name") return sentence(`User name is ${value}`);
     if (normalizedPredicate === "preferred_address") return sentence(`User preferred address is ${value}`);
     if (normalizedPredicate === "relationship_to_siduri" || normalizedPredicate === "relationship") {

@@ -48,6 +48,8 @@ const ActionIntentSchema = z.object({
 const ResponsePlanSchema = z.object({
   speech: z.string(),
   language: z.string(),
+  subtitle: z.string().optional(),
+  subtitles: z.record(z.string(), z.string()).optional(),
   internalMonologue: z.string().optional(),
   memoryProposals: z.array(MemoryProposalSchema).optional(),
   behaviorProposals: z.array(BehaviorProposalSchema).optional(),
@@ -87,6 +89,7 @@ export class OpenAICompatibleBrain implements BrainOrgan {
             properties: {
               speech: { type: "string", description: "The text that the companion will speak." },
               language: { type: "string", description: "The primary language of the speech (e.g., 'en', 'ja', 'id')." },
+              subtitle: { type: "string", description: "Optional translation or subtitle of speech in the requested subtitle language." },
               internalMonologue: { type: "string", description: "Internal reasoning before responding." },
               memoryProposals: {
                 type: "array",

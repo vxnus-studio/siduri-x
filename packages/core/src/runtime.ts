@@ -127,6 +127,7 @@ export class SiduriRuntime {
     history: Message[] = [],
     medium?: MouthMedium,
     signal?: AbortSignal,
+    subtitleLanguage?: string,
   ): Promise<any> {
     return this.processPerception({
       source: 'text_chat',
@@ -135,6 +136,7 @@ export class SiduriRuntime {
       history,
       medium,
       signal,
+      subtitleLanguage,
     });
   }
 }

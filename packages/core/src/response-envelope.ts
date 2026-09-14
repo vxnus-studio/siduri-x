@@ -14,6 +14,9 @@ export interface AssembleResponseEnvelopeParams {
   stagedPlan: StagedResponsePlan;
   speech: string;
   language?: string;
+  subtitle?: string;
+  subtitles?: Record<string, string>;
+  subtitleLanguage?: string;
   speechId?: string;
   createdMemoryProposals: Claim[];
   memoryProposalReceipts: MemoryProposalReceipt[];
@@ -63,6 +66,9 @@ export function assembleResponseEnvelope(
     stagedPlan,
     speech,
     language,
+    subtitle,
+    subtitles,
+    subtitleLanguage,
     speechId,
     createdMemoryProposals,
     memoryProposalReceipts,
@@ -75,6 +81,14 @@ export function assembleResponseEnvelope(
     effectiveMode,
   } = params;
 
+  const resolvedSubtitles: Record<string, string> = {
+    ...(mouthDelivery?.subtitles as Record<string, string> || {}),
+    ...(subtitles || {}),
+  };
+  if (subtitle && subtitleLanguage) {
+    resolvedSubtitles[subtitleLanguage] = subtitle;
+  }
+
   return {
     status: 'APPROVED',
     response_id: stagedPlan.responseId,
@@ -82,8 +96,11 @@ export function assembleResponseEnvelope(
     response: {
       speech_id: speechId,
       audio_url: mouthDelivery?.audioUrl ?? (speechId ? `/voice/stream?id=${speechId}` : undefined),
-      subtitle_ja: mouthDelivery?.subtitles?.ja ?? speech,
-      subtitle_en: mouthDelivery?.subtitles?.en ?? speech,
+      subtitle_ja: mouthDelivery?.subtitles?.ja ?? resolvedSubtitles['ja'] ?? speech,
+      subtitle_en: mouthDelivery?.subtitles?.en ?? resolvedSubtitles['en'] ?? speech,
+      subtitle: subtitle ?? (subtitleLanguage ? resolvedSubtitles[subtitleLanguage] : undefined),
+      subtitle_language: subtitleLanguage,
+      subtitles: resolvedSubtitles,
     },
     delivery: mouthDelivery,
     metadata: {

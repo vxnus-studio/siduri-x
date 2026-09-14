@@ -85,7 +85,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.3';
+  const coreVersion = options.coreVersion || '^2.0.4';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -217,7 +217,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
       instantiationLines.push(`    if (parsedSelf.isValid && parsedSelf.manifest) {`);
       instantiationLines.push(`      await self.setIdentity({ companionId: config.id || 'default', name: parsedSelf.manifest.identity?.name || config.name, archetype: parsedSelf.manifest.identity?.archetype, version: parsedSelf.manifest.version || '1.0.0', updatedAt: new Date().toISOString() });`);
       instantiationLines.push(`      if (parsedSelf.manifest.directives) {`);
-      instantiationLines.push(`        await self.commitDirectives(config.id || 'default', parsedSelf.manifest.directives.map((d) => ({ id: d.id, companionId: config.id || 'default', directive: d.directive, category: (d.category || 'behavioral'), status: 'ACTIVE', priority: d.priority || 50, createdAt: new Date().toISOString() })));`);
+      instantiationLines.push(`        await self.commitDirectives(config.id || 'default', parsedSelf.manifest.directives.map((d) => ({ id: d.id, companionId: config.id || 'default', directive: d.directive, category: (d.category || 'behavioral'), status: 'active', priority: d.priority || 50, createdAt: new Date().toISOString() })));`);
       instantiationLines.push(`      }`);
       instantiationLines.push(`    }`);
       instantiationLines.push(`  }`);
@@ -398,31 +398,35 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    return;`,
     `  }`,
     '',
-    `  // API: Memory Proposal Approval / Rejection`,
-    `  if ((pathname === '/memory/proposals/approve' || pathname === '/memory/proposals/reject') && req.method === 'POST') {`,
+    `  // API: Memory Proposal & Behavioral Approval / Rejection`,
+    `  if ((pathname === '/memory/proposals/approve' || pathname === '/memory/proposals/reject' || pathname === '/memory/behavioral/approve' || pathname === '/memory/behavioral/reject') && req.method === 'POST') {`,
     `    let body = '';`,
     `    req.on('data', (chunk) => { body += chunk; });`,
     `    req.on('end', async () => {`,
     `      try {`,
     `        const payload = JSON.parse(body || '{}');`,
-    `        const claimId = payload.id || payload.claimId;`,
+    `        const claimId = payload.id || payload.claimId || payload.directiveId;`,
     `        if (!claimId) {`,
     `          res.writeHead(400, { 'Content-Type': 'application/json' });`,
-    `          res.end(JSON.stringify({ error: 'Missing required claim id' }));`,
+    `          res.end(JSON.stringify({ error: 'Missing required id' }));`,
     `          return;`,
     `        }`,
     `        if (pathname.endsWith('approve')) {`,
-    `          if (typeof memory?.approveClaim === 'function') {`,
+    `          if (pathname.includes('behavioral') && typeof self?.approveDirective === 'function') {`,
+    `            await self.approveDirective(claimId);`,
+    `          } else if (typeof memory?.approveClaim === 'function') {`,
     `            await memory.approveClaim(claimId);`,
     `          }`,
     `          res.writeHead(200, { 'Content-Type': 'application/json' });`,
-    `          res.end(JSON.stringify({ approved: true, id: claimId }));`,
+    `          res.end(JSON.stringify({ approved: true, id: claimId, status: 'approved' }));`,
     `        } else {`,
-    `          if (typeof memory?.rejectClaim === 'function') {`,
+    `          if (pathname.includes('behavioral') && typeof self?.rejectDirective === 'function') {`,
+    `            await self.rejectDirective(claimId);`,
+    `          } else if (typeof memory?.rejectClaim === 'function') {`,
     `            await memory.rejectClaim(claimId);`,
     `          }`,
     `          res.writeHead(200, { 'Content-Type': 'application/json' });`,
-    `          res.end(JSON.stringify({ rejected: true, id: claimId }));`,
+    `          res.end(JSON.stringify({ rejected: true, id: claimId, status: 'rejected' }));`,
     `        }`,
     `      } catch (err) {`,
     `        res.writeHead(500, { 'Content-Type': 'application/json' });`,
@@ -452,6 +456,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `          message: payload.message || payload.text || '',`,
     `          context: payload.context,`,
     `          history: Array.isArray(payload.history) ? payload.history : [],`,
+    `          subtitleLanguage: payload.subtitleLanguage || payload.subtitle_language,`,
     `        });`,
     '',
     `        res.writeHead(200, { 'Content-Type': 'application/json' });`,
@@ -493,12 +498,13 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `          history: Array.isArray(payload.history) ? payload.history : [],`,
     `          medium: 'web',`,
     `          signal: abortController.signal,`,
+    `          subtitleLanguage: payload.subtitleLanguage || payload.subtitle_language,`,
     `        });`,
     '',
     `        res.write(\`event: staged\\ndata: \${JSON.stringify({ response_id: response.response_id, correlation_id: response.correlation_id, status: response.status })}\\n\\n\`);`,
     '',
     `        const avatarEvent = response.metadata?.events?.find(`,
-    `          (e) => (e.kind === 'avatar' || e.kind === 'body') && (e.approval === 'APPROVED' || !e.approval)`,
+    `          (e) => (e.kind === 'avatar' || e.kind === 'body') && (e.approval?.toLowerCase() === 'approved' || !e.approval)`,
     `        );`,
     `        if (avatarEvent) {`,
     `          res.write(\`event: avatar\\ndata: \${JSON.stringify(avatarEvent)}\\n\\n\`);`,

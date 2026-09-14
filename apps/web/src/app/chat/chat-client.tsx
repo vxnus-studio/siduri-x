@@ -45,6 +45,9 @@ type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  subtitle?: string;
+  subtitleLanguage?: string;
+  subtitles?: Record<string, string>;
   spokenJa?: string;
   evidenceIds?: string[];
   memoryProposals?: MemoryProposalData[];
@@ -60,7 +63,16 @@ type Conversation = {
 };
 
 type ChatResponse = {
-  response: { speech_id?: string; spoken_ja: string; subtitle_en: string; evidence_ids: string[] };
+  response: {
+    speech_id?: string;
+    spoken_ja?: string;
+    subtitle_en?: string;
+    subtitle_ja?: string;
+    subtitle?: string;
+    subtitle_language?: string;
+    subtitles?: Record<string, string>;
+    evidence_ids: string[];
+  };
   metadata?: {
     memory_proposals?: MemoryProposalData[];
     behavioral_proposals?: BehavioralProposalData[];
@@ -125,6 +137,7 @@ export default function ChatClient() {
   const [avatarModelUrl, setAvatarModelUrl] = useState<string | undefined>(undefined);
   const [selectedMode, setSelectedMode] = useState<'auto' | 'casual' | 'teach' | 'hybrid'>('auto');
   const [effectiveMode, setEffectiveMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
+  const [subtitleLanguage, setSubtitleLanguage] = useState<string>("off");
   const messagesRef = useRef<HTMLDivElement>(null);
   const avatarTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -149,6 +162,12 @@ export default function ChatClient() {
     const stored = readConversations();
     setConversations(stored);
     setActiveId(stored[0]?.id ?? null);
+    try {
+      const savedLang = localStorage.getItem("siduri.chat.subtitleLanguage");
+      if (savedLang) {
+        setSubtitleLanguage(savedLang);
+      }
+    } catch {}
     setReady(true);
     fetchApi(`/health`)
       .then(async (res) => {
@@ -307,6 +326,7 @@ export default function ChatClient() {
           message: content,
           medium: "web",
           mode: selectedMode !== "auto" ? selectedMode : undefined,
+          subtitleLanguage: subtitleLanguage !== "off" ? subtitleLanguage : undefined,
           history: conversation.messages.slice(-20).map((item) => ({
             role: item.role,
             content: item.content,
@@ -383,7 +403,10 @@ export default function ChatClient() {
                 msg.id === assistantId
                   ? {
                       ...msg,
-                      content: msg.content || plan.subtitle_en || "",
+                      content: msg.content || plan.subtitle_en || plan.subtitle_ja || "",
+                      subtitle: plan.subtitle,
+                      subtitleLanguage: plan.subtitle_language || (subtitleLanguage !== "off" ? subtitleLanguage : undefined),
+                      subtitles: plan.subtitles,
                       spokenJa: plan.spoken_ja,
                       evidenceIds: plan.evidence_ids,
                       memoryProposals: proposals,
@@ -496,7 +519,7 @@ export default function ChatClient() {
         id: directiveId,
         companionId: "default",
       });
-      const updatedStatus = action === "approve" ? "confirmed" : "rejected";
+      const updatedStatus = action === "approve" ? "active" : "rejected";
       updateConversation(activeConversation.id, (conv) => ({
         ...conv,
         messages: conv.messages.map((msg) =>
@@ -657,6 +680,56 @@ export default function ChatClient() {
               <span className={`status-light ${isPresenceOpen ? "online" : ""}`} />
               <span className="text-xs">Presence</span>
             </button>
+            <div
+              className={`connection-pill flex items-center gap-1 sm:gap-1.5 transition-all focus-within:ring-1 focus-within:ring-[var(--siduri-border-ember)] ${
+                subtitleLanguage !== "off"
+                  ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)]"
+                  : "hover:border-[var(--siduri-border-ember)] text-[var(--siduri-text-secondary)]"
+              }`}
+              title="Subtitle translation language"
+            >
+              <span className={`status-light ${subtitleLanguage !== "off" ? "online" : ""}`} />
+              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60 hidden md:inline">Subtitles:</span>
+              <select
+                value={["off", "en", "ja", "id", "es", "zh", "ko", "fr", "de"].includes(subtitleLanguage) ? subtitleLanguage : "custom-selected"}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "custom") {
+                    const custom = prompt("Enter subtitle language code or name (e.g. it, ru, de, pt, vi):");
+                    if (custom && custom.trim()) {
+                      const clean = custom.trim().toLowerCase();
+                      setSubtitleLanguage(clean);
+                      try {
+                        localStorage.setItem("siduri.chat.subtitleLanguage", clean);
+                      } catch {}
+                    }
+                  } else if (val !== "custom-selected") {
+                    setSubtitleLanguage(val);
+                    try {
+                      localStorage.setItem("siduri.chat.subtitleLanguage", val);
+                    } catch {}
+                  }
+                }}
+                className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0 max-w-[84px] xs:max-w-[100px] sm:max-w-none"
+                aria-label="Select subtitle language"
+              >
+                <option value="off" className="bg-[#121214] text-white">Subtitles: Off</option>
+                <option value="en" className="bg-[#121214] text-white">English (EN)</option>
+                <option value="ja" className="bg-[#121214] text-white">Japanese (JA)</option>
+                <option value="id" className="bg-[#121214] text-white">Indonesian (ID)</option>
+                <option value="es" className="bg-[#121214] text-white">Spanish (ES)</option>
+                <option value="zh" className="bg-[#121214] text-white">Chinese (ZH)</option>
+                <option value="ko" className="bg-[#121214] text-white">Korean (KO)</option>
+                <option value="fr" className="bg-[#121214] text-white">French (FR)</option>
+                <option value="de" className="bg-[#121214] text-white">German (DE)</option>
+                {!["off", "en", "ja", "id", "es", "zh", "ko", "fr", "de"].includes(subtitleLanguage) && (
+                  <option value="custom-selected" className="bg-[#121214] text-white">
+                    {subtitleLanguage.toUpperCase()}
+                  </option>
+                )}
+                <option value="custom" className="bg-[#121214] text-white">Other...</option>
+              </select>
+            </div>
             <span className="connection-pill hidden sm:inline-flex" title={`Status: ${status}`}>
               <span
                 className={`status-light ${status === "online" ? "online" : ""}`}
@@ -716,14 +789,26 @@ export default function ChatClient() {
                         <span>{item.role === "user" ? "You" : "Siduri"}</span>
                         <time>{formatTime(item.createdAt)}</time>
                       </div>
-                      <p className="message-primary">
-                        {item.role === "assistant"
-                          ? (item.spokenJa ?? item.content)
-                          : item.content}
-                      </p>
-                      {item.role === "assistant" && item.spokenJa && (
-                        <p className="message-translation">{item.content}</p>
-                      )}
+                      <p className="message-primary">{item.content}</p>
+                      {subtitleLanguage !== "off" && item.role === "assistant" && (() => {
+                        const sub =
+                          item.subtitles?.[subtitleLanguage] ||
+                          (item.subtitleLanguage === subtitleLanguage ? item.subtitle : undefined) ||
+                          (subtitleLanguage === "ja" && item.spokenJa && item.spokenJa !== item.content ? item.spokenJa : undefined) ||
+                          (item.subtitle && item.subtitle !== item.content ? item.subtitle : undefined);
+
+                        if (sub && sub.trim() !== item.content.trim()) {
+                          return (
+                            <p className="message-translation" title={`Subtitle: ${subtitleLanguage.toUpperCase()}`}>
+                              <span className="text-[10px] font-mono uppercase tracking-wider opacity-60 mr-1.5 not-italic">
+                                [{subtitleLanguage}]:
+                              </span>
+                              {sub}
+                            </p>
+                          );
+                        }
+                        return null;
+                      })()}
                       {item.evidenceIds && item.evidenceIds.length > 0 && (
                         <span className="evidence-chip">
                           {item.evidenceIds.length} evidence link
@@ -733,99 +818,107 @@ export default function ChatClient() {
                       {item.memoryProposals &&
                         item.memoryProposals.length > 0 && (
                           <div className="memory-receipts">
-                            {item.memoryProposals.map((p) => (
-                              <div
-                                key={p.proposal_id}
-                                className={`memory-receipt status-${p.status}`}
-                              >
-                                <strong>
-                                  Remember
-                                  {p.claim_type ? ` (${p.claim_type})` : ""}:
-                                </strong>{" "}
-                                {formatClaimReceipt(p)}
-                                <div className="receipt-actions">
-                                  {p.status === "pending" ? (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleProposal(
-                                            item.id,
-                                            p.proposal_id,
-                                            "approve",
-                                          )
-                                        }
-                                      >
-                                        Approve
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleProposal(
-                                            item.id,
-                                            p.proposal_id,
-                                            "reject",
-                                          )
-                                        }
-                                      >
-                                        Reject
-                                      </button>
-                                    </>
-                                  ) : (
-                                    <span>{p.status.toUpperCase()}</span>
-                                  )}
+                            {item.memoryProposals.map((p) => {
+                              const pStatus = (p.status || "pending").toLowerCase().replace(/_/g, "-");
+                              const isPending = pStatus === "pending";
+                              return (
+                                <div
+                                  key={p.proposal_id}
+                                  className={`memory-receipt status-${pStatus}`}
+                                >
+                                  <strong>
+                                    Remember
+                                    {p.claim_type ? ` (${p.claim_type.toLowerCase()})` : ""}:
+                                  </strong>{" "}
+                                  {formatClaimReceipt(p)}
+                                  <div className="receipt-actions">
+                                    {isPending ? (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleProposal(
+                                              item.id,
+                                              p.proposal_id,
+                                              "approve",
+                                            )
+                                          }
+                                        >
+                                          Approve
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleProposal(
+                                              item.id,
+                                              p.proposal_id,
+                                              "reject",
+                                            )
+                                          }
+                                        >
+                                          Reject
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <span>{pStatus.toUpperCase()}</span>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       {item.behavioralProposals &&
                         item.behavioralProposals.length > 0 && (
                           <div className="memory-receipts">
-                            {item.behavioralProposals.map((p) => (
-                              <div
-                                key={p.directive_id}
-                                className={`memory-receipt status-${p.status}`}
-                              >
-                                <strong>
-                                  Runtime effect [{p.knowledge_domain ?? p.domain}{" "}
-                                  → {p.runtime_effect ?? p.memory_class}]:
-                                </strong>{" "}
-                                {formatRuntimeEffect(p)}
-                                <div className="receipt-actions">
-                                  {p.status === "pending" ? (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleBehavioralProposal(
-                                            item.id,
-                                            p.directive_id,
-                                            "approve",
-                                          )
-                                        }
-                                      >
-                                        Approve
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleBehavioralProposal(
-                                            item.id,
-                                            p.directive_id,
-                                            "reject",
-                                          )
-                                        }
-                                      >
-                                        Reject
-                                      </button>
-                                    </>
-                                  ) : (
-                                    <span>{p.status.toUpperCase()}</span>
-                                  )}
+                            {item.behavioralProposals.map((p) => {
+                              const bStatus = (p.status || "pending").toLowerCase().replace(/_/g, "-");
+                              const isPending = bStatus === "pending";
+                              return (
+                                <div
+                                  key={p.directive_id}
+                                  className={`memory-receipt status-${bStatus}`}
+                                >
+                                  <strong>
+                                    Runtime effect [{((p.knowledge_domain ?? p.domain) || "").toLowerCase()}{" "}
+                                    → {((p.runtime_effect ?? p.memory_class) || "").toLowerCase()}]:
+                                  </strong>{" "}
+                                  {formatRuntimeEffect(p)}
+                                  <div className="receipt-actions">
+                                    {isPending ? (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleBehavioralProposal(
+                                              item.id,
+                                              p.directive_id,
+                                              "approve",
+                                            )
+                                          }
+                                        >
+                                          Approve
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleBehavioralProposal(
+                                              item.id,
+                                              p.directive_id,
+                                              "reject",
+                                            )
+                                          }
+                                        >
+                                          Reject
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <span>{bStatus.toUpperCase()}</span>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                     </div>
