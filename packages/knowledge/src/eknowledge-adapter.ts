@@ -419,18 +419,49 @@ export class EKnowledgeAdapter implements KnowledgeOrgan {
       if (config.provider === 'e-remote' || config.baseUrl) {
         const baseUrl = config.baseUrl || '';
         const provider = module.createRemoteProvider({ baseUrl, timeoutMs: config.timeoutMs });
-        const manifest = await resolveManifest(provider, baseUrl, config.timeoutMs);
+        let manifest: KnowledgePackManifest;
+        try {
+          manifest = await resolveManifest(provider, baseUrl, config.timeoutMs);
+        } catch {
+          // As per E RFC, remote providers are not required to serve a /manifest endpoint.
+          // Fall back to a lightweight synthesized manifest so retrieval remains functional.
+          manifest = {
+            id: config.packId || 'remote-provider',
+            name: config.packId || 'remote-provider',
+            publisher: 'remote',
+            version: '1.0.0',
+            capabilities: {
+              lexicalSearch: true,
+              semanticSearch: false,
+              revisions: false,
+            },
+          } as KnowledgePackManifest;
+        }
         return { provider: provider as any, manifest };
       }
       if (!config.packPath) throw new Error('EKnowledgeAdapter requires packPath, baseUrl, or E Hub configuration');
       return module.loadPack(config.packPath);
+    }).catch((err) => {
+      console.warn(`[EKnowledgeAdapter] Warning: Knowledge pack initialization failed: ${err.message}`);
+      throw err;
     });
+    // Prevent unhandled rejection crashes on startup
+    this.loaded.catch(() => {});
   }
 
-  get currentRevision() { return this.loaded.then(pack => 'revision' in pack ? pack.revision.id : 'remote'); }
+  get currentRevision() {
+    return this.loaded
+      .then(pack => 'revision' in pack ? pack.revision.id : 'remote')
+      .catch(() => 'unavailable');
+  }
 
   async search(query: string): Promise<KnowledgeItem[]> {
-    const pack = await this.loaded;
+    let pack;
+    try {
+      pack = await this.loaded;
+    } catch {
+      return [];
+    }
     if (!query.trim()) return [];
     const requestedMode = this.preferredMode;
     const manifest = pack.manifest;

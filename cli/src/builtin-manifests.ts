@@ -219,7 +219,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/knowledge',
     organType: 'knowledge',
-    version: '2.0.2',
+    version: '2.0.3',
     displayName: 'Knowledge (Sovereign Life DB & Knowledge Packs)',
     description: 'Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs',
     entrypoint: './dist/index.js',

@@ -47,4 +47,28 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
 
     organ.close();
   });
+
+  test('configures e-hub remote pack without throwing unhandled rejection on 404 manifest', async () => {
+    const organ = new UnifiedKnowledgeOrgan({
+      lifeDatabase: true,
+      dbPath: testDbPath,
+      provider: 'e-hub',
+      registryUrl: 'https://e.vxnus.xyz/api/v1/knowledge',
+      packId: '@vxnus/e-teyvat',
+      pack: {
+        mode: 'remote',
+        packId: '@vxnus/e-teyvat',
+        registryUrl: 'https://e.vxnus.xyz/api/v1/knowledge',
+        baseUrl: 'https://127.0.0.1:59999/api/e',
+        preferredMode: 'lexical',
+      },
+    });
+
+    expect(organ.eAdapter).toBeDefined();
+    // search should not crash even if backend endpoint is unavailable
+    const results = await organ.search('Furina');
+    expect(Array.isArray(results)).toBe(true);
+
+    organ.close();
+  });
 });

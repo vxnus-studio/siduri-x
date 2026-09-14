@@ -48,7 +48,7 @@ export const KNOWN_KNOWLEDGE_PACKS: Record<string, KnowledgeHubManifest> = {
     distributionType: 'remote',
     distribution: {
       kind: 'provider',
-      url: 'https://teyvat.e.vxnus.xyz',
+      url: 'https://e-teyvat.vxnus.xyz/api/e',
     },
     source: 'E Knowledge Hub',
   },

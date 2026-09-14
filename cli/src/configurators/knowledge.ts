@@ -116,6 +116,7 @@ export async function configureKnowledge(
       config.registryUrl = 'https://e.vxnus.xyz/api/v1/knowledge';
       config.packId = target;
       config.pack = {
+        provider: 'e-hub',
         mode: 'remote',
         packId: target,
         registryUrl: 'https://e.vxnus.xyz/api/v1/knowledge',
@@ -138,6 +139,7 @@ export async function configureKnowledge(
       config.packPath = packDir;
       config.packId = target;
       config.pack = {
+        provider: 'e-knowledge',
         mode: 'local',
         packId: target,
         packPath: packDir,
