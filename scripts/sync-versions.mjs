@@ -111,6 +111,14 @@ updateFile('cli/src/index.ts', (content) => {
   );
 });
 
+// 7. Sync coreVersion and cliVersion in cli/src/generator.ts
+updateFile('cli/src/generator.ts', (content) => {
+  const coreVer = allPackageVersions['@siduri-x/core'] || '2.0.0';
+  return content
+    .replace(/coreVersion \|\| '\^[0-9]+\.[0-9]+\.[0-9]+'/g, `coreVersion || '^${coreVer}'`)
+    .replace(/cliVersion \|\| '\^[0-9]+\.[0-9]+\.[0-9]+'/g, `cliVersion || '^${cliVer}'`);
+});
+
 if (isCheckMode && hasDiff) {
   console.error('\nDocumentation or metadata versions are out of sync with package.json.');
   console.error('Run "pnpm run sync:versions" to update them.');

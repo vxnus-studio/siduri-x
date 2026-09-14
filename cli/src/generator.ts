@@ -20,6 +20,7 @@ export interface InstanceGeneratorOptions {
   selectedManifests: OrganManifest[];
   organConfigs?: Record<string, any>;
   coreVersion?: string;
+  cliVersion?: string;
 }
 
 function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, any> {
@@ -86,6 +87,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^2.0.6';
+  const cliVersion = options.cliVersion || '^2.0.17';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -113,7 +115,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   };
 
   const devDependencies: Record<string, string> = {
-    '@vxnus/siduri': coreVersion,
+    '@vxnus/siduri': cliVersion,
   };
 
   const packageJsonObj = {
