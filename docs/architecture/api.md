@@ -32,3 +32,15 @@ The API is a single deployable Express process (`apps/api`):
 - `GET /voice/health`: Voice organ readiness probe.
 - `GET /obs/health`: Observation organ connection probe.
 - `GET /me`: Returns authenticated local actor identity.
+
+## 5. Stream Interruption & Barge-in Lifecycle
+- **Barge-In (`user_barge_in`)**: When a user submits a prompt while generation is currently in-flight, the active `AbortController` triggers immediate cancellation.
+  - If the previous turn had not started generating text tokens yet (`!msg.content`), the unstarted assistant placeholder is pruned from the conversation history to eliminate ghost bubbles.
+  - If the companion was already actively streaming speech chunks, the partial text generated so far is preserved as-is, and an unobtrusive `[INTERRUPTED]` status badge is attached to the message metadata header.
+- **Manual Stop (`user_stop`)**: Clicking the stop generation control triggers cancellation. The companion displays a clean, muted `Response stopped` notice without mutating dialogue or injecting hardcoded text strings into speech bubbles.
+
+## 6. LLM Provider Error Propagation & Diagnostics
+- **Upstream Error Extraction**: `@siduri-x/brain` inspects upstream HTTP error bodies (`response.text()`) from OpenRouter / OpenAI-compatible providers rather than discarding details.
+- **Fatal Error Gating**: HTTP statuses `400` (Bad Request), `401` (Unauthorized), `402` (Payment Required / Insufficient credits), `403` (Forbidden), and `404` (Model not found) are marked fatal and abort immediately rather than exhausting backoff retries.
+- **Diagnostic Classification**: `apps/web` identifies error signatures (authentication failures, credits exhausted, rate limits, missing models, context window overflow, request timeout, upstream 5xx outages) and displays an in-character message (*"I couldn't complete the response."*) paired with an actionable diagnosis hint and collapsible technical trace drawer.
+- **Direct Completion Fallback**: When an LLM returns direct text output rather than calling the `submitResponsePlan` function tool, the brain gracefully extracts the text into speech instead of throwing a parsing error.

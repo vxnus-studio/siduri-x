@@ -177,6 +177,21 @@ export class OpenAICompatibleBrain implements BrainOrgan {
 
           if (!response.ok) {
             const status = response.status;
+            let errorDetails = response.statusText || `HTTP ${status}`;
+            try {
+              if (typeof response.text === 'function') {
+                const errorText = await response.text();
+                try {
+                  const parsed = JSON.parse(errorText);
+                  errorDetails = parsed?.error?.message || parsed?.message || errorText;
+                } catch {
+                  if (errorText) errorDetails = errorText;
+                }
+              }
+            } catch {
+              // fallback
+            }
+
             const retryHeader = response.headers?.get ? response.headers.get('retry-after') : undefined;
             if (retryHeader) {
               const parsedSec = parseInt(retryHeader, 10);
@@ -185,12 +200,12 @@ export class OpenAICompatibleBrain implements BrainOrgan {
               }
             }
 
-            // Client authentication, forbidden, and bad request errors are fatal and should not be retried
-            if (status === 400 || status === 401 || status === 403 || status === 404) {
-              throw new Error(`Fatal upstream API error (${status}): ${response.statusText}`);
+            // Client authentication, forbidden, insufficient credits, and bad request errors are fatal and should not be retried
+            if (status === 400 || status === 401 || status === 402 || status === 403 || status === 404) {
+              throw new Error(`Fatal upstream API error (${status}): ${errorDetails}`);
             }
 
-            throw new Error(`OpenRouter API error: ${response.statusText}`);
+            throw new Error(`OpenRouter API error (${status}): ${errorDetails}`);
           }
 
           const data = await response.json();
@@ -200,6 +215,15 @@ export class OpenAICompatibleBrain implements BrainOrgan {
             const rawArgs = JSON.parse(toolCall.function.arguments);
             const parsed = ResponsePlanSchema.parse(rawArgs);
             return parsed;
+          }
+
+          const directContent = data.choices?.[0]?.message?.content;
+          if (typeof directContent === 'string' && directContent.trim().length > 0) {
+            return {
+              speech: directContent.trim(),
+              language: 'en',
+              internalMonologue: 'Direct completion without tool call',
+            };
           }
 
           throw new Error("No valid tool call returned from OpenRouter");

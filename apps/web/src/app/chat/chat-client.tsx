@@ -53,6 +53,9 @@ type ChatMessage = {
   memoryProposals?: MemoryProposalData[];
   behavioralProposals?: BehavioralProposalData[];
   createdAt: number;
+  interrupted?: boolean;
+  interruptionReason?: string;
+  error?: string;
 };
 
 type Conversation = {
@@ -100,9 +103,7 @@ type ChatResponse = {
 const STORAGE_KEY = "siduri.chat.conversations.v1";
 
 function newId(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random()}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 function formatTime(timestamp: number): string {
@@ -112,15 +113,102 @@ function formatTime(timestamp: number): string {
   }).format(timestamp);
 }
 
+function sanitizeMessage(msg: ChatMessage): ChatMessage {
+  if (msg.content === "[interrupted]") {
+    return {
+      ...msg,
+      content: "",
+      interrupted: true,
+      interruptionReason: "interrupted",
+    };
+  }
+  if (msg.content && msg.content.endsWith(" [interrupted]")) {
+    return {
+      ...msg,
+      content: msg.content.slice(0, -" [interrupted]".length).trim(),
+      interrupted: true,
+      interruptionReason: "interrupted",
+    };
+  }
+  if (
+    msg.content &&
+    msg.content.startsWith("I couldn’t reach the orchestrator. ")
+  ) {
+    const err = msg.content.slice("I couldn’t reach the orchestrator. ".length);
+    return {
+      ...msg,
+      content: "",
+      error: err,
+    };
+  }
+  return msg;
+}
+
 function readConversations(): Conversation[] {
   try {
     const value = JSON.parse(
       window.localStorage.getItem(STORAGE_KEY) ?? "[]",
     ) as unknown;
-    return Array.isArray(value) ? (value as Conversation[]) : [];
+    if (!Array.isArray(value)) return [];
+    return (value as Conversation[]).map((conv) => ({
+      ...conv,
+      messages: (conv.messages || []).map(sanitizeMessage),
+    }));
   } catch {
     return [];
   }
+}
+
+export function getErrorDiagnosis(errorMsg?: string): { title: string; hint?: string } {
+  if (!errorMsg) return { title: "Connection or service issue" };
+  const lower = errorMsg.toLowerCase();
+
+  if (lower.includes("401") || lower.includes("unauthorized") || lower.includes("invalid api key") || lower.includes("api_key")) {
+    return {
+      title: "LLM Provider Authentication Failed",
+      hint: "Your API key is invalid or missing. Please check your API key in siduri.config.json or environment variables.",
+    };
+  }
+  if (lower.includes("402") || lower.includes("insufficient") || lower.includes("balance") || lower.includes("credits") || lower.includes("quota")) {
+    return {
+      title: "LLM Credits / Quota Exhausted",
+      hint: "Your LLM provider account has run out of credits or reached its usage quota.",
+    };
+  }
+  if (lower.includes("429") || lower.includes("rate limit") || lower.includes("too many requests")) {
+    return {
+      title: "LLM Rate Limit Reached",
+      hint: "The LLM provider received too many requests. Please wait a moment before trying again.",
+    };
+  }
+  if (lower.includes("404") || (lower.includes("model") && lower.includes("not found"))) {
+    return {
+      title: "LLM Model Not Found",
+      hint: "The configured model could not be found or is unavailable on this provider.",
+    };
+  }
+  if (lower.includes("context length") || lower.includes("maximum context") || lower.includes("token limit")) {
+    return {
+      title: "Context Window Exceeded",
+      hint: "The conversation exceeded the model's token limit. Consider starting a new chat.",
+    };
+  }
+  if (lower.includes("timeout") || lower.includes("timed out") || lower.includes("deadline")) {
+    return {
+      title: "LLM Request Timed Out",
+      hint: "The AI provider took too long to generate a response (wall-clock deadline exceeded).",
+    };
+  }
+  if (lower.includes("500") || lower.includes("502") || lower.includes("503") || lower.includes("504") || lower.includes("bad gateway")) {
+    return {
+      title: "LLM Provider Service Outage",
+      hint: "The AI provider is temporarily unavailable or overloaded.",
+    };
+  }
+  return {
+    title: "Connection or service issue",
+    hint: undefined,
+  };
 }
 
 export default function ChatClient() {
@@ -284,6 +372,11 @@ export default function ChatClient() {
       setActiveId(conversation.id);
     }
 
+    // Filter out unstarted assistant placeholder from previous interrupted turn so it doesn't leave an empty ghost bubble
+    const cleanedMessages = conversation.messages.filter(
+      (m) => !(m.role === "assistant" && !m.content.trim() && !m.error && !m.interrupted),
+    );
+
     const userMessage: ChatMessage = {
       id: newId(),
       role: "user",
@@ -299,7 +392,7 @@ export default function ChatClient() {
       createdAt: Date.now(),
     };
 
-    const nextMessages = [...conversation.messages, userMessage, assistantPlaceholder];
+    const nextMessages = [...cleanedMessages, userMessage, assistantPlaceholder];
     const title =
       conversation.messages.length === 0
         ? content.slice(0, 42)
@@ -419,29 +512,43 @@ export default function ChatClient() {
             }));
             setStatus("online");
           },
-          onInterrupted: () => {
-            updateConversation(conversation.id, (current) => ({
-              ...current,
-              messages: current.messages.map((msg) =>
-                msg.id === assistantId
-                  ? {
-                      ...msg,
-                      content: msg.content ? `${msg.content} [interrupted]` : "[interrupted]",
-                    }
-                  : msg,
-              ),
-              updatedAt: Date.now(),
-            }));
+          onInterrupted: (data) => {
+            const reason = data?.reason || abortController.signal.reason || "interrupted";
+            updateConversation(conversation.id, (current) => {
+              const target = current.messages.find((m) => m.id === assistantId);
+              // If barge-in happened before Siduri spoke anything, remove the empty placeholder
+              if (reason === "user_barge_in" && (!target || !target.content.trim())) {
+                return {
+                  ...current,
+                  messages: current.messages.filter((msg) => msg.id !== assistantId),
+                  updatedAt: Date.now(),
+                };
+              }
+              return {
+                ...current,
+                messages: current.messages.map((msg) =>
+                  msg.id === assistantId
+                    ? {
+                        ...msg,
+                        interrupted: true,
+                        interruptionReason: typeof reason === "string" ? reason : "interrupted",
+                      }
+                    : msg,
+                ),
+                updatedAt: Date.now(),
+              };
+            });
             setStatus("online");
           },
           onError: (err) => {
+            const errorMessage = err?.message || String(err) || "Unknown error";
             updateConversation(conversation.id, (current) => ({
               ...current,
               messages: current.messages.map((msg) =>
                 msg.id === assistantId
                   ? {
                       ...msg,
-                      content: `I couldn’t reach the orchestrator. ${String(err)}`,
+                      error: errorMessage,
                     }
                   : msg,
               ),
@@ -454,13 +561,14 @@ export default function ChatClient() {
       );
     } catch (error) {
       if (!abortController.signal.aborted) {
+        const errorMessage = (error as any)?.message || String(error) || "Connection error";
         updateConversation(conversation.id, (current) => ({
           ...current,
           messages: current.messages.map((msg) =>
             msg.id === assistantId
               ? {
                   ...msg,
-                  content: `I couldn’t reach the orchestrator. ${String(error)}`,
+                  error: errorMessage,
                 }
               : msg,
           ),
@@ -469,7 +577,9 @@ export default function ChatClient() {
         setStatus("offline");
       }
     } finally {
-      abortControllerRef.current = null;
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
       setBusy(false);
     }
   }
@@ -826,13 +936,53 @@ export default function ChatClient() {
                     <div className="message-body">
                       <div className="message-meta">
                         <span>{item.role === "user" ? "You" : "Siduri"}</span>
-                        {item.role === "assistant" && !item.content && busy ? (
+                        {item.role === "assistant" && !item.content && !item.error && !item.interrupted && busy ? (
                           <span className="thinking-label">thinking</span>
                         ) : (
                           <time>{formatTime(item.createdAt)}</time>
                         )}
+                        {item.interrupted && (
+                          <span className="interrupted-pill" title="Response was interrupted">
+                            interrupted
+                          </span>
+                        )}
+                        {item.error && (
+                          <span className="error-pill" title="An error occurred during response">
+                            error
+                          </span>
+                        )}
                       </div>
-                      {item.role === "assistant" && !item.content && busy ? (
+                      {item.error ? (() => {
+                        const diagnosis = getErrorDiagnosis(item.error);
+                        return (
+                          <div className="message-error-container">
+                            {item.content ? (
+                              <p className="message-primary">{item.content}</p>
+                            ) : (
+                              <p className="message-primary text-[var(--siduri-text-muted)] italic">
+                                I couldn&apos;t complete the response.
+                              </p>
+                            )}
+                            <div className="message-error-callout">
+                              <div className="error-callout-header">
+                                <span className="error-icon" aria-hidden="true">⚠️</span>
+                                <span className="error-text">{diagnosis.title}</span>
+                              </div>
+                              {diagnosis.hint && (
+                                <p className="error-hint text-xs text-[var(--siduri-text-secondary)] mt-1 mb-1">
+                                  {diagnosis.hint}
+                                </p>
+                              )}
+                              <details className="error-details">
+                                <summary>View technical details</summary>
+                                <pre className="error-trace">{item.error}</pre>
+                              </details>
+                            </div>
+                          </div>
+                        );
+                      })() : item.interrupted && !item.content ? (
+                        <p className="message-cancelled">Response stopped</p>
+                      ) : item.role === "assistant" && !item.content && busy ? (
                         <div className="thinking-dots">
                           <i />
                           <i />

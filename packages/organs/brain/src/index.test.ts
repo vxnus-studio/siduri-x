@@ -134,6 +134,35 @@ describe('OpenRouterBrain', () => {
 
     await expect(fastTimeoutBrain.generatePlan(mockContext)).rejects.toThrow(/deadline/i);
   });
+
+  test('extracts detailed provider error message from upstream JSON body', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 402,
+      statusText: "Payment Required",
+      text: async () => JSON.stringify({ error: { message: "Provider balance exhausted. Please top up your account." } }),
+    });
+
+    await expect(brain.generatePlan(mockContext)).rejects.toThrow("Provider balance exhausted");
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test('falls back gracefully to direct message content when model omits tool_calls', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [{
+          message: {
+            content: "Hello from direct completion!",
+          },
+        }],
+      }),
+    });
+
+    const plan = await brain.generatePlan(mockContext);
+    expect(plan.speech).toBe("Hello from direct completion!");
+    expect(plan.language).toBe("en");
+  });
 });
 
 describe('OpenAICompatibleBrain', () => {
