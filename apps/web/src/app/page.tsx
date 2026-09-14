@@ -5,20 +5,20 @@ export default function HomePage() {
     <div className="home-page bg-[#09090c] min-h-screen text-[var(--siduri-text-primary)] font-sans">
       {/* Top Header Navigation */}
       <header className="home-nav">
-        <div className="home-container home-nav-inner flex items-center justify-between py-4">
+        <div className="home-container home-nav-inner flex items-center justify-between py-3 sm:py-4">
           <Link href="/" className="brand-link flex items-center gap-2" aria-label="Siduri Home">
             <img src="/logo-circle.svg" alt="Siduri-X Logo" className="w-6 h-6 rounded-full shrink-0" width={24} height={24} />
             <span className="font-bold tracking-widest text-sm">SIDURI-X</span>
           </Link>
 
-          <nav className="nav-links flex gap-6 text-sm text-[var(--siduri-text-muted)]" aria-label="Main Navigation">
+          <nav className="nav-links hidden sm:flex gap-6 text-sm text-[var(--siduri-text-muted)]" aria-label="Main Navigation">
             <Link href="/chat" className="hover:text-[var(--siduri-text-primary)] transition-colors">Chat</Link>
             <Link href="/operator" className="hover:text-[var(--siduri-text-primary)] transition-colors">Operator Console</Link>
           </nav>
 
-          <div>
-            <Link href="/chat" className="nav-cta inline-flex items-center gap-2 text-xs font-mono border border-[var(--siduri-border-subtle)] px-4 py-2 rounded-full hover:bg-[var(--siduri-surface)] transition-all">
-              Open Chat <span>→</span>
+          <div className="flex items-center gap-3">
+            <Link href="/chat" className="nav-cta inline-flex items-center gap-2 text-xs font-mono border border-[var(--siduri-border-subtle)] px-3 sm:px-4 py-2 rounded-full hover:bg-[var(--siduri-surface)] transition-all">
+              <span>Chat</span> <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
@@ -26,32 +26,32 @@ export default function HomePage() {
 
       <main>
         {/* Hero Section */}
-        <section className="py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] relative overflow-hidden">
+        <section className="py-16 sm:py-24 md:py-32 border-b border-[var(--siduri-border-subtle)] relative overflow-hidden">
           <div className="home-container relative z-10 text-center flex flex-col items-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[10px] font-mono tracking-widest uppercase mb-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--siduri-online)] shadow-[0_0_8px_rgba(127,199,154,0.6)]" />
-              Standalone Companion Framework · Version 1.0
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-light)] text-[10px] font-mono tracking-widest uppercase mb-6 sm:mb-8 text-center max-w-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--siduri-online)] shadow-[0_0_8px_rgba(127,199,154,0.6)] shrink-0" />
+              <span className="truncate">Standalone Companion · Version 1.0</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-normal font-serif text-[var(--siduri-text-primary)] tracking-tight leading-[1.15] mb-6 max-w-4xl">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-normal font-serif text-[var(--siduri-text-primary)] tracking-tight leading-[1.2] sm:leading-[1.15] mb-6 max-w-4xl px-2">
               A companion grown from memory, powered by modular cognition.
             </h1>
 
-            <p className="text-base sm:text-lg text-[var(--siduri-text-secondary)] font-sans leading-relaxed mb-10 max-w-2xl font-light">
+            <p className="text-sm sm:text-lg text-[var(--siduri-text-secondary)] font-sans leading-relaxed mb-8 sm:mb-10 max-w-2xl font-light px-2">
               Siduri-X is an intelligent companion designed with authoritative memory, atomic behavioral gating, and a strict 10-organ architecture. She starts as a blank slate and forms her identity entirely through your interactions.
             </p>
 
-            <div className="flex flex-wrap justify-center items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4 w-full max-w-md sm:max-w-none px-4">
               <Link
                 href="/chat"
-                className="inline-flex items-center gap-3 px-6 py-3.5 rounded-xl bg-[var(--siduri-ember)] text-[#1b1619] font-sans font-semibold text-sm tracking-wide transition-all hover:brightness-110 shadow-[0_4px_20px_rgba(217,154,104,0.2)]"
+                className="inline-flex justify-center items-center gap-3 px-6 py-3.5 rounded-xl bg-[var(--siduri-ember)] text-[#1b1619] font-sans font-semibold text-sm tracking-wide transition-all hover:brightness-110 shadow-[0_4px_20px_rgba(217,154,104,0.2)]"
               >
                 Launch Companion
                 <span className="font-mono text-base">→</span>
               </Link>
               <Link
                 href="/operator"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-primary)] font-sans font-medium text-sm transition-all hover:border-[var(--siduri-border-ember)] hover:bg-[var(--siduri-tint-low)]"
+                className="inline-flex justify-center items-center gap-2.5 px-6 py-3.5 rounded-xl border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-primary)] font-sans font-medium text-sm transition-all hover:border-[var(--siduri-border-ember)] hover:bg-[var(--siduri-tint-low)]"
               >
                 <span>⌘</span>
                 Operator Console
@@ -76,7 +76,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
               {[
                 { name: "Brain", desc: "Cognition, planning, and authoritative decision making." },
                 { name: "Memory", desc: "SQLite FTS5 authoritative storage of verified claims and episodic memory." },
@@ -89,7 +89,7 @@ export default function HomePage() {
                 { name: "Body", desc: "Renderer-agnostic avatar expression (Live2D) and embodiment." },
                 { name: "Observation", desc: "Event frame deduplication and real-time evidence extraction." }
               ].map((organ) => (
-                <div key={organ.name} className="p-5 rounded-xl border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] transition-all hover:border-[var(--siduri-border-ember)]">
+                <div key={organ.name} className="p-4 sm:p-5 rounded-xl border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] transition-all hover:border-[var(--siduri-border-ember)]">
                   <h3 className="text-sm font-bold font-mono text-[var(--siduri-ember-light)] mb-2">{organ.name}</h3>
                   <p className="text-xs text-[var(--siduri-text-secondary)] leading-relaxed">{organ.desc}</p>
                 </div>
@@ -99,13 +99,13 @@ export default function HomePage() {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 md:py-28 border-b border-[var(--siduri-border-subtle)]">
-          <div className="home-container grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <section className="py-16 sm:py-20 md:py-28 border-b border-[var(--siduri-border-subtle)]">
+          <div className="home-container grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--siduri-ember)] mb-2">
                 Authoritative State
               </p>
-              <h2 className="text-3xl font-serif font-normal text-[var(--siduri-text-primary)] mb-5">
+              <h2 className="text-2xl sm:text-3xl font-serif font-normal text-[var(--siduri-text-primary)] mb-5">
                 Blank Slate Identity
               </h2>
               <p className="text-sm text-[var(--siduri-text-secondary)] leading-relaxed mb-6">
@@ -127,17 +127,17 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="p-8 rounded-2xl border border-[var(--siduri-border-ember)] bg-[var(--siduri-surface)] shadow-[0_10px_35px_rgba(0,0,0,0.4)] relative">
-              <div className="absolute top-0 right-8 -translate-y-1/2 bg-[var(--siduri-bg)] px-3 text-[10px] font-mono text-[var(--siduri-ember)] tracking-widest uppercase">
+            <div className="p-5 sm:p-8 rounded-2xl border border-[var(--siduri-border-ember)] bg-[var(--siduri-surface)] shadow-[0_10px_35px_rgba(0,0,0,0.4)] relative">
+              <div className="absolute top-0 right-6 sm:right-8 -translate-y-1/2 bg-[var(--siduri-bg)] px-3 text-[10px] font-mono text-[var(--siduri-ember)] tracking-widest uppercase">
                 Operator View
               </div>
               <div className="space-y-4 font-mono text-xs">
                 <div className="p-3 border border-[var(--siduri-border-subtle)] rounded bg-[#13131a]">
                   <div className="text-[var(--siduri-text-muted)] mb-1">Incoming Claim</div>
-                  <div className="text-[var(--siduri-online)] font-bold">"User prefers concise, technical explanations."</div>
-                  <div className="flex gap-2 mt-3">
-                    <span className="bg-[var(--siduri-online)] text-black px-2 py-0.5 rounded font-bold cursor-pointer">APPROVE</span>
-                    <span className="border border-[var(--siduri-border-subtle)] text-[var(--siduri-text-muted)] px-2 py-0.5 rounded cursor-pointer">REJECT</span>
+                  <div className="text-[var(--siduri-online)] font-bold break-words">&ldquo;User prefers concise, technical explanations.&rdquo;</div>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="bg-[var(--siduri-online)] text-black px-2.5 py-1 rounded font-bold cursor-pointer text-xs">APPROVE</span>
+                    <span className="border border-[var(--siduri-border-subtle)] text-[var(--siduri-text-muted)] px-2.5 py-1 rounded cursor-pointer text-xs">REJECT</span>
                   </div>
                 </div>
               </div>
@@ -146,15 +146,15 @@ export default function HomePage() {
         </section>
 
         {/* Local Installation Section */}
-        <section className="py-20 md:py-28 bg-[#09090c]">
-          <div className="home-container text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-serif font-normal text-[var(--siduri-text-primary)] mb-5">
+        <section className="py-16 sm:py-20 md:py-28 bg-[#09090c]">
+          <div className="home-container text-center max-w-2xl mx-auto px-4">
+            <h2 className="text-2xl sm:text-4xl font-serif font-normal text-[var(--siduri-text-primary)] mb-5">
               Private, local, and yours.
             </h2>
             <p className="text-sm text-[var(--siduri-text-secondary)] leading-relaxed mb-8">
               Siduri is designed for local-first operations and explicit consent. The CLI dynamically generates a standalone companion instance leveraging only the organ packages you need. Run it completely on your own machine.
             </p>
-            <div className="bg-[#13131a] p-4 rounded-xl border border-[var(--siduri-border-subtle)] inline-block text-left text-sm font-mono text-[var(--siduri-text-primary)] shadow-lg mx-auto">
+            <div className="bg-[#13131a] p-3.5 sm:p-4 rounded-xl border border-[var(--siduri-border-subtle)] inline-block text-left text-xs sm:text-sm font-mono text-[var(--siduri-text-primary)] shadow-lg mx-auto max-w-full overflow-x-auto">
               <span className="text-emerald-400">$</span> npx @vxnus/siduri create my-companion
             </div>
           </div>

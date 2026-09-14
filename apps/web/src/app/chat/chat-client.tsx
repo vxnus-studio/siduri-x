@@ -119,6 +119,7 @@ export default function ChatClient() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [activeAvatarEvent, setActiveAvatarEvent] = useState<ActiveAvatarEvent | null>(null);
   const [avatarModelUrl, setAvatarModelUrl] = useState<string | undefined>(undefined);
@@ -517,7 +518,18 @@ export default function ChatClient() {
   }
 
   return (
-    <div className={`chat-app ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+    <div
+      className={`chat-app ${sidebarCollapsed ? "sidebar-collapsed" : ""} ${
+        isMobileDrawerOpen ? "mobile-drawer-open" : ""
+      }`}
+    >
+      {isMobileDrawerOpen && (
+        <div
+          className="chat-backdrop"
+          onClick={() => setIsMobileDrawerOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <aside className="chat-sidebar" aria-label="Conversation history">
         <div className="chat-sidebar-top">
           <a className="chat-brand" href="/chat">
@@ -534,11 +546,22 @@ export default function ChatClient() {
           >
             {sidebarCollapsed ? "→" : "←"}
           </button>
+          <button
+            className="mobile-drawer-close"
+            type="button"
+            onClick={() => setIsMobileDrawerOpen(false)}
+            aria-label="Close conversation drawer"
+          >
+            ✕
+          </button>
         </div>
         <button
           className="new-chat-button"
           type="button"
-          onClick={startNewChat}
+          onClick={() => {
+            startNewChat();
+            setIsMobileDrawerOpen(false);
+          }}
         >
           <span>＋</span> New conversation
         </button>
@@ -565,7 +588,10 @@ export default function ChatClient() {
                   <button
                     type="button"
                     className="conversation-select"
-                    onClick={() => setActiveId(conversation.id)}
+                    onClick={() => {
+                      setActiveId(conversation.id);
+                      setIsMobileDrawerOpen(false);
+                    }}
                   >
                     <span className="conversation-title">
                       {conversation.title}
@@ -577,7 +603,10 @@ export default function ChatClient() {
                   <button
                     type="button"
                     className="conversation-delete"
-                    onClick={() => removeConversation(conversation.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeConversation(conversation.id);
+                    }}
                     aria-label={`Delete ${conversation.title}`}
                   >
                     ×
@@ -596,43 +625,60 @@ export default function ChatClient() {
       </aside>
 
       <main className="chat-workspace">
-        <div className="chat-top-status flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setIsPresenceOpen((prev) => !prev)}
-            className={`connection-pill cursor-pointer transition-all focus-visible:ring-1 focus-visible:ring-[var(--siduri-border-ember)] outline-none ${
-              isPresenceOpen
-                ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)]"
-                : "hover:border-[var(--siduri-border-ember)] text-[var(--siduri-text-secondary)]"
-            }`}
-            aria-label="Toggle avatar presence"
-            aria-expanded={isPresenceOpen}
-            title={isPresenceOpen ? "Disable Avatar Presence" : "Enable Avatar Presence"}
-          >
-            <span className={`status-light ${isPresenceOpen ? "online" : ""}`} />
-            <span>Presence</span>
-          </button>
-          <span className="connection-pill">
-            <span
-              className={`status-light ${status === "online" ? "online" : ""}`}
-            />
-            {status}
-          </span>
-          <div className="connection-pill flex items-center gap-1.5" title="Operating interaction mode: Auto (inferred), Casual (zero drift), Teach (strict human-in-the-loop), or Hybrid (default)">
-            <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">Mode:</span>
-            <select
-              value={selectedMode}
-              onChange={(e) => setSelectedMode(e.target.value as any)}
-              className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0"
-              aria-label="Select interaction mode"
+        <header className="chat-header">
+          <div className="chat-header-brand-group">
+            <button
+              type="button"
+              className="mobile-menu-toggle"
+              onClick={() => setIsMobileDrawerOpen(true)}
+              aria-label="Open conversation menu"
             >
-              <option value="auto" className="bg-[#121214] text-white">Auto ({effectiveMode})</option>
-              <option value="casual" className="bg-[#121214] text-white">Casual (Zero Drift)</option>
-              <option value="teach" className="bg-[#121214] text-white">Teach (Human-in-Loop)</option>
-              <option value="hybrid" className="bg-[#121214] text-white">Hybrid (Default)</option>
-            </select>
+              <span className="hamburger-icon">☰</span>
+            </button>
+            <a href="/chat" className="chat-header-title">
+              <span className="chat-brand-mark">S</span>
+              <span className="font-bold tracking-widest text-xs hidden xs:inline">SIDURI</span>
+            </a>
           </div>
-        </div>
+
+          <div className="chat-header-actions flex items-center gap-1.5 sm:gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsPresenceOpen((prev) => !prev)}
+              className={`connection-pill cursor-pointer transition-all focus-visible:ring-1 focus-visible:ring-[var(--siduri-border-ember)] outline-none ${
+                isPresenceOpen
+                  ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)]"
+                  : "hover:border-[var(--siduri-border-ember)] text-[var(--siduri-text-secondary)]"
+              }`}
+              aria-label="Toggle avatar presence"
+              aria-expanded={isPresenceOpen}
+              title={isPresenceOpen ? "Disable Avatar Presence" : "Enable Avatar Presence"}
+            >
+              <span className={`status-light ${isPresenceOpen ? "online" : ""}`} />
+              <span className="text-xs">Presence</span>
+            </button>
+            <span className="connection-pill hidden sm:inline-flex" title={`Status: ${status}`}>
+              <span
+                className={`status-light ${status === "online" ? "online" : ""}`}
+              />
+              <span className="text-xs">{status}</span>
+            </span>
+            <div className="connection-pill flex items-center gap-1 sm:gap-1.5" title="Operating interaction mode">
+              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60 hidden md:inline">Mode:</span>
+              <select
+                value={selectedMode}
+                onChange={(e) => setSelectedMode(e.target.value as any)}
+                className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0 max-w-[84px] xs:max-w-[100px] sm:max-w-none"
+                aria-label="Select interaction mode"
+              >
+                <option value="auto" className="bg-[#121214] text-white">Auto</option>
+                <option value="casual" className="bg-[#121214] text-white">Casual</option>
+                <option value="teach" className="bg-[#121214] text-white">Teach</option>
+                <option value="hybrid" className="bg-[#121214] text-white">Hybrid</option>
+              </select>
+            </div>
+          </div>
+        </header>
 
         <div className="flex flex-col flex-1 min-h-0 w-full overflow-hidden relative">
           <section className="conversation-surface" aria-label="Private chat">

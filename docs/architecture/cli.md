@@ -51,6 +51,7 @@ my-companion/
 ├── siduri.schema.json    # Composed JSON Schema from organ manifests
 ├── .env.example          # Organ-scoped environment variables
 ├── README.md             # Composition-specific guide
+├── public/               # Bundled mobile-friendly Next.js web client export
 └── src/
     └── index.js          # Direct SiduriRuntime bootstrapping with explicit organ factories
 ```

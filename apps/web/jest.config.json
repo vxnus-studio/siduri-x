@@ -2,6 +2,9 @@
   "preset": "ts-jest",
   "testEnvironment": "node",
   "testMatch": ["**/*.test.ts", "**/*.test.tsx"],
+  "moduleNameMapper": {
+    "\\.css$": "<rootDir>/test-mocks/styleMock.js"
+  },
   "transform": {
     "^.+\\.(ts|tsx)$": ["ts-jest", {
       "tsconfig": {

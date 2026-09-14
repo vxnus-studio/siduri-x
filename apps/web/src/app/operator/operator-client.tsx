@@ -320,10 +320,15 @@ export default function OperatorClient() {
   return (
     <main className="console-app">
       <aside className="console-sidebar">
-        <a className="console-brand" href="/chat">
-          <span className="console-brand-mark">S</span>
-          <span>SIDURI</span>
-        </a>
+        <div className="console-sidebar-header flex items-center justify-between w-full">
+          <a className="console-brand" href="/chat">
+            <span className="console-brand-mark">S</span>
+            <span>SIDURI</span>
+          </a>
+          <a href="/chat" className="console-mobile-back" aria-label="Back to chat">
+            ← Chat
+          </a>
+        </div>
         <div className="console-context">
           <span className="console-context-dot" />
           Operator workspace
@@ -363,6 +368,9 @@ export default function OperatorClient() {
             </h1>
           </div>
           <div className="console-top-actions">
+            <a href="/chat" className="console-back-link" title="Return to Private Chat">
+              ← Chat
+            </a>
             <span className="console-version">v{version || "—"}</span>
             <button
               className="console-refresh"
