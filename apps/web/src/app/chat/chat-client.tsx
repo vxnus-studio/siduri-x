@@ -211,6 +211,41 @@ export function getErrorDiagnosis(errorMsg?: string): { title: string; hint?: st
   };
 }
 
+export function getInterruptionExplanation(reason?: string): { label: string; text: string; hint?: string } {
+  switch (reason) {
+    case "client_disconnect":
+      return {
+        label: "Disconnected",
+        text: "Response stopped due to connection close.",
+        hint: "The connection to the companion service closed prematurely.",
+      };
+    case "user_stop":
+      return {
+        label: "Stopped",
+        text: "Response stopped by user.",
+        hint: "Generation was manually cancelled via the stop control.",
+      };
+    case "user_barge_in":
+      return {
+        label: "Interrupted",
+        text: "Response interrupted by new message.",
+        hint: "Generation was cancelled because a new prompt was submitted.",
+      };
+    case "timeout":
+      return {
+        label: "Timed Out",
+        text: "Response timed out.",
+        hint: "The request exceeded the allotted time limit before finishing.",
+      };
+    default:
+      return {
+        label: "Interrupted",
+        text: "Response was interrupted.",
+        hint: reason && reason !== "interrupted" ? `Reason: ${reason}` : undefined,
+      };
+  }
+}
+
 export default function ChatClient() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -941,11 +976,14 @@ export default function ChatClient() {
                         ) : (
                           <time>{formatTime(item.createdAt)}</time>
                         )}
-                        {item.interrupted && (
-                          <span className="interrupted-pill" title="Response was interrupted">
-                            interrupted
-                          </span>
-                        )}
+                        {item.interrupted && (() => {
+                          const info = getInterruptionExplanation(item.interruptionReason);
+                          return (
+                            <span className="interrupted-pill" title={info.hint || info.text}>
+                              {info.label}
+                            </span>
+                          );
+                        })()}
                         {item.error && (
                           <span className="error-pill" title="An error occurred during response">
                             error
@@ -980,16 +1018,33 @@ export default function ChatClient() {
                             </div>
                           </div>
                         );
-                      })() : item.interrupted && !item.content ? (
-                        <p className="message-cancelled">Response stopped</p>
-                      ) : item.role === "assistant" && !item.content && busy ? (
+                      })() : item.interrupted && !item.content ? (() => {
+                        const info = getInterruptionExplanation(item.interruptionReason);
+                        return (
+                          <div className="message-cancelled-container">
+                            <p className="message-cancelled">{info.text}</p>
+                            {info.hint && (
+                              <p className="message-cancelled-hint text-xs text-[var(--siduri-text-dim)] mt-0.5">
+                                {info.hint}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })() : item.role === "assistant" && !item.content && busy ? (
                         <div className="thinking-dots">
                           <i />
                           <i />
                           <i />
                         </div>
                       ) : (
-                        <p className="message-primary">{item.content}</p>
+                        <>
+                          <p className="message-primary">{item.content}</p>
+                          {item.interrupted && (
+                            <p className="message-interrupted-footnote text-xs text-[var(--siduri-text-dim)] italic mt-1">
+                              — {getInterruptionExplanation(item.interruptionReason).text.toLowerCase()}
+                            </p>
+                          )}
+                        </>
                       )}
                       {subtitleLanguage !== "off" && item.role === "assistant" && (() => {
                         const sub =

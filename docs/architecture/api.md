@@ -36,8 +36,10 @@ The API is a single deployable Express process (`apps/api`):
 ## 5. Stream Interruption & Barge-in Lifecycle
 - **Barge-In (`user_barge_in`)**: When a user submits a prompt while generation is currently in-flight, the active `AbortController` triggers immediate cancellation.
   - If the previous turn had not started generating text tokens yet (`!msg.content`), the unstarted assistant placeholder is pruned from the conversation history to eliminate ghost bubbles.
-  - If the companion was already actively streaming speech chunks, the partial text generated so far is preserved as-is, and an unobtrusive `[INTERRUPTED]` status badge is attached to the message metadata header.
-- **Manual Stop (`user_stop`)**: Clicking the stop generation control triggers cancellation. The companion displays a clean, muted `Response stopped` notice without mutating dialogue or injecting hardcoded text strings into speech bubbles.
+  - If the companion was already actively streaming speech chunks, the partial text generated so far is preserved as-is, with an unobtrusive `[INTERRUPTED]` status badge and an attribution footnote.
+- **Manual Stop (`user_stop`)**: Clicking the stop generation control triggers cancellation. Displays `[STOPPED]` with *"Response stopped by user."*
+- **Premature Connection Close (`client_disconnect`)**: The server listens to response socket termination (`res.on('close')` guarded by `!res.writableEnded`). If the connection drops before completion, it displays `[DISCONNECTED]` with *"Response stopped due to connection close."* and guidance on connection state.
+- **Timeout (`timeout`)**: When requests exceed wall-clock deadlines, the client displays `[TIMED OUT]` with *"Response timed out."*
 
 ## 6. LLM Provider Error Propagation & Diagnostics
 - **Upstream Error Extraction**: `@siduri-x/brain` inspects upstream HTTP error bodies (`response.text()`) from OpenRouter / OpenAI-compatible providers rather than discarding details.

@@ -264,12 +264,14 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
 
     const abortController = new AbortController();
     const onClose = () => {
-      abortController.abort('client_disconnect');
-      if (runtime.mouth && typeof runtime.mouth.interrupt === 'function') {
-        runtime.mouth.interrupt('client_disconnect');
+      if (!res.writableEnded) {
+        abortController.abort('client_disconnect');
+        if (runtime.mouth && typeof runtime.mouth.interrupt === 'function') {
+          runtime.mouth.interrupt('client_disconnect');
+        }
       }
     };
-    req.on('close', onClose);
+    res.on('close', onClose);
 
     try {
       const response = await dispatchCompanionChat(runtime, {
@@ -329,7 +331,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       }
       res.end();
     } finally {
-      req.removeListener('close', onClose);
+      res.removeListener('close', onClose);
     }
   });
 

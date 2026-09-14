@@ -726,6 +726,26 @@ a {
   line-height: 1.5;
 }
 
+.message-cancelled-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.message-cancelled-hint {
+  margin: 0;
+  color: var(--siduri-text-dim);
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.message-interrupted-footnote {
+  margin: 4px 0 0;
+  color: var(--siduri-text-dim);
+  font-size: 11px;
+  font-style: italic;
+}
+
 .message-error-container {
   display: flex;
   flex-direction: column;

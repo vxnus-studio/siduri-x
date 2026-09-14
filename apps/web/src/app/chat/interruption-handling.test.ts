@@ -170,4 +170,28 @@ describe("Interruption and Error Handling Logic", () => {
     const timeoutDiag = getErrorDiagnosis("Brain request timed out after overall deadline of 30000ms");
     expect(timeoutDiag.title).toBe("LLM Request Timed Out");
   });
+
+  test("Classifies interruption reasons into human-friendly badges, explanations, and hints", () => {
+    const { getInterruptionExplanation } = require("./chat-client");
+
+    const disconnectInfo = getInterruptionExplanation("client_disconnect");
+    expect(disconnectInfo.label).toBe("Disconnected");
+    expect(disconnectInfo.text).toBe("Response stopped due to connection close.");
+    expect(disconnectInfo.hint).toContain("closed prematurely");
+
+    const stopInfo = getInterruptionExplanation("user_stop");
+    expect(stopInfo.label).toBe("Stopped");
+    expect(stopInfo.text).toBe("Response stopped by user.");
+    expect(stopInfo.hint).toContain("stop control");
+
+    const bargeInInfo = getInterruptionExplanation("user_barge_in");
+    expect(bargeInInfo.label).toBe("Interrupted");
+    expect(bargeInInfo.text).toBe("Response interrupted by new message.");
+    expect(bargeInInfo.hint).toContain("new prompt");
+
+    const timeoutInfo = getInterruptionExplanation("timeout");
+    expect(timeoutInfo.label).toBe("Timed Out");
+    expect(timeoutInfo.text).toBe("Response timed out.");
+    expect(timeoutInfo.hint).toContain("time limit");
+  });
 });
