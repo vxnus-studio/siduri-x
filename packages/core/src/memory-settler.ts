@@ -1,6 +1,8 @@
 import {
   MemoryOrgan,
+  SelfRepository,
   Claim,
+  BehaviorDirective,
   SourceEvent,
   ResponsePlan,
   RequestContext,
@@ -14,6 +16,7 @@ export interface MemorySettlementParams {
   role: 'OWNER' | 'VIEWER' | 'OPERATOR';
   requestContext: RequestContext;
   memory?: MemoryOrgan;
+  self?: SelfRepository;
   explicitTeaching: ReturnType<typeof extractDeterministicTeaching>;
   plan: ResponsePlan;
   effectiveMode?: InteractionMode;
@@ -25,11 +28,32 @@ export interface MemoryProposalReceipt {
   predicate: string;
   value: string;
   status: string;
+  claim_type?: string;
+  content?: string;
+}
+
+export interface BehavioralProposalReceipt {
+  directive_id: string;
+  domain?: string;
+  knowledge_domain?: string;
+  memory_class?: string;
+  runtime_effect?: string;
+  subject?: string;
+  predicate?: string;
+  value?: string;
+  status: string;
+  behavior?: {
+    instruction: string;
+    frequency?: string;
+    preferred_positions?: string[];
+  };
 }
 
 export interface MemorySettlementResult {
   createdMemoryProposals: Claim[];
   memoryProposalReceipts: MemoryProposalReceipt[];
+  createdBehavioralProposals?: BehaviorDirective[];
+  behavioralProposalReceipts?: BehavioralProposalReceipt[];
 }
 
 /**
@@ -45,6 +69,7 @@ export async function settleMemoryProposals(
     role,
     requestContext,
     memory,
+    self,
     explicitTeaching,
     plan,
     effectiveMode,
@@ -94,6 +119,7 @@ export async function settleMemoryProposals(
   if (memory && typeof memory.proposeClaim === 'function') {
     for (const claim of explicitTeaching.claims) {
       const proposal = await memory.proposeClaim({
+        companionId,
         subject: claim.subject,
         predicate: claim.predicate,
         value: claim.value,
@@ -106,7 +132,7 @@ export async function settleMemoryProposals(
         sensitivity:
           claim.sensitivity ||
           (requestContext.conversation?.channel === 'public' ? 'public' : 'private'),
-      });
+      } as any);
       createdMemoryProposals.push(proposal);
     }
 
@@ -114,6 +140,7 @@ export async function settleMemoryProposals(
     if (plan.memoryProposals && plan.memoryProposals.length > 0) {
       for (const p of plan.memoryProposals) {
         const proposal = await memory.proposeClaim({
+          companionId,
           subject: p.subject || `actor:${requestContext.actor.actorId}`,
           predicate: p.predicate,
           value: p.value,
@@ -122,25 +149,82 @@ export async function settleMemoryProposals(
           sourceEventId: sourceEventId || p.sourceEventId,
           claimType: p.claimType || 'semantic',
           sensitivity: p.sensitivity || 'private',
-        });
+        } as any);
         createdMemoryProposals.push(proposal);
       }
     }
   }
 
-  if (
-    memory &&
-    plan.behaviorProposals &&
-    plan.behaviorProposals.length > 0 &&
-    typeof memory.proposeDirective === 'function'
-  ) {
-    for (const bp of plan.behaviorProposals) {
-      await memory.proposeDirective({
+  const createdBehavioralProposals: BehaviorDirective[] = [];
+  const behavioralProposalReceipts: BehavioralProposalReceipt[] = [];
+
+  const allBehaviorProposals = [
+    ...explicitTeaching.behaviorProposals,
+    ...(plan.behaviorProposals || []),
+  ];
+
+  for (const bp of allBehaviorProposals) {
+    let directive: BehaviorDirective | undefined;
+    if (memory && typeof memory.proposeDirective === 'function') {
+      directive = await memory.proposeDirective({
+        companionId,
         directive: bp.directive,
         priority: bp.priority || 50,
-        scopeMatcher: [role],
-      });
+        category: bp.category || 'behavioral',
+        supersedesId: bp.supersedesId,
+        scopeActor: bp.scopeActor || (bp.subject?.startsWith('actor:') ? bp.subject.slice(6) : undefined),
+        memoryClass: bp.memoryClass,
+        subject: bp.subject,
+        predicate: bp.predicate,
+        value: bp.value,
+        sourceEventId: sourceEventId || bp.sourceEventId,
+      } as any);
     }
+    if (!directive || !directive.id) {
+      directive = {
+        id: directive?.id || `dir-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        companionId,
+        directive: bp.directive,
+        priority: bp.priority || 50,
+        status: 'pending' as any,
+        category: (bp.category || 'behavioral') as any,
+        scopeActor: bp.scopeActor,
+        supersedesId: bp.supersedesId,
+        createdAt: new Date().toISOString(),
+      };
+    }
+    createdBehavioralProposals.push(directive);
+
+    if (self && typeof self.commitDirectives === 'function') {
+      await self.commitDirectives(companionId, [{
+        id: directive.id,
+        companionId,
+        directive: bp.directive,
+        priority: bp.priority || 50,
+        status: 'pending' as any,
+        category: (bp.category || 'behavioral') as any,
+        scopeActor: bp.scopeActor,
+        supersedesId: bp.supersedesId,
+        createdAt: new Date().toISOString(),
+      }]);
+    }
+
+    behavioralProposalReceipts.push({
+      directive_id: directive.id,
+      domain: 'behavioral',
+      knowledge_domain: 'behavioral',
+      memory_class: bp.memoryClass || 'behavioral',
+      runtime_effect: bp.memoryClass || 'behavioral',
+      subject: bp.subject || `companion:${companionId}`,
+      predicate: bp.predicate || 'rule',
+      value: bp.value || bp.directive,
+      status: 'pending',
+      behavior: {
+        instruction: bp.directive,
+        frequency: 'continuous',
+        preferred_positions: [],
+      },
+    });
   }
 
   const memoryProposalReceipts: MemoryProposalReceipt[] = createdMemoryProposals.map(
@@ -150,11 +234,15 @@ export async function settleMemoryProposals(
       predicate: p.predicate,
       value: p.value,
       status: (p.status || 'pending').toLowerCase().replace(/_/g, '-') as any,
+      claim_type: p.claimType,
+      content: (p as any).content,
     })
   );
 
   return {
     createdMemoryProposals,
     memoryProposalReceipts,
+    createdBehavioralProposals,
+    behavioralProposalReceipts,
   };
 }

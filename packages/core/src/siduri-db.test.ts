@@ -831,9 +831,8 @@ describe('SiduriDatabase', () => {
         category: 'behavioral',
       });
 
-      expect(() => db.approveDirective('dir-active-1')).toThrow(
-        /invalid transition from status 'active' to 'active'/i
-      );
+      // Approving an already-active directive is now idempotent (no-op, does not throw)
+      expect(() => db.approveDirective('dir-active-1')).not.toThrow();
 
       // 3. Rejecting an already ACTIVE directive throws
       expect(() => db.rejectDirective('dir-active-1')).toThrow(

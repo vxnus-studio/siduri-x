@@ -344,7 +344,9 @@ export type {
 
 export interface SelfRepository {
   getIdentity(companionId: string): Promise<SelfIdentity | undefined>;
+  setIdentity(identity: SelfIdentity): Promise<void>;
   getPersonality?(companionId: string): Promise<PersonalityTraits>;
+  setPersonality?(companionId: string, traits: PersonalityTraits): Promise<void>;
   getActiveDirectives(companionId: string): Promise<SelfDirective[]>;
   getRelationship(companionId: string, entityId: string): Promise<SelfRelationship | null>;
   getRelationships?(companionId: string): Promise<SelfRelationship[]>;
@@ -352,7 +354,11 @@ export interface SelfRepository {
   setExemplars?(companionId: string, exemplars: SelfDialogueExample[]): Promise<void>;
   commitDirectives(companionId: string, directives: SelfDirective[]): Promise<void>;
   updateRelationship(companionId: string, rel: SelfRelationship): Promise<void>;
-  disableDirective?(id: string): Promise<void>;
+  disableDirective?(id: string, companionId?: string): Promise<void>;
+  approveDirective?(id: string, companionId?: string): Promise<void>;
+  rejectDirective?(id: string, companionId?: string): Promise<void>;
+  revokeDirective?(id: string, companionId?: string): Promise<void>;
+  expireDirective?(id: string, companionId?: string): Promise<void>;
   getActiveSelf?(companionId: string): Promise<{
     identity?: SelfIdentity;
     personality?: PersonalityTraits;

@@ -159,6 +159,36 @@ In the web chat UI (`apps/web`), uploading a `.self` file displays an interactiv
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
+### 4.2 Conversational Teach Mode: Live Self Mutation Lifecycle
+
+In addition to batch `.self` file installation, Siduri supports **Conversational Teach Mode**, where the owner teaches the companion dynamically through natural language:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Owner as Owner (Teach Mode)
+    participant Core as Runtime / Teaching Extractor
+    participant Settler as Memory Settler
+    participant Gate as Truth Gate (/memory/proposals/approve)
+    participant SelfDB as SqliteSelfRepository (siduri.sqlite)
+    participant Compiler as ActiveSelfCompiler
+
+    Owner->>Core: "Your role is Lead Architect" / "I am your creator, Kur Zagin"
+    Core->>Core: Extract deterministic teaching claims & behavioral rules
+    Core->>Settler: Create PENDING claims and directives
+    Settler-->>Owner: Emit behavioral_proposals & memory proposals receipt
+    Owner->>Gate: Approve proposal (explicit confirmation)
+    Gate->>SelfDB: promoteClaimToSelf() commits to self_identity / self_relationships / self_directives
+    SelfDB-->>Compiler: Active Self updated immediately
+    Note over Compiler: Future conversation turns retrieve learned identity & directives
+```
+
+#### Invariants & Safety Guarantees:
+1. **Casual Mode Isolation (Zero Drift)**: Casual banter (e.g. "you are probably the funniest AI...") never creates identity claims. Teaching extraction is strictly bounded to deliberate Teach Mode or explicit teaching cues.
+2. **Deterministic Extraction**: Strips companion name prefixes, articles (`a`, `an`, `the`), and handles actor prefix normalization cleanly.
+3. **Approval Idempotency**: Repeatedly approving a proposal is a safe no-op that never creates duplicate rows in `siduri.sqlite`.
+4. **Crash & Restart Durability**: Learned identity, relationships, and active directives reside in persistent SQLite tables (`self_identity`, `self_relationships`, `self_directives`) and survive runtime teardown and restart without state loss.
+
 ---
 
 ## 5. Security & Prompt Injection Defense

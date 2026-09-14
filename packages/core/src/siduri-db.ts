@@ -15,6 +15,7 @@ export interface SelfIdentity {
   companionId: string;
   name: string;
   archetype?: string;
+  role?: string;
   origin?: string;
   ethos?: string;
   version: string;
@@ -156,6 +157,7 @@ export class SiduriDatabase {
         companion_id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         archetype TEXT,
+        role TEXT,
         origin TEXT,
         ethos TEXT,
         version TEXT NOT NULL,
@@ -338,6 +340,11 @@ export class SiduriDatabase {
     } catch {
       // Column already exists
     }
+    try {
+      this.db.exec("ALTER TABLE self_identity ADD COLUMN role TEXT");
+    } catch {
+      // Column already exists
+    }
   }
 
   public close(): void {
@@ -356,6 +363,7 @@ export class SiduriDatabase {
       companionId: row.companion_id,
       name: row.name,
       archetype: row.archetype || undefined,
+      role: row.role || row.archetype || undefined,
       origin: row.origin || undefined,
       ethos: row.ethos || undefined,
       version: row.version,
@@ -364,18 +372,21 @@ export class SiduriDatabase {
   }
 
   public setIdentity(identity: SelfIdentity): void {
+    const role = identity.role || identity.archetype || null;
+    const archetype = identity.archetype || identity.role || null;
     const stmt = this.db.prepare(`
-      INSERT INTO self_identity (companion_id, name, archetype, origin, ethos, version, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO self_identity (companion_id, name, archetype, role, origin, ethos, version, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(companion_id) DO UPDATE SET
         name = excluded.name,
         archetype = excluded.archetype,
+        role = excluded.role,
         origin = excluded.origin,
         ethos = excluded.ethos,
         version = excluded.version,
         updated_at = datetime('now')
     `);
-    stmt.run(identity.companionId, identity.name, identity.archetype || null, identity.origin || null, identity.ethos || null, identity.version);
+    stmt.run(identity.companionId, identity.name, archetype, role, identity.origin || null, identity.ethos || null, identity.version);
   }
 
   public getPersonality(companionId: string): PersonalityTraits | undefined {
@@ -449,6 +460,14 @@ export class SiduriDatabase {
     const stmt = this.db.prepare(`
       INSERT INTO self_directives (id, companion_id, priority, directive, status, category, scope_actor, supersedes_id, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        companion_id = excluded.companion_id,
+        priority = excluded.priority,
+        directive = excluded.directive,
+        status = excluded.status,
+        category = excluded.category,
+        scope_actor = excluded.scope_actor,
+        supersedes_id = excluded.supersedes_id
     `);
     stmt.run(
       directive.id,
@@ -482,6 +501,9 @@ export class SiduriDatabase {
     }
 
     if (normalizeStatus(row.status) !== 'pending') {
+      if (normalizeStatus(row.status) === 'active') {
+        return;
+      }
       throw new Error(
         `Cannot approve directive '${id}': invalid transition from status '${row.status}' to 'active' (only pending directives can be approved)`
       );
@@ -575,8 +597,10 @@ export class SiduriDatabase {
 
 
   public getRelationship(companionId: string, entityId: string): SelfRelationship | undefined {
-    const stmt = this.db.prepare('SELECT * FROM self_relationships WHERE companion_id = ? AND entity_id = ?');
-    const row = stmt.get(companionId, entityId) as any;
+    const stripped = entityId.startsWith('actor:') ? entityId.slice(6) : entityId;
+    const prefixed = entityId.startsWith('actor:') ? entityId : `actor:${entityId}`;
+    const stmt = this.db.prepare('SELECT * FROM self_relationships WHERE companion_id = ? AND (entity_id = ? OR entity_id = ? OR entity_id = ?)');
+    const row = stmt.get(companionId, entityId, stripped, prefixed) as any;
     if (!row) return undefined;
     return {
       companionId: row.companion_id,
@@ -875,7 +899,7 @@ export class SiduriDatabase {
     `);
     stmt.run(
       id,
-      claim.companionId,
+      claim.companionId || 'default',
       claim.subject,
       claim.predicate,
       claim.value,
@@ -910,6 +934,9 @@ export class SiduriDatabase {
     }
 
     if (normalizeStatus(row.status) !== 'pending') {
+      if (normalizeStatus(row.status) === 'approved') {
+        return;
+      }
       throw new Error(`Cannot approve claim '${id}': invalid transition from status '${row.status}' to 'approved' (only pending claims can be approved)`);
     }
 
@@ -931,6 +958,101 @@ export class SiduriDatabase {
     } else {
       const stmt = this.db.prepare("UPDATE memory_claims SET status = 'approved' WHERE id = ? AND LOWER(status) = 'pending'");
       stmt.run(id);
+    }
+
+    // Canonically promote approved claim to Self domain state (identity, role, relationships)
+    const approvedClaim = this.getClaim(id);
+    if (approvedClaim) {
+      this.promoteClaimToSelf(approvedClaim);
+    }
+  }
+
+  /**
+   * Canonically promotes a Claim into Self domain tables.
+   */
+  public promoteClaimToSelf(claim: MemoryClaim | any): void {
+    const companionId = claim.companionId || 'default';
+    const subject = (claim.subject || '').toLowerCase();
+    const predicate = (claim.predicate || '').toLowerCase();
+    const value = claim.value || '';
+
+    if (!value) return;
+
+    // 1. Identity mutations: companion identity/role/origin/name/ethos
+    if (
+      subject.startsWith('companion:') ||
+      subject === 'companion' ||
+      subject === 'siduri' ||
+      subject === 'self'
+    ) {
+      const existing: SelfIdentity = this.getIdentity(companionId) || {
+        companionId,
+        name: 'Siduri',
+        version: '1.0.0',
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (predicate === 'role' || predicate === 'archetype') {
+        existing.archetype = value;
+        existing.role = value;
+        this.setIdentity(existing);
+        this.commitDirective({
+          id: `dir-role-${claim.id || Date.now()}`,
+          companionId,
+          priority: 70,
+          directive: `Acknowledge role as ${value}`,
+          status: 'active' as any,
+          category: 'relational',
+          createdAt: new Date().toISOString(),
+        });
+      } else if (predicate === 'origin' || predicate === 'created_by') {
+        existing.origin = value;
+        this.setIdentity(existing);
+      } else if (predicate === 'name') {
+        existing.name = value;
+        this.setIdentity(existing);
+      } else if (predicate === 'ethos') {
+        existing.ethos = value;
+        this.setIdentity(existing);
+      }
+      return;
+    }
+
+    // 2. Relationship mutations: creator or user stated relationship
+    if (
+      claim.claimType === 'relationship' ||
+      predicate === 'stated_relationship' ||
+      predicate === 'relationship' ||
+      predicate === 'relationship_to_siduri'
+    ) {
+      const rawSubject = (claim.subject || 'actor:user').replace(/^actor:actor:/, 'actor:');
+      const isCreator = value.toLowerCase() === 'creator';
+      this.upsertRelationship({
+        companionId,
+        entityId: rawSubject,
+        entityType: 'human',
+        role: value,
+        stance: isCreator ? 'familiar_loyal' : 'neutral',
+        trustScore: isCreator ? 1.0 : 0.8,
+        familiarity: isCreator ? 0.9 : 0.5,
+        interactionConventions: isCreator
+          ? ['Direct communication', 'Highest administrative trust']
+          : [],
+      });
+      return;
+    }
+
+    // 3. Behavioral rule claim
+    if (predicate === 'behavioral_rule' || predicate === 'rule') {
+      this.commitDirective({
+        id: `dir-rule-${claim.id || Date.now()}`,
+        companionId,
+        priority: 60,
+        directive: value,
+        status: 'active' as any,
+        category: 'behavioral',
+        createdAt: new Date().toISOString(),
+      });
     }
   }
 

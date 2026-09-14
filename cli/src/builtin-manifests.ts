@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/self',
     organType: 'behavior',
-    version: '2.0.2',
+    version: '2.0.3',
     displayName: 'Self & Persona (Identity & Directives)',
     description: 'Autonomous persona compiler, relational stances, and .self asset loader',
     entrypoint: './dist/index.js',
@@ -297,7 +297,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/memory',
     organType: 'memory',
-    version: '2.0.2',
+    version: '2.0.3',
     displayName: 'Memory (Long-term Recall & State)',
     description: 'Relational semantic claims with Full-Text Search (FTS5) and companion isolation',
     entrypoint: './dist/index.js',

@@ -65,6 +65,13 @@ Human operators manage the Truth Gate via administrative API endpoints:
 ### 2.4 Immutability & Lineage Tracking
 Approved claims are immutable. Any modification via `memory.updateClaim()` proposes a new replacement claim with `supersedes: originalClaimId` in `'PENDING'` status. When the replacement is approved, the original claim transitions to `'SUPERSEDED'`, preserving full provenance and lineage in SQLite (`memory_claims.supersedes` and `memory_claims.source_event_id`). For cryptographic, tamper-evident operational audit trails with SHA-256 hash chaining, see the Action Audit System (`action_audit_log` via `ActionStore`).
 
+### 2.5 Active Self Promotion Bridge (`promoteClaimToSelf`)
+When an identity claim (role/archetype), relational claim (creator/stance), or behavioral directive is approved via `/memory/proposals/approve` or `/memory/behavioral/approve`, the Truth Gate triggers `promoteClaimToSelf()`:
+- **Identity / Role**: Updates `self_identity` (`role` and `archetype`), immediately reflected in the identity frame of `ActiveSelfCompiler`.
+- **Relationship / Stance**: Promotes creator and relational claims to `self_relationships`, updating affinity, trust, and interaction conventions for the specific actor.
+- **Behavioral Directives**: Activates the directive in `self_directives`, transitioning status from `pending` to `active` (with idempotent no-op on re-approval).
+- **Subsequent Dialogue**: Context retriever pulls live state directly from `SqliteSelfRepository`, making conversational learning durably active without restart or manual configuration.
+
 ---
 
 ## 3. Implementation: Response & Evidence Gating (`ResponseGatingEngine`)

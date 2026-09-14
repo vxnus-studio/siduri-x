@@ -110,6 +110,8 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
       const parts = [`Name: ${identity.name}`];
       if (identity.archetype) {
         parts.push(`Archetype: ${identity.archetype}`);
+      } else if (identity.role) {
+        parts.push(`Role: ${identity.role}`);
       }
       if (identity.ethos) {
         parts.push(`Ethos: ${identity.ethos}`);

@@ -287,8 +287,8 @@ describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
       // 3. Approving with correct companion succeeds
       await store.approveDirective(dir1.id, 'comp-A');
 
-      // 4. Cannot re-approve an ACTIVE directive
-      await expect(store.approveDirective(dir1.id, 'comp-A')).rejects.toThrow(/invalid transition/);
+      // 4. Re-approving an ACTIVE directive is idempotent (does not throw)
+      await expect(store.approveDirective(dir1.id, 'comp-A')).resolves.not.toThrow();
 
       // 5. Propose superseding directive
       const dir2 = await store.proposeDirective({

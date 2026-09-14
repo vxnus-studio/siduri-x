@@ -14,6 +14,9 @@ export interface PromptCompilationParams {
   requestContext: RequestContext;
   behavior?: BehaviorOrgan;
   activeDirectives: BehaviorDirective[];
+  selfIdentity?: any;
+  selfRelationship?: any;
+  personality?: any;
   subsystemDiagnostics: Record<string, string>;
   knowledgeData: KnowledgeItem[];
   memoryData: Claim[];
@@ -40,6 +43,9 @@ export async function compilePrompts(
     requestContext,
     behavior,
     activeDirectives,
+    selfIdentity,
+    selfRelationship,
+    personality,
     subsystemDiagnostics,
     knowledgeData,
     memoryData,
@@ -84,6 +90,9 @@ export async function compilePrompts(
       ? await behavior.compile({
           directives: activeDirectives,
           companionId,
+          identity: selfIdentity,
+          relationship: selfRelationship,
+          personality,
           actorId: requestContext.actor.actorId,
         })
       : '';

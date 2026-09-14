@@ -20,6 +20,7 @@ export interface AssembleResponseEnvelopeParams {
   speechId?: string;
   createdMemoryProposals: Claim[];
   memoryProposalReceipts: MemoryProposalReceipt[];
+  behavioralProposalReceipts?: any[];
   actionResults: ActionExecutionResult[];
   filteredEvidenceIds?: string[];
   filteredCitations?: ResponseCitation[];
@@ -72,6 +73,7 @@ export function assembleResponseEnvelope(
     speechId,
     createdMemoryProposals,
     memoryProposalReceipts,
+    behavioralProposalReceipts,
     actionResults,
     filteredEvidenceIds,
     filteredCitations,
@@ -108,6 +110,7 @@ export function assembleResponseEnvelope(
       language,
       proposals: createdMemoryProposals,
       memory_proposals: memoryProposalReceipts,
+      behavioral_proposals: behavioralProposalReceipts || [],
       action_results: actionResults,
       evidence_ids: filteredEvidenceIds,
       citations: filteredCitations,

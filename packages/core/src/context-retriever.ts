@@ -34,6 +34,9 @@ export interface RetrievedContext {
   collectedEvidence: EvidenceRecord[];
   citations: ResponseCitation[];
   lifeContext?: string[];
+  selfIdentity?: any;
+  selfRelationship?: any;
+  personality?: any;
 }
 
 /**
@@ -67,8 +70,16 @@ export async function retrieveRuntimeContext(
   // 1. Resolve External Knowledge organ (either explicitly passed or from legacy knowledge with .search)
   const extKnowledge = externalKnowledge || (knowledge && typeof (knowledge as any).search === 'function' ? knowledge : undefined);
 
-  // 2. Query all 4 streams in parallel
-  const [knowledgeData, memoryData, selfOrMemoryDirectives, lifeContext] = await Promise.all([
+  // 2. Query streams in parallel
+  const [
+    knowledgeData,
+    memoryData,
+    selfOrMemoryDirectives,
+    lifeContext,
+    selfIdentity,
+    selfRelationship,
+    personality,
+  ] = await Promise.all([
     // Stream A: External Cited Lore / Documentation
     extKnowledge && shouldQueryKnowledge && typeof (extKnowledge as any).search === 'function'
       ? (extKnowledge as any).search(perceivedText).catch((e: any) => {
@@ -116,6 +127,27 @@ export async function retrieveRuntimeContext(
           return [];
         })
       : Promise.resolve([]),
+
+    // Stream E: Self Identity
+    self && typeof self.getIdentity === 'function'
+      ? self.getIdentity(companionId).catch((e: any) => {
+          console.error('[SiduriRuntime] Self identity failed:', e.message);
+          return undefined;
+        })
+      : Promise.resolve(undefined),
+
+    // Stream F: Self Relationship toward interacting actor
+    self && typeof self.getRelationship === 'function' && requestContext.actor?.actorId
+      ? self.getRelationship(companionId, requestContext.actor.actorId).catch((e: any) => {
+          console.error('[SiduriRuntime] Self relationship failed:', e.message);
+          return null;
+        })
+      : Promise.resolve(null),
+
+    // Stream G: Self Personality
+    self && typeof self.getPersonality === 'function'
+      ? self.getPersonality(companionId).catch(() => undefined)
+      : Promise.resolve(undefined),
   ]);
 
   const activeDirectives: BehaviorDirective[] = (selfOrMemoryDirectives || []) as BehaviorDirective[];
@@ -172,5 +204,8 @@ export async function retrieveRuntimeContext(
     collectedEvidence,
     citations,
     lifeContext,
+    selfIdentity,
+    selfRelationship,
+    personality,
   };
 }
