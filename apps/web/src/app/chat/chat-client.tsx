@@ -132,6 +132,7 @@ export default function ChatClient() {
   const [ready, setReady] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [activeAvatarEvent, setActiveAvatarEvent] = useState<ActiveAvatarEvent | null>(null);
   const [avatarModelUrl, setAvatarModelUrl] = useState<string | undefined>(undefined);
@@ -639,6 +640,17 @@ export default function ChatClient() {
           )}
         </div>
         <div className="sidebar-footer">
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileDrawerOpen(false);
+              setIsMobileSettingsOpen(true);
+            }}
+            className="sidebar-settings-btn md:hidden"
+          >
+            <span>⚙</span>
+            <span className="truncate">Preferences ({selectedMode}{subtitleLanguage !== "off" ? ` · ${subtitleLanguage.toUpperCase()}` : ""})</span>
+          </button>
           <a className="sidebar-console" href="/operator">
             <span>⌘</span>
             <span>Operator console</span>
@@ -680,8 +692,34 @@ export default function ChatClient() {
               <span className={`status-light ${isPresenceOpen ? "online" : ""}`} />
               <span className="text-xs">Presence</span>
             </button>
+
+            {/* Mobile Options Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsMobileSettingsOpen(true)}
+              className={`connection-pill cursor-pointer transition-all md:hidden flex items-center gap-1.5 ${
+                subtitleLanguage !== "off" || selectedMode !== "auto"
+                  ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)]"
+                  : "hover:border-[var(--siduri-border-ember)] text-[var(--siduri-text-secondary)]"
+              }`}
+              aria-label="Open chat preferences"
+              title="Preferences & Subtitles"
+            >
+              <span className="text-xs">⚙</span>
+              <span className="text-xs font-mono font-medium tracking-wide">
+                {selectedMode !== "auto" && subtitleLanguage !== "off"
+                  ? `${selectedMode.slice(0, 4)}·${subtitleLanguage.slice(0, 2).toUpperCase()}`
+                  : selectedMode !== "auto"
+                  ? selectedMode
+                  : subtitleLanguage !== "off"
+                  ? `CC:${subtitleLanguage.slice(0, 2).toUpperCase()}`
+                  : "Options"}
+              </span>
+            </button>
+
+            {/* Desktop Subtitles Selector */}
             <div
-              className={`connection-pill flex items-center gap-1 sm:gap-1.5 transition-all focus-within:ring-1 focus-within:ring-[var(--siduri-border-ember)] ${
+              className={`connection-pill hidden md:flex items-center gap-1 sm:gap-1.5 transition-all focus-within:ring-1 focus-within:ring-[var(--siduri-border-ember)] ${
                 subtitleLanguage !== "off"
                   ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)]"
                   : "hover:border-[var(--siduri-border-ember)] text-[var(--siduri-text-secondary)]"
@@ -689,7 +727,7 @@ export default function ChatClient() {
               title="Subtitle translation language"
             >
               <span className={`status-light ${subtitleLanguage !== "off" ? "online" : ""}`} />
-              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60 hidden md:inline">Subtitles:</span>
+              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">Subtitles:</span>
               <select
                 value={["off", "en", "ja", "id", "es", "zh", "ko", "fr", "de"].includes(subtitleLanguage) ? subtitleLanguage : "custom-selected"}
                 onChange={(e) => {
@@ -710,7 +748,7 @@ export default function ChatClient() {
                     } catch {}
                   }
                 }}
-                className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0 max-w-[84px] xs:max-w-[100px] sm:max-w-none"
+                className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0"
                 aria-label="Select subtitle language"
               >
                 <option value="off" className="bg-[#121214] text-white">Subtitles: Off</option>
@@ -730,18 +768,19 @@ export default function ChatClient() {
                 <option value="custom" className="bg-[#121214] text-white">Other...</option>
               </select>
             </div>
-            <span className="connection-pill hidden sm:inline-flex" title={`Status: ${status}`}>
+            <span className="connection-pill hidden lg:inline-flex" title={`Status: ${status}`}>
               <span
                 className={`status-light ${status === "online" ? "online" : ""}`}
               />
               <span className="text-xs">{status}</span>
             </span>
-            <div className="connection-pill flex items-center gap-1 sm:gap-1.5" title="Operating interaction mode">
-              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60 hidden md:inline">Mode:</span>
+            {/* Desktop Mode Selector */}
+            <div className="connection-pill hidden md:flex items-center gap-1 sm:gap-1.5" title="Operating interaction mode">
+              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">Mode:</span>
               <select
                 value={selectedMode}
                 onChange={(e) => setSelectedMode(e.target.value as any)}
-                className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0 max-w-[84px] xs:max-w-[100px] sm:max-w-none"
+                className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0"
                 aria-label="Select interaction mode"
               >
                 <option value="auto" className="bg-[#121214] text-white">Auto</option>
@@ -787,9 +826,21 @@ export default function ChatClient() {
                     <div className="message-body">
                       <div className="message-meta">
                         <span>{item.role === "user" ? "You" : "Siduri"}</span>
-                        <time>{formatTime(item.createdAt)}</time>
+                        {item.role === "assistant" && !item.content && busy ? (
+                          <span className="thinking-label">thinking</span>
+                        ) : (
+                          <time>{formatTime(item.createdAt)}</time>
+                        )}
                       </div>
-                      <p className="message-primary">{item.content}</p>
+                      {item.role === "assistant" && !item.content && busy ? (
+                        <div className="thinking-dots">
+                          <i />
+                          <i />
+                          <i />
+                        </div>
+                      ) : (
+                        <p className="message-primary">{item.content}</p>
+                      )}
                       {subtitleLanguage !== "off" && item.role === "assistant" && (() => {
                         const sub =
                           item.subtitles?.[subtitleLanguage] ||
@@ -925,7 +976,7 @@ export default function ChatClient() {
                   </article>
                 ))
               )}
-              {busy && !isPresenceOpen && (
+              {busy && !isPresenceOpen && (!messages.length || messages[messages.length - 1]?.role !== "assistant") && (
                 <div className="platform-message assistant thinking-message">
                   <div className="message-avatar">S</div>
                   <div className="message-body">
@@ -991,6 +1042,174 @@ export default function ChatClient() {
           evidence.
         </p>
       </main>
+
+      {/* Mobile Preferences Bottom Sheet */}
+      {isMobileSettingsOpen && (
+        <div className="mobile-settings-overlay fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:hidden">
+          <div
+            className="mobile-settings-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsMobileSettingsOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            className="mobile-settings-sheet relative z-10 w-full max-w-lg bg-[#141418] border border-[var(--siduri-border-subtle)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl animate-slide-up flex flex-col gap-5 text-[#eee8df]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Chat preferences"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--siduri-border-subtle)]">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold tracking-wide text-[#eee8df]">Chat Preferences</span>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)] border border-[var(--siduri-border-ember)]">
+                  Mobile
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileSettingsOpen(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-[var(--siduri-text-muted)] hover:text-[var(--siduri-text-primary)] hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-[var(--siduri-border-subtle)]"
+                aria-label="Close preferences"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Interaction Mode */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-mono uppercase tracking-wider text-[var(--siduri-text-secondary)]">
+                Interaction Mode
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "auto", label: "Auto", desc: "Adaptive context-aware" },
+                  { id: "casual", label: "Casual", desc: "Natural chat & banter" },
+                  { id: "teach", label: "Teach", desc: "Memory & directives" },
+                  { id: "hybrid", label: "Hybrid", desc: "Balanced conversation" },
+                ].map((m) => {
+                  const isSelected = selectedMode === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedMode(m.id as any)}
+                      className={`flex flex-col text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)] ring-1 ring-[var(--siduri-border-ember)]"
+                          : "border-[var(--siduri-border-subtle)] bg-[#19191e]/60 text-[var(--siduri-text-secondary)] hover:border-[var(--siduri-border-ember)]/50 hover:text-[var(--siduri-text-primary)]"
+                      }`}
+                    >
+                      <span className="text-xs font-bold">{m.label}</span>
+                      <span className="text-[10px] opacity-75 mt-0.5 line-clamp-1">{m.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Subtitles */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono uppercase tracking-wider text-[var(--siduri-text-secondary)]">
+                  Subtitle Translation
+                </span>
+                {subtitleLanguage !== "off" && (
+                  <span className="text-[10px] font-mono uppercase text-[var(--siduri-ember-highlight)]">
+                    Active: {subtitleLanguage.toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-[#101014] rounded-xl border border-[var(--siduri-border-subtle)]">
+                {[
+                  { code: "off", label: "Off" },
+                  { code: "en", label: "English (EN)" },
+                  { code: "ja", label: "Japanese (JA)" },
+                  { code: "id", label: "Indonesian (ID)" },
+                  { code: "es", label: "Spanish (ES)" },
+                  { code: "zh", label: "Chinese (ZH)" },
+                  { code: "ko", label: "Korean (KO)" },
+                  { code: "fr", label: "French (FR)" },
+                  { code: "de", label: "German (DE)" },
+                ].map((lang) => {
+                  const isSelected = subtitleLanguage === lang.code;
+                  return (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => {
+                        setSubtitleLanguage(lang.code);
+                        try {
+                          localStorage.setItem("siduri.chat.subtitleLanguage", lang.code);
+                        } catch {}
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-[var(--siduri-ember)] text-[#19151a] font-semibold shadow"
+                          : "bg-[#18181d] text-[var(--siduri-text-secondary)] hover:text-[var(--siduri-text-primary)] hover:bg-[#222228]"
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const custom = prompt("Enter subtitle language code (e.g. it, ru, pt, vi):");
+                    if (custom && custom.trim()) {
+                      const clean = custom.trim().toLowerCase();
+                      setSubtitleLanguage(clean);
+                      try {
+                        localStorage.setItem("siduri.chat.subtitleLanguage", clean);
+                      } catch {}
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#18181d] text-[var(--siduri-text-secondary)] hover:text-[var(--siduri-text-primary)] hover:bg-[#222228] cursor-pointer"
+                >
+                  Custom...
+                </button>
+              </div>
+            </div>
+
+            {/* Avatar Presence Toggle */}
+            <div className="flex items-center justify-between pt-1">
+              <div>
+                <span className="text-xs font-semibold text-[#eee8df] block">Live2D Avatar Presence</span>
+                <span className="text-[11px] text-[var(--siduri-text-muted)]">Render animated companion in chat</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPresenceOpen((prev) => !prev)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                  isPresenceOpen ? "bg-[var(--siduri-ember)]" : "bg-[#282830]"
+                }`}
+                role="switch"
+                aria-checked={isPresenceOpen}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    isPresenceOpen ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Done Button & Status */}
+            <div className="flex items-center justify-between pt-3 border-t border-[var(--siduri-border-subtle)]">
+              <div className="flex items-center gap-2">
+                <span className={`status-light ${status === "online" ? "online" : ""}`} />
+                <span className="text-xs text-[var(--siduri-text-muted)] capitalize">{status}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileSettingsOpen(false)}
+                className="px-4 py-2 rounded-xl bg-[var(--siduri-tint-med)] border border-[var(--siduri-border-ember)] text-[var(--siduri-ember-highlight)] text-xs font-semibold hover:bg-[var(--siduri-border-ember)] hover:text-[#19151a] transition-all cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

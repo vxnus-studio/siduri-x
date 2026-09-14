@@ -90,4 +90,53 @@ describe("Mobile Viewport and Layout Configuration", () => {
       expect(state.isMobileDrawerOpen).toBe(false);
     });
   });
+
+  describe("Mobile preferences sheet and navbar layout logic", () => {
+    interface MobileNavbarState {
+      isMobileSettingsOpen: boolean;
+      selectedMode: "auto" | "casual" | "teach" | "hybrid";
+      subtitleLanguage: string;
+      isPresenceOpen: boolean;
+    }
+
+    function formatMobileOptionsLabel(mode: string, sub: string): string {
+      if (mode !== "auto" && sub !== "off") {
+        return `${mode.slice(0, 4)}·${sub.slice(0, 2).toUpperCase()}`;
+      }
+      if (mode !== "auto") return mode;
+      if (sub !== "off") return `CC:${sub.slice(0, 2).toUpperCase()}`;
+      return "Options";
+    }
+
+    test("Mobile options label dynamically formats based on active settings", () => {
+      expect(formatMobileOptionsLabel("auto", "off")).toBe("Options");
+      expect(formatMobileOptionsLabel("teach", "off")).toBe("teach");
+      expect(formatMobileOptionsLabel("auto", "ja")).toBe("CC:JA");
+      expect(formatMobileOptionsLabel("hybrid", "en")).toBe("hybr·EN");
+    });
+
+    test("Opening mobile settings sheet transitions state cleanly", () => {
+      let state: MobileNavbarState = {
+        isMobileSettingsOpen: false,
+        selectedMode: "auto",
+        subtitleLanguage: "off",
+        isPresenceOpen: false,
+      };
+
+      // User opens settings sheet
+      state = { ...state, isMobileSettingsOpen: true };
+      expect(state.isMobileSettingsOpen).toBe(true);
+
+      // User updates mode to teach and subtitle to ja
+      state = { ...state, selectedMode: "teach", subtitleLanguage: "ja" };
+      expect(state.selectedMode).toBe("teach");
+      expect(state.subtitleLanguage).toBe("ja");
+
+      // User closes settings sheet
+      state = { ...state, isMobileSettingsOpen: false };
+      expect(state.isMobileSettingsOpen).toBe(false);
+      expect(formatMobileOptionsLabel(state.selectedMode, state.subtitleLanguage)).toBe("teac·JA");
+    });
+  });
 });
+

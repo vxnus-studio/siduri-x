@@ -16,10 +16,11 @@ type Status = {
   tone?: "good" | "warn" | "bad";
 };
 type Proposal = {
-  proposal_id: string;
-  content: string;
-  provenance: string;
-  sensitivity: string;
+  id?: string;
+  proposal_id?: string;
+  content?: string;
+  provenance?: string;
+  sensitivity?: string;
   status: string;
   subject?: string;
   predicate?: string;
@@ -27,36 +28,47 @@ type Proposal = {
   claim_type?: string;
 };
 type Claim = {
-  claim_id: string;
+  id?: string;
+  claim_id?: string;
   subject: string;
   predicate: string;
   value: string;
-  claim_type: string;
+  claim_type?: string;
   status: string;
-  provenance: string;
-  asserted_at: string;
-  sensitivity: string;
+  provenance?: string;
+  asserted_at?: string;
+  assertedAt?: string;
+  sensitivity?: string;
 };
 type MemoryItem = {
-  memory_id: string;
-  content: string;
-  provenance: string;
-  sensitivity: string;
-  created_at: string;
+  id?: string;
+  memory_id?: string;
+  content?: string;
+  subject?: string;
+  predicate?: string;
+  value?: string;
+  provenance?: string;
+  sensitivity?: string;
+  created_at?: string;
+  assertedAt?: string;
 };
 type BehavioralDirective = {
-  directive_id: string;
-  memory_class: string;
-  domain: string;
-  subject: string;
-  predicate: string;
-  value: string;
-  activation: string;
+  id?: string;
+  directive_id?: string;
+  memory_class?: string;
+  category?: string;
+  domain?: string;
+  subject?: string;
+  predicate?: string;
+  value?: string;
+  directive?: string;
+  activation?: string;
   status: string;
-  created_at: string;
-  scope: any;
-  behavior: any;
-  confirmed_by: string;
+  created_at?: string;
+  createdAt?: string;
+  scope?: any;
+  behavior?: any;
+  confirmed_by?: string;
   supersedes_id?: string;
   valid_from?: string;
   valid_until?: string;
@@ -76,7 +88,8 @@ type Observation = {
   readings?: unknown[];
 };
 
-function shortId(value: string): string {
+function shortId(value?: string | null): string {
+  if (!value) return "—";
   return value.length > 19 ? `${value.slice(0, 9)}…${value.slice(-7)}` : value;
 }
 function formatDate(value?: string): string {
@@ -288,7 +301,7 @@ export default function OperatorClient() {
     content?: string,
   ): Promise<void> {
     await postAction(path, {
-      id: proposal.proposal_id,
+      id: proposal.id || proposal.proposal_id,
       companionId: "default",
       ...(content === undefined ? {} : { content }),
     });
@@ -520,7 +533,7 @@ function MemoryView({
               <tbody>
                 {proposals.map((item) => (
                   <ProposalRow
-                    key={item.proposal_id}
+                    key={item.id || item.proposal_id}
                     item={item}
                     onAction={onAction}
                   />
@@ -553,88 +566,91 @@ function MemoryView({
                 </tr>
               </thead>
               <tbody>
-                {directives.map((d) => (
-                  <tr key={d.directive_id}>
-                    <td>
-                      <strong>{formatRuntimeEffect(d)}</strong>
-                      <details className="row-details">
-                        <summary>{shortId(d.directive_id)}</summary>
-                        <pre>{JSON.stringify(d, null, 2)}</pre>
-                      </details>
-                    </td>
-                    <td>
-                      <span className="tag">{d.activation}</span>
-                    </td>
-                    <td>
-                      <span className="tag">
-                        {d.domain} / {d.memory_class}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`tag status-${(d.status || "").toLowerCase().replace(/_/g, "-")}`}>
-                        {d.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        {(d.status || "").toLowerCase() === "pending" && (
-                          <>
-                            <button
-                              className="tiny-button approve-button"
-                              onClick={() =>
-                                void directiveAction(
-                                  "/memory/behavioral/approve",
-                                  d.directive_id,
-                                )
-                              }
-                            >
-                              Approve
-                            </button>
-                            <button
-                              className="tiny-button danger-button"
-                              onClick={() =>
-                                void directiveAction(
-                                  "/memory/behavioral/reject",
-                                  d.directive_id,
-                                )
-                              }
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {((d.status || "").toLowerCase() === "active" || (d.status || "").toLowerCase() === "confirmed") && (
-                          <>
-                            <button
-                              className="tiny-button danger-button"
-                              onClick={() =>
-                                void directiveAction(
-                                  "/memory/behavioral/revoke",
-                                  d.directive_id,
-                                )
-                              }
-                            >
-                              Revoke
-                            </button>
-                            {d.activation !== "disabled" && (
+                {directives.map((d) => {
+                  const directiveId = d.id || d.directive_id || "";
+                  return (
+                    <tr key={directiveId}>
+                      <td>
+                        <strong>{formatRuntimeEffect(d)}</strong>
+                        <details className="row-details">
+                          <summary>{shortId(directiveId)}</summary>
+                          <pre>{JSON.stringify(d, null, 2)}</pre>
+                        </details>
+                      </td>
+                      <td>
+                        <span className="tag">{d.activation || "active"}</span>
+                      </td>
+                      <td>
+                        <span className="tag">
+                          {d.domain || d.category || "general"} / {d.memory_class || d.category || "directive"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`tag status-${(d.status || "").toLowerCase().replace(/_/g, "-")}`}>
+                          {d.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          {(d.status || "").toLowerCase() === "pending" && (
+                            <>
                               <button
-                                className="tiny-button"
+                                className="tiny-button approve-button"
                                 onClick={() =>
                                   void directiveAction(
-                                    "/memory/behavioral/disable",
-                                    d.directive_id,
+                                    "/memory/behavioral/approve",
+                                    directiveId,
                                   )
                                 }
                               >
-                                Disable
+                                Approve
                               </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                              <button
+                                className="tiny-button danger-button"
+                                onClick={() =>
+                                  void directiveAction(
+                                    "/memory/behavioral/reject",
+                                    directiveId,
+                                  )
+                                }
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          {((d.status || "").toLowerCase() === "active" || (d.status || "").toLowerCase() === "confirmed") && (
+                            <>
+                              <button
+                                className="tiny-button danger-button"
+                                onClick={() =>
+                                  void directiveAction(
+                                    "/memory/behavioral/revoke",
+                                    directiveId,
+                                  )
+                                }
+                              >
+                                Revoke
+                              </button>
+                              {d.activation !== "disabled" && (
+                                <button
+                                  className="tiny-button"
+                                  onClick={() =>
+                                    void directiveAction(
+                                      "/memory/behavioral/disable",
+                                      directiveId,
+                                    )
+                                  }
+                                >
+                                  Disable
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -665,26 +681,29 @@ function MemoryView({
                 {claims
                   .slice()
                   .reverse()
-                  .map((claim) => (
-                    <tr key={claim.claim_id}>
-                      <td>
-                        <strong>{claim.subject}</strong>
-                        <details className="row-details">
-                          <summary>{shortId(claim.claim_id)}</summary>
-                          <pre>{JSON.stringify(claim, null, 2)}</pre>
-                        </details>
-                      </td>
-                      <td>
-                        <span className="tag">{claim.predicate}</span>
-                      </td>
-                      <td>{claim.value}</td>
-                      <td>
-                        <span className={`tag status-${claim.status}`}>
-                          {claim.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  .map((claim) => {
+                    const claimId = claim.id || claim.claim_id || "";
+                    return (
+                      <tr key={claimId}>
+                        <td>
+                          <strong>{claim.subject}</strong>
+                          <details className="row-details">
+                            <summary>{shortId(claimId)}</summary>
+                            <pre>{JSON.stringify(claim, null, 2)}</pre>
+                          </details>
+                        </td>
+                        <td>
+                          <span className="tag">{claim.predicate}</span>
+                        </td>
+                        <td>{claim.value}</td>
+                        <td>
+                          <span className={`tag status-${(claim.status || "").toLowerCase().replace(/_/g, "-")}`}>
+                            {claim.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
@@ -715,24 +734,32 @@ function MemoryView({
                 {items
                   .slice()
                   .reverse()
-                  .map((item) => (
-                    <tr key={item.memory_id}>
-                      <td>
-                        <strong>{item.content}</strong>
-                        <details className="row-details">
-                          <summary>{shortId(item.memory_id)}</summary>
-                          <pre>{JSON.stringify(item, null, 2)}</pre>
-                        </details>
-                      </td>
-                      <td>
-                        <span className="tag">{item.provenance}</span>
-                      </td>
-                      <td>
-                        <span className="tag">{item.sensitivity}</span>
-                      </td>
-                      <td>{formatDate(item.created_at)}</td>
-                    </tr>
-                  ))}
+                  .map((item) => {
+                    const itemId = item.id || item.memory_id || "";
+                    const factContent =
+                      item.content ||
+                      (item.subject && item.predicate
+                        ? `${item.subject} ${item.predicate} ${item.value}`
+                        : item.value || "—");
+                    return (
+                      <tr key={itemId}>
+                        <td>
+                          <strong>{factContent}</strong>
+                          <details className="row-details">
+                            <summary>{shortId(itemId)}</summary>
+                            <pre>{JSON.stringify(item, null, 2)}</pre>
+                          </details>
+                        </td>
+                        <td>
+                          <span className="tag">{item.provenance || "conversation"}</span>
+                        </td>
+                        <td>
+                          <span className="tag">{item.sensitivity || "normal"}</span>
+                        </td>
+                        <td>{formatDate(item.created_at || item.assertedAt)}</td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
@@ -753,25 +780,26 @@ function ProposalRow({
   item: Proposal;
   onAction: (path: string, item: Proposal, content?: string) => Promise<void>;
 }) {
-  const [content, setContent] = useState(item.content);
+  const proposalId = item.id || item.proposal_id || "";
+  const [content, setContent] = useState(item.content || "");
   return (
     <tr>
       <td>
         <strong>{formatClaimReceipt(item)}</strong>
         <details className="row-details">
-          <summary>Edit raw record · {shortId(item.proposal_id)}</summary>
+          <summary>Edit raw record · {shortId(proposalId)}</summary>
           <textarea
             className="table-editor"
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            aria-label={`Memory candidate ${item.proposal_id}`}
+            aria-label={`Memory candidate ${proposalId}`}
           />
           <pre>{JSON.stringify(item, null, 2)}</pre>
         </details>
       </td>
-      <td>{item.provenance}</td>
+      <td>{item.provenance || "conversation"}</td>
       <td>
-        <span className="tag">{item.sensitivity}</span>
+        <span className="tag">{item.sensitivity || "normal"}</span>
       </td>
       <td>
         <div className="table-actions">

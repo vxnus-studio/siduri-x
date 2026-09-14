@@ -1822,6 +1822,21 @@ body:has(#overlay) {
   50% { opacity: 0.7; transform: scale(1.08); }
 }
 
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* ==========================================================================
    Responsive Breakpoints
    ========================================================================== */
@@ -1956,6 +1971,54 @@ body:has(#overlay) {
     padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
     height: 52px;
     min-height: 52px;
+    gap: 8px;
+  }
+
+  .chat-header-actions {
+    gap: 6px;
+  }
+
+  .chat-header-actions .connection-pill {
+    padding: 5px 10px;
+    gap: 6px;
+    height: 32px;
+    min-height: 32px;
+    font-size: 11px;
+  }
+
+  .sidebar-settings-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--chat-line);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--siduri-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-bottom: 6px;
+    text-decoration: none;
+  }
+
+  .sidebar-settings-btn:active {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--siduri-border-ember);
+    color: var(--siduri-text-primary);
+  }
+
+  .mobile-settings-sheet {
+    max-height: 85dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .console-back-link {
+    display: none !important;
   }
 
   .conversation-surface {

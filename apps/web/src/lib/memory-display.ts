@@ -3,6 +3,7 @@ type ClaimLike = {
   predicate?: string;
   value?: string;
   content?: string;
+  directive?: string;
 };
 
 type RuntimeEffectLike = ClaimLike & {
@@ -17,7 +18,8 @@ function words(value: string): string {
   return value.replace(/[._]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function sentence(value: string): string {
+function sentence(value?: string | null): string {
+  if (!value || typeof value !== "string") return "";
   const trimmed = value.trim();
   return trimmed && !/[.!?]$/.test(trimmed) ? `${trimmed}.` : trimmed;
 }
@@ -33,7 +35,9 @@ export function formatClaimReceipt(item: ClaimLike): string {
   const normalizedPredicate = predicate.toLowerCase();
   const value = item.value?.trim() ?? "";
 
-  if (!subject || !predicate || !value) return sentence(item.content ?? value);
+  if (!subject || !predicate || !value) {
+    return sentence(item.content || value || item.directive || "");
+  }
 
   if (
     SELF_SUBJECTS.has(normalizedSubject) ||
@@ -82,5 +86,6 @@ export function formatRuntimeEffect(item: RuntimeEffectLike): string {
     return sentence(`Set user relationship to ${value}`);
   }
   if (USER_SUBJECTS.has(subject) && predicate === "name") return sentence(`Set user name to ${value}`);
+  if (item.directive) return sentence(item.directive);
   return formatClaimReceipt(item);
 }

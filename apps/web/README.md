@@ -12,6 +12,7 @@ The web client provides a sovereign, private interface for interacting with your
 * **Local-First Communication**: Directly communicates with your local Siduri runtime (`127.0.0.1:3000` / `/api`).
 * **Mobile-First Responsive Layout**:
   * **Off-Canvas Navigation Drawer**: Slide-over drawer for browsing and managing conversation history with backdrop dismiss and touch-friendly targets (WCAG compliant).
+  * **Streamlined Mobile Topbar & Preferences Sheet**: Compact, uncluttered header on small viewports with dedicated sliding preferences sheet for interaction modes, subtitle languages, avatar presence, and connection status.
   * **Virtual Keyboard Adaptation**: Utilizes Next.js `interactiveWidget: "resizes-content"` and viewport safe-area insets (`env(safe-area-inset-*)`) for iOS Safari and Android Chrome.
   * **Interaction Mode Switcher**: Easily switch between **Auto** (inferred), **Casual** (zero drift), **Teach** (human-in-the-loop proposals), and **Hybrid** (default).
   * **Inline Memory & Behavioral Receipts**: Staged claim receipts rendered inline with single-tap **Approve** and **Reject** controls.
