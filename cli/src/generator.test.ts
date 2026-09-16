@@ -222,6 +222,17 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     expect(srcIndexJs).toContain('relative.startsWith(\'..\')');
     expect(srcIndexJs).toContain('path.isAbsolute(relative)');
     expect(srcIndexJs).toContain('decodeURIComponent');
+
+    // 4. Chat endpoints define payload before accessing payload.context
+    const chatEndpointIndex = srcIndexJs.indexOf("pathname === '/chat'");
+    const chatStreamEndpointIndex = srcIndexJs.indexOf("pathname === '/chat/stream'");
+    expect(chatEndpointIndex).toBeGreaterThan(-1);
+    expect(chatStreamEndpointIndex).toBeGreaterThan(-1);
+
+    const chatSlice = srcIndexJs.slice(chatEndpointIndex, chatStreamEndpointIndex);
+    const chatStreamSlice = srcIndexJs.slice(chatStreamEndpointIndex, chatStreamEndpointIndex + 1500);
+    expect(chatSlice).toContain("const payload = JSON.parse(body || '{}');");
+    expect(chatStreamSlice).toContain("const payload = JSON.parse(body || '{}');");
   });
 });
 
