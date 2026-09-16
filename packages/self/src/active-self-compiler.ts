@@ -113,6 +113,9 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
       } else if (identity.role) {
         parts.push(`Role: ${identity.role}`);
       }
+      if (identity.origin) {
+        parts.push(`Origin/Created By: ${identity.origin}`);
+      }
       if (identity.ethos) {
         parts.push(`Ethos: ${identity.ethos}`);
       }

@@ -359,6 +359,36 @@ export class SiduriDatabase {
     } catch {
       // Column already exists
     }
+
+    try {
+      // Reconcile creator claims that may have been recorded before origin dual-promotion
+      const creatorClaims = this.db.prepare(`
+        SELECT * FROM memory_claims
+        WHERE predicate = 'stated_relationship'
+          AND LOWER(value) LIKE '%creator%'
+          AND LOWER(status) = 'approved'
+      `).all() as any[];
+
+      for (const claim of creatorClaims) {
+        const identity = this.db.prepare(`SELECT * FROM self_identity WHERE companion_id = ?`).get(claim.companion_id) as any;
+        if (identity && !identity.origin) {
+          const nameClaim = this.db.prepare(`
+            SELECT value FROM memory_claims
+            WHERE companion_id = ? AND subject = ? AND predicate = 'name' AND LOWER(status) = 'approved'
+            ORDER BY asserted_at DESC LIMIT 1
+          `).get(claim.companion_id, claim.subject) as any;
+          const originName = nameClaim?.value || (claim.subject.startsWith('actor:') ? claim.subject.slice(6) : claim.subject);
+          this.db.prepare(`UPDATE self_identity SET origin = ? WHERE companion_id = ?`).run(originName, claim.companion_id);
+        }
+
+        const rel = this.db.prepare(`SELECT * FROM self_relationships WHERE companion_id = ? AND entity_id = ?`).get(claim.companion_id, claim.subject) as any;
+        if (rel && (rel.role !== 'creator' || rel.stance !== 'familiar_loyal')) {
+          this.db.prepare(`UPDATE self_relationships SET role = 'creator', stance = 'familiar_loyal', trust_score = 1.0 WHERE companion_id = ? AND entity_id = ?`).run(claim.companion_id, claim.subject);
+        }
+      }
+    } catch {
+      // Best-effort auto-reconciliation
+    }
   }
 
   public close(): void {
@@ -614,7 +644,11 @@ export class SiduriDatabase {
     const stripped = entityId.startsWith('actor:') ? entityId.slice(6) : entityId;
     const prefixed = entityId.startsWith('actor:') ? entityId : `actor:${entityId}`;
     const stmt = this.db.prepare('SELECT * FROM self_relationships WHERE companion_id = ? AND (entity_id = ? OR entity_id = ? OR entity_id = ?)');
-    const row = stmt.get(companionId, entityId, stripped, prefixed) as any;
+    let row = stmt.get(companionId, entityId, stripped, prefixed) as any;
+    if (!row && (entityId === 'owner-user' || entityId === 'local-user' || entityId === 'owner' || entityId === 'primary' || entityId === 'user')) {
+      const fallbackStmt = this.db.prepare("SELECT * FROM self_relationships WHERE companion_id = ? AND entity_type = 'human' ORDER BY updated_at DESC LIMIT 1");
+      row = fallbackStmt.get(companionId) as any;
+    }
     if (!row) return undefined;
     return {
       companionId: row.companion_id,
@@ -1051,18 +1085,21 @@ export class SiduriDatabase {
       predicate === 'affiliation'
     ) {
       const rawSubject = (claim.subject || 'actor:user').replace(/^actor:actor:/, 'actor:');
-      const isCreator = value.toLowerCase() === 'creator';
+      const isCreator = value.toLowerCase().includes('creator');
       const isName = predicate === 'name' || predicate === 'preferred_address';
       const isAffil = predicate === 'affiliation';
 
       const existingRel = this.getRelationship(companionId, rawSubject);
-      const role = isCreator ? value : (existingRel?.role || (isName || isAffil ? existingRel?.role : value));
+      const isPriorCreator = existingRel?.role === 'creator' || (existingRel?.stance === 'familiar_loyal' && existingRel.trustScore === 1.0);
+      const role = isCreator
+        ? 'creator'
+        : (isPriorCreator ? 'creator' : (existingRel?.role && existingRel.role !== 'user' ? existingRel.role : (isName || isAffil ? existingRel?.role || 'user' : value)));
       const name = isName ? value : existingRel?.name;
       const affiliation = isAffil ? value : existingRel?.affiliation;
-      const stance = isCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
-      const trustScore = isCreator ? 1.0 : (existingRel?.trustScore ?? 0.8);
-      const familiarity = isCreator ? 0.9 : (existingRel?.familiarity ?? 0.5);
-      const interactionConventions = isCreator
+      const stance = isCreator || isPriorCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
+      const trustScore = isCreator || isPriorCreator ? 1.0 : (existingRel?.trustScore ?? 0.8);
+      const familiarity = isCreator || isPriorCreator ? 0.9 : (existingRel?.familiarity ?? 0.5);
+      const interactionConventions = isCreator || isPriorCreator
         ? Array.from(new Set([...(existingRel?.interactionConventions || []), 'Direct communication', 'Highest administrative trust']))
         : (existingRel?.interactionConventions || []);
 
@@ -1078,6 +1115,20 @@ export class SiduriDatabase {
         familiarity,
         interactionConventions,
       });
+
+      // Dual promotion: If this actor is established as creator, also populate companion's origin in self_identity
+      if (isCreator || (isName && isPriorCreator)) {
+        const existingIdentity: SelfIdentity = this.getIdentity(companionId) || {
+          companionId,
+          name: 'Siduri',
+          version: '1.0.0',
+          updatedAt: new Date().toISOString(),
+        };
+        const creatorName = name || existingRel?.name || (rawSubject.startsWith('actor:') && rawSubject !== 'actor:user' && rawSubject !== 'actor:primary' ? rawSubject.slice(6) : value);
+        existingIdentity.origin = creatorName !== 'user' && creatorName !== 'primary' ? creatorName : value;
+        existingIdentity.updatedAt = new Date().toISOString();
+        this.setIdentity(existingIdentity);
+      }
 
       if (isName) {
         this.commitDirective({

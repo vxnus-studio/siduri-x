@@ -113,6 +113,9 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
           if (ctx.identity.archetype || ctx.identity.role) {
             parts.push(`- Role: ${ctx.identity.role || ctx.identity.archetype}`);
           }
+          if (ctx.identity.origin) {
+            parts.push(`- Origin/Created By: ${ctx.identity.origin}`);
+          }
         }
         if (ctx.relationship) {
           const nameStr = ctx.relationship.name ? ` [Name: ${ctx.relationship.name}]` : '';
@@ -737,6 +740,189 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     expect(lastCallCtx.systemPrompt).toContain('Role: VXNUS Studio Staff');
     expect(lastCallCtx.systemPrompt).toContain('familiar_loyal');
     expect(lastCallCtx.systemPrompt).toContain('Kur Zagin');
+
+    db.close();
+  });
+
+  // =========================================================================
+  // Test I: Benchmark replication (name, creator, new chat turn-1 recognition)
+  // =========================================================================
+  it('Test I: reproduces benchmark scenario: teaches name, teaches creator relationship, and verifies new session recognizes creator in origin and relationship', async () => {
+    const db = new SiduriDatabase({ dbPath });
+    const companionId = 'comp-test-i';
+    const self = createSelfRepository(db);
+    const memory = createMemoryOrgan(db);
+    const behavior = createBehaviorCompiler();
+
+    const mockBrain = {
+      generatePlan: jest.fn().mockImplementation(async (brainCtx: any) => {
+        const lastMsg = brainCtx.recentMessages?.[brainCtx.recentMessages.length - 1]?.content || '';
+        const memoryProposals: any[] = [];
+        const behaviorProposals: any[] = [];
+
+        if (/your name is Siduri/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: 'companion:self',
+            predicate: 'name',
+            value: 'Siduri',
+          });
+          behaviorProposals.push({
+            directive: 'Address self as Siduri',
+            category: 'relational',
+            subject: 'companion:self',
+            predicate: 'name',
+            value: 'Siduri',
+          });
+        }
+
+        if (/i am Kur Zagin, your creator/i.test(lastMsg)) {
+          memoryProposals.push({
+            subject: 'actor:kur_zagin',
+            predicate: 'name',
+            value: 'Kur Zagin',
+          });
+          memoryProposals.push({
+            subject: 'actor:kur_zagin',
+            predicate: 'stated_relationship',
+            value: 'creator of companion Siduri',
+          });
+          behaviorProposals.push({
+            directive: 'Acknowledge actor:kur_zagin as creator of companion Siduri',
+            category: 'relational',
+            subject: 'actor:kur_zagin',
+            predicate: 'stated_relationship',
+            value: 'creator of companion Siduri',
+          });
+          behaviorProposals.push({
+            directive: 'Address actor:kur_zagin as Kur Zagin',
+            category: 'behavioral',
+            subject: 'actor:kur_zagin',
+            predicate: 'name',
+            value: 'Kur Zagin',
+          });
+        }
+
+        return {
+          speech: 'I understand and acknowledge.',
+          language: 'en',
+          memoryProposals: memoryProposals.length > 0 ? memoryProposals : undefined,
+          behaviorProposals: behaviorProposals.length > 0 ? behaviorProposals : undefined,
+          _receivedSystemPrompt: brainCtx.systemPrompt,
+        };
+      }),
+    };
+
+    const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
+      brain: mockBrain as any,
+      memory,
+      self,
+      behavior,
+    });
+    await runtime.initialize();
+
+    // Session 1 - Turn 1: "your name is Siduri"
+    const res1 = await runtime.processPerception({
+      source: 'text_chat',
+      text: 'your name is Siduri',
+      context: createRequestContext(companionId, 'teach', 'owner-user'),
+    });
+    expect(res1.status).toBe('APPROVED');
+    const nameProp = res1.metadata?.proposals?.find((p: any) => p.predicate === 'name');
+    expect(nameProp).toBeDefined();
+    await runtime.approveProposal(nameProp.id, { companionId });
+
+    // Verify companion name in self_identity
+    const idStep1 = await self.getIdentity(companionId);
+    expect(idStep1?.name).toBe('Siduri');
+
+    // Session 1 - Turn 2: "i am Kur Zagin, your creator"
+    const res2 = await runtime.processPerception({
+      source: 'text_chat',
+      text: 'i am Kur Zagin, your creator',
+      context: createRequestContext(companionId, 'teach', 'owner-user'),
+    });
+    expect(res2.status).toBe('APPROVED');
+
+    // Approve both proposals (name and creator of companion Siduri)
+    const proposals2 = res2.metadata?.proposals || [];
+    const creatorProp = proposals2.find((p: any) => p.predicate === 'stated_relationship');
+    const userProp = proposals2.find((p: any) => p.predicate === 'name');
+    expect(creatorProp).toBeDefined();
+    expect(userProp).toBeDefined();
+
+    await runtime.approveProposal(creatorProp.id, { companionId });
+    await runtime.approveProposal(userProp.id, { companionId });
+
+    // Also approve the behavioral directives
+    const dirProps = res2.metadata?.behavioral_proposals || [];
+    for (const d of dirProps) {
+      if (d.directive_id) {
+        await runtime.approveDirective(d.directive_id, { companionId });
+      }
+    }
+
+    // Verify self_identity.origin has been dual-promoted!
+    const idStep2 = await self.getIdentity(companionId);
+    expect(idStep2?.name).toBe('Siduri');
+    expect(idStep2?.origin).toBe('Kur Zagin');
+
+    // Verify relationship has creator role, loyal stance, and user name
+    const relStep2 = await self.getRelationship(companionId, 'actor:kur_zagin');
+    expect(relStep2).toBeDefined();
+    expect(relStep2?.role).toBe('creator');
+    expect(relStep2?.stance).toBe('familiar_loyal');
+    expect(relStep2?.trustScore).toBe(1.0);
+    expect(relStep2?.name).toBe('Kur Zagin');
+
+    // Verify single-owner fallback: an incoming request with 'owner-user' gets the primary relationship!
+    const relOwnerUser = await self.getRelationship(companionId, 'owner-user');
+    expect(relOwnerUser).toBeDefined();
+    expect(relOwnerUser?.name).toBe('Kur Zagin');
+    expect(relOwnerUser?.role).toBe('creator');
+    expect(relOwnerUser?.stance).toBe('familiar_loyal');
+
+    // =======================================================================
+    // Session 2 ("New Chat"): user opens a fresh session as 'owner-user'
+    // =======================================================================
+
+    // Turn 1: "hey, who are you?"
+    await runtime.processPerception({
+      source: 'text_chat',
+      text: 'hey, who are you?',
+      context: createRequestContext(companionId, 'hybrid', 'owner-user'),
+    });
+
+    const calls = mockBrain.generatePlan.mock.calls;
+    const newChatTurn1Ctx = calls[calls.length - 1][0];
+
+    // Identity nucleus has origin
+    expect(newChatTurn1Ctx.systemPrompt).toContain('Name: Siduri');
+    expect(newChatTurn1Ctx.systemPrompt).toContain('Origin/Created By: Kur Zagin');
+    // Relationship stance recognizes Kur Zagin as creator
+    expect(newChatTurn1Ctx.systemPrompt).toContain('Kur Zagin');
+    expect(newChatTurn1Ctx.systemPrompt).toContain('familiar_loyal');
+
+    // Turn 2: "who is your creator?"
+    await runtime.processPerception({
+      source: 'text_chat',
+      text: 'who is your creator?',
+      context: createRequestContext(companionId, 'hybrid', 'owner-user'),
+    });
+
+    const newChatTurn2Ctx = calls[calls.length - 1][0];
+    expect(newChatTurn2Ctx.systemPrompt).toContain('Origin/Created By: Kur Zagin');
+
+    // Turn 3: From an anonymous guest session:
+    // Should NOT get the personal relationship stance, but Identity origin remains!
+    await runtime.processPerception({
+      source: 'text_chat',
+      text: 'who is your creator?',
+      context: createRequestContext(companionId, 'hybrid', 'anonymous-session'),
+    });
+
+    const guestTurnCtx = calls[calls.length - 1][0];
+    expect(guestTurnCtx.systemPrompt).toContain('Origin/Created By: Kur Zagin');
+    expect(guestTurnCtx.systemPrompt).not.toContain('Stance toward anonymous-session [Name: Kur Zagin]');
 
     db.close();
   });

@@ -352,7 +352,7 @@ export async function promoteApprovedClaimToSelf(
     predicate === 'affiliation'
   ) {
     const rawSubject = (claim.subject || 'actor:user').replace(/^actor:actor:/, 'actor:');
-    const isCreator = value.toLowerCase() === 'creator';
+    const isCreator = value.toLowerCase().includes('creator');
     const isName = predicate === 'name' || predicate === 'preferred_address';
     const isAffil = predicate === 'affiliation';
 
@@ -360,13 +360,16 @@ export async function promoteApprovedClaimToSelf(
       ? await self.getRelationship(targetCompanionId, rawSubject)
       : null;
 
-    const role = isCreator ? value : (existingRel?.role || (isName || isAffil ? existingRel?.role : value));
+    const isPriorCreator = existingRel?.role === 'creator' || (existingRel?.stance === 'familiar_loyal' && existingRel.trustScore === 1.0);
+    const role = isCreator
+      ? 'creator'
+      : (isPriorCreator ? 'creator' : (existingRel?.role && existingRel.role !== 'user' ? existingRel.role : (isName || isAffil ? existingRel?.role || 'user' : value)));
     const name = isName ? value : existingRel?.name;
     const affiliation = isAffil ? value : existingRel?.affiliation;
-    const stance = isCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
-    const trustScore = isCreator ? 1.0 : (existingRel?.trustScore ?? 0.8);
-    const familiarity = isCreator ? 0.9 : (existingRel?.familiarity ?? 0.5);
-    const interactionConventions = isCreator
+    const stance = isCreator || isPriorCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
+    const trustScore = isCreator || isPriorCreator ? 1.0 : (existingRel?.trustScore ?? 0.8);
+    const familiarity = isCreator || isPriorCreator ? 0.9 : (existingRel?.familiarity ?? 0.5);
+    const interactionConventions = isCreator || isPriorCreator
       ? Array.from(new Set([...(existingRel?.interactionConventions || []), 'Direct communication', 'Highest administrative trust']))
       : (existingRel?.interactionConventions || []);
 
@@ -382,6 +385,20 @@ export async function promoteApprovedClaimToSelf(
       familiarity,
       interactionConventions,
     });
+
+    // Dual promotion: If this actor is established as creator, also populate companion's origin in self_identity
+    if (isCreator || (isName && isPriorCreator)) {
+      const existingIdentity: SelfIdentity = (await self.getIdentity(targetCompanionId)) || {
+        companionId: targetCompanionId,
+        name: 'Siduri',
+        version: '1.0.0',
+        updatedAt: new Date().toISOString(),
+      };
+      const creatorName = name || existingRel?.name || (rawSubject.startsWith('actor:') && rawSubject !== 'actor:user' && rawSubject !== 'actor:primary' ? rawSubject.slice(6) : value);
+      existingIdentity.origin = creatorName !== 'user' && creatorName !== 'primary' ? creatorName : value;
+      existingIdentity.updatedAt = new Date().toISOString();
+      await self.setIdentity(existingIdentity);
+    }
 
     if (isName) {
       await self.commitDirectives(targetCompanionId, [

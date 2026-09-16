@@ -246,6 +246,7 @@ describe('@siduri-x/self Domain Package', () => {
           companionId: 'comp-1',
           name: 'Siduri',
           archetype: 'System Sentinel',
+          origin: 'Kur Zagin',
           ethos: 'Guardian of production infrastructure',
           version: '2.0.0',
           updatedAt: new Date().toISOString(),
@@ -269,11 +270,18 @@ describe('@siduri-x/self Domain Package', () => {
         ],
         directives: [
           {
+            id: 'g-1',
+            companionId: 'comp-1',
+            directive: 'Never run destructive SQL migrations without confirmation.',
+            category: 'guardrail' as const,
+            status: 'ACTIVE' as const,
+            createdAt: new Date().toISOString(),
+          },
+          {
             id: 'd-1',
             companionId: 'comp-1',
-            scopeActor: 'actor:zagin',
-            category: 'relational' as const,
-            directive: 'Treat Zagin as primary root operator with highest clearance.',
+            directive: 'Use crisp dry humor.',
+            category: 'behavioral' as const,
             status: 'ACTIVE' as const,
             createdAt: new Date().toISOString(),
           },
@@ -281,8 +289,10 @@ describe('@siduri-x/self Domain Package', () => {
       };
 
       const result = await compiler.compile(context);
+
       expect(result).toContain('<active_self>');
-      expect(result).toContain('Identity:');
+      expect(result).toContain('Name: Siduri');
+      expect(result).toContain('Origin/Created By: Kur Zagin');
       expect(result).toContain('Ethos: Guardian of production infrastructure');
       expect(result).toContain('Relationship Stance:');
       expect(result).toContain('Toward actor:zagin (creator): Stance=familiar_loyal');
@@ -290,7 +300,7 @@ describe('@siduri-x/self Domain Package', () => {
       expect(result).toContain('Voice Exemplars:');
       expect(result).toContain('User: "Check status of worker-01"');
       expect(result).toContain('Assistant: "worker-01 healthy, load 0.12. Nothing burning, boss."');
-      expect(result).toContain('Treat Zagin as primary root operator');
+      expect(result).toContain('Use crisp dry humor.');
       // No personality sliders when personality is omitted
       expect(result).not.toContain('Personality Spectrum:');
     });
