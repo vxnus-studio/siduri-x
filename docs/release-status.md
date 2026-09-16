@@ -1,7 +1,7 @@
 # Prototype Verification Status: Siduri-X
 
 **Current Status**: **EXPERIMENTAL PROTOTYPE (MOCK-VERIFIED)**  
-**Verification Baseline**: `main` branch (v2.0.17 milestone) (Pure LLM Cognitive Proposer for Teach Mode, Enriched SelfRelationship with Interlocutor Name & Affiliation, Conversational Teach Mode End-to-End Self Persistence & Truth Gate Bridge, Custom Base Persona .self Generation & Blank Slate Flow, Sequential Top-to-Downstream Organ Wizard Flow, Direct Engine Options & Clean Single-Pass Config, Sovereign Life DB Foundation & E Knowledge Hub Discovery, Clean Capability Manifests, 3 Interaction Modes [Casual, Teach, Hybrid] with 4-Tier Hierarchy, LLM-Native Self & Qualitative Relational Stances, Decoupled Perception Pipeline, Clean Architecture & Pure SQLite)  
+**Verification Baseline**: `main` branch (v2.0.20 milestone) (Local .env Priority & Ambient Shell Variable Isolation, Streamlined LLM Error Diagnosis & Hints, False Client Disconnect Resolution, Pure LLM Cognitive Proposer for Teach Mode, Enriched SelfRelationship with Interlocutor Name & Affiliation, Conversational Teach Mode End-to-End Self Persistence & Truth Gate Bridge, Custom Base Persona .self Generation & Blank Slate Flow, Sequential Top-to-Downstream Organ Wizard Flow, Direct Engine Options & Clean Single-Pass Config, Sovereign Life DB Foundation & E Knowledge Hub Discovery, Clean Capability Manifests, 3 Interaction Modes [Casual, Teach, Hybrid] with 4-Tier Hierarchy, LLM-Native Self & Qualitative Relational Stances, Decoupled Perception Pipeline, Clean Architecture & Pure SQLite)  
 **Branch**: `main`  
 **Product Architecture**: **Single-owner / Single-machine / Local companion / Pure SQLite**  
 

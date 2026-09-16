@@ -166,7 +166,7 @@ export function getErrorDiagnosis(errorMsg?: string): { title: string; hint?: st
   if (lower.includes("401") || lower.includes("unauthorized") || lower.includes("invalid api key") || lower.includes("api_key")) {
     return {
       title: "LLM Provider Authentication Failed",
-      hint: "Your API key is invalid or missing. Please check your API key in siduri.config.json or environment variables.",
+      hint: "Your API key is invalid or missing. Please check your API key in your .env file or environment variables.",
     };
   }
   if (lower.includes("402") || lower.includes("insufficient") || lower.includes("balance") || lower.includes("credits") || lower.includes("quota")) {

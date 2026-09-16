@@ -54,7 +54,7 @@ Each generated companion instance validates its configuration against a tailored
 2. **Organ Subtrees**:
    Active organ configurations are isolated within the `organs` dictionary keyed by their organ type or configuration key. Unused organs are omitted from the configuration rather than stubbed with disabled placeholders.
 3. **Secret Separation & Production Enforcement**:
-   API keys, passwords, and cryptographic secrets are never saved into `siduri.config.json`. The configuration references environment variable names (e.g. `apiKeyEnv: "OPENROUTER_API_KEY"`), and secrets are loaded from the environment or `.env` at runtime.
+   API keys, passwords, and cryptographic secrets are never saved into `siduri.config.json`. The configuration references environment variable names (e.g. `apiKeyEnv: "OPENROUTER_API_KEY"`), and secrets are loaded from the companion's `.env` file or the execution environment at runtime. Local `.env` values strictly take precedence over ambient shell variables to prevent stale terminal exports from polluting companion execution.
    - `ACTION_POLICY_SECRET`: **Mandatory in production** (`NODE_ENV=production`). If unset, the Action Policy Engine and Hands organ fail closed immediately at startup with a fatal error. In local/development environments, an ephemeral random secret is generated per process if unconfigured.
    - `STORAGE_PATH` / `SQLITE_DB_PATH`: Optional path for local `siduri.sqlite` storage (defaults to `./siduri.sqlite`). Supported interchangeably across the API and runtime. No external database servers or connection strings are required.
    - Host Binding: All generated and canonical servers bind explicitly to `127.0.0.1`.

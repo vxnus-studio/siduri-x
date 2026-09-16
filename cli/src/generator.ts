@@ -87,7 +87,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^2.0.6';
-  const cliVersion = options.cliVersion || '^2.0.17';
+  const cliVersion = options.cliVersion || '^2.0.20';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -256,8 +256,25 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `const __dirname = path.dirname(__filename);`,
     `const rootDir = path.resolve(__dirname, '..');`,
     '',
+    `// Load local .env into process.env, giving project-level .env precedence over ambient shell variables`,
     `try {`,
-    `  process.loadEnvFile(path.join(rootDir, '.env'));`,
+    `  const envPath = path.join(rootDir, '.env');`,
+    `  const envContent = await readFile(envPath, 'utf8');`,
+    `  for (const line of envContent.split('\\n')) {`,
+    `    const trimmed = line.trim();`,
+    `    if (!trimmed || trimmed.startsWith('#')) continue;`,
+    `    const eqIdx = trimmed.indexOf('=');`,
+    `    if (eqIdx !== -1) {`,
+    `      const key = trimmed.slice(0, eqIdx).trim();`,
+    `      let val = trimmed.slice(eqIdx + 1).trim();`,
+    `      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {`,
+    `        val = val.slice(1, -1);`,
+    `      }`,
+    `      if (val) {`,
+    `        process.env[key] = val;`,
+    `      }`,
+    `    }`,
+    `  }`,
     `} catch (err) {`,
     `  if (err?.code !== 'ENOENT') {`,
     `    console.error('Failed to load .env file:', err.message);`,
