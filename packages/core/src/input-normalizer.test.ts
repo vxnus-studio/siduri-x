@@ -54,4 +54,15 @@ describe('InputNormalizer', () => {
     expect(mockEar.listen).toHaveBeenCalledWith('text_chat', 'raw text', expect.anything());
     expect(result.perceivedText).toBe('transcribed text');
   });
+
+  test('safely normalizes partial context object (e.g. { mode: "hybrid" }) with default actor and conversation', async () => {
+    const result = await normalizeUserInput('test query', { mode: 'hybrid' } as any, [], 'comp-2');
+
+    expect(result.requestContext.conversation).toBeDefined();
+    expect(result.requestContext.conversation.channel).toBe('direct');
+    expect(result.requestContext.conversation.correlationId).toBeDefined();
+    expect(result.requestContext.actor).toBeDefined();
+    expect(result.requestContext.actor.actorId).toBe('owner-user');
+    expect(result.requestContext.mode).toBe('hybrid');
+  });
 });

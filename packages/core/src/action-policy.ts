@@ -211,7 +211,7 @@ export class ActionPolicyEngine {
 
     // Channel check if tool restricts channels
     if (toolDef.allowedChannels && toolDef.allowedChannels.length > 0) {
-      const channel = effectiveContext.conversation.channel || 'direct';
+      const channel = effectiveContext.conversation?.channel || 'direct';
       if (!toolDef.allowedChannels.includes(channel)) {
         const decision: ActionPolicyDecision = {
           allowed: false,
@@ -361,10 +361,10 @@ export class ActionPolicyEngine {
       providerId,
       parametersHash: paramsHash,
       companionId: effectiveContext.companionId,
-      actorId: effectiveContext.actor.actorId,
-      sessionId: effectiveContext.actor.sessionId,
-      channel: effectiveContext.conversation.channel,
-      correlationId: effectiveContext.conversation.correlationId,
+      actorId: effectiveContext.actor?.actorId || 'owner-user',
+      sessionId: effectiveContext.actor?.sessionId || `sess-${effectiveContext.companionId}`,
+      channel: effectiveContext.conversation?.channel || 'direct',
+      correlationId: effectiveContext.conversation?.correlationId || `corr-${Date.now()}`,
       riskLevel,
       issuedAt,
       expiresAt,
@@ -573,10 +573,10 @@ export class ActionPolicyEngine {
       actionId: action.actionId,
       toolName: action.toolName,
       companionId: context?.companionId || 'unknown',
-      actorId: context?.actor.actorId,
-      sessionId: context?.actor.sessionId,
-      channel: context?.conversation.channel,
-      correlationId: context?.conversation.correlationId,
+      actorId: context?.actor?.actorId,
+      sessionId: context?.actor?.sessionId,
+      channel: context?.conversation?.channel,
+      correlationId: context?.conversation?.correlationId,
       riskLevel: decision?.riskLevel || 'LOW',
       lifecycle,
       decision,

@@ -86,8 +86,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.7';
-  const cliVersion = options.cliVersion || '^2.0.23';
+  const coreVersion = options.coreVersion || '^2.0.8';
+  const cliVersion = options.cliVersion || '^2.0.24';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -469,7 +469,23 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    req.on('end', async () => {`,
     `      try {`,
     `        const payload = JSON.parse(body || '{}');`,
-    `        const chatContext = payload.context ? { ...payload.context, ...(payload.mode ? { mode: payload.mode } : {}) } : (payload.mode ? { mode: payload.mode } : undefined);`,
+    `        const chatContext = {`,
+    `          companionId: config.id,`,
+    `          actor: {`,
+    `            actorId: 'owner-user',`,
+    `            sessionId: \`sess-\${config.id}\`,`,
+    `            authorizationRole: 'administrator',`,
+    `            capabilities: ['chat', 'memory:approve', 'action:execute'],`,
+    `            authenticated: true,`,
+    `          },`,
+    `          conversation: {`,
+    `            channel: 'direct',`,
+    `            correlationId: \`corr-\${Date.now()}\`,`,
+    `          },`,
+    `          source: 'local',`,
+    `          ...(payload.context || {}),`,
+    `          ...(payload.mode ? { mode: payload.mode } : {}),`,
+    `        };`,
     `        const response = await dispatchCompanionChat(runtime, {`,
     `          id: config.id,`,
     `          companionId: config.id,`,
@@ -512,7 +528,23 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '',
     `      try {`,
     `        const payload = JSON.parse(body || '{}');`,
-    `        const chatContext = payload.context ? { ...payload.context, ...(payload.mode ? { mode: payload.mode } : {}) } : (payload.mode ? { mode: payload.mode } : undefined);`,
+    `        const chatContext = {`,
+    `          companionId: config.id,`,
+    `          actor: {`,
+    `            actorId: 'owner-user',`,
+    `            sessionId: \`sess-\${config.id}\`,`,
+    `            authorizationRole: 'administrator',`,
+    `            capabilities: ['chat', 'memory:approve', 'action:execute'],`,
+    `            authenticated: true,`,
+    `          },`,
+    `          conversation: {`,
+    `            channel: 'direct',`,
+    `            correlationId: \`corr-\${Date.now()}\`,`,
+    `          },`,
+    `          source: 'local',`,
+    `          ...(payload.context || {}),`,
+    `          ...(payload.mode ? { mode: payload.mode } : {}),`,
+    `        };`,
     `        const response = await dispatchCompanionChat(runtime, {`,
     `          id: config.id,`,
     `          companionId: config.id,`,

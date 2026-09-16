@@ -134,7 +134,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/ear',
     organType: 'ear',
-    version: '2.0.1',
+    version: '2.0.2',
     displayName: 'Ear (Perception Ingress)',
     description: 'Multi-modal sensory input ingestion, transcription bounds, and mime validation',
     entrypoint: './dist/index.js',

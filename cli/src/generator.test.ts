@@ -233,6 +233,8 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     const chatStreamSlice = srcIndexJs.slice(chatStreamEndpointIndex, chatStreamEndpointIndex + 1500);
     expect(chatSlice).toContain("const payload = JSON.parse(body || '{}');");
     expect(chatStreamSlice).toContain("const payload = JSON.parse(body || '{}');");
+    expect(chatSlice).toContain("channel: 'direct'");
+    expect(chatStreamSlice).toContain("channel: 'direct'");
   });
 });
 

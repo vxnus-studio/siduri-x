@@ -35,26 +35,44 @@ export async function normalizeUserInput(
 
   const isContextObject = typeof roleOrContext === 'object' && roleOrContext !== null;
   const role: 'OWNER' | 'VIEWER' | 'OPERATOR' = isContextObject
-    ? (roleOrContext.actor?.authorizationRole === 'viewer' || roleOrContext.actor?.authenticated === false
+    ? ((roleOrContext as any).actor?.authorizationRole === 'viewer' || (roleOrContext as any).actor?.authenticated === false
         ? 'VIEWER'
         : 'OWNER')
     : (roleOrContext as any);
 
+  const defaultActor = {
+    actorId: role === 'VIEWER' ? 'anonymous-session' : 'owner-user',
+    sessionId: `sess-${companionId}`,
+    authorizationRole: role === 'VIEWER' ? 'viewer' : 'administrator',
+    capabilities: role === 'VIEWER' ? ['chat'] : ['chat', 'memory:approve', 'action:execute'],
+    authenticated: role !== 'VIEWER',
+  };
+
+  const defaultConversation = {
+    channel: 'direct',
+    correlationId: `corr-${Date.now()}`,
+  };
+
   const requestContext: RequestContext = isContextObject
-    ? roleOrContext
-    : {
-        companionId,
+    ? {
+        companionId: (roleOrContext as any).companionId || companionId,
         actor: {
-          actorId: role === 'VIEWER' ? 'anonymous-session' : 'owner-user',
-          sessionId: `sess-${companionId}`,
-          authorizationRole: role === 'VIEWER' ? 'viewer' : 'administrator',
-          capabilities: role === 'VIEWER' ? ['chat'] : ['chat', 'memory:approve', 'action:execute'],
-          authenticated: role !== 'VIEWER',
+          ...defaultActor,
+          ...((roleOrContext as any).actor || {}),
         },
         conversation: {
-          channel: 'direct',
-          correlationId: `corr-${Date.now()}`,
+          ...defaultConversation,
+          ...((roleOrContext as any).conversation || {}),
         },
+        source: (roleOrContext as any).source || 'local',
+        ...((roleOrContext as any).mode ? { mode: (roleOrContext as any).mode } : {}),
+        ...((roleOrContext as any).subject ? { subject: (roleOrContext as any).subject } : {}),
+        ...((roleOrContext as any).metadata ? { metadata: (roleOrContext as any).metadata } : {}),
+      }
+    : {
+        companionId,
+        actor: defaultActor,
+        conversation: defaultConversation,
         source: 'local',
       };
 

@@ -107,8 +107,8 @@ export async function settleMemoryProposals(
         message: perceivedText,
         role,
         companionId,
-        actorId: requestContext.actor.actorId,
-        channel: requestContext.conversation.channel,
+        actorId: requestContext.actor?.actorId || 'owner-user',
+        channel: requestContext.conversation?.channel || 'direct',
       },
     };
     await memory.addSourceEvent(sourceEvent);
