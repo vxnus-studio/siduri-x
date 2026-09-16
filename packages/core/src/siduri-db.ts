@@ -1148,6 +1148,16 @@ export class SiduriDatabase {
   }
 
   public searchClaims(companionId: string, query: string, limit: number = 20): MemoryClaim[] {
+    const cleanTokens = query
+      .replace(/[^\p{L}\p{N}\s_]/gu, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter((t) => t.length > 0)
+      .map((t) => `"${t.replace(/"/g, '""')}"`);
+
+    if (cleanTokens.length === 0) return [];
+    const ftsQuery = cleanTokens.join(' OR ');
+
     const stmt = this.db.prepare(`
       SELECT c.* FROM memory_claims c
       JOIN memory_search s ON c.rowid = s.rowid
@@ -1155,7 +1165,7 @@ export class SiduriDatabase {
       ORDER BY rank
       LIMIT ?
     `);
-    return stmt.all(companionId, query, limit).map((row: any) => this.rowToMemoryClaim(row));
+    return stmt.all(companionId, ftsQuery, limit).map((row: any) => this.rowToMemoryClaim(row));
   }
 
   public getPendingClaims(companionId: string, limit: number = 50): MemoryClaim[] {

@@ -330,8 +330,8 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
 
       const response = await runtime.processPerception({
         source: 'text_chat',
-        text: '!teach remember that your name is Atlas',
-        context: defaultContext,
+        text: 'remember that your name is Atlas',
+        context: { ...defaultContext, mode: 'teach' },
       });
 
       expect(response.status).toBe('APPROVED');

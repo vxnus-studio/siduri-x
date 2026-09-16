@@ -259,7 +259,7 @@ export default function ChatClient() {
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [activeAvatarEvent, setActiveAvatarEvent] = useState<ActiveAvatarEvent | null>(null);
   const [avatarModelUrl, setAvatarModelUrl] = useState<string | undefined>(undefined);
-  const [selectedMode, setSelectedMode] = useState<'auto' | 'casual' | 'teach' | 'hybrid'>('auto');
+  const [selectedMode, setSelectedMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const [effectiveMode, setEffectiveMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const [subtitleLanguage, setSubtitleLanguage] = useState<string>("off");
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -454,7 +454,7 @@ export default function ChatClient() {
           id: "default",
           message: content,
           medium: "web",
-          mode: selectedMode !== "auto" ? selectedMode : undefined,
+          mode: selectedMode,
           subtitleLanguage: subtitleLanguage !== "off" ? subtitleLanguage : undefined,
           history: conversation.messages.slice(-20).map((item) => ({
             role: item.role,
@@ -843,7 +843,7 @@ export default function ChatClient() {
               type="button"
               onClick={() => setIsMobileSettingsOpen(true)}
               className={`connection-pill cursor-pointer transition-all md:hidden flex items-center gap-1.5 ${
-                subtitleLanguage !== "off" || selectedMode !== "auto"
+                subtitleLanguage !== "off" || selectedMode !== "hybrid"
                   ? "border-[var(--siduri-border-ember)] bg-[var(--siduri-tint-med)] text-[var(--siduri-ember-highlight)]"
                   : "hover:border-[var(--siduri-border-ember)] text-[var(--siduri-text-secondary)]"
               }`}
@@ -852,9 +852,9 @@ export default function ChatClient() {
             >
               <span className="text-xs">⚙</span>
               <span className="text-xs font-mono font-medium tracking-wide">
-                {selectedMode !== "auto" && subtitleLanguage !== "off"
+                {selectedMode !== "hybrid" && subtitleLanguage !== "off"
                   ? `${selectedMode.slice(0, 4)}·${subtitleLanguage.slice(0, 2).toUpperCase()}`
-                  : selectedMode !== "auto"
+                  : selectedMode !== "hybrid"
                   ? selectedMode
                   : subtitleLanguage !== "off"
                   ? `CC:${subtitleLanguage.slice(0, 2).toUpperCase()}`
@@ -928,10 +928,9 @@ export default function ChatClient() {
                 className="bg-transparent text-xs text-[var(--siduri-text-primary)] font-medium outline-none cursor-pointer border-none p-0"
                 aria-label="Select interaction mode"
               >
-                <option value="auto" className="bg-[#121214] text-white">Auto</option>
-                <option value="casual" className="bg-[#121214] text-white">Casual</option>
+                <option value="hybrid" className="bg-[#121214] text-white">Hybrid (Default)</option>
                 <option value="teach" className="bg-[#121214] text-white">Teach</option>
-                <option value="hybrid" className="bg-[#121214] text-white">Hybrid</option>
+                <option value="casual" className="bg-[#121214] text-white">Casual</option>
               </select>
             </div>
           </div>
@@ -1284,12 +1283,11 @@ export default function ChatClient() {
               <span className="text-xs font-mono uppercase tracking-wider text-[var(--siduri-text-secondary)]">
                 Interaction Mode
               </span>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id: "auto", label: "Auto", desc: "Adaptive context-aware" },
-                  { id: "casual", label: "Casual", desc: "Natural chat & banter" },
-                  { id: "teach", label: "Teach", desc: "Memory & directives" },
-                  { id: "hybrid", label: "Hybrid", desc: "Balanced conversation" },
+                  { id: "hybrid", label: "Hybrid", desc: "Balanced (Default)" },
+                  { id: "teach", label: "Teach", desc: "Establishing teaching" },
+                  { id: "casual", label: "Casual", desc: "Zero drift chat" },
                 ].map((m) => {
                   const isSelected = selectedMode === m.id;
                   return (

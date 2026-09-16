@@ -33,9 +33,10 @@ export function classifyInputIntent(
   const explicitTeaching = extractDeterministicTeaching(text, context);
   const isTeachingLike =
     overrides?.isTeachingLike ??
-    (explicitTeaching.claims.length > 0 ||
+    (context.mode === 'teach' ||
+      explicitTeaching.claims.length > 0 ||
       explicitTeaching.behaviorProposals.length > 0 ||
-      /\b(?:remember that|my name is|call me)\b/i.test(normalizedMessage));
+      /\b(?:remember that|remember:|my name is|call me)\b/i.test(normalizedMessage));
   const isSelfIdentityRequest =
     overrides?.isSelfIdentityRequest ??
     /\b(?:who|what) are you\b|\bwho is siduri\b|\b(?:your|my) name\b|\bdo you know me\b|\bwho am i\b|\btell me about yourself\b|\bdescribe yourself\b|\bwhat is your origin\b|\bwho created you\b|\bwho made you\b|\bintroduce yourself\b/.test(
@@ -52,28 +53,18 @@ export function classifyInputIntent(
 
   // Multi-tier Interaction Mode Resolution:
   // 1. Overrides / Cognitive Classifier
-  // 2. Explicit Request Override (context.mode)
-  // 3. Security Boundary: public channel or external source forces 'casual' (Zero Memory Drift)
-  // 4. In-dialogue semantic cues (!casual, !teach, "remember that...", etc.)
-  // 5. Default companion baseline: 'hybrid' (salience filtering)
+  // 2. Security Boundary: public channel or external source forces 'casual' (Zero Memory Drift)
+  // 3. Explicit Request Mode (context.mode: 'casual' | 'teach' | 'hybrid')
+  // 4. Default companion baseline: 'hybrid' (salience filtering)
   let effectiveMode: InteractionMode;
   if (overrides?.effectiveMode) {
     effectiveMode = overrides.effectiveMode;
-  } else if (context.mode) {
-    effectiveMode = context.mode;
   } else if (context.conversation?.channel === 'public' || context.source === 'external') {
     effectiveMode = 'casual';
+  } else if (context.mode) {
+    effectiveMode = context.mode;
   } else {
-    const isExplicitCasual = /^(?:!casual|\/casual|\bcasual mode\b|\bjust chatting\b|\boff the record\b)/i.test(normalizedMessage);
-    const isExplicitTeach = /^(?:!teach|\/teach|\bteach mode\b|\blearn this rule\b)/i.test(normalizedMessage);
-
-    if (isExplicitCasual) {
-      effectiveMode = 'casual';
-    } else if (isExplicitTeach || isTeachingLike) {
-      effectiveMode = 'teach';
-    } else {
-      effectiveMode = 'hybrid';
-    }
+    effectiveMode = 'hybrid';
   }
 
   return {

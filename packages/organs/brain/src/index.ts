@@ -56,6 +56,53 @@ const ResponsePlanSchema = z.object({
   actionIntents: z.array(ActionIntentSchema).optional(),
 });
 
+function parseContentFallback(content: string): any | null {
+  if (content.includes('<tool_call>')) {
+    const rawObj: Record<string, any> = {};
+    const regex = /<arg_key>([\s\S]*?)<\/arg_key>\s*<arg_value>([\s\S]*?)(?:<\/arg_value>|(?=<arg_key>)|$)/g;
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      const key = match[1].trim();
+      const valStr = match[2].trim();
+      if (!valStr) continue;
+      try {
+        rawObj[key] = JSON.parse(valStr);
+      } catch {
+        rawObj[key] = valStr;
+      }
+    }
+    if (rawObj.speech && typeof rawObj.speech === 'string' && rawObj.speech.trim().length > 0) {
+      const payload = {
+        speech: rawObj.speech.trim(),
+        language: typeof rawObj.language === 'string' && rawObj.language.trim().length > 0 ? rawObj.language.trim() : 'en',
+        subtitle: typeof rawObj.subtitle === 'string' ? rawObj.subtitle : undefined,
+        internalMonologue: typeof rawObj.internalMonologue === 'string' ? rawObj.internalMonologue : 'Parsed from pseudo tool call XML',
+        memoryProposals: Array.isArray(rawObj.memoryProposals) ? rawObj.memoryProposals : undefined,
+        behaviorProposals: Array.isArray(rawObj.behaviorProposals) ? rawObj.behaviorProposals : undefined,
+        actionIntents: Array.isArray(rawObj.actionIntents) ? rawObj.actionIntents : undefined,
+      };
+      const parsed = ResponsePlanSchema.safeParse(payload);
+      if (parsed.success) return parsed.data;
+      return payload;
+    }
+  }
+
+  const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || content.match(/(\{[\s\S]*"speech"[\s\S]*\})/);
+  if (jsonMatch) {
+    try {
+      const parsedJson = JSON.parse(jsonMatch[1]);
+      if (parsedJson.speech && !parsedJson.language) {
+        parsedJson.language = 'en';
+      }
+      const validated = ResponsePlanSchema.safeParse(parsedJson);
+      if (validated.success) return validated.data;
+    } catch {
+      // Ignore JSON parse error
+    }
+  }
+
+  return null;
+}
 
 export class OpenAICompatibleBrain implements BrainOrgan {
   private config: OpenAICompatibleBrainConfig;
@@ -93,18 +140,20 @@ export class OpenAICompatibleBrain implements BrainOrgan {
               internalMonologue: { type: "string", description: "Internal reasoning before responding." },
               memoryProposals: {
                 type: "array",
+                description: "Candidate memory claims (e.g. user identity, name, creator status, affiliations, preferences) extracted from the user's declarations for staged review. In Teach Mode, you MUST extract every declared fact here.",
                 items: {
                   type: "object",
                   properties: {
-                    subject: { type: "string" },
-                    predicate: { type: "string" },
-                    value: { type: "string" }
+                    subject: { type: "string", description: "Subject of the claim, e.g. 'actor:<id>' for user facts or 'companion:<id>' for companion facts." },
+                    predicate: { type: "string", description: "Predicate, e.g. 'name', 'role', 'stated_relationship', 'affiliation', 'origin', 'preference'." },
+                    value: { type: "string", description: "The stated value of the claim." }
                   },
                   required: ["subject", "predicate", "value"]
                 }
               },
               behaviorProposals: {
                 type: "array",
+                description: "Candidate behavioral, guardrail, or relational directives (e.g. 'Address actor:<id> as <name>', 'Recognize actor:<id> as creator') for staged review. In Teach Mode, formulate directives corresponding to the teaching.",
                 items: {
                   type: "object",
                   properties: {
@@ -170,7 +219,8 @@ export class OpenAICompatibleBrain implements BrainOrgan {
               model: this.config.model,
               messages,
               tools,
-              tool_choice: { type: "function", function: { name: "submitResponsePlan" } }
+              tool_choice: { type: "function", function: { name: "submitResponsePlan" } },
+              max_tokens: (this.config as any).maxTokens ?? 4000,
             }),
             signal: overallController.signal,
           });
@@ -219,6 +269,10 @@ export class OpenAICompatibleBrain implements BrainOrgan {
 
           const directContent = data.choices?.[0]?.message?.content;
           if (typeof directContent === 'string' && directContent.trim().length > 0) {
+            const fallbackPlan = parseContentFallback(directContent.trim());
+            if (fallbackPlan) {
+              return fallbackPlan;
+            }
             return {
               speech: directContent.trim(),
               language: 'en',

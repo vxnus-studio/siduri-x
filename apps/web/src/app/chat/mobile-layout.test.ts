@@ -94,31 +94,31 @@ describe("Mobile Viewport and Layout Configuration", () => {
   describe("Mobile preferences sheet and navbar layout logic", () => {
     interface MobileNavbarState {
       isMobileSettingsOpen: boolean;
-      selectedMode: "auto" | "casual" | "teach" | "hybrid";
+      selectedMode: "casual" | "teach" | "hybrid";
       subtitleLanguage: string;
       isPresenceOpen: boolean;
     }
 
     function formatMobileOptionsLabel(mode: string, sub: string): string {
-      if (mode !== "auto" && sub !== "off") {
+      if (mode !== "hybrid" && sub !== "off") {
         return `${mode.slice(0, 4)}·${sub.slice(0, 2).toUpperCase()}`;
       }
-      if (mode !== "auto") return mode;
+      if (mode !== "hybrid") return mode;
       if (sub !== "off") return `CC:${sub.slice(0, 2).toUpperCase()}`;
       return "Options";
     }
 
     test("Mobile options label dynamically formats based on active settings", () => {
-      expect(formatMobileOptionsLabel("auto", "off")).toBe("Options");
+      expect(formatMobileOptionsLabel("hybrid", "off")).toBe("Options");
       expect(formatMobileOptionsLabel("teach", "off")).toBe("teach");
-      expect(formatMobileOptionsLabel("auto", "ja")).toBe("CC:JA");
-      expect(formatMobileOptionsLabel("hybrid", "en")).toBe("hybr·EN");
+      expect(formatMobileOptionsLabel("hybrid", "ja")).toBe("CC:JA");
+      expect(formatMobileOptionsLabel("casual", "en")).toBe("casu·EN");
     });
 
     test("Opening mobile settings sheet transitions state cleanly", () => {
       let state: MobileNavbarState = {
         isMobileSettingsOpen: false,
-        selectedMode: "auto",
+        selectedMode: "hybrid",
         subtitleLanguage: "off",
         isPresenceOpen: false,
       };

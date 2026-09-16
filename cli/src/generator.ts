@@ -86,8 +86,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.6';
-  const cliVersion = options.cliVersion || '^2.0.20';
+  const coreVersion = options.coreVersion || '^2.0.7';
+  const cliVersion = options.cliVersion || '^2.0.21';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -468,12 +468,12 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    req.on('data', (chunk) => { body += chunk; });`,
     `    req.on('end', async () => {`,
     `      try {`,
-    `        const payload = JSON.parse(body || '{}');`,
+    `        const chatContext = payload.context ? { ...payload.context, ...(payload.mode ? { mode: payload.mode } : {}) } : (payload.mode ? { mode: payload.mode } : undefined);`,
     `        const response = await dispatchCompanionChat(runtime, {`,
     `          id: config.id,`,
     `          companionId: config.id,`,
     `          message: payload.message || payload.text || '',`,
-    `          context: payload.context,`,
+    `          context: chatContext,`,
     `          history: Array.isArray(payload.history) ? payload.history : [],`,
     `          subtitleLanguage: payload.subtitleLanguage || payload.subtitle_language,`,
     `        });`,
@@ -510,12 +510,12 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `      res.on('close', onClose);`,
     '',
     `      try {`,
-    `        const payload = JSON.parse(body || '{}');`,
+    `        const chatContext = payload.context ? { ...payload.context, ...(payload.mode ? { mode: payload.mode } : {}) } : (payload.mode ? { mode: payload.mode } : undefined);`,
     `        const response = await dispatchCompanionChat(runtime, {`,
     `          id: config.id,`,
     `          companionId: config.id,`,
     `          message: payload.message || payload.text || '',`,
-    `          context: payload.context,`,
+    `          context: chatContext,`,
     `          history: Array.isArray(payload.history) ? payload.history : [],`,
     `          medium: 'web',`,
     `          signal: abortController.signal,`,
