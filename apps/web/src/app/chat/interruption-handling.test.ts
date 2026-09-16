@@ -1,3 +1,5 @@
+import { getErrorDiagnosis, getInterruptionExplanation } from "./chat-client";
+
 describe("Interruption and Error Handling Logic", () => {
   interface ChatMessage {
     id: string;
@@ -150,8 +152,6 @@ describe("Interruption and Error Handling Logic", () => {
   });
 
   test("Classifies various LLM provider errors with helpful diagnoses and hints", () => {
-    const { getErrorDiagnosis } = require("./chat-client");
-
     const authDiag = getErrorDiagnosis("Fatal upstream API error (401): Invalid API key provided");
     expect(authDiag.title).toBe("LLM Provider Authentication Failed");
     expect(authDiag.hint).toContain("API key");
@@ -172,8 +172,6 @@ describe("Interruption and Error Handling Logic", () => {
   });
 
   test("Classifies interruption reasons into human-friendly badges, explanations, and hints", () => {
-    const { getInterruptionExplanation } = require("./chat-client");
-
     const disconnectInfo = getInterruptionExplanation("client_disconnect");
     expect(disconnectInfo.label).toBe("Disconnected");
     expect(disconnectInfo.text).toBe("Response stopped due to connection close.");
