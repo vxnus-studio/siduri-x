@@ -262,6 +262,26 @@ export default function ChatClient() {
   const [selectedMode, setSelectedMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const [effectiveMode, setEffectiveMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const [subtitleLanguage, setSubtitleLanguage] = useState<string>("off");
+
+  // Teach Mode & .self Auto-Detection State
+  const [detectedSelf, setDetectedSelf] = useState<{
+    detected: boolean;
+    filename?: string;
+    path?: string;
+    content?: string;
+    parsed?: any;
+    alreadyInstalled?: boolean;
+  } | null>(null);
+  const [detectedSelfDismissed, setDetectedSelfDismissed] = useState(false);
+  const [stagedSelfPackage, setStagedSelfPackage] = useState<{
+    manifest: any;
+    scannedDirectives: any[];
+  } | null>(null);
+  const [approvedDirectives, setApprovedDirectives] = useState<Record<string, boolean>>({});
+  const [installingSelf, setInstallingSelf] = useState(false);
+  const [selfInstallNotice, setSelfInstallNotice] = useState<string | null>(null);
+  const selfFileInputRef = useRef<HTMLInputElement>(null);
+
   const messagesRef = useRef<HTMLDivElement>(null);
   const avatarTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -322,6 +342,21 @@ export default function ChatClient() {
         }
       })
       .catch(() => setStatus("offline"));
+
+    // Check if a .self file is detected on the companion path
+    fetchApi(`/teach/detected-self`)
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json().catch(() => null);
+          if (data && data.detected) {
+            const dismissed = sessionStorage.getItem(`siduri.dismissedSelf:${data.filename}`);
+            if (!dismissed) {
+              setDetectedSelf(data);
+            }
+          }
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -686,6 +721,87 @@ export default function ChatClient() {
     }
   }
 
+  function stageSelfPackage(parsed: any) {
+    if (!parsed || !parsed.manifest) return;
+    const initialApproved: Record<string, boolean> = {};
+    if (Array.isArray(parsed.scannedDirectives)) {
+      parsed.scannedDirectives.forEach((d: any) => {
+        initialApproved[d.id] = d.approvedByDefault ?? d.scanResult?.safe ?? true;
+      });
+    } else if (Array.isArray(parsed.manifest?.directives)) {
+      parsed.manifest.directives.forEach((d: any) => {
+        initialApproved[d.id] = true;
+      });
+    }
+    setApprovedDirectives(initialApproved);
+    setStagedSelfPackage({
+      manifest: parsed.manifest,
+      scannedDirectives: parsed.scannedDirectives || parsed.manifest.directives || [],
+    });
+  }
+
+  function handleImportDetectedSelf() {
+    if (!detectedSelf?.parsed) return;
+    // Automatically transition to Teach Mode when importing detected .self
+    if (selectedMode !== "teach") {
+      setSelectedMode("teach");
+      setEffectiveMode("teach");
+    }
+    stageSelfPackage(detectedSelf.parsed);
+  }
+
+  async function handleSelfFilePicked(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const content = await file.text();
+      const res = await postJson("/teach/upload-self", { content });
+      if (res && res.isValid && res.manifest) {
+        stageSelfPackage(res);
+      } else {
+        alert(res?.errors?.join("\n") || "Invalid .self package format");
+      }
+    } catch (err: any) {
+      alert(`Failed to parse .self file: ${err.message}`);
+    } finally {
+      if (event.target) event.target.value = "";
+    }
+  }
+
+  async function handleInstallStagedSelf() {
+    if (!stagedSelfPackage?.manifest) return;
+    setInstallingSelf(true);
+    try {
+      const approvedIds = Object.entries(approvedDirectives)
+        .filter(([, approved]) => approved)
+        .map(([id]) => id);
+
+      const res = await postJson("/teach/install-self", {
+        companionId: "default",
+        manifest: stagedSelfPackage.manifest,
+        approvedDirectiveIds: approvedIds,
+      });
+
+      if (res && res.success) {
+        setSelfInstallNotice(
+          `Installed '${stagedSelfPackage.manifest.name}' ethos (${approvedIds.length} directives active).`
+        );
+        setTimeout(() => setSelfInstallNotice(null), 6000);
+        setStagedSelfPackage(null);
+        setDetectedSelfDismissed(true);
+        if (detectedSelf?.filename) {
+          sessionStorage.setItem(`siduri.dismissedSelf:${detectedSelf.filename}`, "true");
+        }
+      } else {
+        alert(res?.error || "Failed to install .self package");
+      }
+    } catch (err: any) {
+      alert(`Install error: ${err.message}`);
+    } finally {
+      setInstallingSelf(false);
+    }
+  }
+
   return (
     <div
       className={`chat-app ${sidebarCollapsed ? "sidebar-collapsed" : ""} ${
@@ -935,6 +1051,280 @@ export default function ChatClient() {
             </div>
           </div>
         </header>
+
+        {/* Detected .self Banner */}
+        {detectedSelf && !detectedSelfDismissed && (
+          <div
+            data-testid="detected-self-banner"
+            className="bg-[#1c1814] border-b border-[var(--siduri-border-ember)] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-[#f1e6d0] z-20 shadow-md animate-fade-in"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">📦</span>
+              <span>
+                <strong>.self file detected on path:</strong>{" "}
+                <code className="px-1.5 py-0.5 rounded bg-black/50 text-[var(--siduri-ember-highlight)] font-mono font-medium border border-[var(--siduri-border-subtle)]">
+                  {detectedSelf.filename}
+                </code>
+                {detectedSelf.alreadyInstalled ? (
+                  <span className="ml-1.5 text-[var(--siduri-text-muted)] text-[11px]">(already imported)</span>
+                ) : null}
+                {" — Import to companion ethos & directives?"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setDetectedSelfDismissed(true);
+                  if (detectedSelf.filename) {
+                    sessionStorage.setItem(`siduri.dismissedSelf:${detectedSelf.filename}`, "true");
+                  }
+                }}
+                className="px-2.5 py-1 rounded text-[var(--siduri-text-muted)] hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Dismiss
+              </button>
+              <button
+                type="button"
+                onClick={handleImportDetectedSelf}
+                className="px-3.5 py-1 rounded bg-[var(--siduri-ember)] text-[#151214] font-semibold hover:brightness-110 shadow-sm transition-all cursor-pointer"
+              >
+                Import
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Installation Success Notice */}
+        {selfInstallNotice && (
+          <div className="bg-[#132218] border-b border-[#3e8555] px-4 py-2 text-xs text-[#a9dfbf] flex items-center justify-between z-20">
+            <div className="flex items-center gap-2">
+              <span>✓</span>
+              <span>{selfInstallNotice}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelfInstallNotice(null)}
+              className="text-[#a9dfbf] hover:text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Staged .self Batch Proposal Modal for Teach Mode */}
+        {stagedSelfPackage && (
+          <div
+            data-testid="staged-self-modal"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Review and install .self package"
+          >
+            <div className="relative w-full max-w-2xl max-h-[90vh] bg-[#141418] border border-[var(--siduri-border-ember)] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[#eee8df]">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--siduri-border-subtle)] bg-[#19191e]/90">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--siduri-tint-med)] border border-[var(--siduri-border-ember)] flex items-center justify-center text-lg">
+                    📦
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                        {stagedSelfPackage.manifest?.name || "Self Ethos Package"}
+                      </h3>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-highlight)] border border-[var(--siduri-border-ember)]/40">
+                        v{stagedSelfPackage.manifest?.version || "1.0.0"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[var(--siduri-text-muted)] mt-0.5 font-mono">
+                      Author: {stagedSelfPackage.manifest?.author?.name || "Unknown"} · ID: {stagedSelfPackage.manifest?.id || "custom"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStagedSelfPackage(null)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--siduri-text-muted)] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
+                  aria-label="Close review"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+                {/* Identity Nucleus */}
+                <div className="p-3.5 rounded-xl bg-[#1a1a20] border border-[var(--siduri-border-subtle)] space-y-1.5">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-highlight)] font-semibold">
+                    Identity Nucleus
+                  </span>
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-sm font-bold text-white">
+                      {stagedSelfPackage.manifest?.identity?.name}
+                    </span>
+                    {stagedSelfPackage.manifest?.identity?.archetype && (
+                      <span className="text-xs text-[var(--siduri-text-secondary)]">
+                        · {stagedSelfPackage.manifest.identity.archetype}
+                      </span>
+                    )}
+                  </div>
+                  {stagedSelfPackage.manifest?.identity?.ethos && (
+                    <p className="text-xs text-[var(--siduri-text-secondary)] italic leading-relaxed pt-1">
+                      "{stagedSelfPackage.manifest.identity.ethos}"
+                    </p>
+                  )}
+                </div>
+
+                {/* Relationships (if present) */}
+                {Array.isArray(stagedSelfPackage.manifest?.relationships) &&
+                  stagedSelfPackage.manifest.relationships.length > 0 && (
+                    <div className="p-3.5 rounded-xl bg-[#1a1a20] border border-[var(--siduri-border-subtle)] space-y-2">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-highlight)] font-semibold">
+                        Relational Stances
+                      </span>
+                      <div className="space-y-2">
+                        {stagedSelfPackage.manifest.relationships.map((rel: any, idx: number) => (
+                          <div key={idx} className="text-xs space-y-1 p-2 rounded-lg bg-black/30 border border-white/5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-white font-mono">{rel.entityId}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--siduri-text-secondary)]">
+                                {rel.role || "user"}
+                              </span>
+                              <span className="text-[10px] text-[var(--siduri-ember-highlight)] font-mono">
+                                stance: {rel.stance}
+                              </span>
+                            </div>
+                            {Array.isArray(rel.conventions) && rel.conventions.length > 0 && (
+                              <ul className="list-disc list-inside text-[11px] text-[var(--siduri-text-secondary)] space-y-0.5 pl-1">
+                                {rel.conventions.map((c: string, cIdx: number) => (
+                                  <li key={cIdx}>{c}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Directives Batch Proposal */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-highlight)] font-semibold">
+                      Directives Review ({Object.values(approvedDirectives).filter(Boolean).length} of {stagedSelfPackage.scannedDirectives.length} selected)
+                    </span>
+                    <div className="flex gap-2 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const all: Record<string, boolean> = {};
+                          stagedSelfPackage.scannedDirectives.forEach((d: any) => {
+                            all[d.id] = true;
+                          });
+                          setApprovedDirectives(all);
+                        }}
+                        className="text-[var(--siduri-ember-highlight)] hover:underline cursor-pointer"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-[var(--siduri-text-muted)]">·</span>
+                      <button
+                        type="button"
+                        onClick={() => setApprovedDirectives({})}
+                        className="text-[var(--siduri-text-muted)] hover:underline cursor-pointer"
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {stagedSelfPackage.scannedDirectives.map((d: any, idx: number) => {
+                      const isApproved = Boolean(approvedDirectives[d.id]);
+                      const isSafe = d.scanResult?.safe !== false;
+                      return (
+                        <div
+                          key={d.id || idx}
+                          onClick={() =>
+                            setApprovedDirectives((prev) => ({
+                              ...prev,
+                              [d.id]: !prev[d.id],
+                            }))
+                          }
+                          className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                            isApproved
+                              ? "bg-[#1f1d1b] border-[var(--siduri-border-ember)]/60"
+                              : "bg-[#16161a]/60 border-[var(--siduri-border-subtle)] opacity-70"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isApproved}
+                            onChange={() => {}}
+                            className="mt-0.5 rounded cursor-pointer accent-[var(--siduri-ember)]"
+                          />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center flex-wrap gap-1.5 text-[10px] font-mono">
+                              <span className="text-[var(--siduri-text-muted)]">{d.id}</span>
+                              <span className="px-1.5 py-0.2 rounded bg-white/5 text-[var(--siduri-text-secondary)]">
+                                {d.category || "behavioral"}
+                              </span>
+                              {d.priority && (
+                                <span className="text-[var(--siduri-text-dim)]">P{d.priority}</span>
+                              )}
+                              {isSafe ? (
+                                <span className="text-[var(--siduri-online)] text-[10px] font-sans">
+                                  ✓ Safe
+                                </span>
+                              ) : (
+                                <span className="text-[var(--siduri-danger)] text-[10px] font-sans font-semibold">
+                                  ⚠️ Blocked: {d.scanResult?.reason || "Flagged"}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-white leading-relaxed">{d.directive}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-[var(--siduri-border-subtle)] bg-[#19191e]/90 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStagedSelfPackage(null)}
+                  disabled={installingSelf}
+                  className="px-4 py-2 rounded-xl text-xs text-[var(--siduri-text-secondary)] hover:text-white hover:bg-white/5 transition-all cursor-pointer font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleInstallStagedSelf}
+                  disabled={installingSelf || Object.values(approvedDirectives).filter(Boolean).length === 0}
+                  className="px-5 py-2 rounded-xl text-xs font-semibold bg-[var(--siduri-ember)] text-[#151214] hover:brightness-110 shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2"
+                >
+                  {installingSelf ? (
+                    <>
+                      <span>Installing…</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Install Selected Self</span>
+                      <span className="px-1.5 py-0.5 rounded bg-black/20 text-[10px] font-mono">
+                        {Object.values(approvedDirectives).filter(Boolean).length}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col flex-1 min-h-0 w-full overflow-hidden relative">
           <section className="conversation-surface" aria-label="Private chat">
@@ -1213,12 +1603,36 @@ export default function ChatClient() {
                 aria-label="Message Siduri"
               />
               <div className="composer-bottom">
-                <span>
-                  Private local session ·{" "}
-                  {evidenceCount
-                    ? `${evidenceCount} evidence link${evidenceCount === 1 ? "" : "s"}`
-                    : "No evidence attached"}
-                </span>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span>
+                    Private local session ·{" "}
+                    {evidenceCount
+                      ? `${evidenceCount} evidence link${evidenceCount === 1 ? "" : "s"}`
+                      : "No evidence attached"}
+                  </span>
+                  {/* Conditional Attach .self Button - ONLY rendered in Teach Mode */}
+                  {selectedMode === "teach" && (
+                    <div className="flex items-center">
+                      <input
+                        type="file"
+                        ref={selfFileInputRef}
+                        accept=".self,.yaml,.yml,.json"
+                        className="hidden"
+                        onChange={handleSelfFilePicked}
+                        aria-label="Upload .self file"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => selfFileInputRef.current?.click()}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono rounded-md border border-[var(--siduri-border-ember)] text-[var(--siduri-ember-highlight)] bg-[var(--siduri-tint-med)] hover:bg-[var(--siduri-tint-med)]/80 hover:border-[var(--siduri-ember)] transition-all cursor-pointer shadow-sm"
+                        title="Attach .self file for Teach Mode review"
+                      >
+                        <span>📎</span>
+                        <span>Attach .self</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
                 {busy && !message.trim() ? (
                   <button
                     type="button"

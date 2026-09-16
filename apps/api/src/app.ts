@@ -1,5 +1,7 @@
 import express, { Express } from 'express';
 import cors from 'cors';
+import fs from 'node:fs';
+import path from 'node:path';
 import { createCorsOptions } from './cors';
 import { SiduriRuntime, dispatchCompanionChat } from './runtime';
 import { SelfPackageParser, SqliteSelfRepository, scanDirective } from '@siduri-x/self';
@@ -92,6 +94,99 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   app.put('/me', requireAuth, (req, res) => res.json({ success: true }));
 
   // TEACH MODE ENDPOINTS
+  app.get('/teach/detected-self', attachIdentity, async (req, res) => {
+    try {
+      const companionId = (req.query.companionId as string) || Array.from(runtimes.keys())[0] || 'default';
+      const runtime = runtimes.get(companionId);
+
+      const explicitPath = (req.query.path as string) || undefined;
+      const envPath = process.env.SIDURI_SELF_PATH || process.env.SELF_PATH;
+      const configPath = (runtime?.config as any)?.organs?.behavior?.selfPath ||
+                         (runtime?.config as any)?.behavior?.selfPath;
+
+      const candidates: string[] = [];
+      if (explicitPath) candidates.push(path.resolve(process.cwd(), explicitPath));
+      if (envPath) candidates.push(path.resolve(process.cwd(), envPath));
+      if (configPath) candidates.push(path.resolve(process.cwd(), configPath));
+
+      candidates.push(path.resolve(process.cwd(), 'assets', 'self', `${companionId}.self`));
+      candidates.push(path.resolve(process.cwd(), `${companionId}.self`));
+
+      const searchDirs = [
+        path.resolve(process.cwd(), 'assets', 'self'),
+        path.resolve(process.cwd(), 'assets'),
+        path.resolve(process.cwd()),
+        path.resolve(process.cwd(), '..', '..', 'assets', 'self'),
+        path.resolve(process.cwd(), '..', '..'),
+      ];
+
+      let matchedFilePath: string | undefined;
+
+      for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+          try {
+            const stat = fs.statSync(candidate);
+            if (stat.isFile()) {
+              matchedFilePath = candidate;
+              break;
+            }
+          } catch {}
+        }
+      }
+
+      if (!matchedFilePath) {
+        for (const dir of searchDirs) {
+          if (fs.existsSync(dir)) {
+            try {
+              const entries = fs.readdirSync(dir);
+              const selfFiles = entries.filter((f) => f.endsWith('.self'));
+              if (selfFiles.length > 0) {
+                const companionSelf = selfFiles.find((f) => f === `${companionId}.self`);
+                matchedFilePath = path.join(dir, companionSelf || selfFiles[0]);
+                break;
+              }
+            } catch {}
+          }
+        }
+      }
+
+      if (!matchedFilePath) {
+        return res.json({ detected: false });
+      }
+
+      const content = await fs.promises.readFile(matchedFilePath, 'utf8');
+      const parsed = SelfPackageParser.parse(content);
+
+      let alreadyInstalled = false;
+      const repo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+      try {
+        const existingIdentity = await repo.getIdentity(companionId);
+        const existingDirectives = await repo.getActiveDirectives(companionId);
+        if (
+          existingIdentity &&
+          parsed.manifest?.identity?.name &&
+          existingIdentity.name.toLowerCase() === parsed.manifest.identity.name.toLowerCase() &&
+          existingDirectives.length > 0
+        ) {
+          alreadyInstalled = true;
+        }
+      } catch {} finally {
+        repo.close();
+      }
+
+      res.json({
+        detected: true,
+        filename: path.basename(matchedFilePath),
+        path: matchedFilePath,
+        content,
+        parsed,
+        alreadyInstalled,
+      });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.post('/teach/upload-self', requireAuth, async (req, res) => {
     try {
       const { content } = req.body;

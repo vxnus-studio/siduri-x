@@ -1,3 +1,6 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import request from 'supertest';
 import { createApp } from './app';
 import { SqliteSelfRepository } from '@siduri-x/self';
@@ -225,5 +228,36 @@ kind: "other"
     expect(repoInstance.commitDirectives).toHaveBeenCalledWith('comp-v2', [
       { id: 'dir-rel-1', directive: 'Honor creator root privileges' },
     ]);
+  });
+
+  describe('GET /teach/detected-self', () => {
+    it('returns detected: false when no candidate .self exists on path', async () => {
+      const res = await request(app)
+        .get('/teach/detected-self?path=/tmp/non-existent-path-to-nothing.self');
+
+      expect(res.status).toBe(200);
+      expect(res.body.detected).toBe(false);
+    });
+
+    it('detects and parses a .self file located on path', async () => {
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'siduri-detected-self-'));
+      const selfFilePath = path.join(tmpDir, 'elena.self');
+      fs.writeFileSync(selfFilePath, validSelfContent, 'utf8');
+
+      try {
+        const res = await request(app)
+          .get(`/teach/detected-self?path=${encodeURIComponent(selfFilePath)}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.detected).toBe(true);
+        expect(res.body.filename).toBe('elena.self');
+        expect(res.body.parsed).toBeDefined();
+        expect(res.body.parsed.manifest?.name).toBe('Test Bot');
+        expect(res.body.parsed.scannedDirectives).toHaveLength(2);
+        expect(res.body.content).toContain('kind: "self"');
+      } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
+    });
   });
 });
