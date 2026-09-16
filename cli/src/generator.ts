@@ -87,7 +87,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^2.0.8';
-  const cliVersion = options.cliVersion || '^2.0.24';
+  const cliVersion = options.cliVersion || '^2.0.25';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');

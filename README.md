@@ -57,7 +57,7 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 | **`@siduri-x/brain`** | `^2.0.5` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
 | **`@siduri-x/hands`** | `^2.0.1` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
 | **`@siduri-x/eknowledge`** | `^2.0.1` | External E-compatible lore / documentation client with cited context & SSRF defense | **Implemented** |
-| **`@siduri-x/ear`** | `^2.0.2` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
+| **`@siduri-x/ear`** | `^2.0.3` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
 | **`@siduri-x/vision`** | `^2.0.1` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
 | **`@siduri-x/body`** | `^2.0.1` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
 | **`@siduri-x/voice`** | `^2.0.2` | Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC voice conversion | **Implemented** |
