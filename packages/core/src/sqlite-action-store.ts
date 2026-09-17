@@ -18,6 +18,8 @@ export class SqliteActionStore implements ActionStore {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { DatabaseSync } = require('node:sqlite');
     this.db = new DatabaseSync(dbPath);
+    this.db.exec('PRAGMA busy_timeout = 5000');
+    this.db.exec('PRAGMA journal_mode = WAL');
 
     this.initSchema();
     this.initLastAuditHash();

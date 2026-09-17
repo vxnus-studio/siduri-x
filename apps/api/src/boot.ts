@@ -128,11 +128,14 @@ export function createMouth(config?: DefaultMouthOrganConfig & { provider?: stri
 
 export function createMemory(config?: { provider?: string; connectionString?: string; maxConnections?: number; dbPath?: string }) {
   if (isDisabled(config)) return undefined;
-  return new SqliteMemoryStore({ dbPath: config?.dbPath || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+  const defaultPath = process.env.NODE_ENV === 'test' ? ':memory:' : 'siduri.sqlite';
+  return new SqliteMemoryStore({ dbPath: config?.dbPath || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || defaultPath });
 }
 
-export function createSelf(config?: { dbPath?: string }) {
-  return new SqliteSelfRepository({ dbPath: config?.dbPath || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+export function createSelf(config?: { dbPath?: string; provider?: string }) {
+  if (isDisabled(config)) return undefined;
+  const defaultPath = process.env.NODE_ENV === 'test' ? ':memory:' : 'siduri.sqlite';
+  return new SqliteSelfRepository({ dbPath: config?.dbPath || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || defaultPath });
 }
 
 export function createObservation(vision?: any): FixtureObservationOrgan {

@@ -199,6 +199,7 @@ export class SiduriDatabase {
   constructor(options: SiduriDatabaseOptions = {}) {
     const dbPath = options.dbPath || ':memory:';
     this.db = new DatabaseSync(dbPath);
+    this.db.exec('PRAGMA busy_timeout = 5000');
     this.db.exec('PRAGMA journal_mode = WAL');
     this.initSchema();
   }
