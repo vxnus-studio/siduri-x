@@ -66,6 +66,10 @@ No transition may silently delete a record. A rejected, superseded, revoked,
 or expired record may remain searchable to an operator through an audit path,
 but it is never returned by current-memory retrieval.
 
+For single-value predicates (`name`, `preferred_address`, `role`, `origin`, etc.),
+supersession occurs automatically upon approval of a replacement fact as specified in
+[`RFC: Semantic Supersession & Teach Mode Onboarding`](../rfc/rfc-semantic-supersession-and-teaching.md).
+
 ## Behavioral lifecycle
 
 ```text

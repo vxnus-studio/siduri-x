@@ -537,8 +537,8 @@ export class SiduriDatabase {
 
   public approveDirective(id: string, companionId?: string): void {
     const findStmt = companionId
-      ? this.db.prepare("SELECT id, companion_id, status, supersedes_id FROM self_directives WHERE id = ? AND companion_id = ?")
-      : this.db.prepare("SELECT id, companion_id, status, supersedes_id FROM self_directives WHERE id = ?");
+      ? this.db.prepare("SELECT id, companion_id, directive, scope_actor, status, priority, supersedes_id FROM self_directives WHERE id = ? AND companion_id = ?")
+      : this.db.prepare("SELECT id, companion_id, directive, scope_actor, status, priority, supersedes_id FROM self_directives WHERE id = ?");
     const row = (companionId ? findStmt.get(id, companionId) : findStmt.get(id)) as any;
     if (!row) {
       return;
@@ -568,16 +568,64 @@ export class SiduriDatabase {
       }
     }
 
+    // Automatic Supersession: If an address directive or single-value directive is approved,
+    // transition conflicting older active/pending directives to 'superseded'
+    const addressMatch = (row.directive || '').match(/^address\s+(actor:[^\s]+|the user|user)\s+as\s+["“']?([^"”'.]+)["”']?/i);
+    let targetPriority = row.priority ?? 50;
+    if (addressMatch) {
+      targetPriority = 85;
+      const targetActor = addressMatch[1].toLowerCase();
+      const existingDirectives = this.getAllDirectives(companionId || 'default');
+      for (const d of existingDirectives) {
+        if (
+          (d.status === 'active' || d.status === 'pending') &&
+          d.id !== id &&
+          d.directive &&
+          d.directive.toLowerCase().startsWith(`address ${targetActor} as`)
+        ) {
+          this.supersedeDirective(d.id, companionId);
+        }
+      }
+      const targetEntityId = targetActor === 'the user' || targetActor === 'user' ? 'actor:user' : targetActor;
+      const existingRel = this.getRelationship(companionId || 'default', targetEntityId);
+      if (existingRel) {
+        const cleanedAddress = addressMatch[2].trim();
+        const convs = (existingRel.interactionConventions || []).filter((c) => !c.toLowerCase().startsWith('address as'));
+        convs.push(`Address as ${cleanedAddress}`);
+        this.upsertRelationship({
+          ...existingRel,
+          companionId: companionId || 'default',
+          interactionConventions: convs,
+        });
+      }
+    }
+
+    // Single-value directive canonical supersession (e.g. role, language, response style)
+    const roleMatch = (row.directive || '').match(/^acknowledge role as\s+([^"”'.]+)/i);
+    if (roleMatch) {
+      const existingDirectives = this.getAllDirectives(companionId || 'default');
+      for (const d of existingDirectives) {
+        if (
+          (d.status === 'active' || d.status === 'pending') &&
+          d.id !== id &&
+          d.directive &&
+          d.directive.toLowerCase().startsWith('acknowledge role as')
+        ) {
+          this.supersedeDirective(d.id, companionId);
+        }
+      }
+    }
+
     if (companionId) {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'active' WHERE id = ? AND companion_id = ? AND LOWER(status) = 'pending'"
+        "UPDATE self_directives SET status = 'active', priority = MAX(priority, ?) WHERE id = ? AND companion_id = ? AND LOWER(status) = 'pending'"
       );
-      stmt.run(id, companionId);
+      stmt.run(targetPriority, id, companionId);
     } else {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'active' WHERE id = ? AND LOWER(status) = 'pending'"
+        "UPDATE self_directives SET status = 'active', priority = MAX(priority, ?) WHERE id = ? AND LOWER(status) = 'pending'"
       );
-      stmt.run(id);
+      stmt.run(targetPriority, id);
     }
   }
 
@@ -605,6 +653,16 @@ export class SiduriDatabase {
       const stmt = this.db.prepare(
         "UPDATE self_directives SET status = 'rejected' WHERE id = ? AND LOWER(status) = 'pending'"
       );
+      stmt.run(id);
+    }
+  }
+
+  public supersedeDirective(id: string, companionId?: string): void {
+    if (companionId) {
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'superseded' WHERE id = ? AND companion_id = ?");
+      stmt.run(id, companionId);
+    } else {
+      const stmt = this.db.prepare("UPDATE self_directives SET status = 'superseded' WHERE id = ?");
       stmt.run(id);
     }
   }
@@ -982,8 +1040,8 @@ export class SiduriDatabase {
 
   public approveClaim(id: string, companionId?: string): void {
     const findClaim = companionId
-      ? this.db.prepare("SELECT id, status, supersedes FROM memory_claims WHERE id = ? AND companion_id = ?")
-      : this.db.prepare("SELECT id, status, supersedes FROM memory_claims WHERE id = ?");
+      ? this.db.prepare("SELECT id, subject, predicate, status, supersedes FROM memory_claims WHERE id = ? AND companion_id = ?")
+      : this.db.prepare("SELECT id, subject, predicate, status, supersedes FROM memory_claims WHERE id = ?");
     const row = (companionId ? findClaim.get(id, companionId) : findClaim.get(id)) as any;
     if (!row) {
       return;
@@ -996,7 +1054,7 @@ export class SiduriDatabase {
       throw new Error(`Cannot approve claim '${id}': invalid transition from status '${row.status}' to 'approved' (only pending claims can be approved)`);
     }
 
-    // If this claim supersedes an earlier claim, transition that prior claim to superseded
+    // Explicit supersession transition: if claim explicitly targets an earlier claim
     if (row.supersedes) {
       const supersededId = row.supersedes;
       if (companionId) {
@@ -1006,6 +1064,45 @@ export class SiduriDatabase {
         const supersedeStmt = this.db.prepare("UPDATE memory_claims SET status = 'superseded' WHERE id = ?");
         supersedeStmt.run(supersededId);
       }
+    }
+
+    // Automatic supersession for single-value predicates:
+    // When a single-value predicate (e.g. name, role, creator, preferred_address) is approved,
+    // transition previous active/approved claims on the same subject & predicate to 'superseded'
+    const SINGLE_VALUE_PREDICATES = new Set([
+      'name',
+      'preferred_name',
+      'preferred_address',
+      'preferred_form_of_address',
+      'form_of_address',
+      'title',
+      'honorific',
+      'role',
+      'archetype',
+      'origin',
+      'created_by',
+      'stated_relationship',
+      'relationship',
+      'relationship_to_siduri',
+      'ethos',
+      'server',
+      'uid',
+      'preferred_language',
+    ]);
+
+    const lowerPred = (row.predicate || '').toLowerCase();
+    if (SINGLE_VALUE_PREDICATES.has(lowerPred)) {
+      const effCompanionId = companionId || 'default';
+      const autoSupersedeStmt = this.db.prepare(`
+        UPDATE memory_claims 
+        SET status = 'superseded' 
+        WHERE companion_id = ? 
+          AND LOWER(subject) = LOWER(?) 
+          AND LOWER(predicate) = LOWER(?) 
+          AND id != ? 
+          AND LOWER(status) IN ('approved', 'pending')
+      `);
+      autoSupersedeStmt.run(effCompanionId, row.subject, row.predicate, id);
     }
 
     if (companionId) {
@@ -1074,19 +1171,29 @@ export class SiduriDatabase {
       return;
     }
 
-    // 2. Relationship mutations: creator or user stated relationship, name, or affiliation
+    // 2. Relationship mutations: creator or user stated relationship, name, preferred address, or affiliation
+    const isPreferredAddress = [
+      'preferred_address',
+      'preferred_form_of_address',
+      'preferred_name',
+      'form_of_address',
+      'title',
+      'honorific',
+      'call_me',
+      'addressed_as',
+    ].includes(predicate);
+    const isName = (predicate === 'name' && (subject.startsWith('actor:') || subject === 'user' || subject === 'primary_user')) || isPreferredAddress;
+
     if (
       claim.claimType === 'relationship' ||
       predicate === 'stated_relationship' ||
       predicate === 'relationship' ||
       predicate === 'relationship_to_siduri' ||
-      (predicate === 'name' && (subject.startsWith('actor:') || subject === 'user' || subject === 'primary_user')) ||
-      predicate === 'preferred_address' ||
-      predicate === 'affiliation'
+      predicate === 'affiliation' ||
+      isName
     ) {
       const rawSubject = (claim.subject || 'actor:user').replace(/^actor:actor:/, 'actor:');
       const isCreator = value.toLowerCase().includes('creator');
-      const isName = predicate === 'name' || predicate === 'preferred_address';
       const isAffil = predicate === 'affiliation';
 
       const existingRel = this.getRelationship(companionId, rawSubject);
@@ -1094,14 +1201,21 @@ export class SiduriDatabase {
       const role = isCreator
         ? 'creator'
         : (isPriorCreator ? 'creator' : (existingRel?.role && existingRel.role !== 'user' ? existingRel.role : (isName || isAffil ? existingRel?.role || 'user' : value)));
-      const name = isName ? value : existingRel?.name;
+      const name = isName ? (isPreferredAddress && existingRel?.name ? existingRel.name : value) : existingRel?.name;
       const affiliation = isAffil ? value : existingRel?.affiliation;
       const stance = isCreator || isPriorCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
       const trustScore = isCreator || isPriorCreator ? 1.0 : (existingRel?.trustScore ?? 0.8);
       const familiarity = isCreator || isPriorCreator ? 0.9 : (existingRel?.familiarity ?? 0.5);
-      const interactionConventions = isCreator || isPriorCreator
+      const conventions = isCreator || isPriorCreator
         ? Array.from(new Set([...(existingRel?.interactionConventions || []), 'Direct communication', 'Highest administrative trust']))
-        : (existingRel?.interactionConventions || []);
+        : [...(existingRel?.interactionConventions || [])];
+
+      if (isPreferredAddress) {
+        const filteredConvs = conventions.filter((c) => !c.toLowerCase().startsWith('address as'));
+        filteredConvs.push(`Address as ${value}`);
+        conventions.length = 0;
+        conventions.push(...filteredConvs);
+      }
 
       this.upsertRelationship({
         companionId,
@@ -1113,7 +1227,7 @@ export class SiduriDatabase {
         stance,
         trustScore,
         familiarity,
-        interactionConventions,
+        interactionConventions: conventions,
       });
 
       // Dual promotion: If this actor is established as creator, also populate companion's origin in self_identity
@@ -1131,10 +1245,32 @@ export class SiduriDatabase {
       }
 
       if (isName) {
+        const priority = isPreferredAddress ? 85 : 75;
+        const directiveId = isPreferredAddress ? `dir-prefaddr-${claim.id || Date.now()}` : `dir-name-${claim.id || Date.now()}`;
+
+        // If preferred address, supersede/revoke older address directives for this subject
+        if (isPreferredAddress) {
+          const existingDirectives = this.getAllDirectives(companionId);
+          for (const d of existingDirectives) {
+            const lowerDir = (d.directive || '').toLowerCase();
+            const lowerSubj = rawSubject.toLowerCase();
+            if (
+              (d.status === 'active' || d.status === 'pending') &&
+              d.id !== directiveId &&
+              (lowerDir.startsWith(`address ${lowerSubj} as`) ||
+               lowerDir.startsWith('address the user as') ||
+               lowerDir.startsWith('address actor:user as') ||
+               lowerDir.startsWith('address user as'))
+            ) {
+              this.supersedeDirective(d.id, companionId);
+            }
+          }
+        }
+
         this.commitDirective({
-          id: `dir-name-${claim.id || Date.now()}`,
+          id: directiveId,
           companionId,
-          priority: 75,
+          priority,
           directive: `Address ${rawSubject} as ${value}`,
           status: 'active' as any,
           category: 'relational',

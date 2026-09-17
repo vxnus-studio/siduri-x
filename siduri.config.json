@@ -1,0 +1,40 @@
+{
+  "id": "default",
+  "name": "Siduri",
+  "organs": {
+    "brain": {
+      "provider": "openrouter",
+      "model": "openai/gpt-5.6-luna",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    "memory": {
+      "provider": "sqlite",
+      "dbPath": "siduri.sqlite"
+    },
+    "knowledge": {
+      "provider": "e-hub",
+      "dbPath": "siduri.sqlite",
+      "lifeDatabase": true,
+      "registryUrl": "https://e.vxnus.xyz/api/v1/knowledge",
+      "packId": "@vxnus/e-teyvat",
+      "pack": {
+        "provider": "e-hub",
+        "mode": "remote",
+        "packId": "@vxnus/e-teyvat",
+        "registryUrl": "https://e.vxnus.xyz/api/v1/knowledge",
+        "baseUrl": "https://e-teyvat.vxnus.xyz/api/e",
+        "preferredMode": "lexical"
+      },
+      "baseUrl": "https://e-teyvat.vxnus.xyz/api/e"
+    },
+    "behavior": {
+      "provider": "active_self",
+      "mode": "blank_slate"
+    },
+    "ear": {
+      "defaultSource": "text_chat",
+      "maxTextLength": 4000,
+      "maxAudioBytes": 10485760
+    }
+  }
+}

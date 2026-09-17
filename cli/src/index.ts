@@ -97,7 +97,7 @@ function nonEmpty(value: string): true | string {
   return value.trim().length > 0 || 'Please enter a value.';
 }
 
-export async function runCreateWizard(targetDir?: string): Promise<void> {
+export async function runCreateWizard(targetDir?: string, options?: { localPath?: string }): Promise<void> {
   printHeader();
 
   // 1. Discover manifests from installed or monorepo packages
@@ -244,6 +244,7 @@ export async function runCreateWizard(targetDir?: string): Promise<void> {
     name: companionName,
     selectedManifests,
     organConfigs,
+    localPath: options?.localPath,
   });
 
   await mkdir(projectDir, { recursive: true });
@@ -382,10 +383,73 @@ export async function runCliDoctor(targetDir?: string): Promise<void> {
   }
 }
 
+export async function runCliReset(targetDir?: string): Promise<void> {
+  printHeader();
+  const dir = targetDir ? path.resolve(process.cwd(), targetDir) : process.cwd();
+  console.log(`${colors.cyan}Siduri State Reset${colors.reset}`);
+  console.log(`${colors.dim}──────────────────${colors.reset}\n`);
+
+  try {
+    let dbPath = 'siduri.sqlite';
+    let companionId = 'default';
+    const configPath = path.join(dir, 'siduri.config.json');
+    if (fs.existsSync(configPath)) {
+      try {
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        if (config.id) companionId = config.id;
+        if (config.organs?.memory?.dbPath) dbPath = config.organs.memory.dbPath;
+      } catch {}
+    }
+
+    const fullDbPath = path.resolve(dir, dbPath);
+    if (!fs.existsSync(fullDbPath)) {
+      console.log(`${colors.dim}No database file found at ${fullDbPath}. Already at clean slate.${colors.reset}\n`);
+      process.exitCode = 0;
+      return;
+    }
+
+    const { DatabaseSync } = await import('node:sqlite');
+    const db = new DatabaseSync(fullDbPath);
+    try {
+      db.prepare('DELETE FROM memory_claims WHERE companion_id = ?').run(companionId);
+      db.prepare('DELETE FROM memory_events WHERE companion_id = ?').run(companionId);
+      db.prepare('DELETE FROM self_directives WHERE companion_id = ?').run(companionId);
+      db.prepare('DELETE FROM self_relationships WHERE companion_id = ?').run(companionId);
+      db.prepare('DELETE FROM self_identity WHERE companion_id = ?').run(companionId);
+      if (companionId !== 'default') {
+        db.prepare('DELETE FROM memory_claims WHERE companion_id = "default"').run();
+        db.prepare('DELETE FROM memory_events WHERE companion_id = "default"').run();
+        db.prepare('DELETE FROM self_directives WHERE companion_id = "default"').run();
+        db.prepare('DELETE FROM self_relationships WHERE companion_id = "default"').run();
+        db.prepare('DELETE FROM self_identity WHERE companion_id = "default"').run();
+      }
+    } finally {
+      db.close();
+    }
+
+    printSuccess(`Companion state reset to blank slate:`);
+    console.log(`  ${colors.dim}• Memory claims cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• Memory events cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• Self directives cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• Self relationships cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• Self identity cleared${colors.reset}`);
+    console.log(`\nInstance is now in a clean blank slate state for testing.\n`);
+    process.exitCode = 0;
+  } catch (err: any) {
+    console.error(`\n${colors.yellow}Reset Error:${colors.reset} ${err.message}\n`);
+    process.exitCode = 1;
+  }
+}
+
 export async function runCliDb(subcommand?: string, targetDir?: string): Promise<void> {
   printHeader();
+  if (subcommand === 'reset') {
+    await runCliReset(targetDir);
+    return;
+  }
+
   if (subcommand !== 'push') {
-    console.log('Usage: siduri db push');
+    console.log('Usage: siduri db push | siduri db reset');
     process.exitCode = 2;
     return;
   }
@@ -422,8 +486,17 @@ async function main(): Promise<void> {
   }
 
   if (command === 'create') {
+    const isLocal = args.includes('--local') || args.includes('--dev') || process.env.SIDURI_LOCAL_DEV === 'true';
+    const nonFlags = args.slice(1).filter((a) => !a.startsWith('--'));
+    const targetDir = nonFlags[0];
+    const localRepo = isLocal ? path.resolve(__dirname, '../..') : undefined;
+    await runCreateWizard(targetDir, { localPath: localRepo });
+    return;
+  }
+
+  if (command === 'reset') {
     const targetDir = args[1];
-    await runCreateWizard(targetDir);
+    await runCliReset(targetDir);
     return;
   }
 
@@ -441,9 +514,11 @@ async function main(): Promise<void> {
   }
 
   printHeader();
-  console.log('Usage: npx @vxnus/siduri create [directory]');
+  console.log('Usage: npx @vxnus/siduri create [directory] [--local]');
+  console.log('       npx @vxnus/siduri reset [directory]');
   console.log('       npx @vxnus/siduri doctor [directory]');
   console.log('       npx @vxnus/siduri db push [directory]');
+  console.log('       npx @vxnus/siduri db reset [directory]');
   console.log('       npx @vxnus/siduri --version\n');
 }
 

@@ -99,8 +99,12 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
       const tierB = tierOrder[b.category] || 3;
       if (tierA !== tierB) return tierA - tierB;
 
-      // Priority descending if provided
-      return (b.priority ?? 50) - (a.priority ?? 50);
+      // Priority descending if provided, with newest winning tie-breaks
+      const pDiff = (b.priority ?? 50) - (a.priority ?? 50);
+      if (pDiff !== 0) return pDiff;
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
     });
 
     // 4. Build Identity Block
@@ -140,6 +144,26 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
     let relationshipBlock: string | undefined;
     const relationalDirectives = winningDirectives.filter((d) => d.category === 'relational');
 
+    // Address conflict deduplication: For address directives (Address <actor> as ...), keep only the highest priority/most specific one
+    const addressDirectives = new Map<string, SelfDirective>();
+    const filteredRelationalDirectives: SelfDirective[] = [];
+
+    for (const rd of relationalDirectives) {
+      const match = (rd.directive || '').match(/^address\s+(actor:[^\s]+|the user|user)\s+as\s+["“']?([^"”'.]+)["”']?/i);
+      if (match) {
+        const actorKey = match[1].toLowerCase();
+        const existing = addressDirectives.get(actorKey);
+        if (!existing || (rd.priority ?? 50) > (existing.priority ?? 50)) {
+          addressDirectives.set(actorKey, rd);
+        }
+      } else {
+        filteredRelationalDirectives.push(rd);
+      }
+    }
+    for (const [_, winningAddr] of addressDirectives.entries()) {
+      filteredRelationalDirectives.unshift(winningAddr);
+    }
+
     if (relationship) {
       const lines: string[] = [];
       const target = relationship.entityId || 'interlocutor';
@@ -154,11 +178,32 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
         lines.push(`Toward ${target}${roleStr}${affilStr}`);
       }
 
+      let preferredAddress: string | undefined;
+      for (const conv of relationship.interactionConventions || []) {
+        const match = conv.match(/^address as\s+["“']?([^"”']+)["”']?/i);
+        if (match) {
+          preferredAddress = match[1].trim();
+          break;
+        }
+      }
+      if (!preferredAddress) {
+        for (const [_, winningAddr] of addressDirectives.entries()) {
+          const match = (winningAddr.directive || '').match(/^address\s+(?:actor:[^\s]+|the user|user)\s+as\s+["“']?([^"”'.]+)["”']?/i);
+          if (match) {
+            preferredAddress = match[1].trim();
+            break;
+          }
+        }
+      }
+
       if ((relationship as any).name) {
         lines.push(`- Interlocutor Name: ${(relationship as any).name}`);
       }
+      if (preferredAddress && preferredAddress.toLowerCase() !== ((relationship as any).name || '').toLowerCase()) {
+        lines.push(`- Interlocutor Preferred Form of Address: ${preferredAddress}`);
+      }
 
-      for (const rd of relationalDirectives) {
+      for (const rd of filteredRelationalDirectives) {
         lines.push(`- ${rd.directive}`);
       }
 
@@ -167,8 +212,8 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
       }
       relationshipBlock = lines.join('\n');
       relationshipFacts.push(relationshipBlock);
-    } else if (relationalDirectives.length > 0) {
-      relationshipBlock = relationalDirectives.map((d) => `- ${d.directive}`).join('\n');
+    } else if (filteredRelationalDirectives.length > 0) {
+      relationshipBlock = filteredRelationalDirectives.map((d) => `- ${d.directive}`).join('\n');
       relationshipFacts.push(relationshipBlock);
     }
 

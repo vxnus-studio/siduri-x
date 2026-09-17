@@ -1624,10 +1624,12 @@ export default function ChatClient() {
                       <button
                         type="button"
                         onClick={() => selfFileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono rounded-md border border-[var(--siduri-border-ember)] text-[var(--siduri-ember-highlight)] bg-[var(--siduri-tint-med)] hover:bg-[var(--siduri-tint-med)]/80 hover:border-[var(--siduri-ember)] transition-all cursor-pointer shadow-sm"
+                        className="composer-attach-btn"
                         title="Attach .self file for Teach Mode review"
                       >
-                        <span>📎</span>
+                        <svg viewBox="0 0 24 24">
+                          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                        </svg>
                         <span>Attach .self</span>
                       </button>
                     </div>
@@ -1639,6 +1641,7 @@ export default function ChatClient() {
                     onClick={interruptCurrentChat}
                     aria-label="Stop generation"
                     title="Stop generation"
+                    className="composer-action-btn"
                   >
                     ■
                   </button>
@@ -1647,6 +1650,7 @@ export default function ChatClient() {
                     type="submit"
                     disabled={!message.trim()}
                     aria-label="Send message"
+                    className="composer-action-btn"
                   >
                     ↑
                   </button>

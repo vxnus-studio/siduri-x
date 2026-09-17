@@ -20,6 +20,7 @@ export interface ContextRetrievalParams {
   role: 'OWNER' | 'VIEWER' | 'OPERATOR';
   isContextObject: boolean;
   shouldQueryKnowledge: boolean;
+  isSelfIdentityRequest?: boolean;
   knowledge?: KnowledgeOrgan | LifeDatabase;
   memory?: MemoryOrgan | EpisodicMemoryStore;
   self?: SelfRepository;
@@ -53,6 +54,7 @@ export async function retrieveRuntimeContext(
     role,
     isContextObject,
     shouldQueryKnowledge,
+    isSelfIdentityRequest,
     knowledge,
     memory,
     self,
@@ -89,12 +91,33 @@ export async function retrieveRuntimeContext(
         })
       : Promise.resolve([]),
 
-    // Stream B: Episodic Memory / Verified Claims (SQLite FTS5)
+    // Stream B: Episodic Memory / Verified Claims (SQLite FTS5 with Identity Fallback)
     memory && typeof (memory as any).searchClaims === 'function'
       ? (async () => {
           try {
             // Support both (companionId, query, limit) and (query, options, limit)
-            const result = await (memory as any).searchClaims(perceivedText, queryOptions, 5);
+            let result = await (memory as any).searchClaims(perceivedText, queryOptions, 5);
+            if ((!result || result.length === 0) && isSelfIdentityRequest) {
+              if (typeof (memory as any).getApprovedClaims === 'function') {
+                const approved = await (memory as any).getApprovedClaims(companionId, 10);
+                const identityClaims = approved.filter((c: any) => {
+                  const pred = (c.predicate || '').toLowerCase();
+                  const subj = (c.subject || '').toLowerCase();
+                  return (
+                    ['name', 'role', 'stated_relationship', 'relationship', 'origin', 'created_by', 'preferred_address', 'title', 'identity', 'creator', 'archetype', 'affiliation'].includes(pred) ||
+                    subj.startsWith('companion') ||
+                    subj === 'self' ||
+                    subj === 'siduri' ||
+                    subj.startsWith('actor:')
+                  );
+                });
+                result = identityClaims.length > 0 ? identityClaims.slice(0, 5) : approved.slice(0, 5);
+              } else if (typeof (memory as any).getClaims === 'function') {
+                const all = await (memory as any).getClaims(50);
+                const approved = all.filter((c: any) => (c.status || '').toLowerCase() === 'approved');
+                result = approved.slice(0, 5);
+              }
+            }
             return result || [];
           } catch (e: any) {
             console.error('[SiduriRuntime] Memory search failed:', e.message);

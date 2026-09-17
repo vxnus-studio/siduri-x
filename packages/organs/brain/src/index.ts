@@ -273,6 +273,26 @@ export class OpenAICompatibleBrain implements BrainOrgan {
             if (fallbackPlan) {
               return fallbackPlan;
             }
+            if (directContent.includes('<tool_call>') || directContent.includes('submitResponsePlan')) {
+              if (attempt < maxRetries) {
+                throw new Error(`Incomplete pseudo-tool call from model: ${directContent.slice(0, 120)}`);
+              }
+              // On final retry attempt, strip raw pseudo-tool XML tags rather than speaking code
+              const cleaned = directContent
+                .replace(/<tool_call>[\s\S]*?<\/tool_call>/g, '')
+                .replace(/<arg_key>[\s\S]*?<\/arg_key>/g, '')
+                .replace(/<arg_value>[\s\S]*?<\/arg_value>/g, '')
+                .replace(/<[^>]+>/g, '')
+                .trim();
+              if (cleaned.length > 0) {
+                return {
+                  speech: cleaned,
+                  language: 'en',
+                  internalMonologue: 'Recovered speech from malformed tool call',
+                };
+              }
+              throw new Error("Model failed to provide speech in pseudo-tool call");
+            }
             return {
               speech: directContent.trim(),
               language: 'en',

@@ -170,8 +170,8 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return this.db.searchClaims(this.activeCompanionId, query, limit);
   }
 
-  async getApprovedClaims(companionId: string, limit: number = 50): Promise<MemoryClaim[]> {
-    return this.db.getApprovedClaims(companionId, limit);
+  async getApprovedClaims(companionId?: string, limit: number = 50): Promise<MemoryClaim[]> {
+    return this.db.getApprovedClaims(companionId || this.activeCompanionId, limit);
   }
 
   // --- MemoryOrgan Compatibility Interface ---

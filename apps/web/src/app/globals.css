@@ -1033,7 +1033,7 @@ a {
   font-size: 10px;
 }
 
-.composer-bottom button {
+.composer-bottom .composer-action-btn {
   display: grid;
   width: 29px;
   height: 29px;
@@ -1050,9 +1050,45 @@ a {
   transition: opacity 0.15s ease;
 }
 
-.composer-bottom button:disabled {
+.composer-bottom .composer-action-btn:disabled {
   cursor: default;
   opacity: 0.35;
+}
+
+.composer-attach-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--siduri-border-ember);
+  border-radius: 6px;
+  background: var(--siduri-tint-med);
+  color: var(--siduri-ember-highlight);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.composer-attach-btn:hover {
+  background: var(--siduri-tint-high, rgba(225, 161, 111, 0.25));
+  border-color: var(--siduri-ember-light);
+  color: #fff;
+}
+
+.composer-attach-btn svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .thinking-dots {

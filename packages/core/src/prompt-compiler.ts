@@ -114,6 +114,8 @@ export async function compilePrompts(
     modeInstruction,
     subtitleInstruction,
     'This is a neutral conversation context.',
+    'Active Self identity, origin, and relational stances are verified authoritative context.',
+    'When an interlocutor has an established preferred form of address or title, always address them using that preferred form of address rather than their raw name.',
     'Use only approved, permitted memory as factual personal context.',
     effectiveMode === 'teach'
       ? 'Do not claim prior personal knowledge when no approved memory supports it, but in Teach Mode receptively acknowledge newly established facts and stage them as candidate proposals.'

@@ -148,6 +148,7 @@ export interface MemoryOrgan {
   searchClaims(query: string, scopeOrOptions?: MemoryScope | MemoryQueryOptions, limit?: number): Promise<Claim[]>;
   getClaims(limit?: number): Promise<Claim[]>;
   getPendingClaims(limit?: number): Promise<Claim[]>;
+  getApprovedClaims?(companionId?: string, limit?: number): Promise<any[]>;
   approveClaim(id: string): Promise<void>;
   rejectClaim(id: string): Promise<void>;
   markClaimSessionOnly?(id: string): Promise<void>;

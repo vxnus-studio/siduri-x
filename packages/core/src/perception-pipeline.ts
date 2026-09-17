@@ -166,6 +166,7 @@ export const contextRetrievalStage: PerceptionPipelineStage = async (context) =>
     role: context.input.role,
     isContextObject: context.input.isContextObject,
     shouldQueryKnowledge: context.intent.shouldQueryKnowledge,
+    isSelfIdentityRequest: context.intent.isSelfIdentityRequest,
     knowledge: context.organs.knowledge,
     memory: context.organs.memory,
     self: context.organs.self,

@@ -12,6 +12,9 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "release:check": "node cli/dist/release-check.js",
+    "start": "node scripts/start-instance.mjs",
+    "dev:companion": "node --watch scripts/start-instance.mjs",
+    "reset": "node scripts/reset-dev.mjs",
     "sync:versions": "node scripts/sync-versions.mjs",
     "sync:check": "node scripts/sync-versions.mjs --check"
   },

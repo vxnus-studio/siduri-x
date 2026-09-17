@@ -72,6 +72,8 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
       initialize: async () => {},
       proposeClaim: async (claim: any) => db.proposeClaim(claim) as any,
       searchClaims: async () => [],
+      getApprovedClaims: async (companionId?: string, limit?: number) =>
+        db.getApprovedClaims(companionId || 'default', limit || 50) as any,
       getClaims: async (limit?: number) => db.getAllClaims(undefined, limit || 500) as any,
       getPendingClaims: async (limit?: number) =>
         db.getAllClaims(undefined, limit || 500).filter((c: any) => c.status === 'pending') as any,
@@ -923,6 +925,18 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     const guestTurnCtx = calls[calls.length - 1][0];
     expect(guestTurnCtx.systemPrompt).toContain('Origin/Created By: Kur Zagin');
     expect(guestTurnCtx.systemPrompt).not.toContain('Stance toward anonymous-session [Name: Kur Zagin]');
+
+    // Turn 4: "who am i?" from owner session:
+    // Approved memory claims are retrieved in MEMORY: context even if FTS search yielded 0 keyword matches
+    await runtime.processPerception({
+      source: 'text_chat',
+      text: 'who am i?',
+      context: createRequestContext(companionId, 'hybrid', 'owner-user'),
+    });
+
+    const whoAmICtx = calls[calls.length - 1][0];
+    expect(whoAmICtx.contextPrompt).toContain('MEMORY:');
+    expect(whoAmICtx.contextPrompt).toContain('Kur Zagin');
 
     db.close();
   });

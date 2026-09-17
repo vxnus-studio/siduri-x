@@ -15,6 +15,9 @@ assets/
     │   ├── chat-grounded-memory-retrieval.png
     │   ├── chat-knowledge-citations.png
     │   └── operator-memory-claims-and-directives.png
+    ├── logs/
+    │   ├── teach-mode-session1-identity-and-supersession.png
+    │   └── teach-mode-session2-fresh-chat-recall.png
     └── bugs/
         └── knowledge-hallucination-version-cutoff.png
 ```
@@ -53,7 +56,26 @@ assets/
 
 ---
 
-### 3. Bug Reports & Edge Cases (`screenshots/bugs/`)
+### 3. Teach Mode Onboarding Logs & Supersession (`screenshots/logs/`)
+
+- **`teach-mode-session1-identity-and-supersession.png`**:
+  - **Context**: Interactive Teach Mode Onboarding (Session 1).
+  - **Details**: Captures the foundational teaching sequence:
+    1. Turn 1: Companion identity acceptance (`"Your name is Siduri"` $\to$ `"My name is Siduri"`).
+    2. Turn 2: Creator relationship declaration (`"i am Kur Zagin, your creator"` $\to$ `"Understood, Kur Zagin. You are my creator"`).
+    3. Turn 3: Form of address refinement (`"you may address me as Master Zagin"` $\to$ `"Understood, Master Zagin. I’ll address you as Master Zagin"`).
+    4. Displays real-time proposal approval receipts (`Remember: User role is creator` [APPROVED], `Runtime effect [behavioral]: Address actor:user as Master Zagin` [ACTIVE]) and the fixed Attach `.self` SVG action button in the composer footer.
+
+- **`teach-mode-session2-fresh-chat-recall.png`**:
+  - **Context**: Zero-Amnesia Memory Recall in Fresh Chat Session (Session 2).
+  - **Details**: Captures fresh session continuation immediately respecting persisted memory:
+    1. Turn 1: Greeting automatically using preferred address (`"hey"` $\to$ `"Hey, Master Zagin. How can I help?"`).
+    2. Turn 2: Grounded identity recall without hallucination (`"who are you?"` $\to$ `"I’m Siduri, Master Zagin—a companion created by you. I’m here to assist, learn your preferences, and communicate with you directly"`).
+  - **Specification**: Cross-referenced in [`docs/rfc/rfc-semantic-supersession-and-teaching.md`](../docs/rfc/rfc-semantic-supersession-and-teaching.md).
+
+---
+
+### 4. Bug Reports & Edge Cases (`screenshots/bugs/`)
 
 - **`knowledge-hallucination-version-cutoff.png`**:
   - **Context**: Model hallucination vs. knowledge-cutoff inspection.

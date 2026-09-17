@@ -113,6 +113,10 @@ The chosen rule may affect the prompt projection only. The excluded rule and
 the conflict decision remain auditable. A conflict must not mutate or delete a
 claim/directive.
 
+For single-value domains (such as preferred form of address and identity names),
+approval of a new rule supersedes previous directives cleanly at the store layer,
+as detailed in [`RFC: Semantic Supersession & Teach Mode Onboarding`](../rfc/rfc-semantic-supersession-and-teaching.md).
+
 ## Prompt trust sections
 
 The provider prompt should expose explicit sections with fixed precedence:

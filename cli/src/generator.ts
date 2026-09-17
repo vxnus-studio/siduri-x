@@ -21,6 +21,7 @@ export interface InstanceGeneratorOptions {
   organConfigs?: Record<string, any>;
   coreVersion?: string;
   cliVersion?: string;
+  localPath?: string;
 }
 
 function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, any> {
@@ -100,16 +101,27 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const isVoicevox = hasVoice && (!voiceConfig || voiceConfig.provider === 'voicevox');
 
   // 1. package.json
-  const dependencies: Record<string, string> = {
-    '@siduri-x/core': coreVersion,
-  };
-  for (const m of manifests) {
-    dependencies[m.name] = `^${m.version || '2.0.1'}`;
+  const dependencies: Record<string, string> = {};
+  if (options.localPath) {
+    const repoPath = options.localPath.replace(/\\/g, '/');
+    dependencies['@siduri-x/core'] = `file:${repoPath}/packages/core`;
+    for (const m of manifests) {
+      const organRel = ['@siduri-x/memory', '@siduri-x/knowledge', '@siduri-x/self'].includes(m.name)
+        ? `packages/${m.name.slice('@siduri-x/'.length)}`
+        : `packages/organs/${m.name.slice('@siduri-x/'.length)}`;
+      dependencies[m.name] = `file:${repoPath}/${organRel}`;
+    }
+  } else {
+    dependencies['@siduri-x/core'] = coreVersion;
+    for (const m of manifests) {
+      dependencies[m.name] = `^${m.version || '2.0.1'}`;
+    }
   }
 
   const scripts: Record<string, string> = {
     start: 'node src/index.js',
     dev: 'node --watch src/index.js',
+    reset: 'siduri reset',
     doctor: 'siduri doctor',
     db: 'siduri db',
   };
@@ -452,6 +464,21 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `        res.end(JSON.stringify({ error: err.message }));`,
     `      }`,
     `    });`,
+    `    return;`,
+    `  }`,
+    '',
+    `  // API: Memory & State Reset (Return to blank slate)`,
+    `  if ((pathname === '/api/reset' || pathname === '/memory/reset' || pathname === '/dev/memory/reset') && req.method === 'POST') {`,
+    `    try {`,
+    `      if (typeof memory?.resetMemory === 'function') {`,
+    `        await memory.resetMemory(config.id);`,
+    `      }`,
+    `      res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `      res.end(JSON.stringify({ reset: true, companionId: config.id, status: 'blank_slate' }));`,
+    `    } catch (err) {`,
+    `      res.writeHead(500, { 'Content-Type': 'application/json' });`,
+    `      res.end(JSON.stringify({ error: err.message }));`,
+    `    }`,
     `    return;`,
     `  }`,
     '',
