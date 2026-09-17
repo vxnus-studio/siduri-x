@@ -78,7 +78,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/brain',
     organType: 'brain',
-    version: '2.0.5',
+    version: '2.0.8',
     displayName: 'Brain (Cognition & Planning)',
     description: 'Provider-neutral LLM reasoning, response planning, and proposal generation',
     entrypoint: './dist/index.js',
@@ -219,7 +219,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/knowledge',
     organType: 'knowledge',
-    version: '2.0.3',
+    version: '2.0.5',
     displayName: 'Knowledge (Sovereign Life DB & Knowledge Packs)',
     description: 'Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs',
     entrypoint: './dist/index.js',

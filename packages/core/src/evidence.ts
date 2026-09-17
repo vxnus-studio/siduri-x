@@ -1,6 +1,6 @@
 import { MemoryProposal, BehaviorProposal } from './proposals';
 
-export type EvidenceOrigin = 'knowledge' | 'observation' | 'ocr' | 'platform' | 'conversation';
+export type EvidenceOrigin = 'knowledge' | 'memory' | 'life' | 'observation' | 'ocr' | 'platform' | 'conversation';
 export type EvidenceTrust = 'configured' | 'provider' | 'untrusted';
 export type EvidenceSensitivity = 'public' | 'private' | 'restricted';
 
@@ -44,6 +44,9 @@ export interface ResponseCitation {
   chunkId?: string;
   locator?: string;
   revision?: string;
+  evidenceId?: string;
+  provenance?: string;
+  preview?: string;
 }
 
 export interface StagedResponsePlan {

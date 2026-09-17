@@ -24,7 +24,6 @@ describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
     { filter: '@siduri-x/voice', dir: 'packages/organs/voice', tarName: `siduri-x-voice-${getPkgVer('packages/organs/voice')}.tgz`, isOrgan: true },
     { filter: '@siduri-x/observation', dir: 'packages/organs/observation', tarName: `siduri-x-observation-${getPkgVer('packages/organs/observation')}.tgz`, isOrgan: true },
     { filter: '@siduri-x/mouth', dir: 'packages/organs/mouth', tarName: `siduri-x-mouth-${getPkgVer('packages/organs/mouth')}.tgz`, isOrgan: true },
-    { filter: '@siduri-x/eknowledge', dir: 'packages/organs/eknowledge', tarName: `siduri-x-eknowledge-${getPkgVer('packages/organs/eknowledge')}.tgz`, isOrgan: true },
     { filter: '@vxnus/siduri', dir: 'cli', tarName: `vxnus-siduri-${getPkgVer('cli')}.tgz`, isOrgan: false },
   ];
 

@@ -1,7 +1,7 @@
 # Architecture Overview
 
 > **Status:** Implemented (Clean Architecture, Pure SQLite Foundation)  
-> **Topology:** 4 Core Domains (`packages/{core, self, knowledge, memory}`) + 9 Pluggable Peripheral Organs (`packages/organs/{brain, hands, ear, vision, voice, body, observation, mouth, eknowledge}`)
+> **Topology:** 4 Core Domains (`packages/{core, self, knowledge, memory}`) + 8 Pluggable Peripheral Organs (`packages/organs/{brain, hands, ear, vision, voice, body, observation, mouth}`)
 
 ---
 
@@ -37,7 +37,7 @@ All three persistent continuity substrates (`Self`, `Knowledge`, `Memory`) are b
 
 1. **Perception**: Sensory input (audio via `Ear`, text via `/chat`, or frames via `Observation`) is ingested and normalized.
 2. **Context Retrieval (4 Streams in Parallel)**:
-   - **Stream A (External Knowledge)**: Cited external lore / docs via `@siduri-x/eknowledge`.
+   - **Stream A (External Knowledge)**: Cited external lore / docs via `@siduri-x/knowledge` (`EKnowledgeAdapter`).
    - **Stream B (Episodic Memory)**: Verified past conversational episodes and claims via `@siduri-x/memory` (FTS5).
    - **Stream C (Self Directives)**: Active identity and behavioral rules from `@siduri-x/self`.
    - **Stream D (Life Context)**: Objective user reality (inventory, expenses, schedules) from `@siduri-x/knowledge`.

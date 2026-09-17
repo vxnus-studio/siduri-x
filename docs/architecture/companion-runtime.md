@@ -19,7 +19,7 @@ To prevent God-object anti-patterns and enforce strict single-responsibility bou
 
 3. **Context Retrieval (4 Parallel Streams)** (`packages/core/src/context-retriever.ts`):
    - Queries all four context streams concurrently in a single pass with graceful degradation:
-     - **Stream A (External Knowledge)**: Cited external packs via `@siduri-x/eknowledge`.
+     - **Stream A (External Knowledge)**: Cited external packs via `@siduri-x/knowledge` (`EKnowledgeAdapter`).
      - **Stream B (Episodic Memory)**: Verified claims via `@siduri-x/memory` (FTS5 BM25 relevance).
      - **Stream C (Self Directives)**: Active behavioral directives from `@siduri-x/self` (`SelfRepository`).
      - **Stream D (Life DB Context)**: Sovereign facts (inventory, finances, schedule, preferences) from `@siduri-x/knowledge`.

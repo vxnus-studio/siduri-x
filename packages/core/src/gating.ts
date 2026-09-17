@@ -145,7 +145,12 @@ export class ResponseGatingEngine {
     // If any evidence attached to this plan violated disclosure in this channel, exclude it
     const admittedEvidenceIds = admitted.map((e) => e.evidenceId);
     const filteredCitations = staged.citations.filter((c) =>
-      admitted.some((e) => e.sourceId === c.sourceId || (e.documentId && e.documentId === c.documentId))
+      admitted.some(
+        (e) =>
+          (c.evidenceId && e.evidenceId === c.evidenceId) ||
+          e.sourceId === c.sourceId ||
+          (e.documentId && e.documentId === c.documentId)
+      )
     );
 
     // 4. Explicitly rejected or status check

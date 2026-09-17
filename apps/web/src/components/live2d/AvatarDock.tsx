@@ -8,6 +8,7 @@ import {
   AvatarState,
 } from "./types";
 import AvatarCanvas from "./AvatarCanvas";
+import { CloseIcon } from "../icons";
 
 export interface ActiveAvatarEvent {
   eventId?: string;
@@ -102,7 +103,7 @@ export default function AvatarDock({
           aria-label="Close avatar presence dock"
           title="Close presence dock"
         >
-          ✕
+          <CloseIcon size={12} />
         </button>
       </div>
 

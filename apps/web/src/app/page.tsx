@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CommandIcon, CheckIcon, ArrowRightIcon } from "../components/icons";
 
 export default function HomePage() {
   return (
@@ -17,8 +18,8 @@ export default function HomePage() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/chat" className="nav-cta inline-flex items-center gap-2 text-xs font-mono border border-[var(--siduri-border-subtle)] px-3 sm:px-4 py-2 rounded-full hover:bg-[var(--siduri-surface)] transition-all">
-              <span>Chat</span> <span aria-hidden="true">→</span>
+            <Link href="/chat" className="nav-cta inline-flex items-center gap-1.5 text-xs font-mono border border-[var(--siduri-border-subtle)] px-3 sm:px-4 py-2 rounded-full hover:bg-[var(--siduri-surface)] transition-all">
+              <span>Chat</span> <ArrowRightIcon size={12} aria-hidden="true" />
             </Link>
           </div>
         </div>
@@ -47,13 +48,13 @@ export default function HomePage() {
                 className="inline-flex justify-center items-center gap-3 px-6 py-3.5 rounded-xl bg-[var(--siduri-ember)] text-[#1b1619] font-sans font-semibold text-sm tracking-wide transition-all hover:brightness-110 shadow-[0_4px_20px_rgba(217,154,104,0.2)]"
               >
                 Launch Companion
-                <span className="font-mono text-base">→</span>
+                <ArrowRightIcon size={16} aria-hidden="true" />
               </Link>
               <Link
                 href="/operator"
                 className="inline-flex justify-center items-center gap-2.5 px-6 py-3.5 rounded-xl border border-[var(--siduri-border-subtle)] bg-[var(--siduri-surface)] text-[var(--siduri-text-primary)] font-sans font-medium text-sm transition-all hover:border-[var(--siduri-border-ember)] hover:bg-[var(--siduri-tint-low)]"
               >
-                <span>⌘</span>
+                <CommandIcon size={14} className="shrink-0" />
                 Operator Console
               </Link>
             </div>
@@ -113,16 +114,16 @@ export default function HomePage() {
               </p>
               <ul className="space-y-3 text-xs text-[var(--siduri-text-muted)] font-mono">
                 <li className="flex items-center gap-2.5">
-                  <span className="text-[var(--siduri-online)]">✓</span>
-                  No hidden relationship assumptions
+                  <CheckIcon size={14} className="text-[var(--siduri-online)] shrink-0" />
+                  <span>No hidden relationship assumptions</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <span className="text-[var(--siduri-online)]">✓</span>
-                  Structured episodic and semantic memory
+                  <CheckIcon size={14} className="text-[var(--siduri-online)] shrink-0" />
+                  <span>Structured episodic and semantic memory</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <span className="text-[var(--siduri-online)]">✓</span>
-                  Full revocation and override controls
+                  <CheckIcon size={14} className="text-[var(--siduri-online)] shrink-0" />
+                  <span>Full revocation and override controls</span>
                 </li>
               </ul>
             </div>

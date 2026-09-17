@@ -31,7 +31,6 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
     { name: '@siduri-x/memory', dir: 'packages/memory', isOrgan: false, tarName: `siduri-x-memory-${getPkgVer('packages/memory')}.tgz` },
     { name: '@siduri-x/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: `siduri-x-brain-${getPkgVer('packages/organs/brain')}.tgz` },
     { name: '@siduri-x/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: `siduri-x-ear-${getPkgVer('packages/organs/ear')}.tgz` },
-    { name: '@siduri-x/eknowledge', dir: 'packages/organs/eknowledge', isOrgan: true, tarName: `siduri-x-eknowledge-${getPkgVer('packages/organs/eknowledge')}.tgz` },
     { name: '@siduri-x/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: `siduri-x-vision-${getPkgVer('packages/organs/vision')}.tgz` },
     { name: '@siduri-x/hands', dir: 'packages/organs/hands', isOrgan: true, tarName: `siduri-x-hands-${getPkgVer('packages/organs/hands')}.tgz` },
     { name: '@siduri-x/body', dir: 'packages/organs/body', isOrgan: true, tarName: `siduri-x-body-${getPkgVer('packages/organs/body')}.tgz` },

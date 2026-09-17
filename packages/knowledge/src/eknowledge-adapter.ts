@@ -399,22 +399,27 @@ async function resolveHubProvider(config: EKnowledgeConfig, module: EKnowledgeMo
 }
 
 export class EKnowledgeAdapter implements KnowledgeOrgan {
-  private loaded: Promise<LoadedPack | { provider: KnowledgeProvider & { retrieve: (request: RetrievalRequest) => Promise<RetrievalResponse> }; manifest: KnowledgePackManifest }>;
+  private loaded: Promise<LoadedPack | { provider: KnowledgeProvider & { retrieve: (request: RetrievalRequest) => Promise<RetrievalResponse> }; manifest: KnowledgePackManifest; baseUrl?: string }>;
   private readonly preferredMode: EKnowledgeConfig['preferredMode'];
+  private readonly timeoutMs?: number;
+  private readonly maxResponseBytes?: number;
 
   constructor(config: EKnowledgeConfig) {
     this.preferredMode = config.preferredMode ?? 'lexical';
+    this.timeoutMs = config.timeoutMs;
+    this.maxResponseBytes = config.maxResponseBytes;
     this.loaded = loadEKnowledgeModule().then(async (module) => {
       if (config.provider === 'e-hub') {
         const { provider, baseUrl, manifest: hubManifest } = await resolveHubProvider(config, module);
         let manifest: KnowledgePackManifest;
         try {
-          manifest = await resolveManifest(provider, baseUrl, config.timeoutMs);
+          const resolved = await resolveManifest(provider, baseUrl, config.timeoutMs);
+          manifest = { ...hubManifest, ...resolved, apiContract: (resolved as any)?.apiContract || (hubManifest as any)?.apiContract };
         } catch {
           if (!hubManifest) throw new Error('Could not resolve manifest for E Hub provider');
           manifest = hubManifest;
         }
-        return { provider: provider as any, manifest };
+        return { provider: provider as any, manifest, baseUrl };
       }
       if (config.provider === 'e-remote' || config.baseUrl) {
         const baseUrl = config.baseUrl || '';
@@ -437,7 +442,7 @@ export class EKnowledgeAdapter implements KnowledgeOrgan {
             },
           } as KnowledgePackManifest;
         }
-        return { provider: provider as any, manifest };
+        return { provider: provider as any, manifest, baseUrl };
       }
       if (!config.packPath) throw new Error('EKnowledgeAdapter requires packPath, baseUrl, or E Hub configuration');
       return module.loadPack(config.packPath);
@@ -470,16 +475,355 @@ export class EKnowledgeAdapter implements KnowledgeOrgan {
     try {
       response = await pack.provider.retrieve!({ query, mode: modeSupported ? requestedMode : 'lexical', limit: 8 });
     } catch (error) {
-      if (requestedMode === 'lexical') throw error;
-      // Semantic infrastructure is optional: an outage must not remove the
-      // provider's cited lexical path.
-      response = await pack.provider.retrieve!({ query, mode: 'lexical', limit: 8 });
+      if (requestedMode !== 'lexical') {
+        try {
+          response = await pack.provider.retrieve!({ query, mode: 'lexical', limit: 8 });
+        } catch (innerError) {
+          // Fall through to REST fallback
+        }
+      }
+      if (!response && 'baseUrl' in pack && pack.baseUrl) {
+        try {
+          response = await this.fallbackRestSearch(pack.baseUrl, query, manifest, this.timeoutMs, this.maxResponseBytes);
+        } catch {
+          // Both SDK retrieve and REST fallback failed
+          throw error;
+        }
+      } else if (!response) {
+        throw error;
+      }
     }
     return response.results.map((result: RetrievalResult) => ({
+      id: result.id,
       content: result.content,
       revision: result.revision,
       citations: result.citations,
       provenance: result.citations[0]?.sourceId || pack.manifest.publisher
     }));
+  }
+
+  private extractOpenApiEndpoints(apiContract: any): Array<{
+    path: string;
+    operationId?: string;
+    summary: string;
+    description: string;
+    tags: string[];
+    parameters: Array<{ in: string; name: string; required?: boolean }>;
+  }> {
+    const paths = apiContract?.paths || {};
+    const endpoints: any[] = [];
+    for (const [p, methods] of Object.entries(paths)) {
+      if (!methods || typeof methods !== 'object') continue;
+      for (const [m, op] of Object.entries(methods as any)) {
+        if (m.toLowerCase() !== 'get') continue;
+        if (p.includes('/health') || p.includes('/verify') || p.includes('openapi') || p.includes('/mcp')) continue;
+        const opObj = op as any;
+        endpoints.push({
+          path: p,
+          operationId: opObj.operationId,
+          summary: opObj.summary || '',
+          description: opObj.description || '',
+          tags: Array.isArray(opObj.tags) ? opObj.tags : [],
+          parameters: Array.isArray(opObj.parameters) ? opObj.parameters : [],
+        });
+      }
+    }
+    return endpoints;
+  }
+
+  private resolveOpenApiCall(q: string, ep: any, originUrl: string): string | null {
+    const pathParams = (ep.parameters || []).filter((p: any) => p.in === 'path');
+    let resolvedPath = ep.path;
+
+    if (pathParams.length > 0) {
+      const descWords = new Set(
+        `${ep.path} ${ep.summary} ${ep.tags.join(' ')}`
+          .toLowerCase()
+          .replace(/[{}]/g, ' ')
+          .split(/[^a-z0-9]+/)
+          .filter((w: string) => w.length > 2)
+      );
+      const stopWords = new Set([
+        'who', 'what', 'where', 'when', 'how', 'is', 'was', 'are', 'were',
+        'she', 'he', 'they', 'the', 'a', 'an', 'in', 'on', 'to', 'for', 'of',
+        'tell', 'about', 'banner', 'banners', 'wish', 'wishes', 'rerun', 'reruns',
+        'pull', 'pulls', 'phase', 'rateup', 'history', 'build', 'builds', 'guide', 'guides'
+      ]);
+
+      const queryTokens = q.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+      const candidateTokens = queryTokens.filter((t) => !descWords.has(t) && !stopWords.has(t));
+
+      if (candidateTokens.length === 0) return null;
+      const slug = candidateTokens.join('-');
+
+      for (const pp of pathParams) {
+        resolvedPath = resolvedPath.replace(`{${pp.name}}`, slug);
+      }
+      if (resolvedPath.includes('{')) return null;
+      return `${originUrl}${resolvedPath}`;
+    }
+
+    const qParam = (ep.parameters || []).find((p: any) => p.in === 'query' && (p.name === 'q' || p.name === 'query'));
+    if (qParam) {
+      const cleanSearchTokens = q
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((w) => !['banner', 'banners', 'build', 'builds', 'wish', 'wishes'].includes(w) && w.length > 1);
+      const cleanSearchQuery = cleanSearchTokens.length > 0 ? cleanSearchTokens.join(' ') : q;
+      return `${originUrl}${resolvedPath}?${qParam.name}=${encodeURIComponent(cleanSearchQuery)}&limit=5`;
+    }
+
+    return `${originUrl}${resolvedPath}`;
+  }
+
+  private formatOpenApiResponse(data: any, ep: any, manifest: KnowledgePackManifest, callUrl: string): RetrievalResult[] {
+    if (!data || typeof data !== 'object') return [];
+    const results: RetrievalResult[] = [];
+    const revision = manifest.version || '1.0.0';
+    const sourceId = manifest.id || manifest.name || '@vxnus/knowledge-pack';
+
+    const items = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : null;
+    if (items) {
+      for (let idx = 0; idx < items.length; idx++) {
+        const item = items[idx];
+        if (!item || typeof item !== 'object') continue;
+        const id = item.id || item.entity_id || item.entityId || item.slug || `${ep.path}:${idx}`;
+        const title = item.title || item.name || item.section || '';
+        const body = item.content || item.snippet || item.description || '';
+        let content = '';
+        if (title && body && !body.startsWith(title)) {
+          content = `${title}: ${body}`;
+        } else if (body) {
+          content = body;
+        } else if (title) {
+          content = title;
+        } else {
+          content = JSON.stringify(item);
+        }
+        results.push({
+          id: String(id),
+          content,
+          revision,
+          citations: [
+            {
+              sourceId,
+              documentId: String(item.slug || item.entitySlug || id),
+              chunkId: String(id),
+              locator: callUrl,
+            },
+          ],
+        });
+      }
+      return results;
+    }
+
+    const summaryTitle = ep.summary || ep.path;
+    const textLines: string[] = [`[${summaryTitle}]`];
+
+    if (data.character && typeof data.character === 'object') {
+      const cName = data.character.name || data.character.id;
+      textLines.push(`Subject: ${cName} (${data.character.rarity ? data.character.rarity + '★' : ''})`);
+    }
+    if (Array.isArray(data.appearances)) {
+      textLines.push(`Total Appearances: ${data.appearances.length}`);
+      for (const a of data.appearances) {
+        textLines.push(`  • Version ${a.version} Phase ${a.phaseNumber || 1} (${a.phaseKey || ''}): ${a.startDate || ''} to ${a.endDate || ''}`);
+      }
+    }
+    if (data.currentWait !== undefined) {
+      textLines.push(`Current Wait: ${data.currentWait} phases`);
+    }
+    if (data.analysis && typeof data.analysis === 'object') {
+      textLines.push(`Analysis: ${data.analysis.summary || ''}`);
+      if (data.analysis.pressureScore !== undefined && data.analysis.pressureScore !== null) {
+        textLines.push(`Pressure Score: ${data.analysis.pressureScore} [${data.analysis.pressureLevel || ''}]`);
+      }
+    }
+    if (Array.isArray(data.builds)) {
+      for (const b of data.builds) {
+        textLines.push(`Role: ${b.role || ''} - ${b.title || ''}`);
+        if (Array.isArray(b.weapons)) {
+          textLines.push(`  Weapons: ${b.weapons.map((w: any) => w.name || w).join(', ')}`);
+        }
+        if (Array.isArray(b.artifacts)) {
+          textLines.push(`  Artifacts: ${b.artifacts.map((a: any) => a.name || a).join(', ')}`);
+        }
+      }
+    }
+    if (Array.isArray(data.characters)) {
+      if (data.currentPhase) textLines.push(`Current Phase: ${data.currentPhase.phaseKey || ''}`);
+      for (const c of data.characters.slice(0, 5)) {
+        textLines.push(`  • ${c.name}: ${c.currentWait} phases wait (pressure: ${c.pressureScore})`);
+      }
+    }
+
+    if (textLines.length === 1) {
+      textLines.push(JSON.stringify(data, null, 2));
+    }
+
+    results.push({
+      id: `${ep.path}:${callUrl}`,
+      content: textLines.join('\n'),
+      revision,
+      citations: [
+        {
+          sourceId,
+          documentId: ep.operationId || ep.path,
+          chunkId: `${ep.path}:${callUrl}`,
+          locator: callUrl,
+        },
+      ],
+    });
+    return results;
+  }
+
+  /**
+   * Universal dynamic retrieval for remote knowledge providers.
+   * If the pack registered an OpenAPI contract in E Hub (apiContract),
+   * dynamically discovers and queries relevant endpoints (search, banner history, builds, etc.).
+   * Also maintains backwards compatibility for REST search fallbacks.
+   */
+  private async fallbackRestSearch(
+    baseUrl: string,
+    query: string,
+    manifest: KnowledgePackManifest,
+    timeoutMs?: number,
+    maxBytes?: number
+  ): Promise<RetrievalResponse> {
+    const cleanUrl = baseUrl.replace(/\/+$/, '');
+    const originUrl = new URL(cleanUrl).origin;
+    const timeout = timeoutMs || 5000;
+    const revision = manifest.version || '1.0.0';
+
+    // 1. Dynamic execution via OpenAPI specification contract if present
+    const apiContract = (manifest as any).apiContract;
+    if (apiContract && typeof apiContract === 'object' && apiContract.paths) {
+      const endpoints = this.extractOpenApiEndpoints(apiContract);
+      const matchedCalls: Array<{ ep: any; callUrl: string }> = [];
+
+      for (const ep of endpoints) {
+        const text = `${ep.path} ${ep.summary} ${ep.description} ${ep.tags.join(' ')}`.toLowerCase();
+        const qWords = query.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2);
+        const hasMatch = qWords.some((w) => text.includes(w));
+        const isSearch = (ep.parameters || []).some((p: any) => p.in === 'query' && (p.name === 'q' || p.name === 'query'));
+
+        if (hasMatch || isSearch) {
+          const callUrl = this.resolveOpenApiCall(query, ep, originUrl);
+          if (callUrl) {
+            matchedCalls.push({ ep, callUrl });
+          }
+        }
+      }
+
+      if (matchedCalls.length > 0) {
+        const fetchPromises = matchedCalls.map(async ({ ep, callUrl }) => {
+          try {
+            const data = await safeFetchJson<any>(callUrl, {
+              headers: { accept: 'application/json' },
+              timeoutMs: timeout,
+              maxBytes,
+            });
+            return this.formatOpenApiResponse(data, ep, manifest, callUrl);
+          } catch {
+            return [];
+          }
+        });
+
+        const allResults = (await Promise.all(fetchPromises)).flat();
+        if (allResults.length > 0) {
+          // Sort results: prioritize specialized/targeted endpoints (e.g. banner history, builds) over broad full-text lists
+          allResults.sort((a, b) => {
+            const aIsSpecialized = a.content.startsWith('[');
+            const bIsSpecialized = b.content.startsWith('[');
+            if (aIsSpecialized && !bIsSpecialized) return -1;
+            if (!aIsSpecialized && bIsSpecialized) return 1;
+            return 0;
+          });
+
+          // Deduplicate
+          const seen = new Set<string>();
+          const deduped: RetrievalResult[] = [];
+          for (const res of allResults) {
+            if (!seen.has(res.id)) {
+              seen.add(res.id);
+              deduped.push(res);
+            }
+          }
+          return {
+            revision,
+            results: deduped,
+          };
+        }
+      }
+    }
+
+    // 2. Fallback for standard knowledge search / lore endpoints if no OpenAPI contract matched
+    const encoded = encodeURIComponent(query);
+    const [loreData, knowData] = await Promise.all([
+      safeFetchJson<any>(`${cleanUrl}/v1/lore/search?q=${encoded}&limit=5`, {
+        headers: { accept: 'application/json' },
+        timeoutMs: timeout,
+        maxBytes,
+      }).catch(() =>
+        safeFetchJson<any>(cleanUrl.replace(/\/api\/e\/?$/, '/api/v1/lore/search') + `?q=${encoded}&limit=5`, {
+          headers: { accept: 'application/json' },
+          timeoutMs: timeout,
+          maxBytes,
+        }).catch(() => null)
+      ),
+      safeFetchJson<any>(`${cleanUrl}/v1/knowledge/search?q=${encoded}&limit=5`, {
+        headers: { accept: 'application/json' },
+        timeoutMs: timeout,
+        maxBytes,
+      }).catch(() =>
+        safeFetchJson<any>(cleanUrl.replace(/\/api\/e\/?$/, '/api/knowledge/search') + `?q=${encoded}&limit=5`, {
+          headers: { accept: 'application/json' },
+          timeoutMs: timeout,
+          maxBytes,
+        }).catch(() => null)
+      ),
+    ]);
+
+    let rawLoreItems: any[] = Array.isArray(loreData?.items) ? loreData.items : [];
+    let rawKnowItems: any[] = Array.isArray(knowData?.items) ? knowData.items : [];
+
+    const combined = [...rawLoreItems, ...rawKnowItems];
+    const seen = new Set<string>();
+    const deduplicated: any[] = [];
+
+    for (const item of combined) {
+      const key = item.id || item.entity_id || item.entityId || item.slug || item.content;
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduplicated.push(item);
+      }
+    }
+
+    const results: RetrievalResult[] = deduplicated.map((item, idx) => {
+      const id = item.id || item.entity_id || item.entityId || `item-${idx}`;
+      const title = item.title || item.name || item.section || '';
+      const body = item.content || item.snippet || '';
+      const content = title && body && !body.startsWith(title) ? `${title}: ${body}` : (body || title);
+      const docSlug = item.entitySlug || item.slug || id;
+
+      return {
+        id,
+        content,
+        revision,
+        citations: [
+          {
+            sourceId: manifest.id || manifest.name || '@vxnus/knowledge-pack',
+            documentId: docSlug,
+            chunkId: id,
+            locator: `${cleanUrl}/v1/lore/search?q=${encoded}`,
+          },
+        ],
+      };
+    });
+
+    return {
+      revision,
+      results,
+    };
   }
 }

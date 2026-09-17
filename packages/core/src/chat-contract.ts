@@ -38,6 +38,13 @@ export interface ChatResponsePlan {
   subtitle_language?: string;
   subtitles?: Record<string, string>;
   evidence_ids?: string[];
+  citations?: ResponseCitation[];
+  gate?: {
+    status: string;
+    requires_approval: boolean;
+    confidence?: string;
+    uncertainty?: string;
+  };
 }
 
 export interface ChatResponseMetadata {
@@ -159,6 +166,22 @@ export async function dispatchCompanionChat(
     resolvedSubtitles[requestedSubtitleLang] = subtitle;
   }
 
+  const rawCitations = runtimeResult?.metadata?.citations ?? runtimeResult?.response?.citations ?? [];
+  const normalizedCitations = (Array.isArray(rawCitations) ? rawCitations : []).map((c: any) => ({
+    evidence_id: c.evidence_id || c.evidenceId,
+    evidenceId: c.evidenceId || c.evidence_id,
+    source_id: c.source_id || c.sourceId,
+    sourceId: c.sourceId || c.source_id,
+    document_id: c.document_id || c.documentId,
+    documentId: c.documentId || c.document_id,
+    chunk_id: c.chunk_id || c.chunkId,
+    chunkId: c.chunkId || c.chunk_id,
+    revision: c.revision,
+    provenance: c.provenance || c.sourceId || c.source_id,
+    preview: c.preview,
+    locator: c.locator,
+  }));
+
   // Ensure both spoken_ja and subtitle_en are accessible alongside speech_id and evidence_ids
   const responsePlan: ChatResponsePlan = {
     speech_id: runtimeResult?.response?.speech_id,
@@ -169,11 +192,14 @@ export async function dispatchCompanionChat(
     subtitle,
     subtitle_language: requestedSubtitleLang,
     subtitles: resolvedSubtitles,
-    evidence_ids: runtimeResult?.metadata?.evidence_ids ?? runtimeResult?.response?.evidence_ids ?? [],
+    evidence_ids: runtimeResult?.metadata?.evidence_ids ?? runtimeResult?.response?.evidence_ids ?? (normalizedCitations.map((c) => c.evidence_id).filter(Boolean)),
+    citations: normalizedCitations,
+    gate: runtimeResult?.response?.gate ?? runtimeResult?.metadata?.gate,
   };
 
   const metadata: ChatResponseMetadata = {
     ...(runtimeResult?.metadata || {}),
+    citations: normalizedCitations,
   };
   delete (metadata as any).internal_monologue;
   delete (metadata as any).internalMonologue;

@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/api",
-  "version": "2.0.14",
+  "version": "2.0.15",
   "publishConfig": {
     "access": "public"
   },
@@ -19,7 +19,6 @@
     "@siduri-x/brain": "workspace:*",
     "@siduri-x/core": "workspace:*",
     "@siduri-x/ear": "workspace:*",
-    "@siduri-x/eknowledge": "workspace:*",
     "@siduri-x/hands": "workspace:*",
     "@siduri-x/knowledge": "workspace:*",
     "@siduri-x/memory": "workspace:*",

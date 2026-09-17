@@ -147,12 +147,41 @@ export const inputNormalizationStage: PerceptionPipelineStage = async (context) 
 
 export const intentClassificationStage: PerceptionPipelineStage = async (context) => {
   if (!context.input) return;
+
+  // 1. If BrainOrgan supports cognitive retrieval planning, allow it to plan queries
+  let brainRetrievalPlan: any;
+  if (context.organs.brain && typeof (context.organs.brain as any).planRetrieval === 'function') {
+    try {
+      const history = (context.perception.history && context.perception.history.length > 0)
+        ? context.perception.history
+        : context.sessionHistory.getHistory(context.sessionKey || 'default');
+      brainRetrievalPlan = await (context.organs.brain as any).planRetrieval(
+        context.input.perceivedText,
+        context.input.requestContext,
+        history
+      );
+    } catch (e: any) {
+      // Graceful fallback to Ear/Heuristics
+    }
+  }
+
+  const classifier = async (t: string, c: any) => {
+    if (brainRetrievalPlan) {
+      return {
+        ...brainRetrievalPlan,
+        classifierOrigin: 'brain' as const,
+      };
+    }
+    if (context.organs.ear?.classifyIntent) {
+      return context.organs.ear.classifyIntent(t, c) as any;
+    }
+    return {};
+  };
+
   const intent = await classifyInputIntentAsync(
     context.input.perceivedText,
     context.input.requestContext,
-    context.organs.ear?.classifyIntent
-      ? (t, c) => context.organs.ear!.classifyIntent!(t, c) as any
-      : undefined
+    classifier
   );
   context.intent = intent;
 };
@@ -166,6 +195,8 @@ export const contextRetrievalStage: PerceptionPipelineStage = async (context) =>
     role: context.input.role,
     isContextObject: context.input.isContextObject,
     shouldQueryKnowledge: context.intent.shouldQueryKnowledge,
+    knowledgeQueries: context.intent.knowledgeQueries,
+    memoryQueries: context.intent.memoryQueries,
     isSelfIdentityRequest: context.intent.isSelfIdentityRequest,
     knowledge: context.organs.knowledge,
     memory: context.organs.memory,

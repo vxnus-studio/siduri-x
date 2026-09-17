@@ -1,4 +1,4 @@
-import { BrainOrgan, BrainContext, ResponsePlan, Message } from '@siduri-x/core';
+import { BrainOrgan, BrainContext, ResponsePlan, Message, RetrievalPlan, RequestContext } from '@siduri-x/core';
 import { PromptAssembler } from './prompt';
 import { z } from 'zod';
 
@@ -334,6 +334,85 @@ export class OpenAICompatibleBrain implements BrainOrgan {
     } finally {
       clearTimeout(overallTimer);
     }
+  }
+
+  async planRetrieval(
+    text: string,
+    context?: RequestContext,
+    recentHistory?: { role: string; content: string }[]
+  ): Promise<RetrievalPlan> {
+    const defaultResponse: RetrievalPlan = {
+      shouldQueryKnowledge: undefined as any,
+      knowledgeQueries: [],
+      shouldQueryMemory: undefined as any,
+      memoryQueries: [],
+    };
+
+    if (!text || !text.trim() || !this.resolvedApiKey) {
+      return defaultResponse;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+
+    let historyContext = '';
+    if (recentHistory && recentHistory.length > 0) {
+      const recentTurns = recentHistory
+        .slice(-4)
+        .map((m) => `${m.role}: ${m.content}`)
+        .join('\n');
+      historyContext = `\n\nRecent conversation context:\n${recentTurns}\nIf the current user message uses pronouns (she, he, it, they) or refers to previously mentioned entities (e.g. 'where is she coming to banner?'), resolve the pronoun to the specific entity name from context (e.g. ['Sandrone banner']).`;
+    }
+
+    try {
+      const response = await fetch(`${this.config.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.resolvedApiKey || this.config.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: this.config.model,
+          messages: [
+            {
+              role: "system",
+              content: `You are an agentic query planning module for a companion named Siduri. Analyze the user message.\nDecide:\n1. shouldQueryKnowledge (boolean): does this message ask about external world facts, domain documentation, fictional/real universe entities, lore, timelines, or specifications? (False if greeting, self-identity of Siduri, or personal small talk).\n2. knowledgeQueries (string[]): 1-2 focused keyword queries of the specific entity, topic, or subject name (e.g. 'Sandrone', or with topic qualifier like 'Sandrone banner'; strictly remove companion name 'Siduri', greetings, and conversational fluff like 'who is', 'tell me about', 'what is').\n3. shouldQueryMemory (boolean): does this message ask about user identity, past conversation history, or shared facts?\n4. memoryQueries (string[]): 1-2 focused query keywords for episodic memory.${historyContext}\nRespond strictly in JSON format: {"shouldQueryKnowledge": boolean, "knowledgeQueries": string[], "shouldQueryMemory": boolean, "memoryQueries": string[]}`,
+            },
+            {
+              role: "user",
+              content: text,
+            },
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 150,
+          temperature: 0,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        return defaultResponse;
+      }
+
+      const data = await response.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (content) {
+        const parsed = JSON.parse(content);
+        return {
+          shouldQueryKnowledge: typeof parsed.shouldQueryKnowledge === 'boolean' ? parsed.shouldQueryKnowledge : undefined,
+          knowledgeQueries: Array.isArray(parsed.knowledgeQueries) ? parsed.knowledgeQueries.filter((q: any) => typeof q === 'string' && q.trim()) : [],
+          shouldQueryMemory: typeof parsed.shouldQueryMemory === 'boolean' ? parsed.shouldQueryMemory : undefined,
+          memoryQueries: Array.isArray(parsed.memoryQueries) ? parsed.memoryQueries.filter((q: any) => typeof q === 'string' && q.trim()) : [],
+          reasoning: parsed.reasoning,
+        };
+      }
+    } catch {
+      // Fallback to heuristic extraction
+    } finally {
+      clearTimeout(timer);
+    }
+
+    return defaultResponse;
   }
 }
 

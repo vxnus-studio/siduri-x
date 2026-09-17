@@ -86,8 +86,17 @@ export interface ResponsePlan {
   internalMonologue?: string;
 }
 
+export interface RetrievalPlan {
+  shouldQueryKnowledge: boolean;
+  knowledgeQueries: string[];
+  shouldQueryMemory?: boolean;
+  memoryQueries?: string[];
+  reasoning?: string;
+}
+
 export interface BrainOrgan {
   generatePlan(context: BrainContext): Promise<ResponsePlan>;
+  planRetrieval?(text: string, context?: RequestContext): Promise<RetrievalPlan>;
 }
 
 

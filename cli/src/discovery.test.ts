@@ -6,10 +6,10 @@ import { generateInstanceFiles } from './generator';
 describe('Discovery & Dynamic Composition System Tests (Phase 3)', () => {
   const rootOrgansDir = path.resolve(__dirname, '../../packages/organs');
 
-  test('Registry successfully discovers all 12 organ packages from workspace', () => {
+  test('Registry successfully discovers all 11 organ packages from workspace', () => {
     const registry = OrganRegistry.discover();
     const manifests = registry.getAll();
-    expect(manifests.length).toBe(12);
+    expect(manifests.length).toBe(11);
 
     const organTypes = registry.getAvailableOrganTypes().sort();
     expect(organTypes).toEqual([
@@ -17,7 +17,6 @@ describe('Discovery & Dynamic Composition System Tests (Phase 3)', () => {
       'body',
       'brain',
       'ear',
-      'eknowledge',
       'hands',
       'knowledge',
       'memory',

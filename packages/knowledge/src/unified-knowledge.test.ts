@@ -117,4 +117,139 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
     fetchMock.mockRestore();
     dnsSpy.mockRestore();
   });
+
+  test('falls back to REST search endpoint when standard E retrieve fails (e-teyvat protocol)', async () => {
+    const dnsSpy = jest.spyOn(dns, 'lookup').mockImplementation(async () => {
+      return [{ address: '93.184.216.34', family: 4 }] as any;
+    });
+
+    const fetchMock = jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/api/v1/knowledge/vxnus/e-teyvat')) {
+        const payload = {
+          id: '@vxnus/e-teyvat',
+          name: 'e-teyvat',
+          publisher: 'vxnus',
+          distribution: { kind: 'provider', url: 'https://provider.example/api/e' },
+        };
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify(payload),
+          json: async () => payload,
+          headers: new Headers(),
+        } as Response;
+      }
+      if (url.includes('/retrieve')) {
+        return {
+          ok: false,
+          status: 404,
+          statusText: 'Not Found',
+          text: async () => 'Not Found',
+          json: async () => ({ error: 'Not Found' }),
+          headers: new Headers(),
+        } as Response;
+      }
+      if (url.includes('/knowledge/search')) {
+        const restSearchPayload = {
+          items: [
+            {
+              entity_id: 'genshin:character:furina',
+              kind: 'character',
+              slug: 'furina',
+              name: 'Furina',
+              section: 'Profile',
+              content: 'Furina is the Hydro Archon Focalors vessel in Fontaine.',
+              rank: 0.95,
+            },
+          ],
+          preview: false,
+        };
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify(restSearchPayload),
+          json: async () => restSearchPayload,
+          headers: new Headers(),
+        } as Response;
+      }
+      return {
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        text: async () => 'Not Found',
+        json: async () => ({ error: 'Not Found' }),
+        headers: new Headers(),
+      } as Response;
+    });
+
+    const organ = new UnifiedKnowledgeOrgan({
+      lifeDatabase: true,
+      dbPath: testDbPath,
+      provider: 'e-hub',
+      registryUrl: 'https://e.vxnus.xyz/api/v1/knowledge',
+      packId: '@vxnus/e-teyvat',
+    });
+
+    const results = await organ.search('Furina');
+    expect(results).toHaveLength(1);
+    expect(results[0].content).toContain('Furina is the Hydro Archon');
+    expect(results[0].provenance).toBe('@vxnus/e-teyvat');
+
+    organ.close();
+    fetchMock.mockRestore();
+    dnsSpy.mockRestore();
+  });
+
+  test('supports pack list discovery, enabling, disabling, and toggling', async () => {
+    const dnsSpy = jest.spyOn(dns, 'lookup').mockImplementation(async () => {
+      return [{ address: '93.184.216.34', family: 4 }] as any;
+    });
+    const fetchMock = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({}),
+        json: async () => ({}),
+        headers: new Headers(),
+      } as Response;
+    });
+
+    const organ = new UnifiedKnowledgeOrgan({
+      lifeDatabase: true,
+      dbPath: testDbPath,
+      packs: [
+        {
+          id: 'pack-1',
+          name: 'Knowledge Pack 1',
+          enabled: true,
+          baseUrl: 'https://example.com/pack1',
+        },
+        {
+          id: 'pack-2',
+          name: 'Knowledge Pack 2',
+          enabled: false,
+          baseUrl: 'https://example.com/pack2',
+        },
+      ],
+    });
+
+    const packs = organ.getPacks();
+    expect(packs).toHaveLength(2);
+    expect(packs.find(p => p.id === 'pack-1')?.enabled).toBe(true);
+    expect(packs.find(p => p.id === 'pack-2')?.enabled).toBe(false);
+
+    organ.disablePack('pack-1');
+    expect(organ.getPacks().find(p => p.id === 'pack-1')?.enabled).toBe(false);
+
+    organ.enablePack('pack-2');
+    expect(organ.getPacks().find(p => p.id === 'pack-2')?.enabled).toBe(true);
+
+    const toggled = organ.togglePack('pack-2');
+    expect(toggled).toBe(false);
+
+    organ.close();
+    fetchMock.mockRestore();
+    dnsSpy.mockRestore();
+  });
 });

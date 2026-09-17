@@ -25,7 +25,6 @@ const packagePaths = [
   'packages/organs/body/package.json',
   'packages/organs/brain/package.json',
   'packages/organs/ear/package.json',
-  'packages/organs/eknowledge/package.json',
   'packages/organs/hands/package.json',
   'packages/organs/mouth/package.json',
   'packages/organs/observation/package.json',

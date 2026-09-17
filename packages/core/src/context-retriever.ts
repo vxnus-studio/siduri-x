@@ -12,6 +12,7 @@ import {
   EpisodicMemoryStore,
   EKnowledgeOrgan,
 } from './index';
+import { extractSearchKeywords } from './intent-classifier';
 
 export interface ContextRetrievalParams {
   companionId: string;
@@ -20,6 +21,8 @@ export interface ContextRetrievalParams {
   role: 'OWNER' | 'VIEWER' | 'OPERATOR';
   isContextObject: boolean;
   shouldQueryKnowledge: boolean;
+  knowledgeQueries?: string[];
+  memoryQueries?: string[];
   isSelfIdentityRequest?: boolean;
   knowledge?: KnowledgeOrgan | LifeDatabase;
   memory?: MemoryOrgan | EpisodicMemoryStore;
@@ -54,6 +57,8 @@ export async function retrieveRuntimeContext(
     role,
     isContextObject,
     shouldQueryKnowledge,
+    knowledgeQueries,
+    memoryQueries,
     isSelfIdentityRequest,
     knowledge,
     memory,
@@ -72,6 +77,30 @@ export async function retrieveRuntimeContext(
   // 1. Resolve External Knowledge organ (either explicitly passed or from legacy knowledge with .search)
   const extKnowledge = externalKnowledge || (knowledge && typeof (knowledge as any).search === 'function' ? knowledge : undefined);
 
+  // Formulate queries: combine AI/cognitive queries, entity keywords, and cleaned query variants
+  const keywordQueries = extractSearchKeywords(perceivedText, companionId, (requestContext as any)?.history);
+  const aiQueries = (knowledgeQueries || []).filter(Boolean);
+  
+  // Clean AI queries of conversational filler if present (e.g. 'what is the lore on Sandrone' -> 'Sandrone')
+  const cleanedAiQueries = aiQueries.map((q) =>
+    q.replace(/^(?:what(?:\s+is|\s+are)?|who(?:\s+is|\s+are)?|tell(?:\s+me)?(?:\s+about)?|search(?:\s+for)?|information(?:\s+on|\s+about)?|details(?:\s+on|\s+about)?|lore(?:\s+for|\s+on|\s+about)?)\s+/gi, '').trim()
+  ).filter((q) => q.length > 0);
+
+  const queryCandidateSet = new Set<string>();
+  for (const q of [...keywordQueries, ...aiQueries, ...cleanedAiQueries]) {
+    if (q && q.trim()) {
+      queryCandidateSet.add(q.trim());
+    }
+  }
+  if (queryCandidateSet.size === 0 && perceivedText && perceivedText.trim()) {
+    queryCandidateSet.add(perceivedText.trim());
+  }
+  const finalKnowledgeQueries = Array.from(queryCandidateSet);
+
+  const memoryQueryToRun = (memoryQueries && memoryQueries.length > 0 && memoryQueries[0])
+    ? memoryQueries[0]
+    : extractSearchKeywords(perceivedText, companionId)[0] || perceivedText;
+
   // 2. Query streams in parallel
   const [
     knowledgeData,
@@ -84,10 +113,28 @@ export async function retrieveRuntimeContext(
   ] = await Promise.all([
     // Stream A: External Cited Lore / Documentation
     extKnowledge && shouldQueryKnowledge && typeof (extKnowledge as any).search === 'function'
-      ? (extKnowledge as any).search(perceivedText).catch((e: any) => {
-          console.error('[SiduriRuntime] Knowledge search failed:', e.message);
-          subsystemDiagnostics['knowledge'] = `UNAVAILABLE: ${e.message}`;
-          return [];
+      ? Promise.all(
+          finalKnowledgeQueries.map((q) =>
+            (extKnowledge as any).search(q).catch((e: any) => {
+              console.error(`[SiduriRuntime] Knowledge search failed for "${q}":`, e.message);
+              subsystemDiagnostics['knowledge'] = `UNAVAILABLE: ${e.message}`;
+              return [];
+            })
+          )
+        ).then((resultsArray) => {
+          const merged: KnowledgeItem[] = [];
+          const seen = new Set<string>();
+          for (const list of resultsArray) {
+            if (!Array.isArray(list)) continue;
+            for (const item of list) {
+              const key = item.id || item.content || (item as any).text || JSON.stringify(item.citations);
+              if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(item);
+              }
+            }
+          }
+          return merged;
         })
       : Promise.resolve([]),
 
@@ -96,7 +143,7 @@ export async function retrieveRuntimeContext(
       ? (async () => {
           try {
             // Support both (companionId, query, limit) and (query, options, limit)
-            let result = await (memory as any).searchClaims(perceivedText, queryOptions, 5);
+            let result = await (memory as any).searchClaims(memoryQueryToRun, queryOptions, 5);
             if ((!result || result.length === 0) && isSelfIdentityRequest) {
               if (typeof (memory as any).getApprovedClaims === 'function') {
                 const approved = await (memory as any).getApprovedClaims(companionId, 10);
@@ -175,23 +222,28 @@ export async function retrieveRuntimeContext(
 
   const activeDirectives: BehaviorDirective[] = (selfOrMemoryDirectives || []) as BehaviorDirective[];
 
-  // Build evidence records from retrieved external knowledge context
+  // Build evidence records from retrieved context streams
   const collectedEvidence: EvidenceRecord[] = [];
   const citations: ResponseCitation[] = [];
 
+  // Stream A: External Knowledge
   if (knowledgeData.length > 0) {
     for (const k of knowledgeData) {
+      const previewText = k.content || (k as any).text || (k as any).summary || (k as any).preview || '';
       if (k.evidenceRecord) {
         const nativeRecord = {
           ...k.evidenceRecord,
         };
         collectedEvidence.push(nativeRecord);
         citations.push({
+          evidenceId: nativeRecord.evidenceId,
+          provenance: k.provenance || nativeRecord.sourceId || 'knowledge',
           sourceId: nativeRecord.sourceId,
           revision: nativeRecord.revision,
           documentId: nativeRecord.documentId || k.citations?.[0]?.documentId,
           chunkId: nativeRecord.chunkId || k.citations?.[0]?.chunkId,
           locator: nativeRecord.locator || k.citations?.[0]?.locator,
+          preview: previewText.slice(0, 300),
         });
       } else {
         // Synthesize fallback evidence record with provenance
@@ -209,13 +261,76 @@ export async function retrieveRuntimeContext(
           createdAt: new Date().toISOString(),
         });
         citations.push({
+          evidenceId: evId,
+          provenance: sourceId,
           sourceId,
           revision: k.revision,
           documentId: k.citations?.[0]?.documentId,
           chunkId: k.citations?.[0]?.chunkId,
           locator: k.citations?.[0]?.locator,
+          preview: previewText.slice(0, 300),
         });
       }
+    }
+  }
+
+  // Stream B: Episodic Memory Claims
+  if (memoryData.length > 0) {
+    for (const m of memoryData) {
+      const claimId = (m as any).claim_id || (m as any).id || `claim-${Date.now()}`;
+      const sourceId = (m as any).provenance || 'sqlite-memory';
+      const evId = `ev-mem-${claimId}`;
+      const claimPreview = (m as any).content || `${(m as any).subject || 'user'} ${(m as any).predicate || 'claims'}: ${(m as any).value || ''}`;
+      collectedEvidence.push({
+        evidenceId: evId,
+        sourceId,
+        documentId: claimId,
+        chunkId: `${(m as any).subject || 'user'}:${(m as any).predicate || 'claim'}`,
+        origin: 'memory',
+        trust: 'configured',
+        sensitivity: 'private',
+        companionId,
+        correlationId: requestContext.conversation.correlationId,
+        createdAt: new Date().toISOString(),
+      });
+      citations.push({
+        evidenceId: evId,
+        provenance: 'memory',
+        sourceId,
+        documentId: claimId,
+        chunkId: `${(m as any).subject || 'user'}.${(m as any).predicate || 'claim'}`,
+        locator: `claim:${claimId}`,
+        preview: claimPreview.slice(0, 300),
+      });
+    }
+  }
+
+  // Stream D: Life DB Context Items
+  if (lifeContext && lifeContext.length > 0) {
+    for (let i = 0; i < lifeContext.length; i++) {
+      const item = lifeContext[i];
+      const evId = `ev-life-${Date.now()}-${i}`;
+      const sourceId = 'sqlite-lifedb';
+      const itemPreview = (item as any).title || (item as any).name || (item as any).summary || JSON.stringify(item);
+      collectedEvidence.push({
+        evidenceId: evId,
+        sourceId,
+        documentId: `item-${i}`,
+        origin: 'life',
+        trust: 'configured',
+        sensitivity: 'private',
+        companionId,
+        correlationId: requestContext.conversation.correlationId,
+        createdAt: new Date().toISOString(),
+      });
+      citations.push({
+        evidenceId: evId,
+        provenance: 'life',
+        sourceId,
+        documentId: `item-${i}`,
+        locator: `lifedb:item:${i}`,
+        preview: itemPreview.slice(0, 300),
+      });
     }
   }
 

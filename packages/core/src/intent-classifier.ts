@@ -8,15 +8,92 @@ export interface IntentClassification {
   isSelfIdentityRequest: boolean;
   isGreeting: boolean;
   shouldQueryKnowledge: boolean;
+  knowledgeQueries?: string[];
+  primaryQuery?: string;
+  memoryQueries?: string[];
   effectiveMode: InteractionMode;
   confidence?: number;
-  classifierOrigin?: 'heuristic' | 'cognitive' | 'ear';
+  classifierOrigin?: 'heuristic' | 'cognitive' | 'ear' | 'brain';
 }
 
 export type CognitiveIntentClassifier = (
   text: string,
   context: RequestContext
 ) => Promise<Partial<IntentClassification>> | Partial<IntentClassification>;
+
+/**
+ * Strips conversational syntax, companion invocations, and question carrier phrases
+ * to extract targeted keyword search terms (e.g., "Siduri, who is Sandrone" -> ["Sandrone"]).
+ */
+export function extractSearchKeywords(
+  text: string,
+  companionName?: string,
+  recentHistory?: { role: string; content: string }[]
+): string[] {
+  if (!text || !text.trim()) return [];
+
+  let query = text.trim();
+
+  // 1. Strip companion names (e.g. "Siduri", "Siduri:", "Hey Siduri,")
+  const companionTokens = ['siduri'];
+  if (typeof companionName === 'string' && companionName.trim()) {
+    companionTokens.push(companionName.trim().toLowerCase());
+  }
+  for (const comp of companionTokens) {
+    const compRegex = new RegExp(`^(?:hey|hi|hello)?\\s*${comp}\\b[,:]?\\s*`, 'i');
+    query = query.replace(compRegex, '');
+    const compEndRegex = new RegExp(`[,:]?\\s*${comp}\\s*[.!?]?$`, 'i');
+    query = query.replace(compEndRegex, '');
+  }
+
+  // 2. Strip leading conversational intent carriers / question frames
+  const prefixPatterns = [
+    /^(?:can\s+you\s+)?(?:please\s+)?(?:tell\s+me\s+(?:all\s+)?about|explain|describe)\s+(?:the\s+)?/i,
+    /^(?:do\s+you\s+know\s+(?:about|who|what)\s+(?:is\s+)?(?:the\s+)?)/i,
+    /^(?:what\s+do\s+you\s+know\s+about\s+(?:the\s+)?)/i,
+    /^(?:who\s+(?:is|was|are|were)\s+(?:the\s+)?)/i,
+    /^(?:what\s+(?:is|was|are|were)\s+(?:the\s+)?)/i,
+    /^(?:where\s+(?:is|was|are|were)\s+(?:the\s+)?)/i,
+    /^(?:when\s+(?:is|was|are|were|will|does)\s+(?:the\s+)?)/i,
+    /^(?:search\s+(?:for\s+)?(?:the\s+)?)/i,
+    /^(?:look\s+up\s+(?:the\s+)?)/i,
+    /^(?:give\s+me\s+(?:info|information|details)\s+(?:on|about)\s+(?:the\s+)?)/i,
+  ];
+
+  for (const pattern of prefixPatterns) {
+    query = query.replace(pattern, '');
+  }
+
+  // 3. Strip trailing question marks, quotes, and punctuation
+  query = query.replace(/[?.,!;:'"]+$/g, '').replace(/^[?.,!;:'"]+/g, '').trim();
+
+  // 4. Resolve pronouns from conversation history if present
+  const hasPronoun = /\b(?:she|he|they|her|him|it)\b/i.test(query);
+  if (hasPronoun && Array.isArray(recentHistory) && recentHistory.length > 0) {
+    for (let i = recentHistory.length - 1; i >= 0; i--) {
+      const prevContent = recentHistory[i].content || '';
+      const prevClean = prevContent.replace(/^(?:who\s+is|what\s+is|where\s+is)\s+/i, '').replace(/[?.,!;:'"]+$/g, '').trim();
+      if (prevClean && !/\b(?:she|he|they|it)\b/i.test(prevClean)) {
+        const firstToken = prevClean.split(/\s+/)[0].replace(/[^a-zA-Z0-9]/g, '');
+        if (firstToken && firstToken.length >= 3) {
+          // Extract remaining qualifier keywords from current question (e.g. "banner", "build", "lore")
+          const qualifiers = query.split(/\s+/).filter((w) => !/\b(?:she|he|they|her|him|it)\b/i.test(w) && w.length >= 3);
+          if (qualifiers.length > 0) {
+            return [`${firstToken} ${qualifiers.join(' ')}`, firstToken];
+          }
+          return [firstToken];
+        }
+      }
+    }
+  }
+
+  // 5. Return clean keyword if valid
+  if (query.length > 0) {
+    return [query];
+  }
+
+  return [];
+}
 
 /**
  * Evaluates domain heuristics and intent classification for user messages.
@@ -48,8 +125,21 @@ export function classifyInputIntent(
       normalizedMessage
     );
   const shouldQueryKnowledge =
-    overrides?.shouldQueryKnowledge ??
-    (!isTeachingLike && !isSelfIdentityRequest && !isGreeting);
+    typeof overrides?.shouldQueryKnowledge === 'boolean'
+      ? overrides.shouldQueryKnowledge
+      : (!isTeachingLike && !isSelfIdentityRequest && !isGreeting);
+
+  const rawKeywords = extractSearchKeywords(text, context.companionId, (context as any).history);
+  const aiKnowledgeQueries = (overrides?.knowledgeQueries || []).filter(Boolean);
+  const knowledgeQueries =
+    aiKnowledgeQueries.length > 0
+      ? Array.from(new Set([...aiKnowledgeQueries, ...rawKeywords]))
+      : (shouldQueryKnowledge ? rawKeywords : []);
+  const primaryQuery = knowledgeQueries[0] || (shouldQueryKnowledge ? text.trim() : undefined);
+  const memoryQueries =
+    (overrides?.memoryQueries && overrides.memoryQueries.length > 0)
+      ? overrides.memoryQueries
+      : rawKeywords;
 
   // Multi-tier Interaction Mode Resolution:
   // 1. Overrides / Cognitive Classifier
@@ -74,6 +164,9 @@ export function classifyInputIntent(
     isSelfIdentityRequest,
     isGreeting,
     shouldQueryKnowledge,
+    knowledgeQueries,
+    primaryQuery,
+    memoryQueries,
     effectiveMode,
     confidence: overrides?.confidence ?? 0.95,
     classifierOrigin: overrides?.classifierOrigin ?? 'heuristic',

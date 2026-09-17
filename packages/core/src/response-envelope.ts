@@ -103,6 +103,14 @@ export function assembleResponseEnvelope(
       subtitle: subtitle ?? (subtitleLanguage ? resolvedSubtitles[subtitleLanguage] : undefined),
       subtitle_language: subtitleLanguage,
       subtitles: resolvedSubtitles,
+      evidence_ids: filteredEvidenceIds ?? [],
+      citations: filteredCitations ?? [],
+      gate: {
+        status: 'APPROVED',
+        requires_approval: stagedPlan.requiresApproval,
+        confidence: stagedPlan.confidenceSummary,
+        uncertainty: stagedPlan.uncertaintySummary,
+      },
     },
     delivery: mouthDelivery,
     metadata: {
@@ -114,6 +122,12 @@ export function assembleResponseEnvelope(
       action_results: actionResults,
       evidence_ids: filteredEvidenceIds,
       citations: filteredCitations,
+      gate: {
+        status: 'APPROVED',
+        requires_approval: stagedPlan.requiresApproval,
+        confidence: stagedPlan.confidenceSummary,
+        uncertainty: stagedPlan.uncertaintySummary,
+      },
       subsystem_diagnostics:
         Object.keys(subsystemDiagnostics).length > 0
           ? subsystemDiagnostics

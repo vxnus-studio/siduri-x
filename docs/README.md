@@ -43,9 +43,9 @@ Detailed subsystem and organ-level specifications:
 ### Active Subsystem Deep-Dives
 - **[Architecture Overview](./architecture/architecture.md)** — High-level runtime overview and 4-stream parallel execution flow.
 - **[The Truth Gate & Anchor](./architecture/truth-gate.md)** — Two-tier reality model: memory proposal staging and runtime response/evidence gating.
-- **[Organs Reference](./architecture/organs.md)** — Detailed responsibilities and package mapping for all 4 domains and 9 peripheral organs.
+- **[Organs Reference](./architecture/organs.md)** — Detailed responsibilities and package mapping for all 4 domains and 8 peripheral organs.
 - **[Companion Runtime](./architecture/companion-runtime.md)** — `SiduriRuntime` orchestration pipeline, 4-stream parallel context retrieval, and life context injection.
-- **[External Knowledge & E-Packs](./architecture/knowledge-e.md)** — `@siduri-x/eknowledge` client, cited context, and SSRF hardening.
+- **[External Knowledge & E-Packs](./architecture/knowledge-e.md)** — `@siduri-x/knowledge` client, cited context, and SSRF hardening.
 - **[Action Policy Design](./architecture/action-policy-design.md)** — Cryptographic action capabilities, MCP execution, and audit chaining.
 - **[API Reference](./architecture/api.md)** — REST API surface including `/chat`, `/chat/stream`, `/teach/upload-self`, and `/teach/install-self`.
 - **[CLI Reference](./architecture/cli.md)** — `@vxnus/siduri` CLI reference, dynamic organ discovery, and diagnostic tools.

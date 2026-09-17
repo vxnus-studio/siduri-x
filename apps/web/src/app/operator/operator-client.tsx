@@ -8,6 +8,22 @@ import {
   formatClaimReceipt,
   formatRuntimeEffect,
 } from "../../lib/memory-display";
+import {
+  CheckIcon,
+  PackageIcon,
+  ClockIcon,
+  CalendarIcon,
+  CloseIcon,
+  PlusIcon,
+  TrashIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  DownloadIcon,
+  RefreshIcon,
+  ExternalLinkIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+} from "../../components/icons";
 type View = "overview" | "memory" | "lifedb" | "evidence" | "logs" | "settings";
 type SystemLog = {
   id: string;
@@ -556,8 +572,9 @@ export default function OperatorClient() {
             <span className="console-brand-mark">S</span>
             <span>SIDURI</span>
           </a>
-          <a href="/chat" className="console-mobile-back" aria-label="Back to chat">
-            ← Chat
+          <a href="/chat" className="console-mobile-back inline-flex items-center gap-1" aria-label="Back to chat">
+            <ArrowLeftIcon size={12} />
+            Chat
           </a>
         </div>
         <div className="console-context">
@@ -586,7 +603,10 @@ export default function OperatorClient() {
           ))}
         </nav>
         <div className="console-sidebar-bottom">
-          <a href="/chat">← Private chat</a>
+          <a href="/chat" className="inline-flex items-center gap-1">
+            <ArrowLeftIcon size={12} />
+            Private chat
+          </a>
           <span>Local operator surface</span>
         </div>
       </aside>
@@ -605,11 +625,13 @@ export default function OperatorClient() {
             </h1>
           </div>
           <div className="console-top-actions">
-            <a href="/chat" className="console-back-link" title="Return to Private Chat">
-              ← Chat
+            <a href="/chat" className="console-back-link inline-flex items-center gap-1" title="Return to Private Chat">
+              <ArrowLeftIcon size={12} />
+              Chat
             </a>
             <span className="console-version">v{version || "—"}</span>
             <button
+              type="button"
               className="console-refresh"
               onClick={() => {
                 void loadStatuses();
@@ -620,7 +642,7 @@ export default function OperatorClient() {
               }}
               aria-label="Refresh dashboard"
             >
-              ↻
+              <RefreshIcon size={14} />
             </button>
           </div>
         </header>
@@ -726,7 +748,11 @@ function PanelHeader({
   return (
     <div className="panel-header">
       <h2>{title}</h2>
-      {action && <button onClick={onClick}>{action} →</button>}
+      {action && (
+        <button onClick={onClick} className="inline-flex items-center gap-1">
+          {action} <ArrowRightIcon size={12} />
+        </button>
+      )}
     </div>
   );
 }
@@ -1151,12 +1177,12 @@ function EvidenceView({
                     </td>
                     <td>
                       <a
-                        className="table-link"
+                        className="table-link inline-flex items-center gap-1"
                         href={item.url}
                         target="_blank"
                         rel="noreferrer"
                       >
-                        Open ↗
+                        Open <ExternalLinkIcon size={12} />
                       </a>
                     </td>
                   </tr>
@@ -1253,9 +1279,9 @@ function Overview({
           />
           <div className="gate-row">
             <span
-              className={`gate-icon ${pendingCorrelationId ? "pending" : "ready"}`}
+              className={`gate-icon flex items-center justify-center ${pendingCorrelationId ? "pending" : "ready"}`}
             >
-              {pendingCorrelationId ? "!" : "✓"}
+              {pendingCorrelationId ? "!" : <CheckIcon size={14} className="shrink-0" />}
             </span>
             <div>
               <strong>
@@ -1313,17 +1339,17 @@ function Overview({
       <section className="console-panel quick-panel">
         <PanelHeader title="Quick actions" />
         <div className="quick-actions">
-          <button onClick={() => onNavigate("memory")}>
-            Review memory <span>→</span>
+          <button onClick={() => onNavigate("memory")} className="inline-flex items-center justify-between">
+            Review memory <span><ArrowRightIcon size={12} /></span>
           </button>
-          <button onClick={() => onNavigate("lifedb")}>
-            Inspect Life DB <span>→</span>
+          <button onClick={() => onNavigate("lifedb")} className="inline-flex items-center justify-between">
+            Inspect Life DB <span><ArrowRightIcon size={12} /></span>
           </button>
-          <button onClick={() => onNavigate("evidence")}>
-            Inspect evidence <span>→</span>
+          <button onClick={() => onNavigate("evidence")} className="inline-flex items-center justify-between">
+            Inspect evidence <span><ArrowRightIcon size={12} /></span>
           </button>
-          <button onClick={() => onNavigate("settings")}>
-            Identity & Directives <span>→</span>
+          <button onClick={() => onNavigate("settings")} className="inline-flex items-center justify-between">
+            Identity & Directives <span><ArrowRightIcon size={12} /></span>
           </button>
         </div>
       </section>
@@ -1417,28 +1443,32 @@ function LifeDbView({
       {/* Subtab navigation */}
       <div className="lifedb-nav">
         <button
-          className={`lifedb-tab-btn ${activeTab === "tasks" ? "active" : ""}`}
+          className={`lifedb-tab-btn flex items-center gap-1.5 ${activeTab === "tasks" ? "active" : ""}`}
           onClick={() => setActiveTab("tasks")}
         >
-          ✓ Tasks & Goals ({tasks.length})
+          <CheckIcon size={13} className="shrink-0" />
+          <span>Tasks & Goals ({tasks.length})</span>
         </button>
         <button
-          className={`lifedb-tab-btn ${activeTab === "entities" ? "active" : ""}`}
+          className={`lifedb-tab-btn flex items-center gap-1.5 ${activeTab === "entities" ? "active" : ""}`}
           onClick={() => setActiveTab("entities")}
         >
-          📦 Entities & Items ({entities.length})
+          <PackageIcon size={13} className="shrink-0" />
+          <span>Entities & Items ({entities.length})</span>
         </button>
         <button
-          className={`lifedb-tab-btn ${activeTab === "events" ? "active" : ""}`}
+          className={`lifedb-tab-btn flex items-center gap-1.5 ${activeTab === "events" ? "active" : ""}`}
           onClick={() => setActiveTab("events")}
         >
-          ⏱️ Telemetry & Events ({events.length})
+          <ClockIcon size={13} className="shrink-0" />
+          <span>Telemetry & Events ({events.length})</span>
         </button>
         <button
-          className={`lifedb-tab-btn ${activeTab === "schedule" ? "active" : ""}`}
+          className={`lifedb-tab-btn flex items-center gap-1.5 ${activeTab === "schedule" ? "active" : ""}`}
           onClick={() => setActiveTab("schedule")}
         >
-          📅 Schedule & Calendar ({schedule.length})
+          <CalendarIcon size={13} className="shrink-0" />
+          <span>Schedule & Calendar ({schedule.length})</span>
         </button>
       </div>
 
@@ -1461,10 +1491,20 @@ function LifeDbView({
               </div>
             </div>
             <button
-              className="tiny-button"
+              className="tiny-button flex items-center gap-1"
               onClick={() => setShowNewTask(!showNewTask)}
             >
-              {showNewTask ? "✕ Close" : "+ New Task"}
+              {showNewTask ? (
+                <>
+                  <CloseIcon size={12} className="shrink-0" />
+                  <span>Close</span>
+                </>
+              ) : (
+                <>
+                  <PlusIcon size={12} className="shrink-0" />
+                  <span>New Task</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -1603,10 +1643,20 @@ function LifeDbView({
               <span>Nouns, devices, gaming items, and contacts</span>
             </div>
             <button
-              className="tiny-button"
+              className="tiny-button flex items-center gap-1"
               onClick={() => setShowNewEntity(!showNewEntity)}
             >
-              {showNewEntity ? "✕ Close" : "+ New Entity"}
+              {showNewEntity ? (
+                <>
+                  <CloseIcon size={12} className="shrink-0" />
+                  <span>Close</span>
+                </>
+              ) : (
+                <>
+                  <PlusIcon size={12} className="shrink-0" />
+                  <span>New Entity</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -1731,10 +1781,20 @@ function LifeDbView({
               <span>Biometrics, finances, workout telemetry, and logs</span>
             </div>
             <button
-              className="tiny-button"
+              className="tiny-button flex items-center gap-1"
               onClick={() => setShowNewEvent(!showNewEvent)}
             >
-              {showNewEvent ? "✕ Close" : "+ Log Event"}
+              {showNewEvent ? (
+                <>
+                  <CloseIcon size={12} className="shrink-0" />
+                  <span>Close</span>
+                </>
+              ) : (
+                <>
+                  <PlusIcon size={12} className="shrink-0" />
+                  <span>Log Event</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -1841,10 +1901,20 @@ function LifeDbView({
               <span>Upcoming time intervals and schedule items</span>
             </div>
             <button
-              className="tiny-button"
+              className="tiny-button flex items-center gap-1"
               onClick={() => setShowNewSchedule(!showNewSchedule)}
             >
-              {showNewSchedule ? "✕ Close" : "+ New Schedule Item"}
+              {showNewSchedule ? (
+                <>
+                  <CloseIcon size={12} className="shrink-0" />
+                  <span>Close</span>
+                </>
+              ) : (
+                <>
+                  <PlusIcon size={12} className="shrink-0" />
+                  <span>New Schedule Item</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -1989,11 +2059,13 @@ function LogsView({
           <p>Real-time audit trail of perception cycles, LLM calls, Truth Gate decisions, and tool executions.</p>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
-          <button className="tiny-button" onClick={onExport} title="Download current logs as JSON">
-            ↓ Export JSON
+          <button className="tiny-button flex items-center gap-1" onClick={onExport} title="Download current logs as JSON">
+            <DownloadIcon size={12} className="shrink-0" />
+            <span>Export JSON</span>
           </button>
-          <button className="tiny-button danger-button" onClick={onClear} title="Purge stored logs">
-            ✕ Clear Logs
+          <button className="tiny-button danger-button flex items-center gap-1" onClick={onClear} title="Purge stored logs">
+            <TrashIcon size={12} className="shrink-0" />
+            <span>Clear Logs</span>
           </button>
         </div>
       </div>
@@ -2049,8 +2121,8 @@ function LogsView({
               Live (3s)
             </label>
 
-            <button type="button" className="tiny-button" onClick={onRefresh} title="Fetch latest logs">
-              ↻
+            <button type="button" className="tiny-button inline-flex items-center justify-center" onClick={onRefresh} title="Fetch latest logs">
+              <RefreshIcon size={12} />
             </button>
           </div>
         </div>
@@ -2086,8 +2158,8 @@ function LogsView({
                     <span className="log-subsystem">[{log.subsystem}]</span>
                     <span className="log-message">{log.message}</span>
                     {hasMetadata && (
-                      <span className="log-expand-icon" title="Toggle JSON metadata">
-                        {isExpanded ? "▲" : "▼"}
+                      <span className="log-expand-icon flex items-center justify-center" title="Toggle JSON metadata">
+                        {isExpanded ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
                       </span>
                     )}
                   </div>

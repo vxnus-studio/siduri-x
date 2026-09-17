@@ -13,6 +13,24 @@ import {
   type AvatarAction,
 } from "../../components/live2d";
 import { postJson, fetchApi, postStream, interruptChat } from "../../lib/api";
+import {
+  SearchIcon,
+  SettingsIcon,
+  MenuIcon,
+  CloseIcon,
+  CheckIcon,
+  AlertTriangleIcon,
+  PackageIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  SendIcon,
+  StopIcon,
+  CommandIcon,
+  PlusIcon,
+  ExternalLinkIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+} from "../../components/icons";
 
 type MemoryProposalData = {
   id?: string;
@@ -43,6 +61,28 @@ type BehavioralProposalData = {
   };
 };
 
+type EvidenceCitation = {
+  evidence_id?: string;
+  evidenceId?: string;
+  source_id?: string;
+  sourceId?: string;
+  document_id?: string;
+  documentId?: string;
+  chunk_id?: string;
+  chunkId?: string;
+  revision?: string;
+  provenance?: string;
+  preview?: string;
+  locator?: string;
+};
+
+type GateEvaluationData = {
+  status: string;
+  requires_approval: boolean;
+  confidence?: string;
+  uncertainty?: string;
+};
+
 type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -52,6 +92,8 @@ type ChatMessage = {
   subtitles?: Record<string, string>;
   spokenJa?: string;
   evidenceIds?: string[];
+  citations?: EvidenceCitation[];
+  gate?: GateEvaluationData;
   memoryProposals?: MemoryProposalData[];
   behavioralProposals?: BehavioralProposalData[];
   createdAt: number;
@@ -68,6 +110,7 @@ type Conversation = {
 };
 
 type ChatResponse = {
+  status?: string;
   response: {
     speech_id?: string;
     spoken_ja?: string;
@@ -77,19 +120,14 @@ type ChatResponse = {
     subtitle_language?: string;
     subtitles?: Record<string, string>;
     evidence_ids: string[];
+    citations?: EvidenceCitation[];
+    gate?: GateEvaluationData;
   };
   metadata?: {
     memory_proposals?: MemoryProposalData[];
     behavioral_proposals?: BehavioralProposalData[];
-    citations?: Array<{
-      evidence_id: string;
-      source_id?: string;
-      document_id?: string;
-      chunk_id?: string;
-      revision?: string;
-      provenance?: string;
-      preview?: string;
-    }>;
+    citations?: EvidenceCitation[];
+    gate?: GateEvaluationData;
     events?: Array<{
       event_id: string;
       kind: string;
@@ -283,6 +321,11 @@ export default function ChatClient() {
   const [installingSelf, setInstallingSelf] = useState(false);
   const [selfInstallNotice, setSelfInstallNotice] = useState<string | null>(null);
   const selfFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Evidence & Truth Gate UI state
+  const [expandedEvidenceIds, setExpandedEvidenceIds] = useState<Record<string, boolean>>({});
+  const [approvedGateIds, setApprovedGateIds] = useState<Record<string, 'approved' | 'rejected' | 'requires_approval'>>({});
+  const [activeEvidenceModal, setActiveEvidenceModal] = useState<EvidenceCitation | null>(null);
 
   const messagesRef = useRef<HTMLDivElement>(null);
   const avatarTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -562,6 +605,8 @@ export default function ChatClient() {
             const plan = data.response || {};
             const proposals = data.metadata?.memory_proposals;
             const behavioralProposals = data.metadata?.behavioral_proposals;
+            const citations = plan.citations || data.metadata?.citations || [];
+            const gate = plan.gate || data.metadata?.gate;
 
             updateConversation(conversation.id, (current) => ({
               ...current,
@@ -574,7 +619,9 @@ export default function ChatClient() {
                       subtitleLanguage: plan.subtitle_language || (subtitleLanguage !== "off" ? subtitleLanguage : undefined),
                       subtitles: plan.subtitles,
                       spokenJa: plan.spoken_ja,
-                      evidenceIds: plan.evidence_ids,
+                      evidenceIds: plan.evidence_ids || (citations.length > 0 ? citations.map((c: EvidenceCitation) => c.evidence_id || c.evidenceId).filter(Boolean) : undefined),
+                      citations: citations.length > 0 ? citations : undefined,
+                      gate,
                       memoryProposals: proposals,
                       behavioralProposals,
                     }
@@ -836,26 +883,27 @@ export default function ChatClient() {
               sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
             }
           >
-            {sidebarCollapsed ? "→" : "←"}
+            {sidebarCollapsed ? <ArrowRightIcon size={14} /> : <ArrowLeftIcon size={14} />}
           </button>
           <button
-            className="mobile-drawer-close"
+            className="mobile-drawer-close flex items-center justify-center"
             type="button"
             onClick={() => setIsMobileDrawerOpen(false)}
             aria-label="Close conversation drawer"
           >
-            ✕
+            <CloseIcon size={14} />
           </button>
         </div>
         <button
-          className="new-chat-button"
+          className="new-chat-button flex items-center gap-1.5"
           type="button"
           onClick={() => {
             startNewChat();
             setIsMobileDrawerOpen(false);
           }}
         >
-          <span>＋</span> New conversation
+          <PlusIcon size={13} className="shrink-0" />
+          <span>New conversation</span>
         </button>
         <div className="history-heading">
           <span>Recent conversations</span>
@@ -894,14 +942,14 @@ export default function ChatClient() {
                   </button>
                   <button
                     type="button"
-                    className="conversation-delete"
+                    className="conversation-delete flex items-center justify-center"
                     onClick={(e) => {
                       e.stopPropagation();
                       removeConversation(conversation.id);
                     }}
                     aria-label={`Delete ${conversation.title}`}
                   >
-                    ×
+                    <CloseIcon size={12} />
                   </button>
                 </div>
               ))
@@ -914,15 +962,17 @@ export default function ChatClient() {
               setIsMobileDrawerOpen(false);
               setIsMobileSettingsOpen(true);
             }}
-            className="sidebar-settings-btn md:hidden"
+            className="sidebar-settings-btn md:hidden flex items-center gap-1.5"
           >
-            <span>⚙</span>
+            <SettingsIcon size={14} className="shrink-0" />
             <span className="truncate">Preferences ({selectedMode}{subtitleLanguage !== "off" ? ` · ${subtitleLanguage.toUpperCase()}` : ""})</span>
           </button>
           <a className="sidebar-console" href="/operator">
-            <span>⌘</span>
+            <CommandIcon size={13} className="shrink-0" />
             <span>Operator console</span>
-            <b>↗</b>
+            <b>
+              <ExternalLinkIcon size={12} />
+            </b>
           </a>
         </div>
       </aside>
@@ -932,11 +982,11 @@ export default function ChatClient() {
           <div className="chat-header-brand-group">
             <button
               type="button"
-              className="mobile-menu-toggle"
+              className="mobile-menu-toggle flex items-center justify-center"
               onClick={() => setIsMobileDrawerOpen(true)}
               aria-label="Open conversation menu"
             >
-              <span className="hamburger-icon">☰</span>
+              <MenuIcon size={16} />
             </button>
             <a href="/chat" className="chat-header-title">
               <span className="chat-brand-mark">S</span>
@@ -973,7 +1023,7 @@ export default function ChatClient() {
               aria-label="Open chat preferences"
               title="Preferences & Subtitles"
             >
-              <span className="text-xs">⚙</span>
+              <SettingsIcon size={12} className="shrink-0" />
               <span className="text-xs font-mono font-medium tracking-wide">
                 {selectedMode !== "hybrid" && subtitleLanguage !== "off"
                   ? `${selectedMode.slice(0, 4)}·${subtitleLanguage.slice(0, 2).toUpperCase()}`
@@ -1066,7 +1116,7 @@ export default function ChatClient() {
             className="bg-[#1c1814] border-b border-[var(--siduri-border-ember)] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-[#f1e6d0] z-20 shadow-md animate-fade-in"
           >
             <div className="flex items-center gap-2.5">
-              <span className="text-base">📦</span>
+              <PackageIcon size={18} className="text-[var(--siduri-ember-highlight)] shrink-0" />
               <span>
                 <strong>.self file detected on path:</strong>{" "}
                 <code className="px-1.5 py-0.5 rounded bg-black/50 text-[var(--siduri-ember-highlight)] font-mono font-medium border border-[var(--siduri-border-subtle)]">
@@ -1106,7 +1156,7 @@ export default function ChatClient() {
         {selfInstallNotice && (
           <div className="bg-[#132218] border-b border-[#3e8555] px-4 py-2 text-xs text-[#a9dfbf] flex items-center justify-between z-20">
             <div className="flex items-center gap-2">
-              <span>✓</span>
+              <CheckIcon size={14} className="shrink-0 text-[#a9dfbf]" />
               <span>{selfInstallNotice}</span>
             </div>
             <button
@@ -1114,7 +1164,7 @@ export default function ChatClient() {
               onClick={() => setSelfInstallNotice(null)}
               className="text-[#a9dfbf] hover:text-white cursor-pointer"
             >
-              ✕
+              <CloseIcon size={13} />
             </button>
           </div>
         )}
@@ -1132,8 +1182,8 @@ export default function ChatClient() {
               {/* Modal Header */}
               <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--siduri-border-subtle)] bg-[#19191e]/90">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--siduri-tint-med)] border border-[var(--siduri-border-ember)] flex items-center justify-center text-lg">
-                    📦
+                  <div className="w-10 h-10 rounded-xl bg-[var(--siduri-tint-med)] border border-[var(--siduri-border-ember)] flex items-center justify-center">
+                    <PackageIcon size={20} className="text-[var(--siduri-ember-highlight)]" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -1155,7 +1205,7 @@ export default function ChatClient() {
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--siduri-text-muted)] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
                   aria-label="Close review"
                 >
-                  ✕
+                  <CloseIcon size={16} />
                 </button>
               </div>
 
@@ -1281,12 +1331,14 @@ export default function ChatClient() {
                                 <span className="text-[var(--siduri-text-dim)]">P{d.priority}</span>
                               )}
                               {isSafe ? (
-                                <span className="text-[var(--siduri-online)] text-[10px] font-sans">
-                                  ✓ Safe
+                                <span className="text-[var(--siduri-online)] text-[10px] font-sans inline-flex items-center gap-1">
+                                  <CheckIcon size={12} className="shrink-0" />
+                                  <span>Safe</span>
                                 </span>
                               ) : (
-                                <span className="text-[var(--siduri-danger)] text-[10px] font-sans font-semibold">
-                                  ⚠️ Blocked: {d.scanResult?.reason || "Flagged"}
+                                <span className="text-[var(--siduri-danger)] text-[10px] font-sans font-semibold inline-flex items-center gap-1">
+                                  <AlertTriangleIcon size={12} className="shrink-0" />
+                                  <span>Blocked: {d.scanResult?.reason || "Flagged"}</span>
                                 </span>
                               )}
                             </div>
@@ -1358,6 +1410,7 @@ export default function ChatClient() {
               ) : (
                 messages.map((item) => (
                   <article
+                    id={`msg-${item.id}`}
                     className={`platform-message ${item.role}`}
                     key={item.id}
                   >
@@ -1398,8 +1451,10 @@ export default function ChatClient() {
                               </p>
                             )}
                             <div className="message-error-callout">
-                              <div className="error-callout-header">
-                                <span className="error-icon" aria-hidden="true">⚠️</span>
+                              <div className="error-callout-header flex items-center gap-1.5">
+                                <span className="error-icon flex items-center justify-center text-[var(--siduri-warning)]" aria-hidden="true">
+                                  <AlertTriangleIcon size={14} />
+                                </span>
                                 <span className="error-text">{diagnosis.title}</span>
                               </div>
                               {diagnosis.hint && (
@@ -1461,12 +1516,199 @@ export default function ChatClient() {
                         }
                         return null;
                       })()}
-                      {item.evidenceIds && item.evidenceIds.length > 0 && (
-                        <span className="evidence-chip">
-                          {item.evidenceIds.length} evidence link
-                          {item.evidenceIds.length === 1 ? "" : "s"}
-                        </span>
-                      )}
+                      {/* Truth Gate Approval Card - Only displayed when response requires confirmation/action */}
+                      {item.role === "assistant" && (item.gate?.requires_approval || approvedGateIds[item.id]) && (() => {
+                        const gateStatus = approvedGateIds[item.id] || (item.gate?.requires_approval ? "requires_approval" : (item.gate?.status?.toLowerCase() || "approved"));
+                        const isPendingApproval = gateStatus === "requires_approval";
+                        const isApproved = gateStatus === "approved";
+                        return (
+                          <div className={`truth-gate-card gate-${gateStatus}`}>
+                            <div className="truth-gate-header">
+                              <span className="truth-gate-badge flex items-center gap-1.5">
+                                {isApproved ? (
+                                  <>
+                                    <CheckIcon size={12} className="shrink-0" />
+                                    <span>TRUTH GATE: AUTHORIZED</span>
+                                  </>
+                                ) : isPendingApproval ? (
+                                  <>
+                                    <AlertTriangleIcon size={12} className="shrink-0" />
+                                    <span>TRUTH GATE: REQUIRES APPROVAL</span>
+                                  </>
+                                ) : (
+                                  <span>TRUTH GATE: {gateStatus.toUpperCase()}</span>
+                                )}
+                              </span>
+                              {item.gate?.confidence && (
+                                <span className="truth-gate-metric">Confidence: {item.gate.confidence}</span>
+                              )}
+                              {item.gate?.uncertainty && (
+                                <span className="truth-gate-metric">Uncertainty: {item.gate.uncertainty}</span>
+                              )}
+                            </div>
+                            {isPendingApproval && (
+                              <div className="truth-gate-actions">
+                                <span className="truth-gate-prompt">This response contains unverified claims or side-effects that require manual confirmation.</span>
+                                <div className="receipt-actions">
+                                  <button
+                                    type="button"
+                                    onClick={() => setApprovedGateIds((prev) => ({ ...prev, [item.id]: "approved" }))}
+                                  >
+                                    Authorize Response
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setApprovedGateIds((prev) => ({ ...prev, [item.id]: "rejected" }))}
+                                  >
+                                    Reject / Block
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Grounded Evidence Trace Card */}
+                      {((item.evidenceIds && item.evidenceIds.length > 0) || (item.citations && item.citations.length > 0)) && (() => {
+                        const isExpanded = Boolean(expandedEvidenceIds[item.id]);
+                        const evidenceCount = item.citations?.length || item.evidenceIds?.length || 0;
+                        return (
+                          <div className="evidence-trace-card">
+                            <button
+                              type="button"
+                              className="evidence-toggle-btn"
+                              onClick={() =>
+                                setExpandedEvidenceIds((prev) => ({
+                                  ...prev,
+                                  [item.id]: !prev[item.id],
+                                }))
+                              }
+                              title={isExpanded ? "Collapse grounded evidence trace" : "Click to view grounded sources and evidence"}
+                            >
+                              <span className="evidence-chip">
+                                <SearchIcon size={12} className="shrink-0" />
+                                <span>Grounded in DB ({evidenceCount} source{evidenceCount === 1 ? "" : "s"})</span>
+                                {isExpanded ? (
+                                  <span className="inline-flex items-center gap-0.5 opacity-80 font-sans text-[10px]">
+                                    <ChevronUpIcon size={11} /> Hide
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-0.5 opacity-80 font-sans text-[10px]">
+                                    <ChevronDownIcon size={11} /> Show
+                                  </span>
+                                )}
+                              </span>
+                            </button>
+
+                             {isExpanded && (
+                              <div className="evidence-details-tray">
+                                {item.citations && item.citations.length > 0 ? (
+                                  item.citations.map((c, idx) => {
+                                    const eid = c.evidence_id || c.evidenceId || `ev-${idx}`;
+                                    const prov = c.provenance || c.source_id || c.sourceId || "grounded-db";
+                                    const isHttp = c.locator && (c.locator.startsWith("http://") || c.locator.startsWith("https://"));
+                                    return (
+                                      <div
+                                        key={eid || idx}
+                                        className="evidence-source-card"
+                                      >
+                                        <div className="evidence-source-meta">
+                                          <span className="evidence-provenance">
+                                            [{prov}]
+                                          </span>
+                                          <span className="evidence-id">ID: {eid}</span>
+                                          {c.revision && <span className="evidence-rev">rev: {c.revision}</span>}
+                                          <div className="evidence-actions">
+                                            {isHttp && (
+                                              <a
+                                                href={c.locator}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="evidence-action-link"
+                                                title={`Open external source: ${c.locator}`}
+                                              >
+                                                Open Source <ExternalLinkIcon size={12} className="inline ml-0.5" />
+                                              </a>
+                                            )}
+                                            {c.locator && c.locator.startsWith("lifedb:") && (
+                                              <a
+                                                href="/operator"
+                                                className="evidence-action-link"
+                                                title="View record in Operator Console"
+                                              >
+                                                Operator <ExternalLinkIcon size={12} className="inline ml-0.5" />
+                                              </a>
+                                            )}
+                                            <button
+                                              type="button"
+                                              className="evidence-inspect-btn flex items-center gap-1"
+                                              onClick={() => setActiveEvidenceModal(c)}
+                                              title="Inspect complete cryptographic evidence payload"
+                                            >
+                                              <SearchIcon size={10} className="shrink-0" />
+                                              <span>Inspect</span>
+                                            </button>
+                                          </div>
+                                        </div>
+                                        {c.preview && (
+                                          <div
+                                            className="evidence-source-preview cursor-pointer"
+                                            onClick={() => setActiveEvidenceModal(c)}
+                                            title="Click to view full preview and metadata"
+                                          >
+                                            &ldquo;{c.preview}&rdquo;
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  item.evidenceIds?.map((id, idx) => {
+                                    const isMem = id.startsWith("ev-mem");
+                                    const isKnow = id.startsWith("ev-know");
+                                    const isLife = id.startsWith("ev-life");
+                                    const prov = isKnow ? "knowledge" : isMem ? "memory" : isLife ? "life" : "grounded-record";
+                                    const desc = isKnow
+                                      ? `External lore from configured Knowledge Pack (ID: ${id})`
+                                      : isMem
+                                      ? `Episodic conversation claim stored in SQLite memory (ID: ${id})`
+                                      : `Grounded database record (ID: ${id})`;
+                                    return (
+                                      <div
+                                        key={id || idx}
+                                        className="evidence-source-card"
+                                      >
+                                        <div className="evidence-source-meta">
+                                          <span className="evidence-provenance">[{prov}]</span>
+                                          <span className="evidence-id">ID: {id}</span>
+                                          <div className="evidence-actions">
+                                            <button
+                                              type="button"
+                                              className="evidence-inspect-btn flex items-center gap-1"
+                                              onClick={() =>
+                                                setActiveEvidenceModal({
+                                                  evidence_id: id,
+                                                  provenance: prov,
+                                                  preview: desc,
+                                                })
+                                              }
+                                              title="Click to inspect evidence details"
+                                            >
+                                              <SearchIcon size={10} className="shrink-0" />
+                                              <span>Inspect</span>
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {item.memoryProposals &&
                         item.memoryProposals.length > 0 && (
                           <div className="memory-receipts">
@@ -1535,7 +1777,7 @@ export default function ChatClient() {
                                 >
                                   <strong>
                                     Runtime effect [{((p.knowledge_domain ?? p.domain) || "").toLowerCase()}{" "}
-                                    → {((p.runtime_effect ?? p.memory_class) || "").toLowerCase()}]:
+                                    <ArrowRightIcon size={11} className="inline mx-0.5" /> {((p.runtime_effect ?? p.memory_class) || "").toLowerCase()}]:
                                   </strong>{" "}
                                   {formatRuntimeEffect(p)}
                                   <div className="receipt-actions">
@@ -1613,11 +1855,38 @@ export default function ChatClient() {
               />
               <div className="composer-bottom">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span>
+                  <span className="composer-session-info inline-flex items-center gap-1.5">
                     Private local session ·{" "}
-                    {evidenceCount
-                      ? `${evidenceCount} evidence link${evidenceCount === 1 ? "" : "s"}`
-                      : "No evidence attached"}
+                    {evidenceCount > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const lastAssistant = [...messages].reverse().find(
+                            (m) =>
+                              m.role === "assistant" &&
+                              ((m.evidenceIds && m.evidenceIds.length > 0) ||
+                                (m.citations && m.citations.length > 0)),
+                          );
+                          if (lastAssistant) {
+                            setExpandedEvidenceIds((prev) => ({
+                              ...prev,
+                              [lastAssistant.id]: true,
+                            }));
+                            const el = document.getElementById(`msg-${lastAssistant.id}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: "smooth", block: "center" });
+                            }
+                          }
+                        }}
+                        className="composer-evidence-link-btn"
+                        title="Click to view and inspect grounded evidence in the latest response"
+                      >
+                        <SearchIcon size={12} className="shrink-0" />
+                        <span>{evidenceCount} evidence link{evidenceCount === 1 ? "" : "s"}</span>
+                      </button>
+                    ) : (
+                      "No evidence attached"
+                    )}
                   </span>
                   {/* Conditional Attach .self Button - ONLY rendered in Teach Mode */}
                   {selectedMode === "teach" && (
@@ -1650,18 +1919,18 @@ export default function ChatClient() {
                     onClick={interruptCurrentChat}
                     aria-label="Stop generation"
                     title="Stop generation"
-                    className="composer-action-btn"
+                    className="composer-action-btn flex items-center justify-center"
                   >
-                    ■
+                    <StopIcon size={12} />
                   </button>
                 ) : (
                   <button
                     type="submit"
                     disabled={!message.trim()}
                     aria-label="Send message"
-                    className="composer-action-btn"
+                    className="composer-action-btn flex items-center justify-center"
                   >
-                    ↑
+                    <SendIcon size={14} />
                   </button>
                 )}
               </div>
@@ -1701,7 +1970,7 @@ export default function ChatClient() {
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-[var(--siduri-text-muted)] hover:text-[var(--siduri-text-primary)] hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-[var(--siduri-border-subtle)]"
                 aria-label="Close preferences"
               >
-                ✕
+                <CloseIcon size={16} />
               </button>
             </div>
 
@@ -1837,6 +2106,145 @@ export default function ChatClient() {
                 Done
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Evidence Detail Modal */}
+      {activeEvidenceModal && (
+        <div
+          className="evidence-modal-overlay"
+          onClick={() => setActiveEvidenceModal(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="evidence-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const modalEvId = activeEvidenceModal.evidence_id || activeEvidenceModal.evidenceId;
+              const modalSourceId = activeEvidenceModal.source_id || activeEvidenceModal.sourceId;
+              const modalDocId = activeEvidenceModal.document_id || activeEvidenceModal.documentId;
+              const modalChunkId = activeEvidenceModal.chunk_id || activeEvidenceModal.chunkId;
+              const modalProv = activeEvidenceModal.provenance || modalSourceId || "grounded-record";
+              const isLore = modalProv.includes("knowledge") || modalProv.includes("hub") || modalProv.startsWith("@");
+              const isMem = modalProv.includes("memory") || (modalEvId && modalEvId.startsWith("ev-mem"));
+              const footerText = isLore
+                ? `Cryptographically verifiable citation from Knowledge Pack (${modalProv}).`
+                : isMem
+                ? `Episodic verifiable claim from local SQLite memory store.`
+                : `Cryptographically verifiable ground truth record.`;
+
+              return (
+                <>
+                  <div className="evidence-modal-header">
+                    <div className="flex items-center gap-2">
+                      <span className="evidence-chip">
+                        [{modalProv}]
+                      </span>
+                      <span className="text-sm font-semibold tracking-wide text-[#eee8df]">
+                        Evidence Inspector
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="evidence-modal-close flex items-center justify-center"
+                      onClick={() => setActiveEvidenceModal(null)}
+                      aria-label="Close evidence details"
+                    >
+                      <CloseIcon size={14} />
+                    </button>
+                  </div>
+
+                  <div className="evidence-modal-body">
+                    {modalEvId && (
+                      <div className="evidence-field-group">
+                        <label>Evidence ID</label>
+                        <div className="evidence-code-box">{modalEvId}</div>
+                      </div>
+                    )}
+
+                    {modalSourceId && (
+                      <div className="evidence-field-group">
+                        <label>Source / Provenance</label>
+                        <div className="evidence-code-box">{modalSourceId}</div>
+                      </div>
+                    )}
+
+                    {modalDocId && (
+                      <div className="evidence-field-group">
+                        <label>Document ID</label>
+                        <div className="evidence-code-box">{modalDocId}</div>
+                      </div>
+                    )}
+
+                    {modalChunkId && (
+                      <div className="evidence-field-group">
+                        <label>Chunk ID</label>
+                        <div className="evidence-code-box">{modalChunkId}</div>
+                      </div>
+                    )}
+
+                    {activeEvidenceModal.revision && (
+                      <div className="evidence-field-group">
+                        <label>Revision</label>
+                        <div className="evidence-code-box">{activeEvidenceModal.revision}</div>
+                      </div>
+                    )}
+
+                    {activeEvidenceModal.locator && (
+                      <div className="evidence-field-group">
+                        <label>Locator / Source URL</label>
+                        <div className="evidence-locator-row">
+                          <code className="evidence-code-box evidence-locator-code">
+                            {activeEvidenceModal.locator}
+                          </code>
+                          {activeEvidenceModal.locator.startsWith("http://") ||
+                          activeEvidenceModal.locator.startsWith("https://") ? (
+                            <a
+                              href={activeEvidenceModal.locator}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="evidence-modal-open-btn"
+                            >
+                              Open Source URL <ExternalLinkIcon size={12} className="inline ml-1" />
+                            </a>
+                          ) : activeEvidenceModal.locator.startsWith("lifedb:") ? (
+                            <a
+                              href="/operator"
+                              className="evidence-modal-open-btn"
+                            >
+                              Operator Console <ExternalLinkIcon size={12} className="inline ml-1" />
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="evidence-field-group">
+                      <label>Grounded Excerpt / Content</label>
+                      <div className="evidence-quote-box">
+                        {activeEvidenceModal.preview || "No preview excerpt available for this evidence entry."}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="evidence-modal-footer">
+                    <span className="text-[10px] font-mono text-[var(--siduri-text-muted)]">
+                      {footerText}
+                    </span>
+                    <button
+                      type="button"
+                      className="evidence-close-btn"
+                      onClick={() => setActiveEvidenceModal(null)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
