@@ -6,6 +6,9 @@ import {
   FinanceRepository,
   ScheduleRepository,
   PreferencesRepository,
+  EntityRepository,
+  EventRepository,
+  TaskRepository,
 } from './types';
 import { SqliteLifeDatabase, SqliteLifeDatabaseOptions } from './life-database';
 import { EKnowledgeAdapter, EKnowledgeConfig } from './eknowledge-adapter';
@@ -108,6 +111,21 @@ export class UnifiedKnowledgeOrgan implements KnowledgeOrgan, LifeDatabase {
   get preferences(): PreferencesRepository {
     if (!this.lifeDb) throw new Error('LifeDatabase is not enabled in this Knowledge configuration');
     return this.lifeDb.preferences;
+  }
+
+  get entities(): EntityRepository {
+    if (!this.lifeDb) throw new Error('LifeDatabase is not enabled in this Knowledge configuration');
+    return this.lifeDb.entities;
+  }
+
+  get events(): EventRepository {
+    if (!this.lifeDb) throw new Error('LifeDatabase is not enabled in this Knowledge configuration');
+    return this.lifeDb.events;
+  }
+
+  get tasks(): TaskRepository {
+    if (!this.lifeDb) throw new Error('LifeDatabase is not enabled in this Knowledge configuration');
+    return this.lifeDb.tasks;
   }
 
   async queryLifeContext(companionId: string, queryText: string): Promise<LifeContextResult> {

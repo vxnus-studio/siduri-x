@@ -87,8 +87,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.10';
-  const cliVersion = options.cliVersion || '^2.0.27';
+  const coreVersion = options.coreVersion || '^2.0.11';
+  const cliVersion = options.cliVersion || '^2.0.28';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
@@ -464,6 +464,42 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `        res.end(JSON.stringify({ error: err.message }));`,
     `      }`,
     `    });`,
+    `    return;`,
+    `  }`,
+    ``,
+    `  // API: System Logs`,
+    `  if ((pathname === '/system/logs' || pathname === '/api/system/logs') && req.method === 'GET') {`,
+    `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    try {`,
+    `      const level = parsedUrl.searchParams.get('level') || undefined;`,
+    `      const subsystem = parsedUrl.searchParams.get('subsystem') || undefined;`,
+    `      const q = parsedUrl.searchParams.get('q') || undefined;`,
+    `      const limit = parseInt(parsedUrl.searchParams.get('limit') || '100', 10);`,
+    `      const offset = parseInt(parsedUrl.searchParams.get('offset') || '0', 10);`,
+    `      const logs = typeof runtime?.queryLogs === 'function'`,
+    `        ? runtime.queryLogs({ companionId: config.id, level, subsystem, q, limit, offset })`,
+    `        : (typeof self?.db?.queryLogs === 'function' ? self.db.queryLogs({ companionId: config.id, level, subsystem, q, limit, offset }) : []);`,
+    `      res.end(JSON.stringify({ logs }));`,
+    `    } catch (e) {`,
+    `      res.writeHead(500, { 'Content-Type': 'application/json' });`,
+    `      res.end(JSON.stringify({ error: e.message, logs: [] }));`,
+    `    }`,
+    `    return;`,
+    `  }`,
+    ``,
+    `  if ((pathname === '/system/logs/clear' || pathname === '/api/system/logs/clear' || (pathname === '/system/logs' && req.method === 'DELETE')) && (req.method === 'POST' || req.method === 'DELETE')) {`,
+    `    try {`,
+    `      if (typeof runtime?.clearLogs === 'function') {`,
+    `        runtime.clearLogs(config.id);`,
+    `      } else if (typeof self?.db?.clearLogs === 'function') {`,
+    `        self.db.clearLogs(config.id);`,
+    `      }`,
+    `      res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `      res.end(JSON.stringify({ cleared: true }));`,
+    `    } catch (e) {`,
+    `      res.writeHead(500, { 'Content-Type': 'application/json' });`,
+    `      res.end(JSON.stringify({ error: e.message }));`,
+    `    }`,
     `    return;`,
     `  }`,
     '',

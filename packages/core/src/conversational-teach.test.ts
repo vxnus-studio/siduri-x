@@ -940,4 +940,107 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
 
     db.close();
   });
+
+  it('promotes approved Life / Knowledge proposals to sovereign Life DB via Truth Gate', async () => {
+    const companionId = 'comp-truth-knowledge';
+    const db = new SiduriDatabase({ dbPath });
+    const self = createSelfRepository(db);
+    const memory = createMemoryOrgan(db);
+
+    const mockKnowledge: any = {
+      entities: {
+        saveEntity: jest.fn(async (entity) => db.upsertEntity(entity)),
+      },
+      events: {
+        addEvent: jest.fn(async (event) => db.addEvent(event)),
+      },
+      tasks: {
+        saveTask: jest.fn(async (task) => db.upsertTask(task)),
+      },
+      schedule: {
+        saveItem: jest.fn(async (sch) => db.upsertScheduleItem(sch)),
+      },
+      preferences: {
+        setPreference: jest.fn(async (pref) => db.upsertPreference(pref)),
+      },
+      queryContext: jest.fn(async () => []),
+    };
+
+    const runtime = new SiduriRuntime(
+      companionId,
+      {
+        name: 'Siduri',
+        initialMode: 'teach',
+      },
+      {
+        self,
+        memory,
+        knowledge: mockKnowledge,
+      }
+    );
+
+    // 1. Propose knowledge claims in memory store (quarantined as PENDING)
+    const entityClaim = await memory.proposeClaim({
+      companionId,
+      subject: 'entity:Workstation Rig',
+      predicate: 'inventory',
+      value: 'Threadripper 64-core',
+      claimType: 'life_entity',
+      evidence: { domain: 'hardware', properties: { cores: 64, ram: '256GB' } },
+    } as any);
+
+    const eventClaim = await memory.proposeClaim({
+      companionId,
+      subject: 'finance:expense',
+      predicate: 'expense',
+      value: '45.00',
+      claimType: 'life_event',
+      evidence: { metricValue: -45.0, stream: 'finance', category: 'dining' },
+    } as any);
+
+    const taskClaim = await memory.proposeClaim({
+      companionId,
+      subject: 'task:Review PR',
+      predicate: 'todo',
+      value: 'Review PR #42 for Life DB',
+      claimType: 'life_task',
+      evidence: { status: 'in_progress' },
+    } as any);
+
+    // Before approval, Life DB tables in sqlite are empty
+    expect(db.getEntities(companionId)).toHaveLength(0);
+    expect(db.getEvents(companionId)).toHaveLength(0);
+    expect(db.getTasks(companionId)).toHaveLength(0);
+
+    // 2. Truth Gate Approval
+    const resEntity = await runtime.approveProposal(entityClaim.id, { companionId });
+    expect(resEntity.success).toBe(true);
+    expect(resEntity.target).toBe('knowledge');
+
+    const resEvent = await runtime.approveProposal(eventClaim.id, { companionId });
+    expect(resEvent.success).toBe(true);
+    expect(resEvent.target).toBe('knowledge');
+
+    const resTask = await runtime.approveProposal(taskClaim.id, { companionId });
+    expect(resTask.success).toBe(true);
+    expect(resTask.target).toBe('knowledge');
+
+    // 3. Verify persistent commit to sovereign Life DB in SQLite
+    const entities = db.getEntities(companionId);
+    expect(entities).toHaveLength(1);
+    expect(entities[0].name).toBe('Workstation Rig');
+    expect(entities[0].domain).toBe('hardware');
+
+    const events = db.getEvents(companionId);
+    expect(events).toHaveLength(1);
+    expect(events[0].stream).toBe('finance');
+    expect(events[0].metricValue).toBe(-45.0);
+
+    const tasks = db.getTasks(companionId);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].title).toBe('Review PR #42 for Life DB');
+    expect(tasks[0].status).toBe('in_progress');
+
+    db.close();
+  });
 });

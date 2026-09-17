@@ -15,8 +15,9 @@ import {
 import { postJson, fetchApi, postStream, interruptChat } from "../../lib/api";
 
 type MemoryProposalData = {
-  proposal_id: string;
-  content: string;
+  id?: string;
+  proposal_id?: string;
+  content?: string;
   status: string;
   subject?: string;
   predicate?: string;
@@ -25,19 +26,20 @@ type MemoryProposalData = {
 };
 
 type BehavioralProposalData = {
-  directive_id: string;
-  memory_class: string;
-  domain: string;
+  id?: string;
+  directive_id?: string;
+  memory_class?: string;
+  domain?: string;
   knowledge_domain?: string;
   runtime_effect?: string;
-  subject: string;
-  predicate: string;
-  value: string;
-  status: string;
-  behavior: {
-    instruction: string;
-    frequency: string;
-    preferred_positions: string[];
+  subject?: string;
+  predicate?: string;
+  value?: string;
+  status?: string;
+  behavior?: {
+    instruction?: string;
+    frequency?: string;
+    preferred_positions?: string[];
   };
 };
 
@@ -664,28 +666,29 @@ export default function ChatClient() {
   ) {
     if (!activeConversation) return;
     try {
-      await postJson<{ item?: any; proposal?: any }>(
+      const res = await postJson<{ item?: any; proposal?: any; status?: string }>(
         `/memory/proposals/${action}`,
         { id: proposalId, companionId: "default" },
       );
-      const updatedStatus = action === "approve" ? "approved" : "rejected";
+      const updatedStatus = res?.status || (action === "approve" ? "approved" : "rejected");
       updateConversation(activeConversation.id, (conv) => ({
         ...conv,
         messages: conv.messages.map((msg) =>
           msg.id === messageId && msg.memoryProposals
             ? {
                 ...msg,
-                memoryProposals: msg.memoryProposals.map((p) =>
-                  p.proposal_id === proposalId
+                memoryProposals: msg.memoryProposals.map((p) => {
+                  const pid = p.proposal_id || p.id;
+                  return pid === proposalId
                     ? { ...p, status: updatedStatus }
-                    : p,
-                ),
+                    : p;
+                }),
               }
             : msg,
         ),
       }));
     } catch (err) {
-      console.error(err);
+      console.error("Failed to update memory proposal:", err);
     }
   }
 
@@ -696,28 +699,32 @@ export default function ChatClient() {
   ) {
     if (!activeConversation) return;
     try {
-      await postJson(`/memory/behavioral/${action}`, {
-        id: directiveId,
-        companionId: "default",
-      });
-      const updatedStatus = action === "approve" ? "active" : "rejected";
+      const res = await postJson<{ approved?: boolean; rejected?: boolean; status?: string }>(
+        `/memory/behavioral/${action}`,
+        {
+          id: directiveId,
+          companionId: "default",
+        },
+      );
+      const updatedStatus = res?.status || (action === "approve" ? "active" : "rejected");
       updateConversation(activeConversation.id, (conv) => ({
         ...conv,
         messages: conv.messages.map((msg) =>
           msg.id === messageId && msg.behavioralProposals
             ? {
                 ...msg,
-                behavioralProposals: msg.behavioralProposals.map((p) =>
-                  p.directive_id === directiveId
+                behavioralProposals: msg.behavioralProposals.map((p) => {
+                  const pid = p.directive_id || p.id;
+                  return pid === directiveId
                     ? { ...p, status: updatedStatus }
-                    : p,
-                ),
+                    : p;
+                }),
               }
             : msg,
         ),
       }));
     } catch (err) {
-      console.error(err);
+      console.error("Failed to update behavioral proposal:", err);
     }
   }
 
@@ -1463,12 +1470,13 @@ export default function ChatClient() {
                       {item.memoryProposals &&
                         item.memoryProposals.length > 0 && (
                           <div className="memory-receipts">
-                            {item.memoryProposals.map((p) => {
+                            {item.memoryProposals.map((p, idx) => {
+                              const propId = p.proposal_id || p.id || `mprop-${idx}`;
                               const pStatus = (p.status || "pending").toLowerCase().replace(/_/g, "-");
                               const isPending = pStatus === "pending";
                               return (
                                 <div
-                                  key={p.proposal_id}
+                                  key={propId}
                                   className={`memory-receipt status-${pStatus}`}
                                 >
                                   <strong>
@@ -1484,7 +1492,7 @@ export default function ChatClient() {
                                           onClick={() =>
                                             handleProposal(
                                               item.id,
-                                              p.proposal_id,
+                                              propId,
                                               "approve",
                                             )
                                           }
@@ -1496,7 +1504,7 @@ export default function ChatClient() {
                                           onClick={() =>
                                             handleProposal(
                                               item.id,
-                                              p.proposal_id,
+                                              propId,
                                               "reject",
                                             )
                                           }
@@ -1516,12 +1524,13 @@ export default function ChatClient() {
                       {item.behavioralProposals &&
                         item.behavioralProposals.length > 0 && (
                           <div className="memory-receipts">
-                            {item.behavioralProposals.map((p) => {
+                            {item.behavioralProposals.map((p, idx) => {
+                              const bId = p.directive_id || p.id || `bprop-${idx}`;
                               const bStatus = (p.status || "pending").toLowerCase().replace(/_/g, "-");
                               const isPending = bStatus === "pending";
                               return (
                                 <div
-                                  key={p.directive_id}
+                                  key={bId}
                                   className={`memory-receipt status-${bStatus}`}
                                 >
                                   <strong>
@@ -1537,7 +1546,7 @@ export default function ChatClient() {
                                           onClick={() =>
                                             handleBehavioralProposal(
                                               item.id,
-                                              p.directive_id,
+                                              bId,
                                               "approve",
                                             )
                                           }
@@ -1549,7 +1558,7 @@ export default function ChatClient() {
                                           onClick={() =>
                                             handleBehavioralProposal(
                                               item.id,
-                                              p.directive_id,
+                                              bId,
                                               "reject",
                                             )
                                           }

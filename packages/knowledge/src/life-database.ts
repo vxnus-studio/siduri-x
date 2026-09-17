@@ -6,12 +6,18 @@ import {
   FinanceRepository,
   ScheduleRepository,
   PreferencesRepository,
+  EntityRepository,
+  EventRepository,
+  TaskRepository,
 } from './types';
 import {
   SqliteInventoryRepository,
   SqliteFinanceRepository,
   SqliteScheduleRepository,
   SqlitePreferencesRepository,
+  SqliteEntityRepository,
+  SqliteEventRepository,
+  SqliteTaskRepository,
 } from './repositories';
 
 export interface SqliteLifeDatabaseOptions {
@@ -27,6 +33,9 @@ export class SqliteLifeDatabase implements LifeDatabase {
   public readonly finance: FinanceRepository;
   public readonly schedule: ScheduleRepository;
   public readonly preferences: PreferencesRepository;
+  public readonly entities: EntityRepository;
+  public readonly events: EventRepository;
+  public readonly tasks: TaskRepository;
 
   constructor(options: SqliteLifeDatabaseOptions = {}) {
     if (options.db) {
@@ -41,6 +50,9 @@ export class SqliteLifeDatabase implements LifeDatabase {
     this.finance = new SqliteFinanceRepository(this.db);
     this.schedule = new SqliteScheduleRepository(this.db);
     this.preferences = new SqlitePreferencesRepository(this.db);
+    this.entities = new SqliteEntityRepository(this.db);
+    this.events = new SqliteEventRepository(this.db);
+    this.tasks = new SqliteTaskRepository(this.db);
   }
 
   async queryLifeContext(companionId: string, queryText: string): Promise<LifeContextResult> {
@@ -78,13 +90,38 @@ export class SqliteLifeDatabase implements LifeDatabase {
       );
     });
 
-    // 5. Render formatted context block
+    // 5. Generic Life Entities (Contacts, Places, Bookmarks, Custom items)
+    const allEntities = await this.entities.getEntities(companionId);
+    const matchedEntities = allEntities.filter((entity) => {
+      const matchName = entity.name.toLowerCase().includes(queryLower) ||
+        queryTerms.some((t) => entity.name.toLowerCase().includes(t));
+      const matchType = entity.entityType.toLowerCase().includes(queryLower);
+      const matchDomain = entity.domain.toLowerCase().includes(queryLower);
+      const matchProps = JSON.stringify(entity.properties).toLowerCase().includes(queryLower);
+      return matchName || matchType || matchDomain || matchProps;
+    });
+
+    // 6. Recent Life Events (Workouts, Health, Habits, Telemetry)
+    const recentEvents = await this.events.getEvents(companionId, undefined, 5);
+
+    // 7. Active Tasks & Goals
+    const allTasks = await this.tasks.getTasks(companionId);
+    const activeTasks = allTasks.filter((t) => t.status !== 'completed' && t.status !== 'cancelled');
+
+    // 8. Render formatted context block
     const lines: string[] = ['<life_context>'];
 
     if (matchedInventory.length > 0) {
       lines.push('Inventory:');
       for (const item of matchedInventory) {
         lines.push(`- ${item.entityName} (${item.domain}): ${JSON.stringify(item.properties)}`);
+      }
+    }
+
+    if (matchedEntities.length > 0) {
+      lines.push('Personal Entities & Contacts:');
+      for (const entity of matchedEntities) {
+        lines.push(`- [${entity.entityType}] ${entity.name} (${entity.domain}): ${JSON.stringify(entity.properties)}`);
       }
     }
 
@@ -95,10 +132,24 @@ export class SqliteLifeDatabase implements LifeDatabase {
       );
     }
 
+    if (recentEvents.length > 0) {
+      lines.push('Recent Life Events:');
+      for (const ev of recentEvents.slice(0, 3)) {
+        lines.push(`- [${ev.stream}] ${ev.timestamp}: ${ev.metricValue != null ? `${ev.metricValue} ` : ''}${JSON.stringify(ev.metadata || {})}`);
+      }
+    }
+
     if (upcomingSchedule.length > 0) {
       lines.push('Upcoming Schedule:');
       for (const item of upcomingSchedule.slice(0, 3)) {
         lines.push(`- ${item.startTime}: ${item.title}${item.endTime ? ` (until ${item.endTime})` : ''}`);
+      }
+    }
+
+    if (activeTasks.length > 0) {
+      lines.push('Active Tasks & Goals:');
+      for (const task of activeTasks.slice(0, 5)) {
+        lines.push(`- [${task.status}] ${task.title}${task.targetDate ? ` (due: ${task.targetDate})` : ''}`);
       }
     }
 
@@ -117,6 +168,9 @@ export class SqliteLifeDatabase implements LifeDatabase {
       recentFinances,
       upcomingSchedule,
       preferences: matchedPreferences.length > 0 ? matchedPreferences : allPreferences,
+      matchedEntities,
+      recentEvents,
+      activeTasks,
       formattedContext,
     };
   }

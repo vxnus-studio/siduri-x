@@ -8,7 +8,52 @@ import {
   formatClaimReceipt,
   formatRuntimeEffect,
 } from "../../lib/memory-display";
-type View = "overview" | "memory" | "evidence" | "settings";
+type View = "overview" | "memory" | "lifedb" | "evidence" | "logs" | "settings";
+type SystemLog = {
+  id: string;
+  companionId?: string;
+  level: "info" | "warn" | "error" | "debug";
+  subsystem: string;
+  message: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+type LifeEntity = {
+  id: string;
+  companionId?: string;
+  entityType: string;
+  domain: string;
+  name: string;
+  properties: Record<string, unknown>;
+  updatedAt?: string;
+};
+type LifeEvent = {
+  id: string;
+  companionId?: string;
+  stream: string;
+  timestamp?: string;
+  metricValue?: number;
+  metadata?: Record<string, unknown>;
+};
+type LifeTask = {
+  id: string;
+  companionId?: string;
+  title: string;
+  status: string;
+  priority?: number;
+  targetDate?: string;
+  metadata?: Record<string, unknown>;
+  updatedAt?: string;
+};
+type LifeScheduleItem = {
+  id: string;
+  companionId?: string;
+  title: string;
+  startTime: string;
+  endTime?: string;
+  isRecurring?: boolean;
+  status?: string;
+};
 type Status = {
   label: string;
   value: string;
@@ -129,6 +174,16 @@ export default function OperatorClient() {
   const [directives, setDirectives] = useState<BehavioralDirective[]>([]);
   const [evidenceResults, setEvidenceResults] = useState<EvidenceResult[]>([]);
   const [observations, setObservations] = useState<Observation[]>([]);
+  const [entities, setEntities] = useState<LifeEntity[]>([]);
+  const [events, setEvents] = useState<LifeEvent[]>([]);
+  const [tasks, setTasks] = useState<LifeTask[]>([]);
+  const [schedule, setSchedule] = useState<LifeScheduleItem[]>([]);
+  const [logs, setLogs] = useState<SystemLog[]>([]);
+  const [logsFilterLevel, setLogsFilterLevel] = useState<string>("all");
+  const [logsFilterSubsystem, setLogsFilterSubsystem] = useState<string>("all");
+  const [logsSearch, setLogsSearch] = useState<string>("");
+  const [logsAutoRefresh, setLogsAutoRefresh] = useState<boolean>(true);
+  const [expandedLogIds, setExpandedLogIds] = useState<Set<string>>(new Set());
   const [me, setMe] = useState("{}");
   const [message, setMessage] = useState("");
   const [responseJson, setResponseJson] = useState<unknown>(null);
@@ -136,6 +191,54 @@ export default function OperatorClient() {
     string | null
   >(null);
   const [busy, setBusy] = useState(false);
+
+  async function loadLogs(): Promise<void> {
+    try {
+      const params = new URLSearchParams();
+      if (logsFilterLevel !== "all") params.set("level", logsFilterLevel);
+      if (logsFilterSubsystem !== "all") params.set("subsystem", logsFilterSubsystem);
+      if (logsSearch.trim()) params.set("q", logsSearch.trim());
+      params.set("limit", "150");
+      const res = await getJson<{ logs: SystemLog[] }>(`/system/logs?${params.toString()}`);
+      setLogs(res.logs || []);
+    } catch (err) {
+      console.error("Failed to load system logs:", err);
+    }
+  }
+
+  function toggleExpandLog(id: string) {
+    setExpandedLogIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function clearAllLogs(): Promise<void> {
+    if (!window.confirm("Are you sure you want to clear all system logs?")) return;
+    try {
+      await postJson("/system/logs/clear", {});
+      setLogs([]);
+      setMessage("Logs cleared.");
+    } catch (err: any) {
+      setMessage(`Failed to clear logs: ${err.message}`);
+    }
+  }
+
+  function exportLogsAsJson() {
+    try {
+      const blob = new Blob([JSON.stringify(logs, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `siduri-logs-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setMessage(`Export failed: ${err.message}`);
+    }
+  }
 
   async function loadStatuses(): Promise<void> {
     try {
@@ -244,9 +347,124 @@ export default function OperatorClient() {
       setMe("Unable to load profile.");
     }
   }
+
+  async function loadLifeDb(): Promise<void> {
+    try {
+      const [entData, evtData, taskData, schedData] = await Promise.all([
+        getJson<{ entities: LifeEntity[] }>("/knowledge/entities").catch(() => ({ entities: [] })),
+        getJson<{ events: LifeEvent[] }>("/knowledge/events").catch(() => ({ events: [] })),
+        getJson<{ tasks: LifeTask[] }>("/knowledge/tasks").catch(() => ({ tasks: [] })),
+        getJson<{ items: LifeScheduleItem[] }>("/knowledge/schedule").catch(() => ({ items: [] })),
+      ]);
+      setEntities(entData?.entities || []);
+      setEvents(evtData?.events || []);
+      setTasks(taskData?.tasks || []);
+      setSchedule(schedData?.items || []);
+    } catch {
+      // ignore
+    }
+  }
+
+  async function saveEntity(entity: Partial<LifeEntity>): Promise<void> {
+    setBusy(true);
+    try {
+      await postJson("/knowledge/entities", entity);
+      setMessage(`Saved entity "${entity.name}"`);
+      await loadLifeDb();
+    } catch (e: any) {
+      setMessage(`Error saving entity: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteEntity(id: string): Promise<void> {
+    setBusy(true);
+    try {
+      await postJson("/knowledge/entities/delete", { id });
+      setMessage("Entity deleted");
+      await loadLifeDb();
+    } catch (e: any) {
+      setMessage(`Error deleting entity: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveTask(task: Partial<LifeTask>): Promise<void> {
+    setBusy(true);
+    try {
+      await postJson("/knowledge/tasks", task);
+      setMessage(`Saved task "${task.title}"`);
+      await loadLifeDb();
+    } catch (e: any) {
+      setMessage(`Error saving task: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleTaskStatus(task: LifeTask): Promise<void> {
+    const nextStatus = task.status === "completed" ? "todo" : "completed";
+    await saveTask({ ...task, status: nextStatus });
+  }
+
+  async function deleteTask(id: string): Promise<void> {
+    setBusy(true);
+    try {
+      await postJson("/knowledge/tasks/delete", { id });
+      setMessage("Task deleted");
+      await loadLifeDb();
+    } catch (e: any) {
+      setMessage(`Error deleting task: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function addLifeEvent(event: Partial<LifeEvent>): Promise<void> {
+    setBusy(true);
+    try {
+      await postJson("/knowledge/events", event);
+      setMessage(`Logged event on stream "${event.stream}"`);
+      await loadLifeDb();
+    } catch (e: any) {
+      setMessage(`Error logging event: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveSchedule(item: Partial<LifeScheduleItem>): Promise<void> {
+    setBusy(true);
+    try {
+      await postJson("/knowledge/schedule", item);
+      setMessage(`Saved schedule item "${item.title}"`);
+      await loadLifeDb();
+    } catch (e: any) {
+      setMessage(`Error saving schedule: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteSchedule(id: string): Promise<void> {
+    setBusy(true);
+    try {
+      await postJson("/knowledge/schedule/delete", { id });
+      setMessage("Schedule item deleted");
+      await loadLifeDb();
+    } catch (e: any) {
+      setMessage(`Error deleting schedule item: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   useEffect(() => {
     void loadStatuses();
     void loadMemory();
+    void loadLifeDb();
     void loadEvidence();
     void loadMe();
   }, []);
@@ -351,7 +569,9 @@ export default function OperatorClient() {
             [
               "overview",
               "memory",
+              "lifedb",
               "evidence",
+              "logs",
               "settings",
             ] as View[]
           ).map((item) => (
@@ -361,7 +581,7 @@ export default function OperatorClient() {
               onClick={() => setView(item)}
             >
               <span className={`nav-glyph nav-${item}`} />
-              {item[0].toUpperCase() + item.slice(1)}
+              {item === "lifedb" ? "Life DB" : item[0].toUpperCase() + item.slice(1)}
             </button>
           ))}
         </nav>
@@ -377,6 +597,10 @@ export default function OperatorClient() {
             <h1>
               {view === "overview"
                 ? "Control room"
+                : view === "lifedb"
+                ? "Life Database (Sovereign Reality)"
+                : view === "logs"
+                ? "System Logs & Diagnostics"
                 : view[0].toUpperCase() + view.slice(1)}
             </h1>
           </div>
@@ -390,7 +614,9 @@ export default function OperatorClient() {
               onClick={() => {
                 void loadStatuses();
                 void loadMemory();
+                void loadLifeDb();
                 void loadEvidence();
+                if (view === "logs") void loadLogs();
               }}
               aria-label="Refresh dashboard"
             >
@@ -424,12 +650,48 @@ export default function OperatorClient() {
             onRefresh={loadMemory}
           />
         )}
+        {view === "lifedb" && (
+          <LifeDbView
+            entities={entities}
+            events={events}
+            tasks={tasks}
+            schedule={schedule}
+            busy={busy}
+            onSaveEntity={saveEntity}
+            onDeleteEntity={deleteEntity}
+            onSaveTask={saveTask}
+            onToggleTask={toggleTaskStatus}
+            onDeleteTask={deleteTask}
+            onAddEvent={addLifeEvent}
+            onSaveSchedule={saveSchedule}
+            onDeleteSchedule={deleteSchedule}
+            onRefresh={loadLifeDb}
+          />
+        )}
         {view === "evidence" && (
           <EvidenceView
             results={evidenceResults}
             observations={observations}
             onCreate={createObservation}
             onRefresh={loadEvidence}
+          />
+        )}
+        {view === "logs" && (
+          <LogsView
+            logs={logs}
+            filterLevel={logsFilterLevel}
+            filterSubsystem={logsFilterSubsystem}
+            searchQuery={logsSearch}
+            autoRefresh={logsAutoRefresh}
+            expandedIds={expandedLogIds}
+            onToggleExpand={toggleExpandLog}
+            onChangeLevel={setLogsFilterLevel}
+            onChangeSubsystem={setLogsFilterSubsystem}
+            onChangeSearch={setLogsSearch}
+            onToggleAutoRefresh={() => setLogsAutoRefresh((prev) => !prev)}
+            onRefresh={loadLogs}
+            onClear={clearAllLogs}
+            onExport={exportLogsAsJson}
           />
         )}
         {view === "settings" && (
@@ -1054,6 +1316,9 @@ function Overview({
           <button onClick={() => onNavigate("memory")}>
             Review memory <span>→</span>
           </button>
+          <button onClick={() => onNavigate("lifedb")}>
+            Inspect Life DB <span>→</span>
+          </button>
           <button onClick={() => onNavigate("evidence")}>
             Inspect evidence <span>→</span>
           </button>
@@ -1061,6 +1326,800 @@ function Overview({
             Identity & Directives <span>→</span>
           </button>
         </div>
+      </section>
+    </div>
+  );
+}
+
+function LifeDbView({
+  entities,
+  events,
+  tasks,
+  schedule,
+  busy,
+  onSaveEntity,
+  onDeleteEntity,
+  onSaveTask,
+  onToggleTask,
+  onDeleteTask,
+  onAddEvent,
+  onSaveSchedule,
+  onDeleteSchedule,
+  onRefresh,
+}: {
+  entities: LifeEntity[];
+  events: LifeEvent[];
+  tasks: LifeTask[];
+  schedule: LifeScheduleItem[];
+  busy: boolean;
+  onSaveEntity: (entity: Partial<LifeEntity>) => Promise<void>;
+  onDeleteEntity: (id: string) => Promise<void>;
+  onSaveTask: (task: Partial<LifeTask>) => Promise<void>;
+  onToggleTask: (task: LifeTask) => Promise<void>;
+  onDeleteTask: (id: string) => Promise<void>;
+  onAddEvent: (event: Partial<LifeEvent>) => Promise<void>;
+  onSaveSchedule: (item: Partial<LifeScheduleItem>) => Promise<void>;
+  onDeleteSchedule: (id: string) => Promise<void>;
+  onRefresh: () => Promise<void>;
+}) {
+  const [activeTab, setActiveTab] = useState<"tasks" | "entities" | "events" | "schedule">("tasks");
+  const [taskFilter, setTaskFilter] = useState<string>("all");
+  const [showNewTask, setShowNewTask] = useState(false);
+  const [showNewEntity, setShowNewEntity] = useState(false);
+  const [showNewEvent, setShowNewEvent] = useState(false);
+  const [showNewSchedule, setShowNewSchedule] = useState(false);
+
+  // New task form state
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState("1");
+  const [newTaskStatus, setNewTaskStatus] = useState("todo");
+  const [newTaskTargetDate, setNewTaskTargetDate] = useState("");
+
+  // New entity form state
+  const [newEntityName, setNewEntityName] = useState("");
+  const [newEntityType, setNewEntityType] = useState("item");
+  const [newEntityDomain, setNewEntityDomain] = useState("general");
+  const [newEntityProps, setNewEntityProps] = useState("{}");
+
+  // New event form state
+  const [newEventStream, setNewEventStream] = useState("finance:expense");
+  const [newEventMetric, setNewEventMetric] = useState("");
+  const [newEventMeta, setNewEventMeta] = useState("{}");
+
+  // New schedule form state
+  const [newSchedTitle, setNewSchedTitle] = useState("");
+  const [newSchedStart, setNewSchedStart] = useState("");
+  const [newSchedEnd, setNewSchedEnd] = useState("");
+
+  const filteredTasks = tasks.filter((t) => {
+    if (taskFilter === "all") return true;
+    if (taskFilter === "active") return t.status !== "completed" && t.status !== "cancelled";
+    return t.status === taskFilter;
+  });
+
+  return (
+    <div className="console-view">
+      <div className="view-intro">
+        <div>
+          <p className="console-eyebrow">LIFE DATABASE</p>
+          <h2>Sovereign Reality & Structured Primitives</h2>
+          <p>
+            Inspect and mutate your concrete user reality: actionable tasks, static entities, telemetry events, and temporal schedules.
+          </p>
+        </div>
+        <div className="button-row">
+          <button className="soft-button" onClick={() => void onRefresh()} disabled={busy}>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Subtab navigation */}
+      <div className="lifedb-nav">
+        <button
+          className={`lifedb-tab-btn ${activeTab === "tasks" ? "active" : ""}`}
+          onClick={() => setActiveTab("tasks")}
+        >
+          ✓ Tasks & Goals ({tasks.length})
+        </button>
+        <button
+          className={`lifedb-tab-btn ${activeTab === "entities" ? "active" : ""}`}
+          onClick={() => setActiveTab("entities")}
+        >
+          📦 Entities & Items ({entities.length})
+        </button>
+        <button
+          className={`lifedb-tab-btn ${activeTab === "events" ? "active" : ""}`}
+          onClick={() => setActiveTab("events")}
+        >
+          ⏱️ Telemetry & Events ({events.length})
+        </button>
+        <button
+          className={`lifedb-tab-btn ${activeTab === "schedule" ? "active" : ""}`}
+          onClick={() => setActiveTab("schedule")}
+        >
+          📅 Schedule & Calendar ({schedule.length})
+        </button>
+      </div>
+
+      {/* TASKS TAB */}
+      {activeTab === "tasks" && (
+        <section className="console-panel table-panel">
+          <div className="table-toolbar">
+            <div className="flex items-center gap-3">
+              <strong>Actionable Tasks</strong>
+              <div className="flex gap-1">
+                {["all", "active", "todo", "in_progress", "completed"].map((f) => (
+                  <button
+                    key={f}
+                    className={`px-2 py-0.5 rounded text-[10px] ${taskFilter === f ? "bg-amber-500/20 text-amber-300 font-semibold" : "text-gray-400 hover:text-gray-200"}`}
+                    onClick={() => setTaskFilter(f)}
+                  >
+                    {f.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              className="tiny-button"
+              onClick={() => setShowNewTask(!showNewTask)}
+            >
+              {showNewTask ? "✕ Close" : "+ New Task"}
+            </button>
+          </div>
+
+          {showNewTask && (
+            <div className="lifedb-form-card m-4">
+              <h4 className="text-xs font-semibold text-amber-300 mb-2">Create New Task</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                <input
+                  type="text"
+                  placeholder="Task title (e.g. Order fresh coffee)"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  className="lifedb-input md:col-span-2"
+                />
+                <select
+                  value={newTaskStatus}
+                  onChange={(e) => setNewTaskStatus(e.target.value)}
+                  className="lifedb-input"
+                >
+                  <option value="todo">To-Do</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <input
+                  type="number"
+                  placeholder="Priority (1-5)"
+                  value={newTaskPriority}
+                  onChange={(e) => setNewTaskPriority(e.target.value)}
+                  className="lifedb-input"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button className="tiny-button" onClick={() => setShowNewTask(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="tiny-button approve-button"
+                  disabled={!newTaskTitle.trim() || busy}
+                  onClick={async () => {
+                    await onSaveTask({
+                      title: newTaskTitle.trim(),
+                      status: newTaskStatus,
+                      priority: Number(newTaskPriority) || 1,
+                      targetDate: newTaskTargetDate || undefined,
+                    });
+                    setNewTaskTitle("");
+                    setShowNewTask(false);
+                  }}
+                >
+                  Save Task
+                </button>
+              </div>
+            </div>
+          )}
+
+          {filteredTasks.length ? (
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "40px" }}>Done</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Target Date</th>
+                    <th>Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTasks.map((t) => {
+                    const isDone = t.status === "completed";
+                    return (
+                      <tr key={t.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={isDone}
+                            onChange={() => void onToggleTask(t)}
+                            className="cursor-pointer accent-amber-500"
+                          />
+                        </td>
+                        <td>
+                          <span className={isDone ? "line-through text-gray-500" : "font-medium text-gray-200"}>
+                            {t.title}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`lifedb-pill lifedb-pill-${t.status || "todo"}`}>
+                            {t.status || "todo"}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="tag font-mono">P{t.priority ?? 1}</span>
+                        </td>
+                        <td>{formatDate(t.targetDate)}</td>
+                        <td>{formatDate(t.updatedAt)}</td>
+                        <td>
+                          <div className="table-actions">
+                            <button
+                              className="tiny-button"
+                              onClick={() => void onToggleTask(t)}
+                            >
+                              {isDone ? "Reopen" : "Complete"}
+                            </button>
+                            <button
+                              className="tiny-button danger-button"
+                              onClick={() => void onDeleteTask(t.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              title="No tasks match filter"
+              detail="Tasks learned through conversation or created above will appear here."
+            />
+          )}
+        </section>
+      )}
+
+      {/* ENTITIES TAB */}
+      {activeTab === "entities" && (
+        <section className="console-panel table-panel">
+          <div className="table-toolbar">
+            <div>
+              <strong>Static Entities & Inventory</strong>
+              <span>Nouns, devices, gaming items, and contacts</span>
+            </div>
+            <button
+              className="tiny-button"
+              onClick={() => setShowNewEntity(!showNewEntity)}
+            >
+              {showNewEntity ? "✕ Close" : "+ New Entity"}
+            </button>
+          </div>
+
+          {showNewEntity && (
+            <div className="lifedb-form-card m-4">
+              <h4 className="text-xs font-semibold text-amber-300 mb-2">Create New Entity</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <input
+                  type="text"
+                  placeholder="Entity Name (e.g. MacBook Pro M3)"
+                  value={newEntityName}
+                  onChange={(e) => setNewEntityName(e.target.value)}
+                  className="lifedb-input"
+                />
+                <input
+                  type="text"
+                  placeholder="Type (e.g. hardware, contact, item)"
+                  value={newEntityType}
+                  onChange={(e) => setNewEntityType(e.target.value)}
+                  className="lifedb-input"
+                />
+                <input
+                  type="text"
+                  placeholder="Domain (e.g. workstation, gaming, home)"
+                  value={newEntityDomain}
+                  onChange={(e) => setNewEntityDomain(e.target.value)}
+                  className="lifedb-input"
+                />
+              </div>
+              <div className="mb-3">
+                <textarea
+                  placeholder='Properties JSON (e.g. {"model": "16-inch", "ram": "36GB"})'
+                  value={newEntityProps}
+                  onChange={(e) => setNewEntityProps(e.target.value)}
+                  className="lifedb-input w-full font-mono text-xs"
+                  rows={2}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button className="tiny-button" onClick={() => setShowNewEntity(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="tiny-button approve-button"
+                  disabled={!newEntityName.trim() || busy}
+                  onClick={async () => {
+                    let parsedProps = {};
+                    try { parsedProps = JSON.parse(newEntityProps || "{}"); } catch {}
+                    await onSaveEntity({
+                      name: newEntityName.trim(),
+                      entityType: newEntityType.trim() || "item",
+                      domain: newEntityDomain.trim() || "general",
+                      properties: parsedProps,
+                    });
+                    setNewEntityName("");
+                    setShowNewEntity(false);
+                  }}
+                >
+                  Save Entity
+                </button>
+              </div>
+            </div>
+          )}
+
+          {entities.length ? (
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Domain</th>
+                    <th>Properties</th>
+                    <th>Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {entities.map((ent) => (
+                    <tr key={ent.id}>
+                      <td className="font-medium text-gray-200">{ent.name}</td>
+                      <td>
+                        <span className="tag font-mono">{ent.entityType}</span>
+                      </td>
+                      <td>
+                        <span className="tag">{ent.domain}</span>
+                      </td>
+                      <td>
+                        <pre className="text-[10px] text-gray-400 font-mono max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
+                          {JSON.stringify(ent.properties || {})}
+                        </pre>
+                      </td>
+                      <td>{formatDate(ent.updatedAt)}</td>
+                      <td>
+                        <button
+                          className="tiny-button danger-button"
+                          onClick={() => void onDeleteEntity(ent.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              title="No entities recorded"
+              detail="Hardware, game characters, contacts, and items stored in Life DB will appear here."
+            />
+          )}
+        </section>
+      )}
+
+      {/* EVENTS TAB */}
+      {activeTab === "events" && (
+        <section className="console-panel table-panel">
+          <div className="table-toolbar">
+            <div>
+              <strong>Time-Series Events & Telemetry</strong>
+              <span>Biometrics, finances, workout telemetry, and logs</span>
+            </div>
+            <button
+              className="tiny-button"
+              onClick={() => setShowNewEvent(!showNewEvent)}
+            >
+              {showNewEvent ? "✕ Close" : "+ Log Event"}
+            </button>
+          </div>
+
+          {showNewEvent && (
+            <div className="lifedb-form-card m-4">
+              <h4 className="text-xs font-semibold text-amber-300 mb-2">Log New Event</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <input
+                  type="text"
+                  placeholder="Stream (e.g. finance:expense, health:heartrate)"
+                  value={newEventStream}
+                  onChange={(e) => setNewEventStream(e.target.value)}
+                  className="lifedb-input"
+                />
+                <input
+                  type="number"
+                  step="any"
+                  placeholder="Metric Value (optional, e.g. 25.5)"
+                  value={newEventMetric}
+                  onChange={(e) => setNewEventMetric(e.target.value)}
+                  className="lifedb-input"
+                />
+              </div>
+              <div className="mb-3">
+                <textarea
+                  placeholder='Metadata JSON (optional, e.g. {"category": "coffee", "currency": "USD"})'
+                  value={newEventMeta}
+                  onChange={(e) => setNewEventMeta(e.target.value)}
+                  className="lifedb-input w-full font-mono text-xs"
+                  rows={2}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button className="tiny-button" onClick={() => setShowNewEvent(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="tiny-button approve-button"
+                  disabled={!newEventStream.trim() || busy}
+                  onClick={async () => {
+                    let parsedMeta = {};
+                    try { parsedMeta = JSON.parse(newEventMeta || "{}"); } catch {}
+                    await onAddEvent({
+                      stream: newEventStream.trim(),
+                      metricValue: newEventMetric !== "" ? Number(newEventMetric) : undefined,
+                      metadata: parsedMeta,
+                    });
+                    setNewEventMetric("");
+                    setShowNewEvent(false);
+                  }}
+                >
+                  Log Event
+                </button>
+              </div>
+            </div>
+          )}
+
+          {events.length ? (
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Stream</th>
+                    <th>Metric Value</th>
+                    <th>Timestamp</th>
+                    <th>Metadata</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {events.map((evt) => (
+                    <tr key={evt.id}>
+                      <td className="font-mono text-amber-400 text-xs">{evt.stream}</td>
+                      <td className="font-mono text-xs">
+                        {evt.metricValue !== undefined && evt.metricValue !== null
+                          ? <strong>{evt.metricValue}</strong>
+                          : "—"}
+                      </td>
+                      <td>{formatDate(evt.timestamp)}</td>
+                      <td>
+                        <pre className="text-[10px] text-gray-400 font-mono max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
+                          {JSON.stringify(evt.metadata || {})}
+                        </pre>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              title="No events logged"
+              detail="Telemetry and time-series events will be displayed here."
+            />
+          )}
+        </section>
+      )}
+
+      {/* SCHEDULE TAB */}
+      {activeTab === "schedule" && (
+        <section className="console-panel table-panel">
+          <div className="table-toolbar">
+            <div>
+              <strong>Calendar Commitments & Routines</strong>
+              <span>Upcoming time intervals and schedule items</span>
+            </div>
+            <button
+              className="tiny-button"
+              onClick={() => setShowNewSchedule(!showNewSchedule)}
+            >
+              {showNewSchedule ? "✕ Close" : "+ New Schedule Item"}
+            </button>
+          </div>
+
+          {showNewSchedule && (
+            <div className="lifedb-form-card m-4">
+              <h4 className="text-xs font-semibold text-amber-300 mb-2">Create Schedule Item</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <input
+                  type="text"
+                  placeholder="Title (e.g. Flight to Tokyo)"
+                  value={newSchedTitle}
+                  onChange={(e) => setNewSchedTitle(e.target.value)}
+                  className="lifedb-input"
+                />
+                <input
+                  type="text"
+                  placeholder="Start Time (e.g. 2026-09-20T14:00:00Z)"
+                  value={newSchedStart}
+                  onChange={(e) => setNewSchedStart(e.target.value)}
+                  className="lifedb-input"
+                />
+                <input
+                  type="text"
+                  placeholder="End Time (optional)"
+                  value={newSchedEnd}
+                  onChange={(e) => setNewSchedEnd(e.target.value)}
+                  className="lifedb-input"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button className="tiny-button" onClick={() => setShowNewSchedule(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="tiny-button approve-button"
+                  disabled={!newSchedTitle.trim() || !newSchedStart.trim() || busy}
+                  onClick={async () => {
+                    await onSaveSchedule({
+                      title: newSchedTitle.trim(),
+                      startTime: newSchedStart.trim(),
+                      endTime: newSchedEnd.trim() || undefined,
+                      status: "active",
+                    });
+                    setNewSchedTitle("");
+                    setNewSchedStart("");
+                    setNewSchedEnd("");
+                    setShowNewSchedule(false);
+                  }}
+                >
+                  Save Schedule
+                </button>
+              </div>
+            </div>
+          )}
+
+          {schedule.length ? (
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedule.map((item) => (
+                    <tr key={item.id}>
+                      <td className="font-medium text-gray-200">{item.title}</td>
+                      <td>{formatDate(item.startTime)}</td>
+                      <td>{formatDate(item.endTime)}</td>
+                      <td>
+                        <span className="tag font-mono">{item.status || "active"}</span>
+                      </td>
+                      <td>
+                        <button
+                          className="tiny-button danger-button"
+                          onClick={() => void onDeleteSchedule(item.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              title="No upcoming schedule items"
+              detail="Calendar commitments and schedule intervals will appear here."
+            />
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function LogsView({
+  logs,
+  filterLevel,
+  filterSubsystem,
+  searchQuery,
+  autoRefresh,
+  expandedIds,
+  onToggleExpand,
+  onChangeLevel,
+  onChangeSubsystem,
+  onChangeSearch,
+  onToggleAutoRefresh,
+  onRefresh,
+  onClear,
+  onExport,
+}: {
+  logs: SystemLog[];
+  filterLevel: string;
+  filterSubsystem: string;
+  searchQuery: string;
+  autoRefresh: boolean;
+  expandedIds: Set<string>;
+  onToggleExpand: (id: string) => void;
+  onChangeLevel: (lvl: string) => void;
+  onChangeSubsystem: (sub: string) => void;
+  onChangeSearch: (q: string) => void;
+  onToggleAutoRefresh: () => void;
+  onRefresh: () => void;
+  onClear: () => void;
+  onExport: () => void;
+}) {
+  const errorCount = useMemo(() => logs.filter((l) => l.level === "error").length, [logs]);
+  const warnCount = useMemo(() => logs.filter((l) => l.level === "warn").length, [logs]);
+
+  return (
+    <div className="console-view">
+      <div className="view-intro">
+        <div>
+          <p className="console-eyebrow">DIAGNOSTICS & AUDIT</p>
+          <h2>System Logs & Diagnostics</h2>
+          <p>Real-time audit trail of perception cycles, LLM calls, Truth Gate decisions, and tool executions.</p>
+        </div>
+        <div className="flex gap-2 items-center flex-wrap">
+          <button className="tiny-button" onClick={onExport} title="Download current logs as JSON">
+            ↓ Export JSON
+          </button>
+          <button className="tiny-button danger-button" onClick={onClear} title="Purge stored logs">
+            ✕ Clear Logs
+          </button>
+        </div>
+      </div>
+
+      <section className="console-panel">
+        <div className="logs-toolbar">
+          <div className="logs-toolbar-left">
+            <input
+              type="text"
+              placeholder="Search logs, metadata..."
+              value={searchQuery}
+              onChange={(e) => onChangeSearch(e.target.value)}
+              className="logs-search-input"
+            />
+            <select
+              value={filterSubsystem}
+              onChange={(e) => onChangeSubsystem(e.target.value)}
+              className="logs-select"
+            >
+              <option value="all">All Subsystems</option>
+              <option value="perception">Perception</option>
+              <option value="brain">Brain / LLM</option>
+              <option value="truth_gate">Truth Gate</option>
+              <option value="memory">Memory</option>
+              <option value="hands">Hands / Tools</option>
+              <option value="server">Server</option>
+            </select>
+          </div>
+
+          <div className="logs-toolbar-right">
+            <div className="logs-level-pills">
+              {(["all", "error", "warn", "info", "debug"] as const).map((lvl) => (
+                <button
+                  key={lvl}
+                  type="button"
+                  className={`log-pill ${filterLevel === lvl ? "active" : ""} ${lvl === "error" && errorCount > 0 ? "has-errors" : ""}`}
+                  onClick={() => onChangeLevel(lvl)}
+                >
+                  {lvl.toUpperCase()}
+                  {lvl === "error" && errorCount > 0 && <span className="pill-badge">{errorCount}</span>}
+                  {lvl === "warn" && warnCount > 0 && <span className="pill-badge">{warnCount}</span>}
+                </button>
+              ))}
+            </div>
+
+            <label className="logs-live-toggle">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={onToggleAutoRefresh}
+              />
+              <span className={`live-indicator ${autoRefresh ? "active" : ""}`} />
+              Live (3s)
+            </label>
+
+            <button type="button" className="tiny-button" onClick={onRefresh} title="Fetch latest logs">
+              ↻
+            </button>
+          </div>
+        </div>
+
+        {logs.length > 0 ? (
+          <div className="logs-container">
+            {logs.map((log) => {
+              const isExpanded = expandedIds.has(log.id);
+              const hasMetadata = Boolean(log.metadata && Object.keys(log.metadata).length > 0);
+              const formattedTime = new Date(log.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                fractionalSecondDigits: 3,
+              });
+
+              return (
+                <div
+                  key={log.id}
+                  className={`log-entry log-entry-${log.level} ${isExpanded ? "expanded" : ""}`}
+                >
+                  <div
+                    className="log-header"
+                    onClick={() => hasMetadata && onToggleExpand(log.id)}
+                    style={{ cursor: hasMetadata ? "pointer" : "default" }}
+                  >
+                    <span className="log-time" title={log.createdAt}>
+                      {formattedTime}
+                    </span>
+                    <span className={`log-badge log-badge-${log.level}`}>
+                      {log.level.toUpperCase()}
+                    </span>
+                    <span className="log-subsystem">[{log.subsystem}]</span>
+                    <span className="log-message">{log.message}</span>
+                    {hasMetadata && (
+                      <span className="log-expand-icon" title="Toggle JSON metadata">
+                        {isExpanded ? "▲" : "▼"}
+                      </span>
+                    )}
+                  </div>
+
+                  {isExpanded && hasMetadata && (
+                    <div className="log-metadata-card">
+                      {Boolean(log.metadata?.stack) && (
+                        <div className="log-stack-trace">
+                          <strong>Stack trace:</strong>
+                          <pre>{String(log.metadata?.stack)}</pre>
+                        </div>
+                      )}
+                      <div className="log-json-block">
+                        <strong>Payload / Metadata:</strong>
+                        <pre>{JSON.stringify(log.metadata, null, 2)}</pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="No system logs found"
+            detail={
+              searchQuery || filterLevel !== "all" || filterSubsystem !== "all"
+                ? "No logs match the current filters. Try resetting the search or level filter."
+                : "No logs have been recorded yet. New perception cycles, Truth Gate decisions, and model queries will appear here."
+            }
+          />
+        )}
       </section>
     </div>
   );

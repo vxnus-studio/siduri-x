@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.27';
+export const CLI_VERSION = '2.0.28';
 
 import { colors } from './colors';
 export { colors };
@@ -408,31 +408,49 @@ export async function runCliReset(targetDir?: string): Promise<void> {
       return;
     }
 
+    const tables = [
+      'memory_claims',
+      'memory_events',
+      'self_directives',
+      'self_relationships',
+      'self_identity',
+      'self_personality',
+      'self_exemplars',
+      'life_entities',
+      'life_events',
+      'life_finance',
+      'life_inventory',
+      'life_preferences',
+      'life_schedule',
+      'life_tasks',
+      'system_logs',
+    ];
+
     const { DatabaseSync } = await import('node:sqlite');
     const db = new DatabaseSync(fullDbPath);
     try {
-      db.prepare('DELETE FROM memory_claims WHERE companion_id = ?').run(companionId);
-      db.prepare('DELETE FROM memory_events WHERE companion_id = ?').run(companionId);
-      db.prepare('DELETE FROM self_directives WHERE companion_id = ?').run(companionId);
-      db.prepare('DELETE FROM self_relationships WHERE companion_id = ?').run(companionId);
-      db.prepare('DELETE FROM self_identity WHERE companion_id = ?').run(companionId);
-      if (companionId !== 'default') {
-        db.prepare('DELETE FROM memory_claims WHERE companion_id = "default"').run();
-        db.prepare('DELETE FROM memory_events WHERE companion_id = "default"').run();
-        db.prepare('DELETE FROM self_directives WHERE companion_id = "default"').run();
-        db.prepare('DELETE FROM self_relationships WHERE companion_id = "default"').run();
-        db.prepare('DELETE FROM self_identity WHERE companion_id = "default"').run();
+      for (const table of tables) {
+        try {
+          db.prepare(`DELETE FROM ${table} WHERE companion_id = ?`).run(companionId);
+        } catch {
+          try { db.prepare(`DELETE FROM ${table}`).run(); } catch {}
+        }
+        if (companionId !== 'default') {
+          try {
+            db.prepare(`DELETE FROM ${table} WHERE companion_id = "default"`).run();
+          } catch {}
+        }
       }
+      try { db.exec('VACUUM'); } catch {}
     } finally {
       db.close();
     }
 
     printSuccess(`Companion state reset to blank slate:`);
-    console.log(`  ${colors.dim}• Memory claims cleared${colors.reset}`);
-    console.log(`  ${colors.dim}• Memory events cleared${colors.reset}`);
-    console.log(`  ${colors.dim}• Self directives cleared${colors.reset}`);
-    console.log(`  ${colors.dim}• Self relationships cleared${colors.reset}`);
-    console.log(`  ${colors.dim}• Self identity cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• Memory claims and events cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• Self directives, identity, and relationships cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• Life DB (entities, tasks, schedule, events) cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• System logs cleared${colors.reset}`);
     console.log(`\nInstance is now in a clean blank slate state for testing.\n`);
     process.exitCode = 0;
   } catch (err: any) {

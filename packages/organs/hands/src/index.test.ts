@@ -392,5 +392,89 @@ describe('DefaultHandsOrgan Adversarial Remediation Suite', () => {
       expect(res.lifecycle).toBe('TIMED_OUT');
       expect(abortedSignal).toBe(true);
     });
+
+    it('registers and executes audited Life DB tools with signed capability', async () => {
+      const mockKnowledge = {
+        entities: {
+          saveEntity: jest.fn(async (ent) => ent),
+        },
+        events: {
+          addEvent: jest.fn(async (ev) => ev),
+        },
+        schedule: {
+          saveItem: jest.fn(async (sch) => sch),
+        },
+        tasks: {
+          saveTask: jest.fn(async (tsk) => tsk),
+        },
+      };
+
+      const hands = new DefaultHandsOrgan({ secretKey, knowledge: mockKnowledge });
+      const tools = await hands.listTools();
+      expect(tools.length).toBeGreaterThanOrEqual(4);
+
+      for (const t of tools) {
+        engine.registerToolDefinition(t);
+      }
+
+      // Execute life:save_entity
+      const saveAction = {
+        actionId: 'act-save-ent-1',
+        toolName: 'life:save_entity',
+        parameters: {
+          name: 'MacBook Pro',
+          entityType: 'hardware',
+          domain: 'workstation',
+          properties: { ram: '64GB' },
+        },
+        context: sampleContext,
+        executionId: 'exec-save-ent-1',
+      };
+
+      const { capability: cap1 } = await engine.evaluateAction(saveAction);
+      expect(cap1).toBeDefined();
+
+      const res1 = await hands.executeAction(saveAction, cap1!);
+      expect(res1.success).toBe(true);
+      expect(res1.lifecycle).toBe('COMPLETED');
+      expect(mockKnowledge.entities.saveEntity).toHaveBeenCalledTimes(1);
+
+      // Execute life:log_event
+      const logAction = {
+        actionId: 'act-log-evt-1',
+        toolName: 'life:log_event',
+        parameters: {
+          stream: 'workout',
+          metricValue: 10,
+          metadata: { unit: 'km' },
+        },
+        context: sampleContext,
+        executionId: 'exec-log-evt-1',
+      };
+
+      const { capability: cap2 } = await engine.evaluateAction(logAction);
+      const res2 = await hands.executeAction(logAction, cap2!);
+      expect(res2.success).toBe(true);
+      expect(res2.lifecycle).toBe('COMPLETED');
+      expect(mockKnowledge.events.addEvent).toHaveBeenCalledTimes(1);
+
+      // Execute life:update_task
+      const taskAction = {
+        actionId: 'act-task-1',
+        toolName: 'life:update_task',
+        parameters: {
+          title: 'Implement Life DB Primitives',
+          status: 'completed',
+        },
+        context: sampleContext,
+        executionId: 'exec-task-1',
+      };
+
+      const { capability: cap3 } = await engine.evaluateAction(taskAction);
+      const res3 = await hands.executeAction(taskAction, cap3!);
+      expect(res3.success).toBe(true);
+      expect(res3.lifecycle).toBe('COMPLETED');
+      expect(mockKnowledge.tasks.saveTask).toHaveBeenCalledTimes(1);
+    });
   });
 });

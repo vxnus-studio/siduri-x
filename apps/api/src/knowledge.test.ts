@@ -38,6 +38,19 @@ describe('Life Database & UnifiedKnowledgeOrgan API Integration', () => {
       }),
     };
 
+    const memory: any = {
+      initialize: async () => {},
+      proposeClaim: async (claim: any) => (knowledge.lifeDb as any).db.proposeClaim(claim),
+      getClaims: async (limit?: number) => (knowledge.lifeDb as any).db.getAllClaims(undefined, limit || 500),
+      getPendingClaims: async (limit?: number) =>
+        (knowledge.lifeDb as any).db.getAllClaims(undefined, limit || 500).filter((c: any) => c.status === 'pending'),
+      approveClaim: async (id: string) => (knowledge.lifeDb as any).db.approveClaim(id),
+      rejectClaim: async (id: string) => (knowledge.lifeDb as any).db.rejectClaim(id),
+      searchClaims: async () => [],
+      getApprovedClaims: async () => [],
+      getDirectives: async () => [],
+    };
+
     runtime = new SiduriRuntime(
       'test-comp',
       { name: 'Test Companion', organs: { knowledge: { provider: 'unified', dbPath: testDbPath } } } as any,
@@ -45,6 +58,7 @@ describe('Life Database & UnifiedKnowledgeOrgan API Integration', () => {
         brain: mockBrain,
         knowledge,
         externalKnowledge: knowledge.eAdapter ?? knowledge,
+        memory,
       }
     );
     await runtime.initialize();
@@ -152,5 +166,102 @@ describe('Life Database & UnifiedKnowledgeOrgan API Integration', () => {
 
     expect(lifeRes.status).toBe(200);
     expect(lifeRes.body.matchedInventory).toEqual([]);
+  });
+
+  test('seeds and queries generic entities, events, and tasks', async () => {
+    // 1. Entities
+    await knowledge.entities.saveEntity({
+      id: 'ent-1',
+      companionId: 'test-comp',
+      name: 'Coffee Grinder',
+      entityType: 'item',
+      domain: 'kitchen',
+      properties: { burr: 'conical', setting: 14 },
+    });
+
+    const entRes = await request(app)
+      .get('/knowledge/entities?id=test-comp&domain=kitchen')
+      .set(mockAuthHeader);
+    expect(entRes.status).toBe(200);
+    expect(entRes.body.entities).toHaveLength(1);
+    expect(entRes.body.entities[0].name).toBe('Coffee Grinder');
+    expect(entRes.body.entities[0].properties.setting).toBe(14);
+
+    // 2. Events
+    await knowledge.events.addEvent({
+      id: 'evt-1',
+      companionId: 'test-comp',
+      stream: 'health:heartrate',
+      timestamp: new Date().toISOString(),
+      metricValue: 72,
+      metadata: { unit: 'bpm' },
+    });
+
+    const evtRes = await request(app)
+      .get('/knowledge/events?id=test-comp&stream=health:heartrate')
+      .set(mockAuthHeader);
+    expect(evtRes.status).toBe(200);
+    expect(evtRes.body.events).toHaveLength(1);
+    expect(evtRes.body.events[0].metricValue).toBe(72);
+
+    // 3. Tasks
+    await knowledge.tasks.saveTask({
+      id: 'task-1',
+      companionId: 'test-comp',
+      title: 'Order fresh espresso beans',
+      status: 'pending',
+      priority: 2,
+    });
+
+    const taskRes = await request(app)
+      .get('/knowledge/tasks?id=test-comp&status=pending')
+      .set(mockAuthHeader);
+    expect(taskRes.status).toBe(200);
+    expect(taskRes.body.tasks).toHaveLength(1);
+    expect(taskRes.body.tasks[0].title).toBe('Order fresh espresso beans');
+  });
+
+  test('Truth Gate candidate proposal approval commits Life DB mutations', async () => {
+    // Stage a candidate proposal targeting Life DB
+    const proposal = await (knowledge.lifeDb as any).db.proposeClaim({
+      id: 'prop-task-gate',
+      companionId: 'test-comp',
+      subject: 'task:buy-filter',
+      predicate: 'is',
+      value: 'Buy paper filters',
+      status: 'pending',
+      evidence: {
+        type: 'task',
+        title: 'Buy paper filters',
+        status: 'todo',
+        priority: 1,
+      },
+    });
+    expect(proposal.status).toBe('pending');
+
+    // Confirm it is not yet in tasks
+    const beforeRes = await request(app)
+      .get('/knowledge/tasks?id=test-comp')
+      .set(mockAuthHeader);
+    expect(beforeRes.body.tasks.some((t: any) => t.title === 'Buy paper filters')).toBe(false);
+
+    // Approve via Truth Gate endpoint
+    const approveRes = await request(app)
+      .post('/knowledge/proposals/approve')
+      .set(mockAuthHeader)
+      .send({ companionId: 'test-comp', id: 'prop-task-gate' });
+
+    expect(approveRes.status).toBe(200);
+    expect(approveRes.body.approved).toBe(true);
+    expect(approveRes.body.target).toBe('knowledge');
+
+    // Confirm it is committed to Life DB tasks
+    const afterRes = await request(app)
+      .get('/knowledge/tasks?id=test-comp')
+      .set(mockAuthHeader);
+    expect(afterRes.status).toBe(200);
+    const approvedTask = afterRes.body.tasks.find((t: any) => t.title === 'Buy paper filters');
+    expect(approvedTask).toBeDefined();
+    expect(approvedTask.status).toBe('todo');
   });
 });

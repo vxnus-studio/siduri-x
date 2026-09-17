@@ -347,6 +347,113 @@ describe('SiduriDatabase', () => {
       expect(result[0].preferenceValue).toBe('dry red wine');
       expect(result[0].category).toBe('food');
     });
+
+    it('stores, queries, and deletes generic life entities', () => {
+      db = new SiduriDatabase({ dbPath });
+
+      db.upsertEntity({
+        id: 'entity-1',
+        companionId: 'siduri-test',
+        entityType: 'contact',
+        domain: 'social',
+        name: 'Alice',
+        properties: { birthday: 'June 4', allergy: 'peanuts' },
+      });
+
+      db.upsertEntity({
+        id: 'entity-2',
+        companionId: 'siduri-test',
+        entityType: 'hardware',
+        domain: 'workstation',
+        name: '4K Monitor',
+        properties: { refreshRate: 144 },
+      });
+
+      const allEntities = db.getEntities('siduri-test');
+      expect(allEntities).toHaveLength(2);
+
+      const contacts = db.getEntities('siduri-test', 'contact');
+      expect(contacts).toHaveLength(1);
+      expect(contacts[0].name).toBe('Alice');
+      expect(contacts[0].properties).toEqual({ birthday: 'June 4', allergy: 'peanuts' });
+
+      const single = db.getEntityById('entity-2');
+      expect(single?.name).toBe('4K Monitor');
+
+      const deleted = db.deleteEntity('entity-1');
+      expect(deleted).toBe(true);
+      expect(db.getEntities('siduri-test', 'contact')).toHaveLength(0);
+    });
+
+    it('stores and retrieves time-series life events (telemetry/math)', () => {
+      db = new SiduriDatabase({ dbPath });
+
+      db.addEvent({
+        id: 'evt-1',
+        companionId: 'siduri-test',
+        stream: 'workout',
+        metricValue: 5.2,
+        metadata: { activity: 'running', unit: 'km' },
+      });
+
+      db.addEvent({
+        id: 'evt-2',
+        companionId: 'siduri-test',
+        stream: 'finance',
+        metricValue: -25.5,
+        metadata: { category: 'dining', currency: 'USD' },
+      });
+
+      const workouts = db.getEvents('siduri-test', 'workout');
+      expect(workouts).toHaveLength(1);
+      expect(workouts[0].metricValue).toBe(5.2);
+      expect(workouts[0].metadata).toEqual({ activity: 'running', unit: 'km' });
+
+      const allEvents = db.getEvents('siduri-test');
+      expect(allEvents).toHaveLength(2);
+    });
+
+    it('manages life tasks lifecycle (status, priority, deletion)', () => {
+      db = new SiduriDatabase({ dbPath });
+
+      db.upsertTask({
+        id: 'task-1',
+        companionId: 'siduri-test',
+        title: 'Submit research paper',
+        status: 'in_progress',
+        priority: 10,
+        targetDate: '2026-10-01',
+        metadata: { venue: 'NeurIPS' },
+        updatedAt: new Date().toISOString(),
+      });
+
+      db.upsertTask({
+        id: 'task-2',
+        companionId: 'siduri-test',
+        title: 'Buy groceries',
+        status: 'backlog',
+        priority: 2,
+        updatedAt: new Date().toISOString(),
+      });
+
+      const inProgress = db.getTasks('siduri-test', 'in_progress');
+      expect(inProgress).toHaveLength(1);
+      expect(inProgress[0].title).toBe('Submit research paper');
+
+      // Update task status
+      db.upsertTask({
+        ...inProgress[0],
+        status: 'completed',
+      });
+
+      const completed = db.getTasks('siduri-test', 'completed');
+      expect(completed).toHaveLength(1);
+      expect(completed[0].id).toBe('task-1');
+
+      const deleted = db.deleteTask('task-2');
+      expect(deleted).toBe(true);
+      expect(db.getTasks('siduri-test')).toHaveLength(1);
+    });
   });
 
   // ==========================================
@@ -838,6 +945,30 @@ describe('SiduriDatabase', () => {
       expect(() => db.rejectDirective('dir-active-1')).toThrow(
         /invalid transition from status 'active' to 'rejected'/i
       );
+
+      // 4. Approving a SUPERSEDED directive reactivates it
+      db.commitDirective({
+        id: 'dir-superseded-1',
+        companionId: cId,
+        priority: 50,
+        directive: 'Superseded rule to reactivate',
+        status: 'superseded',
+        category: 'behavioral',
+      });
+      expect(() => db.approveDirective('dir-superseded-1', cId)).not.toThrow();
+      expect(db.getDirective('dir-superseded-1', cId)?.status).toBe('active');
+
+      // 5. Rejecting a SUPERSEDED directive transitions to rejected
+      db.commitDirective({
+        id: 'dir-superseded-2',
+        companionId: cId,
+        priority: 50,
+        directive: 'Superseded rule to reject',
+        status: 'superseded',
+        category: 'behavioral',
+      });
+      expect(() => db.rejectDirective('dir-superseded-2', cId)).not.toThrow();
+      expect(db.getDirective('dir-superseded-2', cId)?.status).toBe('rejected');
     });
 
     it('automatically marks prior directive as SUPERSEDED when approving superseding directive', () => {
@@ -989,6 +1120,61 @@ describe('SiduriDatabase', () => {
 
       // Attempting to approve an EXPIRED claim must throw
       expect(() => db.approveClaim(expiredClaim.id)).toThrow(/invalid transition from status 'expired' to 'approved'/i);
+    });
+  });
+
+  describe('System Logs', () => {
+    it('persists structured system logs and queries them with filters', () => {
+      const db = new SiduriDatabase();
+      const cId = 'test-log-companion';
+
+      db.insertLog({
+        companionId: cId,
+        level: 'info',
+        subsystem: 'perception',
+        message: 'Perception cycle started',
+        metadata: { turn: 1 },
+      });
+
+      db.insertLog({
+        companionId: cId,
+        level: 'warn',
+        subsystem: 'brain',
+        message: 'High latency detected',
+        metadata: { latencyMs: 1450 },
+      });
+
+      db.insertLog({
+        companionId: cId,
+        level: 'error',
+        subsystem: 'truth_gate',
+        message: 'Approval policy violation',
+        metadata: { claimId: 'c-123' },
+      });
+
+      // Query all logs
+      const allLogs = db.queryLogs({ companionId: cId });
+      expect(allLogs).toHaveLength(3);
+
+      // Query by level
+      const errorLogs = db.queryLogs({ companionId: cId, level: 'error' });
+      expect(errorLogs).toHaveLength(1);
+      expect(errorLogs[0].message).toBe('Approval policy violation');
+      expect(errorLogs[0].metadata).toEqual({ claimId: 'c-123' });
+
+      // Query by subsystem
+      const brainLogs = db.queryLogs({ companionId: cId, subsystem: 'brain' });
+      expect(brainLogs).toHaveLength(1);
+      expect(brainLogs[0].level).toBe('warn');
+
+      // Search by keyword in message
+      const searchLogs = db.queryLogs({ companionId: cId, q: 'latency' });
+      expect(searchLogs).toHaveLength(1);
+      expect(searchLogs[0].message).toContain('latency');
+
+      // Clear logs
+      db.clearLogs(cId);
+      expect(db.queryLogs({ companionId: cId })).toHaveLength(0);
     });
   });
 });

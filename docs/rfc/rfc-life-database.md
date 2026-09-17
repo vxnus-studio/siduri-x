@@ -6,8 +6,8 @@
 > **Authors:** Kur Zagin & Siduri Architecture Team  
 
 > [!NOTE]
-> **STATUS UPDATE: IMPLEMENTED**  
-> The Life Database is fully implemented as the sovereign Knowledge domain substrate in `@siduri-x/knowledge` (`SqliteLifeDatabase`), backed by tables `life_inventory`, `life_finance`, `life_schedule`, and `life_preferences` in `siduri.sqlite`.
+> **STATUS UPDATE: IMPLEMENTED & EXTENDED TO GENERIC PRIMITIVES**  
+> The Life Database is fully implemented as the sovereign Knowledge domain substrate in `@siduri-x/knowledge` (`SqliteLifeDatabase`), backed by `siduri.sqlite`. To prevent schema churn when new life categories arise, the storage model is organized into **4 generic structural primitives** (`life_entities`, `life_events`, `life_tasks`, `life_schedule`), while maintaining 100% backward compatibility for legacy domain tables (`life_inventory`, `life_finance`, `life_preferences`). State mutations pass strictly through the **Truth Gate**.
 
 ---
 
@@ -32,8 +32,8 @@ The **Life Database** introduces a fundamental architectural separation:
 ├─────────────────────────────────────────┼─────────────────────────────────────────┤
 │ • Subjective & Relational               │ • Objective & Factual                   │
 │ • "How did our interaction feel?"       │ • "What actually exists in user's life?"│
-│ • Conversational impressions & dialogue │ • Account inventories (e.g. Genshin)    │
-│ • Inside jokes, promises, shared trust  │ • Financial ledgers, expenses, budgets  │
+│ • Conversational impressions & dialogue │ • Account inventories, devices, places  │
+│ • Inside jokes, promises, shared trust  │ • Financial ledgers, biometrics, logs   │
 │ • Volatile, organic, evolving narrative │ • Calendar, routines, task commitments  │
 │ • Vector embeddings & semantic claims   │ • Typed relational tables & JSON schemas│
 │ • Bound to companion instance           │ • Owned sovereignly by the human user   │
@@ -48,58 +48,58 @@ This is **not** merely a fuzzy semantic snippet in conversational memory. It is 
 
 ---
 
-## 3. Core Domains of the Life Database
+## 3. Storage Architecture: 4 Generic Structural Primitives
 
-The Life Database is structured into modular, typed domains:
+Rather than creating a new relational table every time a user introduces a new life modality (e.g. medical, subscriptions, habits, contacts, workout sets), the Life Database substrate models reality using four universal structural primitives:
 
-1. **Accounts & Inventories (`life_inventory`)**:
-   - Game rosters (e.g. Genshin Impact characters, weapons, constellations, UIDs).
-   - Owned hardware, software tools, equipment, subscriptions.
-2. **Finances & Ledgers (`life_finance`)**:
-   - Expense transactions, recurring bills, budget limits, savings milestones.
-   - Enables exact mathematical reasoning without LLM arithmetic drift.
-3. **Schedule & Time Commitments (`life_schedule`)**:
-   - Deadlines, events, sleep cycles, focus hours, reminders.
-4. **Personal Tastes & Grounded Preferences (`life_preferences`)**:
-   - Dietary restrictions, favorite media, aesthetics, UI themes.
+1. **`life_entities` (Nouns / Static Facts)**:
+   - Things that exist, their attributes, specifications, and categories.
+   - Examples: Hardware specs, contacts, owned gaming characters, subscriptions, places, bookmarks.
+   - Schema: `id`, `companion_id`, `entity_type`, `domain`, `name`, `properties` (JSON), `updated_at`.
+2. **`life_events` (Time-Series / Telemetry / Math)**:
+   - Immutable historical points with optional numerical metrics and payloads.
+   - Examples: Financial transactions, heart rate / sleep telemetry, workout reps, medication logs.
+   - Schema: `id`, `companion_id`, `stream`, `timestamp`, `metric_value` (REAL), `metadata` (JSON).
+3. **`life_tasks` (Verbs / Intent / Progress)**:
+   - Discrete actionable items, milestones, and workflows.
+   - Examples: To-dos, project goals, errands, backlog items.
+   - Schema: `id`, `companion_id`, `title`, `status` (`backlog`, `in_progress`, `completed`, `cancelled`), `priority`, `target_date`, `metadata` (JSON), `updated_at`.
+4. **`life_schedule` (Temporal Commitments / Intervals)**:
+   - Time intervals anchored on a calendar timeline.
+   - Examples: Flights, meetings, focus blocks, reminders, appointments.
+   - Schema: `id`, `companion_id`, `title`, `start_time`, `end_time`, `is_all_day`, `metadata` (JSON), `created_at`.
+
+### Backwards Compatibility
+Existing tables (`life_inventory`, `life_finance`, `life_preferences`) remain fully supported and operational alongside the new generic primitives, allowing incremental adoption without database migrations or breaking changes.
 
 ---
 
-## 4. Integration with Siduri-X Organs (Zero New Organs)
+## 4. Epistemic Protection: The Truth Gate Invariant
 
-The Life Database does not require adding a new organ to `@siduri-x/*`. Instead, it serves as an **external grounded substrate** that existing organs interface with through defined capabilities:
+A companion cannot arbitrarily mutate the user's Life Database through hallucinations or conversational misunderstandings. All mutations are governed by the **Truth Gate**:
+
+> **"Learning may propose. Truth Gate authorizes."**
 
 ```text
-                     ┌────────────────────────────────────┐
-                     │          SIDURI COMPANION          │
-                     │  Brain • Behavior • Memory • Hands │
-                     └─────────────────┬──────────────────┘
-                                       │
-            ┌──────────────────────────┴──────────────────────────┐
-            │                                                     │
-     READ / QUERY VIA                                     MUTATE / WRITE VIA
-Knowledge & Action Tools                              Hands Organ Tool Contracts
-            │                                                     │
-            └──────────────────────────┬──────────────────────────┘
-                                       │
-                     ┌─────────────────▼──────────────────┐
-                     │           LIFE DATABASE            │
-                     │  (Encrypted, Local-First, Sovereign│
-                     │   Structured PostgreSQL / SQLite)  │
-                     └────────────────────────────────────┘
+  Conversational Extract ──► Staged Proposal ('PENDING') ──► Truth Gate ──► Human Operator Approval
+                                                                               │
+                                                                               ├── Approved ──► Commit to Life DB
+                                                                               │
+                                                                               └── Rejected ──► Quarantined / Dropped
 ```
 
-### Operational Workflows:
-- **Reasoning & Retrieval (`@siduri-x/brain` + `@siduri-x/knowledge`):**
-  - When asked *"Can I afford to pull on the current banner?"*, the Brain queries the Life Database for current month expenses, budget headroom, and owned pity/inventory.
-  - Generates factual, hallucination-free reasoning grounded in real data.
-- **Action & Mutation (`@siduri-x/hands`):**
-  - Explicit user updates (e.g. *"Log $30 for lunch"*, *"Mark Furina as acquired"*) trigger audited `Hands` action intents (`log_expense`, `update_inventory`).
-  - Gated by action policies and confirmation boundaries.
+1. **Passive / Conversational Learning**:
+   - Extracted candidate facts targeting knowledge (e.g. `subject: 'entity:*'`, `'task:*'`, `'event:*'`) are quarantined in `memory_claims` as `PENDING`.
+   - Invisible to context retrieval until explicit human approval (`POST /knowledge/proposals/approve`).
+   - Approval invokes `promoteApprovedClaimToKnowledge`, committing mutations to `siduri.sqlite`.
+2. **Direct Intent Execution (`@siduri-x/hands`)**:
+   - Explicit operational commands (e.g., *"Save my new laptop serial number"*, *"Log $14 for lunch"*) bypass conversational learning and execute via signed `HandsOrgan` tool contracts (`life:save_entity`, `life:log_event`, `life:upsert_schedule`, `life:update_task`).
+   - Requires cryptographically valid `AuthorizationCapability` tokens and appends tamper-evident audit records to `action_audit_log`.
 
 ---
 
 ## 5. Portability & Sovereign Ownership
 
 - **Model-Agnostic:** Companions or underlying LLM models may be upgraded, swapped, or re-instantiated from blank slates. The Life Database persists unchanged.
-- **Local-First & Encrypted:** Stored under direct user authority (local SQLite/PostgreSQL), ensuring sensitive financial and personal records are never leaked or co-mingled with public or third-party datasets.
+- **Local-First & Encrypted:** Stored under direct user authority in SQLite (`siduri.sqlite`), ensuring sensitive financial, biometric, and personal records remain sovereign and private.
+

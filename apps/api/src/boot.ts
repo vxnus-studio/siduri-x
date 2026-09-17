@@ -160,7 +160,7 @@ export async function bootCompanion(
   const vision = createVision(organs.vision || config?.vision);
   const behavior = createBehavior(organs.behavior || config?.behavior);
   const body = createBody(organs.body || config?.body);
-  const hands = createHands(organs.hands || config?.hands);
+  const hands = createHands({ ...((organs.hands || config?.hands) as any), knowledge });
   const ear = createEar(organs.ear || config?.ear);
   const mouth = createMouth(organs.mouth || config?.mouth, voice);
   const observation = options?.observationOrgan;

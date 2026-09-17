@@ -37,6 +37,10 @@ export async function executeActionIntents(
     const actionWithContext: ActionIntent = {
       ...rawAction,
       context: requestContext,
+      parameters: {
+        ...(requestContext.companionId ? { companionId: requestContext.companionId } : {}),
+        ...(rawAction.parameters || {}),
+      },
       executionId:
         rawAction.executionId ||
         `exec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

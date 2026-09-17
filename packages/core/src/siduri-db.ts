@@ -103,6 +103,36 @@ export interface LifePreference {
   updatedAt: string;
 }
 
+export interface LifeEntity {
+  id: string;
+  companionId: string;
+  entityType: string;
+  domain: string;
+  name: string;
+  properties: Record<string, unknown>;
+  updatedAt?: string;
+}
+
+export interface LifeEvent {
+  id: string;
+  companionId: string;
+  stream: string;
+  timestamp?: string;
+  metricValue?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface LifeTask {
+  id: string;
+  companionId: string;
+  title: string;
+  status: 'backlog' | 'in_progress' | 'completed' | 'cancelled' | string;
+  priority?: number;
+  targetDate?: string;
+  metadata?: Record<string, unknown>;
+  updatedAt?: string;
+}
+
 // --- Memory Domain Types ---
 export interface EpisodicEvent {
   id: string;
@@ -126,6 +156,27 @@ export interface MemoryClaim {
   assertedAt: string;
   supersedes?: string;
   sourceEventId?: string;
+}
+
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+export interface SystemLog {
+  id: string;
+  companionId: string;
+  level: LogLevel;
+  subsystem: string;
+  message: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export function safeJsonParse<T = any>(str?: string | null, fallback: T = undefined as any): T {
+  if (!str) return fallback;
+  try {
+    return JSON.parse(str);
+  } catch {
+    return fallback;
+  }
 }
 
 export function normalizeStatus(status?: string, defaultStatus: string = 'pending'): string {
@@ -250,6 +301,40 @@ export class SiduriDatabase {
         updated_at TEXT DEFAULT (datetime('now'))
       );
 
+      CREATE TABLE IF NOT EXISTS life_entities (
+        id TEXT PRIMARY KEY,
+        companion_id TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        domain TEXT NOT NULL,
+        name TEXT NOT NULL,
+        properties TEXT NOT NULL,
+        updated_at TEXT DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS life_events (
+        id TEXT PRIMARY KEY,
+        companion_id TEXT NOT NULL,
+        stream TEXT NOT NULL,
+        timestamp TEXT DEFAULT (datetime('now')),
+        metric_value REAL,
+        metadata TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS life_tasks (
+        id TEXT PRIMARY KEY,
+        companion_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        status TEXT DEFAULT 'backlog',
+        priority INTEGER DEFAULT 0,
+        target_date TEXT,
+        metadata TEXT,
+        updated_at TEXT DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_life_entities_comp ON life_entities(companion_id, entity_type);
+      CREATE INDEX IF NOT EXISTS idx_life_events_comp ON life_events(companion_id, stream, timestamp);
+      CREATE INDEX IF NOT EXISTS idx_life_tasks_comp ON life_tasks(companion_id, status);
+
       -- Memory Tables
       CREATE TABLE IF NOT EXISTS memory_events (
         id TEXT PRIMARY KEY,
@@ -301,6 +386,19 @@ export class SiduriDatabase {
         INSERT INTO memory_search(rowid, subject, predicate, value) 
         VALUES (new.rowid, new.subject, new.predicate, new.value);
       END;
+
+      -- System Logs Table
+      CREATE TABLE IF NOT EXISTS system_logs (
+        id TEXT PRIMARY KEY,
+        companion_id TEXT NOT NULL,
+        level TEXT NOT NULL,
+        subsystem TEXT NOT NULL,
+        message TEXT NOT NULL,
+        metadata TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_system_logs_comp ON system_logs(companion_id, level, created_at DESC);
     `;
     this.db.exec(schema);
 
@@ -544,12 +642,12 @@ export class SiduriDatabase {
       return;
     }
 
-    if (normalizeStatus(row.status) !== 'pending') {
+    if (normalizeStatus(row.status) !== 'pending' && normalizeStatus(row.status) !== 'superseded') {
       if (normalizeStatus(row.status) === 'active') {
         return;
       }
       throw new Error(
-        `Cannot approve directive '${id}': invalid transition from status '${row.status}' to 'active' (only pending directives can be approved)`
+        `Cannot approve directive '${id}': invalid transition from status '${row.status}' to 'active' (only pending or superseded directives can be approved)`
       );
     }
 
@@ -618,12 +716,12 @@ export class SiduriDatabase {
 
     if (companionId) {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'active', priority = MAX(priority, ?) WHERE id = ? AND companion_id = ? AND LOWER(status) = 'pending'"
+        "UPDATE self_directives SET status = 'active', priority = MAX(priority, ?) WHERE id = ? AND companion_id = ? AND LOWER(status) IN ('pending', 'superseded')"
       );
       stmt.run(targetPriority, id, companionId);
     } else {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'active', priority = MAX(priority, ?) WHERE id = ? AND LOWER(status) = 'pending'"
+        "UPDATE self_directives SET status = 'active', priority = MAX(priority, ?) WHERE id = ? AND LOWER(status) IN ('pending', 'superseded')"
       );
       stmt.run(targetPriority, id);
     }
@@ -638,20 +736,23 @@ export class SiduriDatabase {
       return;
     }
 
-    if (normalizeStatus(row.status) !== 'pending') {
+    if (normalizeStatus(row.status) !== 'pending' && normalizeStatus(row.status) !== 'superseded') {
+      if (normalizeStatus(row.status) === 'rejected') {
+        return;
+      }
       throw new Error(
-        `Cannot reject directive '${id}': invalid transition from status '${row.status}' to 'rejected' (only pending directives can be rejected)`
+        `Cannot reject directive '${id}': invalid transition from status '${row.status}' to 'rejected' (only pending or superseded directives can be rejected)`
       );
     }
 
     if (companionId) {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'rejected' WHERE id = ? AND companion_id = ? AND LOWER(status) = 'pending'"
+        "UPDATE self_directives SET status = 'rejected' WHERE id = ? AND companion_id = ? AND LOWER(status) IN ('pending', 'superseded')"
       );
       stmt.run(id, companionId);
     } else {
       const stmt = this.db.prepare(
-        "UPDATE self_directives SET status = 'rejected' WHERE id = ? AND LOWER(status) = 'pending'"
+        "UPDATE self_directives SET status = 'rejected' WHERE id = ? AND LOWER(status) IN ('pending', 'superseded')"
       );
       stmt.run(id);
     }
@@ -903,6 +1004,12 @@ export class SiduriDatabase {
     );
   }
 
+  public deleteScheduleItem(id: string): boolean {
+    const stmt = this.db.prepare('DELETE FROM life_schedule WHERE id = ?');
+    const result = stmt.run(id);
+    return result.changes > 0;
+  }
+
   public getPreferences(companionId: string): LifePreference[] {
     const stmt = this.db.prepare('SELECT * FROM life_preferences WHERE companion_id = ?');
     return stmt.all(companionId).map((row: any) => ({
@@ -932,6 +1039,169 @@ export class SiduriDatabase {
       pref.preferenceValue,
       pref.category
     );
+  }
+
+  // --- Generic Life Entities Methods ---
+
+  public getEntities(companionId: string, entityType?: string, domain?: string): LifeEntity[] {
+    let query = 'SELECT * FROM life_entities WHERE companion_id = ?';
+    const params: any[] = [companionId];
+
+    if (entityType) {
+      query += ' AND entity_type = ?';
+      params.push(entityType);
+    }
+    if (domain) {
+      query += ' AND domain = ?';
+      params.push(domain);
+    }
+    query += ' ORDER BY updated_at DESC';
+
+    const stmt = this.db.prepare(query);
+    return stmt.all(...params).map((row: any) => ({
+      id: row.id,
+      companionId: row.companion_id,
+      entityType: row.entity_type,
+      domain: row.domain,
+      name: row.name,
+      properties: JSON.parse(row.properties || '{}'),
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  public getEntityById(id: string): LifeEntity | undefined {
+    const stmt = this.db.prepare('SELECT * FROM life_entities WHERE id = ?');
+    const row = stmt.get(id) as any;
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      companionId: row.companion_id,
+      entityType: row.entity_type,
+      domain: row.domain,
+      name: row.name,
+      properties: JSON.parse(row.properties || '{}'),
+      updatedAt: row.updated_at,
+    };
+  }
+
+  public upsertEntity(entity: LifeEntity): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO life_entities (id, companion_id, entity_type, domain, name, properties, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(id) DO UPDATE SET
+        entity_type = excluded.entity_type,
+        domain = excluded.domain,
+        name = excluded.name,
+        properties = excluded.properties,
+        updated_at = datetime('now')
+    `);
+    stmt.run(
+      entity.id,
+      entity.companionId,
+      entity.entityType,
+      entity.domain,
+      entity.name,
+      JSON.stringify(entity.properties || {})
+    );
+  }
+
+  public deleteEntity(id: string): boolean {
+    const stmt = this.db.prepare('DELETE FROM life_entities WHERE id = ?');
+    const res = stmt.run(id);
+    return res.changes > 0;
+  }
+
+  // --- Generic Life Events (Telemetry & Logs) Methods ---
+
+  public getEvents(companionId: string, stream?: string, limit: number = 50): LifeEvent[] {
+    let query = 'SELECT * FROM life_events WHERE companion_id = ?';
+    const params: any[] = [companionId];
+
+    if (stream) {
+      query += ' AND stream = ?';
+      params.push(stream);
+    }
+    query += ' ORDER BY timestamp DESC LIMIT ?';
+    params.push(limit);
+
+    const stmt = this.db.prepare(query);
+    return stmt.all(...params).map((row: any) => ({
+      id: row.id,
+      companionId: row.companion_id,
+      stream: row.stream,
+      timestamp: row.timestamp,
+      metricValue: row.metric_value != null ? row.metric_value : undefined,
+      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+    }));
+  }
+
+  public addEvent(event: LifeEvent): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO life_events (id, companion_id, stream, timestamp, metric_value, metadata)
+      VALUES (?, ?, ?, coalesce(?, datetime('now')), ?, ?)
+    `);
+    stmt.run(
+      event.id,
+      event.companionId,
+      event.stream,
+      event.timestamp || null,
+      event.metricValue != null ? event.metricValue : null,
+      event.metadata ? JSON.stringify(event.metadata) : null
+    );
+  }
+
+  // --- Generic Life Tasks (Verbs & Progress) Methods ---
+
+  public getTasks(companionId: string, status?: string): LifeTask[] {
+    let query = 'SELECT * FROM life_tasks WHERE companion_id = ?';
+    const params: any[] = [companionId];
+
+    if (status) {
+      query += ' AND status = ?';
+      params.push(status);
+    }
+    query += ' ORDER BY priority DESC, updated_at DESC';
+
+    const stmt = this.db.prepare(query);
+    return stmt.all(...params).map((row: any) => ({
+      id: row.id,
+      companionId: row.companion_id,
+      title: row.title,
+      status: row.status,
+      priority: row.priority,
+      targetDate: row.target_date || undefined,
+      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  public upsertTask(task: LifeTask): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO life_tasks (id, companion_id, title, status, priority, target_date, metadata, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(id) DO UPDATE SET
+        title = excluded.title,
+        status = excluded.status,
+        priority = excluded.priority,
+        target_date = excluded.target_date,
+        metadata = excluded.metadata,
+        updated_at = datetime('now')
+    `);
+    stmt.run(
+      task.id,
+      task.companionId,
+      task.title,
+      task.status || 'backlog',
+      task.priority ?? 0,
+      task.targetDate || null,
+      task.metadata ? JSON.stringify(task.metadata) : null
+    );
+  }
+
+  public deleteTask(id: string): boolean {
+    const stmt = this.db.prepare('DELETE FROM life_tasks WHERE id = ?');
+    const res = stmt.run(id);
+    return res.changes > 0;
   }
 
   // ==========================================
@@ -1385,5 +1655,115 @@ export class SiduriDatabase {
     deleteClaims.run(companionId);
     const deleteEvents = this.db.prepare("DELETE FROM memory_events WHERE companion_id = ?");
     deleteEvents.run(companionId);
+  }
+
+  // --- System Logs ---
+
+  public insertLog(entry: {
+    id?: string;
+    companionId?: string;
+    level: LogLevel | string;
+    subsystem: string;
+    message: string;
+    metadata?: Record<string, unknown>;
+    createdAt?: string;
+  }): SystemLog {
+    const id = entry.id || crypto.randomUUID();
+    const companionId = entry.companionId || 'default';
+    const level = (entry.level || 'info').toLowerCase() as LogLevel;
+    const subsystem = (entry.subsystem || 'system').toLowerCase();
+    const message = entry.message || '';
+    const metadata = entry.metadata ? JSON.stringify(entry.metadata) : null;
+    const createdAt = entry.createdAt || new Date().toISOString();
+
+    const stmt = this.db.prepare(`
+      INSERT INTO system_logs (id, companion_id, level, subsystem, message, metadata, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(id, companionId, level, subsystem, message, metadata, createdAt);
+
+    // Prune logs beyond 5000 per companion to prevent unbounded growth
+    try {
+      this.db.prepare(`
+        DELETE FROM system_logs
+        WHERE companion_id = ? AND rowid NOT IN (
+          SELECT rowid FROM system_logs WHERE companion_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 5000
+        )
+      `).run(companionId, companionId);
+    } catch {
+      // Best effort pruning
+    }
+
+    return {
+      id,
+      companionId,
+      level,
+      subsystem,
+      message,
+      metadata: entry.metadata,
+      createdAt,
+    };
+  }
+
+  public queryLogs(options: {
+    companionId?: string;
+    level?: string;
+    subsystem?: string;
+    q?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): SystemLog[] {
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (options.companionId) {
+      conditions.push('companion_id = ?');
+      params.push(options.companionId);
+    }
+    if (options.level && options.level !== 'all') {
+      conditions.push('level = ?');
+      params.push(options.level.toLowerCase());
+    }
+    if (options.subsystem && options.subsystem !== 'all') {
+      conditions.push('subsystem = ?');
+      params.push(options.subsystem.toLowerCase());
+    }
+    if (options.q && options.q.trim().length > 0) {
+      conditions.push('(message LIKE ? OR metadata LIKE ?)');
+      const term = `%${options.q.trim()}%`;
+      params.push(term, term);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const limit = Math.min(Math.max(Number(options.limit) || 100, 1), 1000);
+    const offset = Math.max(Number(options.offset) || 0, 0);
+
+    const query = `
+      SELECT id, companion_id, level, subsystem, message, metadata, created_at
+      FROM system_logs
+      ${whereClause}
+      ORDER BY created_at DESC, rowid DESC
+      LIMIT ? OFFSET ?
+    `;
+    params.push(limit, offset);
+
+    const rows = this.db.prepare(query).all(...params) as any[];
+    return rows.map((row) => ({
+      id: row.id,
+      companionId: row.companion_id,
+      level: row.level as LogLevel,
+      subsystem: row.subsystem,
+      message: row.message,
+      metadata: row.metadata ? safeJsonParse(row.metadata) : undefined,
+      createdAt: row.created_at,
+    }));
+  }
+
+  public clearLogs(companionId?: string): void {
+    if (companionId) {
+      this.db.prepare('DELETE FROM system_logs WHERE companion_id = ?').run(companionId);
+    } else {
+      this.db.prepare('DELETE FROM system_logs').run();
+    }
   }
 }

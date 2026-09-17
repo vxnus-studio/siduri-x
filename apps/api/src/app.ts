@@ -611,6 +611,213 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
+  app.get('/knowledge/entities', requireAuth, async (req, res) => {
+    const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    const entityType = req.query.type as string | undefined;
+    const domain = req.query.domain as string | undefined;
+    if (!runtime.knowledge || !(runtime.knowledge as any).entities) {
+      return res.json({ entities: [] });
+    }
+    try {
+      const entities = await (runtime.knowledge as any).entities.getEntities(id, entityType, domain);
+      res.json({ entities });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/knowledge/events', requireAuth, async (req, res) => {
+    const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    const stream = req.query.stream as string | undefined;
+    const limit = Number(req.query.limit || 50);
+    if (!runtime.knowledge || !(runtime.knowledge as any).events) {
+      return res.json({ events: [] });
+    }
+    try {
+      const events = await (runtime.knowledge as any).events.getEvents(id, stream, limit);
+      res.json({ events });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/knowledge/tasks', requireAuth, async (req, res) => {
+    const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    const status = req.query.status as string | undefined;
+    if (!runtime.knowledge || !(runtime.knowledge as any).tasks) {
+      return res.json({ tasks: [] });
+    }
+    try {
+      const tasks = await (runtime.knowledge as any).tasks.getTasks(id, status);
+      res.json({ tasks });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/knowledge/proposals/approve', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    try {
+      if (typeof (runtime as any).approveProposal === 'function') {
+        const result = await (runtime as any).approveProposal(req.body.id, { companionId: id });
+        res.json({ approved: true, target: result?.target || 'knowledge', status: 'approved' });
+      } else {
+        res.status(400).json({ error: 'Runtime does not support proposal approval' });
+      }
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/knowledge/entities', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    if (!runtime.knowledge || !(runtime.knowledge as any).entities) {
+      return res.status(400).json({ error: 'Knowledge organ does not support entities' });
+    }
+    try {
+      const entity = {
+        id: req.body.id || `ent-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        companionId: id,
+        name: req.body.name,
+        entityType: req.body.entityType || req.body.type || 'entity',
+        domain: req.body.domain || 'general',
+        properties: req.body.properties || {},
+      };
+      await (runtime.knowledge as any).entities.saveEntity(entity);
+      res.json({ saved: true, entity });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/knowledge/entities/delete', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    if (!runtime.knowledge || !(runtime.knowledge as any).entities) {
+      return res.status(400).json({ error: 'Knowledge organ does not support entities' });
+    }
+    try {
+      const success = await (runtime.knowledge as any).entities.deleteEntity(req.body.id);
+      res.json({ deleted: success, id: req.body.id });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/knowledge/tasks', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    if (!runtime.knowledge || !(runtime.knowledge as any).tasks) {
+      return res.status(400).json({ error: 'Knowledge organ does not support tasks' });
+    }
+    try {
+      const task = {
+        id: req.body.id || `task-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        companionId: id,
+        title: req.body.title,
+        status: req.body.status || 'todo',
+        priority: req.body.priority !== undefined ? Number(req.body.priority) : 1,
+        targetDate: req.body.targetDate || null,
+        metadata: req.body.metadata || {},
+      };
+      await (runtime.knowledge as any).tasks.saveTask(task);
+      res.json({ saved: true, task });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/knowledge/tasks/delete', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    if (!runtime.knowledge || !(runtime.knowledge as any).tasks) {
+      return res.status(400).json({ error: 'Knowledge organ does not support tasks' });
+    }
+    try {
+      const success = await (runtime.knowledge as any).tasks.deleteTask(req.body.id);
+      res.json({ deleted: success, id: req.body.id });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/knowledge/events', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    if (!runtime.knowledge || !(runtime.knowledge as any).events) {
+      return res.status(400).json({ error: 'Knowledge organ does not support events' });
+    }
+    try {
+      const event = {
+        id: req.body.id || `evt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        companionId: id,
+        stream: req.body.stream || 'default',
+        timestamp: req.body.timestamp || new Date().toISOString(),
+        metricValue: req.body.metricValue !== undefined && req.body.metricValue !== null ? Number(req.body.metricValue) : undefined,
+        metadata: req.body.metadata || {},
+      };
+      await (runtime.knowledge as any).events.addEvent(event);
+      res.json({ saved: true, event });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/knowledge/schedule', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    if (!runtime.knowledge || !(runtime.knowledge as any).schedule) {
+      return res.status(400).json({ error: 'Knowledge organ does not support schedule' });
+    }
+    try {
+      const item = {
+        id: req.body.id || `sched-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        companionId: id,
+        title: req.body.title,
+        startTime: req.body.startTime,
+        endTime: req.body.endTime || null,
+        isRecurring: Boolean(req.body.isRecurring),
+        status: req.body.status || 'active',
+      };
+      await (runtime.knowledge as any).schedule.saveItem(item);
+      res.json({ saved: true, item });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/knowledge/schedule/delete', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: 'Companion not found' });
+    if (!runtime.knowledge || !(runtime.knowledge as any).schedule) {
+      return res.status(400).json({ error: 'Knowledge organ does not support schedule' });
+    }
+    try {
+      const success = typeof (runtime.knowledge as any).schedule.deleteItem === 'function'
+        ? await (runtime.knowledge as any).schedule.deleteItem(req.body.id)
+        : false;
+      res.json({ deleted: success, id: req.body.id });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // MEMORY MUTATIONS - PROPOSALS
   app.post('/memory/proposals/update', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
@@ -725,6 +932,40 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     try {
       await runtime.memory.disableDirective(req.body.id);
       res.json({ disabled: true, status: 'disabled' });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // SYSTEM LOGS
+  app.get('/system/logs', requireAuth, async (req, res) => {
+    const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    const level = req.query.level as string | undefined;
+    const subsystem = req.query.subsystem as string | undefined;
+    const q = req.query.q as string | undefined;
+    const limit = parseInt((req.query.limit as string) || '100', 10);
+    const offset = parseInt((req.query.offset as string) || '0', 10);
+    try {
+      const logs = typeof runtime.queryLogs === 'function'
+        ? runtime.queryLogs({ companionId: id, level, subsystem, q, limit, offset })
+        : [];
+      res.json({ logs });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message, logs: [] });
+    }
+  });
+
+  app.post('/system/logs/clear', requireAuth, async (req, res) => {
+    const id = (req.body.companionId as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    try {
+      if (typeof runtime.clearLogs === 'function') {
+        runtime.clearLogs(id);
+      }
+      res.json({ cleared: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }

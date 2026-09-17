@@ -18,15 +18,17 @@ import {
   MCPProviderConfig,
   MCPToolHandler,
 } from './mcp-provider';
+import { createLifeTools, LifeToolsOptions } from './life-tools';
 
 export type ToolHandler = MCPToolHandler;
-export { MCPClientProvider, MCPProviderConfig };
+export { MCPClientProvider, MCPProviderConfig, createLifeTools, LifeToolsOptions };
 
 export interface DefaultHandsOrganConfig {
   providers?: MCPProviderConfig[];
   defaultTimeoutMs?: number;
   store?: ActionStore;
   secretKey?: string;
+  knowledge?: any;
 }
 
 export class DefaultHandsOrgan implements HandsOrgan {
@@ -43,6 +45,13 @@ export class DefaultHandsOrgan implements HandsOrgan {
     this.defaultTimeoutMs = config.defaultTimeoutMs ?? 10_000;
     this.store = config.store ?? new InMemoryActionStore();
     this.secretKey = getOrGenerateLocalActionPolicySecret(config.secretKey);
+
+    if (config.knowledge) {
+      const lifeTools = createLifeTools(config.knowledge);
+      for (const tool of lifeTools) {
+        this.registerTool(tool, 'life');
+      }
+    }
 
     if (config.providers) {
       for (const providerConfig of config.providers) {

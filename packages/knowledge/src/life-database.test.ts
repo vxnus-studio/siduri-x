@@ -245,5 +245,49 @@ describe('@siduri-x/knowledge Domain Package (Internal Life DB)', () => {
       expect(contextArray).toHaveLength(1);
       expect(contextArray[0]).toContain('Staff of Homa');
     });
+
+    it('queries and incorporates generic entities, events, and tasks into formatted context', async () => {
+      const companionId = 'comp-primitives';
+
+      await lifeDb.entities.saveEntity({
+        id: 'ent-1',
+        companionId,
+        entityType: 'contact',
+        domain: 'social',
+        name: 'Dr. Aris Thorne',
+        properties: { role: 'Lead Architect', birthday: 'October 12' },
+      });
+
+      await lifeDb.events.addEvent({
+        id: 'evt-1',
+        companionId,
+        stream: 'health',
+        metricValue: 8.5,
+        metadata: { type: 'sleep', quality: 'deep' },
+      });
+
+      await lifeDb.tasks.saveTask({
+        id: 'tsk-1',
+        companionId,
+        title: 'Complete Phase 3 Migration',
+        status: 'in_progress',
+        priority: 5,
+        targetDate: '2026-10-15',
+        updatedAt: new Date().toISOString(),
+      });
+
+      const res = await lifeDb.queryLifeContext(companionId, 'Aris Thorne Thorne meeting');
+      expect(res.matchedEntities).toHaveLength(1);
+      expect(res.matchedEntities![0].name).toBe('Dr. Aris Thorne');
+      expect(res.recentEvents).toHaveLength(1);
+      expect(res.activeTasks).toHaveLength(1);
+
+      expect(res.formattedContext).toContain('Personal Entities & Contacts:');
+      expect(res.formattedContext).toContain('Dr. Aris Thorne');
+      expect(res.formattedContext).toContain('Recent Life Events:');
+      expect(res.formattedContext).toContain('[health]');
+      expect(res.formattedContext).toContain('Active Tasks & Goals:');
+      expect(res.formattedContext).toContain('Complete Phase 3 Migration');
+    });
   });
 });

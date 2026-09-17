@@ -7,11 +7,12 @@ import { fileURLToPath } from 'node:url';
 
 // Direct monorepo dist imports
 import { SiduriRuntime, dispatchCompanionChat } from '../packages/core/dist/index.js';
-import { OpenRouterBrain } from '../packages/organs/brain/dist/index.js';
+import { OpenAICompatibleBrain, OpenRouterBrain } from '../packages/organs/brain/dist/index.js';
 import { SqliteMemoryStore } from '../packages/memory/dist/index.js';
 import { UnifiedKnowledgeOrgan } from '../packages/knowledge/dist/index.js';
 import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser } from '../packages/self/dist/index.js';
 import { DefaultEarOrgan } from '../packages/organs/ear/dist/index.js';
+import { DefaultHandsOrgan } from '../packages/organs/hands/dist/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,12 +53,15 @@ try {
 }
 
 // 3. Initialize organs
-const brain = new OpenRouterBrain(config.organs.brain);
+const brain = config.organs?.brain?.provider === 'openai-compatible'
+  ? new OpenAICompatibleBrain(config.organs.brain)
+  : new OpenRouterBrain(config.organs.brain);
 const memory = new SqliteMemoryStore({ ...config.organs.memory, dbPath: path.resolve(rootDir, config.organs.memory?.dbPath || 'siduri.sqlite') });
 const knowledge = new UnifiedKnowledgeOrgan({ ...config.organs.knowledge, dbPath: path.resolve(rootDir, config.organs.knowledge?.dbPath || 'siduri.sqlite') });
 const self = new SqliteSelfRepository({ dbPath: path.resolve(rootDir, 'siduri.sqlite') });
 const behavior = new ActiveSelfCompiler(config.organs.behavior);
 const ear = new DefaultEarOrgan(config.organs.ear);
+const hands = new DefaultHandsOrgan({ knowledge: knowledge.lifeDb || knowledge });
 
 const runtime = new SiduriRuntime(config.id, config, {
   brain,
@@ -66,6 +70,7 @@ const runtime = new SiduriRuntime(config.id, config, {
   behavior,
   self,
   ear,
+  hands,
 });
 
 await runtime.initialize();
@@ -157,7 +162,7 @@ const server = createServer(async (req, res) => {
   }
 
   // API: Memory Proposals / Behavioral Approval & Rejection
-  if ((pathname === '/memory/proposals/approve' || pathname === '/memory/proposals/reject' || pathname === '/memory/behavioral/approve' || pathname === '/memory/behavioral/reject') && req.method === 'POST') {
+  if ((pathname === '/memory/proposals/approve' || pathname === '/knowledge/proposals/approve' || pathname === '/memory/proposals/reject' || pathname === '/memory/behavioral/approve' || pathname === '/memory/behavioral/reject') && req.method === 'POST') {
     let body = '';
     req.on('data', (chunk) => { body += chunk; });
     req.on('end', async () => {
@@ -170,16 +175,32 @@ const server = createServer(async (req, res) => {
           return;
         }
         if (pathname.endsWith('approve')) {
-          if (pathname.includes('behavioral') && typeof self?.approveDirective === 'function') {
-            await self.approveDirective(claimId);
+          let target = 'memory';
+          let status = 'approved';
+          if (pathname.includes('behavioral')) {
+            if (typeof runtime?.approveDirective === 'function') {
+              await runtime.approveDirective(claimId, { companionId: config.id });
+              target = 'runtime';
+            } else if (typeof self?.approveDirective === 'function') {
+              await self.approveDirective(claimId, config.id);
+              target = 'self';
+            }
+            status = 'active';
+          } else if (typeof runtime?.approveProposal === 'function') {
+            const resData = await runtime.approveProposal(claimId, { companionId: config.id });
+            target = resData?.target || 'knowledge';
           } else if (typeof memory?.approveClaim === 'function') {
             await memory.approveClaim(claimId);
           }
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ approved: true, id: claimId, status: 'approved' }));
+          res.end(JSON.stringify({ approved: true, id: claimId, target, status }));
         } else {
-          if (pathname.includes('behavioral') && typeof self?.rejectDirective === 'function') {
-            await self.rejectDirective(claimId);
+          if (pathname.includes('behavioral')) {
+            if (typeof runtime?.rejectDirective === 'function') {
+              await runtime.rejectDirective(claimId, { companionId: config.id });
+            } else if (typeof self?.rejectDirective === 'function') {
+              await self.rejectDirective(claimId, config.id);
+            }
           } else if (typeof memory?.rejectClaim === 'function') {
             await memory.rejectClaim(claimId);
           }
@@ -194,6 +215,274 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // API: Knowledge & Life Database routes
+  if (pathname === '/knowledge/life' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    try {
+      const q = parsedUrl.searchParams.get('q') || '';
+      const result = typeof knowledge?.queryLifeContext === 'function'
+        ? await knowledge.queryLifeContext(config.id, q)
+        : { matchedInventory: [], recentFinances: [], upcomingSchedule: [], preferences: [], formattedContext: '' };
+      res.end(JSON.stringify(result));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/knowledge/entities' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    try {
+      const type = parsedUrl.searchParams.get('type') || undefined;
+      const domain = parsedUrl.searchParams.get('domain') || undefined;
+      const entities = typeof knowledge?.entities?.getEntities === 'function'
+        ? await knowledge.entities.getEntities(config.id, type, domain)
+        : [];
+      res.end(JSON.stringify({ entities }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/knowledge/events' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    try {
+      const stream = parsedUrl.searchParams.get('stream') || undefined;
+      const limit = Number(parsedUrl.searchParams.get('limit') || 50);
+      const events = typeof knowledge?.events?.getEvents === 'function'
+        ? await knowledge.events.getEvents(config.id, stream, limit)
+        : [];
+      res.end(JSON.stringify({ events }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/knowledge/tasks' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    try {
+      const status = parsedUrl.searchParams.get('status') || undefined;
+      const tasks = typeof knowledge?.tasks?.getTasks === 'function'
+        ? await knowledge.tasks.getTasks(config.id, status)
+        : [];
+      res.end(JSON.stringify({ tasks }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/knowledge/schedule' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    try {
+      const items = typeof knowledge?.schedule?.getUpcoming === 'function'
+        ? await knowledge.schedule.getUpcoming(config.id)
+        : [];
+      res.end(JSON.stringify({ items }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/knowledge/entities' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const entity = {
+          id: payload.id || `ent-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          companionId: config.id,
+          name: payload.name,
+          entityType: payload.entityType || payload.type || 'entity',
+          domain: payload.domain || 'general',
+          properties: payload.properties || {},
+        };
+        await knowledge?.entities?.saveEntity(entity);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ saved: true, entity }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/knowledge/entities/delete' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const success = await knowledge?.entities?.deleteEntity(payload.id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ deleted: success, id: payload.id }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/knowledge/tasks' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const task = {
+          id: payload.id || `task-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          companionId: config.id,
+          title: payload.title,
+          status: payload.status || 'todo',
+          priority: payload.priority !== undefined ? Number(payload.priority) : 1,
+          targetDate: payload.targetDate || null,
+          metadata: payload.metadata || {},
+        };
+        await knowledge?.tasks?.saveTask(task);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ saved: true, task }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/knowledge/tasks/delete' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const success = await knowledge?.tasks?.deleteTask(payload.id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ deleted: success, id: payload.id }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/knowledge/events' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const event = {
+          id: payload.id || `evt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          companionId: config.id,
+          stream: payload.stream || 'default',
+          timestamp: payload.timestamp || new Date().toISOString(),
+          metricValue: payload.metricValue !== undefined && payload.metricValue !== null ? Number(payload.metricValue) : undefined,
+          metadata: payload.metadata || {},
+        };
+        await knowledge?.events?.addEvent(event);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ saved: true, event }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/knowledge/schedule' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const item = {
+          id: payload.id || `sched-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          companionId: config.id,
+          title: payload.title,
+          startTime: payload.startTime,
+          endTime: payload.endTime || null,
+          isRecurring: Boolean(payload.isRecurring),
+          status: payload.status || 'active',
+        };
+        await knowledge?.schedule?.saveItem(item);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ saved: true, item }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/knowledge/schedule/delete' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const success = typeof knowledge?.schedule?.deleteItem === 'function'
+          ? await knowledge.schedule.deleteItem(payload.id)
+          : false;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ deleted: success, id: payload.id }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // API: System Logs
+  if ((pathname === '/system/logs' || pathname === '/api/system/logs') && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    try {
+      const level = parsedUrl.searchParams.get('level') || undefined;
+      const subsystem = parsedUrl.searchParams.get('subsystem') || undefined;
+      const q = parsedUrl.searchParams.get('q') || undefined;
+      const limit = parseInt(parsedUrl.searchParams.get('limit') || '100', 10);
+      const offset = parseInt(parsedUrl.searchParams.get('offset') || '0', 10);
+      const logs = typeof runtime?.queryLogs === 'function'
+        ? runtime.queryLogs({ companionId: config.id, level, subsystem, q, limit, offset })
+        : (typeof self?.db?.queryLogs === 'function' ? self.db.queryLogs({ companionId: config.id, level, subsystem, q, limit, offset }) : []);
+      res.end(JSON.stringify({ logs }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message, logs: [] }));
+    }
+    return;
+  }
+
+  if ((pathname === '/system/logs/clear' || pathname === '/api/system/logs/clear' || (pathname === '/system/logs' && req.method === 'DELETE')) && (req.method === 'POST' || req.method === 'DELETE')) {
+    try {
+      if (typeof runtime?.clearLogs === 'function') {
+        runtime.clearLogs(config.id);
+      } else if (typeof self?.db?.clearLogs === 'function') {
+        self.db.clearLogs(config.id);
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ cleared: true }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
   // API: Memory & State Reset (Return to blank slate)
   if ((pathname === '/api/reset' || pathname === '/memory/reset' || pathname === '/dev/memory/reset') && req.method === 'POST') {
     try {
@@ -202,11 +491,27 @@ const server = createServer(async (req, res) => {
       if (fs.existsSync(dbPath)) {
         const db = new DatabaseSync(dbPath);
         try {
-          db.prepare('DELETE FROM memory_claims').run();
-          db.prepare('DELETE FROM memory_events').run();
-          db.prepare('DELETE FROM self_directives').run();
-          db.prepare('DELETE FROM self_relationships').run();
-          db.prepare('DELETE FROM self_identity').run();
+          const tables = [
+            'memory_claims',
+            'memory_events',
+            'self_directives',
+            'self_relationships',
+            'self_identity',
+            'self_personality',
+            'self_exemplars',
+            'life_entities',
+            'life_events',
+            'life_finance',
+            'life_inventory',
+            'life_preferences',
+            'life_schedule',
+            'life_tasks',
+            'system_logs',
+          ];
+          for (const table of tables) {
+            try { db.prepare(`DELETE FROM ${table}`).run(); } catch {}
+          }
+          try { db.exec('VACUUM'); } catch {}
         } finally {
           db.close();
         }
@@ -245,18 +550,27 @@ const server = createServer(async (req, res) => {
           ...(payload.mode ? { mode: payload.mode } : {}),
         };
 
+        const userMsg = payload.message || payload.text || '';
+        runtime.log('info', 'perception', `User message: "${userMsg.slice(0, 120)}"`, { message: userMsg, mode: payload.mode });
+
         const response = await dispatchCompanionChat(runtime, {
           id: config.id,
           companionId: config.id,
-          message: payload.message || payload.text || '',
+          message: userMsg,
           context: chatContext,
           history: Array.isArray(payload.history) ? payload.history : [],
           subtitleLanguage: payload.subtitleLanguage || payload.subtitle_language,
         });
 
+        runtime.log('info', 'perception', `Response generated successfully`, {
+          speech: response.delivery?.text || response.response?.subtitle_en || response.response?.spoken_ja,
+          proposalsCount: (response.metadata?.memory_proposals?.length || 0) + (response.metadata?.behavioral_proposals?.length || 0),
+        });
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(response));
       } catch (err) {
+        runtime.log('error', 'brain', `Chat generation error: ${err.message}`, { error: err.message, stack: err.stack });
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
       }
@@ -284,6 +598,9 @@ const server = createServer(async (req, res) => {
 
       try {
         const payload = JSON.parse(body || '{}');
+        const userMsg = payload.message || payload.text || '';
+        runtime.log('info', 'perception', `Stream turn started: "${userMsg.slice(0, 120)}"`, { message: userMsg, mode: payload.mode });
+
         const chatContext = {
           companionId: config.id,
           actor: {
@@ -304,7 +621,7 @@ const server = createServer(async (req, res) => {
         const response = await dispatchCompanionChat(runtime, {
           id: config.id,
           companionId: config.id,
-          message: payload.message || payload.text || '',
+          message: userMsg,
           context: chatContext,
           history: Array.isArray(payload.history) ? payload.history : [],
           medium: 'web',
@@ -324,11 +641,19 @@ const server = createServer(async (req, res) => {
         const speechText = response.delivery?.text || response.response?.subtitle_en || response.response?.spoken_ja || '';
         res.write(`event: chunk\ndata: ${JSON.stringify({ utteranceId: response.response_id || 'utt-stream', index: 1, deltaText: speechText, isComplete: true, medium: 'web' })}\n\n`);
         res.write(`event: done\ndata: ${JSON.stringify(response)}\n\n`);
+
+        runtime.log('info', 'perception', `Stream turn completed`, {
+          responseId: response.response_id,
+          speech: speechText,
+        });
+
         res.end();
       } catch (err) {
         if (abortController.signal.aborted) {
+          runtime.log('info', 'perception', `Stream interrupted: ${abortController.signal.reason}`);
           res.write(`event: interrupted\ndata: ${JSON.stringify({ reason: abortController.signal.reason })}\n\n`);
         } else {
+          runtime.log('error', 'brain', `Stream generation error: ${err.message}`, { error: err.message, stack: err.stack });
           res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);
         }
         res.end();

@@ -326,6 +326,9 @@ import type {
   LifeInventoryItem,
   LifeScheduleItem,
   LifePreference,
+  LifeEntity,
+  LifeEvent,
+  LifeTask,
   MemoryClaim,
   EpisodicEvent,
 } from './siduri-db';
@@ -339,6 +342,9 @@ export type {
   LifeInventoryItem,
   LifeScheduleItem,
   LifePreference,
+  LifeEntity,
+  LifeEvent,
+  LifeTask,
   MemoryClaim,
   EpisodicEvent,
 };
@@ -374,6 +380,9 @@ export interface LifeDatabase {
   getFinanceSummary?(companionId: string): Promise<any>;
   getSchedule?(companionId: string, windowStart?: Date, windowEnd?: Date): Promise<LifeScheduleItem[]>;
   getPreferences?(companionId: string): Promise<Record<string, string> | LifePreference[]>;
+  getEntities?(companionId: string, entityType?: string, domain?: string): Promise<LifeEntity[]>;
+  getEvents?(companionId: string, stream?: string, limit?: number): Promise<LifeEvent[]>;
+  getTasks?(companionId: string, status?: string): Promise<LifeTask[]>;
   queryContext(companionId: string, query: string): Promise<string[]>;
   searchLifeContext?(queryText: string): Promise<string[]>;
 }
@@ -391,3 +400,18 @@ export interface EpisodicMemoryStore {
 export interface EKnowledgeOrgan {
   search(query: string): Promise<KnowledgeItem[]>;
 }
+
+export {
+  promoteApprovedClaimToSelf,
+  promoteApprovedClaimToKnowledge,
+  isSelfAffectingClaim,
+  isKnowledgeAffectingClaim,
+} from './runtime';
+
+export {
+  SiduriDatabase,
+  type SiduriDatabaseOptions,
+  type LogLevel,
+  type SystemLog,
+} from './siduri-db';
+

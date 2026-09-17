@@ -23,13 +23,35 @@ for (const rel of targetPaths) {
   if (fs.existsSync(fullPath)) {
     try {
       const db = new DatabaseSync(fullPath);
-      db.prepare('DELETE FROM memory_claims').run();
-      db.prepare('DELETE FROM memory_events').run();
-      db.prepare('DELETE FROM self_directives').run();
-      db.prepare('DELETE FROM self_relationships').run();
-      db.prepare('DELETE FROM self_identity').run();
+      const tables = [
+        // Memory
+        'memory_claims',
+        'memory_events',
+        // Self
+        'self_directives',
+        'self_relationships',
+        'self_identity',
+        'self_personality',
+        'self_exemplars',
+        // Life Database
+        'life_entities',
+        'life_events',
+        'life_finance',
+        'life_inventory',
+        'life_preferences',
+        'life_schedule',
+        'life_tasks',
+        // System
+        'system_logs',
+      ];
+      for (const table of tables) {
+        try {
+          db.prepare(`DELETE FROM ${table}`).run();
+        } catch {}
+      }
+      try { db.exec('VACUUM'); } catch {}
       db.close();
-      console.log(`✓ Reset ${rel} to blank slate`);
+      console.log(`✓ Reset ${rel} (Memory, Self, LifeDB, Logs) to blank slate`);
       clearedAny = true;
     } catch (e) {
       console.warn(`! Could not reset ${rel}: ${e.message}`);

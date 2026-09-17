@@ -72,5 +72,27 @@ describe("Operator Memory Data Representation and ID Resolution", () => {
 
       expect(factContent).toBe("user drink_preference matcha latte");
     });
+
+    test("Toggles task status between todo and completed correctly", () => {
+      const task = { id: "t-1", title: "Test task", status: "todo" };
+      const nextStatus = task.status === "completed" ? "todo" : "completed";
+      expect(nextStatus).toBe("completed");
+
+      const completedTask = { ...task, status: nextStatus };
+      const toggledBack = completedTask.status === "completed" ? "todo" : "completed";
+      expect(toggledBack).toBe("todo");
+    });
+
+    test("Formats entity properties safely when JSON or undefined", () => {
+      const entity = {
+        id: "ent-1",
+        name: "Mechanical Keyboard",
+        entityType: "hardware",
+        domain: "workstation",
+        properties: { switches: "Gateron Brown", layout: "75%" },
+      };
+      const jsonStr = JSON.stringify(entity.properties || {});
+      expect(jsonStr).toContain("Gateron Brown");
+    });
   });
 });
