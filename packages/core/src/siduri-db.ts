@@ -715,6 +715,26 @@ export class SiduriDatabase {
       }
     }
 
+    // Companion name directive detection: "Address companion as X", "Your name is X", "Call yourself X", "Acknowledge name as X"
+    const compNameMatch = (row.directive || '').match(
+      /^(?:address\s+companion\s+as|your\s+name\s+is|call\s+yourself|acknowledge\s+name\s+as|companion\s+name\s+is)\s+["“']?([^"”'.]+)["”']?/i
+    );
+    if (compNameMatch) {
+      const newCompanionName = compNameMatch[1].trim();
+      if (newCompanionName) {
+        const targetId = companionId || row.companion_id || 'default';
+        const currentIdentity = this.getIdentity(targetId) || {
+          companionId: targetId,
+          name: '',
+          version: '1.0.0',
+          updatedAt: new Date().toISOString(),
+        };
+        currentIdentity.name = newCompanionName;
+        currentIdentity.updatedAt = new Date().toISOString();
+        this.setIdentity(currentIdentity);
+      }
+    }
+
     if (companionId) {
       const stmt = this.db.prepare(
         "UPDATE self_directives SET status = 'active', priority = MAX(priority, ?) WHERE id = ? AND companion_id = ? AND LOWER(status) IN ('pending', 'superseded')"
@@ -1403,15 +1423,25 @@ export class SiduriDatabase {
     if (!value) return;
 
     // 1. Identity mutations: companion identity/role/origin/name/ethos
-    if (
-      subject.startsWith('companion:') ||
-      subject === 'companion' ||
+    const isCompanionTarget =
+      subject.startsWith('companion') ||
       subject === 'siduri' ||
-      subject === 'self'
-    ) {
+      subject === 'self' ||
+      subject === 'assistant' ||
+      subject === 'persona' ||
+      subject === 'ai' ||
+      subject === 'me' ||
+      ((predicate === 'name' || predicate === 'role' || predicate === 'archetype' || predicate === 'ethos' || predicate === 'origin') &&
+        !subject.startsWith('actor:') &&
+        subject !== 'user' &&
+        subject !== 'primary_user' &&
+        subject !== 'owner' &&
+        subject !== 'creator');
+
+    if (isCompanionTarget) {
       const existing: SelfIdentity = this.getIdentity(companionId) || {
         companionId,
-        name: 'Siduri',
+        name: '',
         version: '1.0.0',
         updatedAt: new Date().toISOString(),
       };

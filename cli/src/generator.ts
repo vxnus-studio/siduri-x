@@ -87,8 +87,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.14';
-  const cliVersion = options.cliVersion || '^2.0.34';
+  const coreVersion = options.coreVersion || '^2.0.15';
+  const cliVersion = options.cliVersion || '^2.0.35';
   const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
@@ -457,16 +457,35 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `          return;`,
     `        }`,
     `        if (pathname.endsWith('approve')) {`,
-    `          if (pathname.includes('behavioral') && typeof self?.approveDirective === 'function') {`,
-    `            await self.approveDirective(claimId);`,
+    `          let name = null;`,
+    `          if (pathname.includes('behavioral')) {`,
+    `            if (typeof runtime?.approveDirective === 'function') {`,
+    `              const bRes = await runtime.approveDirective(claimId, { companionId: config.id });`,
+    `              name = bRes?.name;`,
+    `            } else if (typeof self?.approveDirective === 'function') {`,
+    `              await self.approveDirective(claimId, config.id);`,
+    `            }`,
+    `          } else if (typeof runtime?.approveProposal === 'function') {`,
+    `            const pRes = await runtime.approveProposal(claimId, { companionId: config.id });`,
+    `            name = pRes?.name;`,
     `          } else if (typeof memory?.approveClaim === 'function') {`,
     `            await memory.approveClaim(claimId);`,
     `          }`,
+    `          if (!name && typeof self?.getIdentity === 'function') {`,
+    `            try {`,
+    `              const ident = await self.getIdentity(config.id);`,
+    `              name = ident?.name;`,
+    `            } catch {}`,
+    `          }`,
     `          res.writeHead(200, { 'Content-Type': 'application/json' });`,
-    `          res.end(JSON.stringify({ approved: true, id: claimId, status: 'approved' }));`,
+    `          res.end(JSON.stringify({ approved: true, id: claimId, status: 'approved', name: name || undefined }));`,
     `        } else {`,
-    `          if (pathname.includes('behavioral') && typeof self?.rejectDirective === 'function') {`,
-    `            await self.rejectDirective(claimId);`,
+    `          if (pathname.includes('behavioral')) {`,
+    `            if (typeof runtime?.rejectDirective === 'function') {`,
+    `              await runtime.rejectDirective(claimId, { companionId: config.id });`,
+    `            } else if (typeof self?.rejectDirective === 'function') {`,
+    `              await self.rejectDirective(claimId, config.id);`,
+    `            }`,
     `          } else if (typeof memory?.rejectClaim === 'function') {`,
     `            await memory.rejectClaim(claimId);`,
     `          }`,

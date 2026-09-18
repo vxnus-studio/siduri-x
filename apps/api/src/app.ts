@@ -879,12 +879,20 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
     if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
+      let name: string | undefined;
       if (typeof (runtime as any).approveProposal === 'function') {
-        await (runtime as any).approveProposal(req.body.id, { companionId: id });
+        const pRes = await (runtime as any).approveProposal(req.body.id, { companionId: id });
+        name = pRes?.name;
       } else {
         await runtime.memory.approveClaim(req.body.id);
       }
-      res.json({ approved: true, status: 'approved' });
+      if (!name && runtime.self && typeof (runtime.self as any).getIdentity === 'function') {
+        try {
+          const ident = await (runtime.self as any).getIdentity(id);
+          name = ident?.name;
+        } catch {}
+      }
+      res.json({ approved: true, status: 'approved', name });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
@@ -914,12 +922,20 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
     if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
     try {
+      let name: string | undefined;
       if (typeof (runtime as any).approveDirective === 'function') {
-        await (runtime as any).approveDirective(req.body.id, { companionId: id });
+        const bRes = await (runtime as any).approveDirective(req.body.id, { companionId: id });
+        name = bRes?.name;
       } else {
         await runtime.memory.approveDirective(req.body.id);
       }
-      res.json({ approved: true, status: 'active' });
+      if (!name && runtime.self && typeof (runtime.self as any).getIdentity === 'function') {
+        try {
+          const ident = await (runtime.self as any).getIdentity(id);
+          name = ident?.name;
+        } catch {}
+      }
+      res.json({ approved: true, status: 'active', name });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }

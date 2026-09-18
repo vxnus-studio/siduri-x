@@ -189,7 +189,7 @@ export class SiduriRuntime {
   async approveProposal(
     proposalId: string,
     options?: { companionId?: string }
-  ): Promise<{ success: boolean; target?: string }> {
+  ): Promise<{ success: boolean; target?: string; name?: string }> {
     const companionId = options?.companionId || this.id;
 
     // 1. Approve claim in memory if present
@@ -232,6 +232,7 @@ export class SiduriRuntime {
     // 4. Promote to SelfRepository if claim is Self-affecting
     if (claim && this.self) {
       await promoteApprovedClaimToSelf(claim, this.self, companionId);
+      const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
       this.log('info', 'truth_gate', `Approved and promoted claim '${proposalId}' to Self`, {
         proposalId,
         companionId,
@@ -239,30 +240,32 @@ export class SiduriRuntime {
         subject: claim.subject,
         predicate: claim.predicate,
       });
-      return { success: true, target: 'self' };
+      return { success: true, target: 'self', name: identity?.name };
     }
 
     // 5. Also check if this proposal ID is a behavioral directive in Self
     if (this.self && typeof (this.self as any).approveDirective === 'function') {
       try {
         await (this.self as any).approveDirective(proposalId, companionId);
+        const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
         this.log('info', 'truth_gate', `Approved behavioral directive proposal '${proposalId}'`, {
           proposalId,
           companionId,
           target: 'self',
         });
-        return { success: true, target: 'self' };
+        return { success: true, target: 'self', name: identity?.name };
       } catch {
         // Not a pending directive or already active
       }
     }
 
+    const identity = this.self && typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
     this.log('info', 'truth_gate', `Approved memory proposal '${proposalId}'`, {
       proposalId,
       companionId,
       target: 'memory',
     });
-    return { success: true, target: 'memory' };
+    return { success: true, target: 'memory', name: identity?.name };
   }
 
   /**
@@ -296,7 +299,7 @@ export class SiduriRuntime {
   async approveDirective(
     directiveId: string,
     options?: { companionId?: string }
-  ): Promise<{ success: boolean }> {
+  ): Promise<{ success: boolean; name?: string }> {
     const companionId = options?.companionId || this.id;
     if (this.self && typeof (this.self as any).approveDirective === 'function') {
       await (this.self as any).approveDirective(directiveId, companionId);
@@ -304,11 +307,42 @@ export class SiduriRuntime {
     if (this.memory && typeof (this.memory as any).approveDirective === 'function') {
       await (this.memory as any).approveDirective(directiveId, companionId);
     }
+
+    // If directive pertains to companion name, ensure self identity reflects it
+    if (this.self && typeof (this.self as any).getActiveDirectives === 'function') {
+      try {
+        const activeDirs = await (this.self as any).getActiveDirectives(companionId);
+        const dir = activeDirs.find((d: any) => d.id === directiveId);
+        if (dir?.directive) {
+          const compNameMatch = dir.directive.match(
+            /^(?:address\s+companion\s+as|your\s+name\s+is|call\s+yourself|acknowledge\s+name\s+as|companion\s+name\s+is)\s+["“']?([^"”'.]+)["”']?/i
+          );
+          if (compNameMatch) {
+            const newName = compNameMatch[1].trim();
+            if (newName) {
+              const currentIdentity = (await this.self.getIdentity(companionId)) || {
+                companionId,
+                name: '',
+                version: '1.0.0',
+                updatedAt: new Date().toISOString(),
+              };
+              currentIdentity.name = newName;
+              currentIdentity.updatedAt = new Date().toISOString();
+              await this.self.setIdentity(currentIdentity);
+            }
+          }
+        }
+      } catch {
+        // non-blocking
+      }
+    }
+
+    const identity = this.self && typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
     this.log('info', 'truth_gate', `Approved behavioral directive '${directiveId}'`, {
       directiveId,
       companionId,
     });
-    return { success: true };
+    return { success: true, name: identity?.name };
   }
 
   /**
@@ -407,12 +441,22 @@ export async function promoteApprovedClaimToSelf(
   if (!value) return;
 
   // 1. Identity mutations: companion identity/role/origin/name/ethos
-  if (
-    subject.startsWith('companion:') ||
-    subject === 'companion' ||
+  const isCompanionTarget =
+    subject.startsWith('companion') ||
     subject === 'siduri' ||
-    subject === 'self'
-  ) {
+    subject === 'self' ||
+    subject === 'assistant' ||
+    subject === 'persona' ||
+    subject === 'ai' ||
+    subject === 'me' ||
+    ((predicate === 'name' || predicate === 'role' || predicate === 'archetype' || predicate === 'ethos' || predicate === 'origin') &&
+      !subject.startsWith('actor:') &&
+      subject !== 'user' &&
+      subject !== 'primary_user' &&
+      subject !== 'owner' &&
+      subject !== 'creator');
+
+  if (isCompanionTarget) {
     const existing: SelfIdentity = (await self.getIdentity(targetCompanionId)) || {
       companionId: targetCompanionId,
       name: '',
@@ -549,16 +593,19 @@ export function isSelfAffectingClaim(claim: any): boolean {
   const subject = (claim.subject || '').toLowerCase();
   const predicate = (claim.predicate || '').toLowerCase();
   return (
-    subject.startsWith('companion:') ||
-    subject === 'companion' ||
+    subject.startsWith('companion') ||
     subject === 'siduri' ||
     subject === 'self' ||
+    subject === 'assistant' ||
+    subject === 'persona' ||
+    subject === 'ai' ||
+    subject === 'me' ||
     claim.claimType === 'relationship' ||
     predicate === 'stated_relationship' ||
     predicate === 'relationship' ||
     predicate === 'relationship_to_companion' ||
     predicate === 'relationship_to_siduri' ||
-    (predicate === 'name' && (subject.startsWith('actor:') || subject === 'user' || subject === 'primary_user')) ||
+    predicate === 'name' ||
     predicate === 'preferred_address' ||
     predicate === 'affiliation' ||
     predicate === 'role' ||

@@ -325,7 +325,7 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
   <header>
     <div class="brand">
       <h1>◈ SIDURI</h1>
-      <span style="font-weight: 600; color: #fff;">${instanceName}</span>
+      <span id="companion-display-name" style="font-weight: 600; color: #fff;">${instanceName}</span>
       <div class="badges">
         ${organBadges}
       </div>
@@ -351,7 +351,7 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
         <div class="chat-pane">
           <div id="messages" class="messages-container">
             <div class="message companion">
-              <div class="meta">${instanceName}</div>
+              <div class="meta companion-meta">${instanceName}</div>
               Hello! I am your Siduri companion. How can I help you today?
             </div>
           </div>
@@ -416,6 +416,34 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
 
   <script>
     let currentClaims = [];
+    let companionName = '${instanceName}';
+
+    function updateCompanionName(newName) {
+      if (!newName || typeof newName !== 'string' || !newName.trim()) return;
+      companionName = newName.trim();
+      const displayEl = document.getElementById('companion-display-name');
+      if (displayEl) displayEl.textContent = companionName;
+      document.title = companionName + ' · Siduri Companion';
+      document.querySelectorAll('.companion-meta').forEach(el => {
+        el.textContent = companionName;
+      });
+    }
+
+    async function fetchIdentity() {
+      try {
+        const res = await fetch('/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.name) {
+            updateCompanionName(data.name);
+          }
+        }
+      } catch {}
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchIdentity();
+    });
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -454,7 +482,7 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
           data.text ||
           '(No response)';
 
-        appendMessage('companion', '${instanceName}', replyText);
+        appendMessage('companion', companionName, replyText);
         
         const expression = data.expression || data.metadata?.events?.find(e => e.kind === 'avatar')?.expression;
         if (expression) {
@@ -466,8 +494,11 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
           const audioEl = new Audio(audio);
           audioEl.play().catch(e => console.warn('Audio autoplay blocked:', e));
         }
+
+        // Check if identity changed
+        fetchIdentity();
       } catch (err) {
-        appendMessage('companion', '${instanceName}', '⚠️ Error connecting to companion: ' + err.message);
+        appendMessage('companion', companionName, '⚠️ Error connecting to companion: ' + err.message);
       }
     }
 
@@ -475,7 +506,8 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
       const container = document.getElementById('messages');
       const div = document.createElement('div');
       div.className = 'message ' + role;
-      div.innerHTML = '<div class="meta">' + name + '</div>' + text.replace(/\\n/g, '<br>');
+      const metaClass = role === 'companion' ? 'meta companion-meta' : 'meta';
+      div.innerHTML = '<div class="' + metaClass + '">' + name + '</div>' + text.replace(/\\n/g, '<br>');
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }

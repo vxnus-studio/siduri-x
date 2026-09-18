@@ -1043,4 +1043,53 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
 
     db.close();
   });
+
+  it('updates companion identity name dynamically when companion naming claim or directive is approved', async () => {
+    const companionId = 'dynamic-companion';
+    const db = new SiduriDatabase({ dbPath: ':memory:' });
+    const memory = createMemoryOrgan(db);
+    const self = createSelfRepository(db);
+
+    const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
+      memory,
+      self,
+    });
+    await runtime.initialize();
+
+    // Verify initial default identity
+    const initialIdentity = await self.getIdentity(companionId);
+    expect(initialIdentity?.name || 'Siduri').toBe('Siduri');
+
+    // 1. Propose and approve claim with subject "assistant" and predicate "name"
+    const nameClaim = await memory.proposeClaim({
+      companionId,
+      subject: 'assistant',
+      predicate: 'name',
+      value: 'Hu Tao',
+      claimType: 'semantic',
+    } as any);
+
+    await runtime.approveProposal(nameClaim.id, { companionId });
+    const identityAfterClaim = await self.getIdentity(companionId);
+    expect(identityAfterClaim?.name).toBe('Hu Tao');
+
+    // 2. Propose and approve behavioral directive "Address companion as Hu Tao The 77th"
+    const dir = {
+      id: 'dir-name-test-1',
+      companionId,
+      directive: 'Address companion as Hu Tao The 77th',
+      priority: 80,
+      status: 'pending' as any,
+      category: 'relational' as any,
+      createdAt: new Date().toISOString(),
+    };
+    await self.commitDirectives(companionId, [dir]);
+
+    await runtime.approveDirective(dir.id, { companionId });
+    const identityAfterDirective = await self.getIdentity(companionId);
+    expect(identityAfterDirective?.name).toBe('Hu Tao The 77th');
+
+    db.close();
+  });
 });
+

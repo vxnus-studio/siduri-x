@@ -79,8 +79,8 @@ const audioCache = new Map();
 
 // Determine public web directory (Next.js static export)
 const webDistCandidates = [
-  path.resolve(rootDir, 'cli/dist/web-dist'),
   path.resolve(rootDir, 'apps/web/out'),
+  path.resolve(rootDir, 'cli/dist/web-dist'),
   path.resolve(rootDir, 'public'),
 ];
 const canonicalPublicRoot = webDistCandidates.find((p) => fs.existsSync(p)) || path.resolve(rootDir, 'public');
@@ -186,10 +186,12 @@ const server = createServer(async (req, res) => {
         if (pathname.endsWith('approve')) {
           let target = 'memory';
           let status = 'approved';
+          let name = null;
           if (pathname.includes('behavioral')) {
             if (typeof runtime?.approveDirective === 'function') {
-              await runtime.approveDirective(claimId, { companionId: config.id });
+              const bRes = await runtime.approveDirective(claimId, { companionId: config.id });
               target = 'runtime';
+              name = bRes?.name;
             } else if (typeof self?.approveDirective === 'function') {
               await self.approveDirective(claimId, config.id);
               target = 'self';
@@ -198,11 +200,18 @@ const server = createServer(async (req, res) => {
           } else if (typeof runtime?.approveProposal === 'function') {
             const resData = await runtime.approveProposal(claimId, { companionId: config.id });
             target = resData?.target || 'knowledge';
+            name = resData?.name;
           } else if (typeof memory?.approveClaim === 'function') {
             await memory.approveClaim(claimId);
           }
+          if (!name && typeof self?.getIdentity === 'function') {
+            try {
+              const ident = await self.getIdentity(config.id);
+              name = ident?.name;
+            } catch {}
+          }
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ approved: true, id: claimId, target, status }));
+          res.end(JSON.stringify({ approved: true, id: claimId, target, status, name: name || undefined }));
         } else {
           if (pathname.includes('behavioral')) {
             if (typeof runtime?.rejectDirective === 'function') {

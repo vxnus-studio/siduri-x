@@ -46,6 +46,7 @@ type MemoryProposalData = {
 type BehavioralProposalData = {
   id?: string;
   directive_id?: string;
+  directive?: string;
   memory_class?: string;
   domain?: string;
   knowledge_domain?: string;
@@ -738,7 +739,7 @@ export default function ChatClient() {
   ) {
     if (!activeConversation) return;
     try {
-      const res = await postJson<{ item?: any; proposal?: any; status?: string }>(
+      const res = await postJson<{ item?: any; proposal?: any; status?: string; name?: string }>(
         `/memory/proposals/${action}`,
         { id: proposalId, companionId: "default" },
       );
@@ -746,18 +747,32 @@ export default function ChatClient() {
 
       // If approved, check if this proposal defined or updated companion identity/name
       if (action === "approve") {
+        if (res?.name) {
+          setCompanionName(res.name);
+        }
         const currentMsg = activeConversation.messages.find((m) => m.id === messageId);
         const currentProp = currentMsg?.memoryProposals?.find((p) => (p.proposal_id || p.id) === proposalId);
+        const anyNameProp = currentMsg?.memoryProposals?.find(
+          (p) => (p.predicate || "").toLowerCase() === "name" &&
+          !(p.subject || "").toLowerCase().startsWith("actor:") &&
+          (p.subject || "").toLowerCase() !== "user" &&
+          (p.subject || "").toLowerCase() !== "primary_user"
+        );
         const subj = (currentProp?.subject || "").toLowerCase();
         const pred = (currentProp?.predicate || "").toLowerCase();
-        if (
-          pred === "name" &&
-          (subj === "companion" || subj === "siduri" || subj === "self" || subj.startsWith("companion:"))
-        ) {
-          if (currentProp?.value) {
-            setCompanionName(currentProp.value);
-          }
+        const isNotUser =
+          !subj.startsWith("actor:") &&
+          subj !== "user" &&
+          subj !== "primary_user" &&
+          subj !== "owner" &&
+          subj !== "creator";
+
+        if (pred === "name" && isNotUser && currentProp?.value) {
+          setCompanionName(currentProp.value);
+        } else if (anyNameProp?.value) {
+          setCompanionName(anyNameProp.value);
         }
+
         // Refetch identity to ensure complete sync
         fetchApi(`/teach/identity`)
           .then(async (iRes) => {
@@ -797,7 +812,7 @@ export default function ChatClient() {
   ) {
     if (!activeConversation) return;
     try {
-      const res = await postJson<{ approved?: boolean; rejected?: boolean; status?: string }>(
+      const res = await postJson<{ approved?: boolean; rejected?: boolean; status?: string; name?: string }>(
         `/memory/behavioral/${action}`,
         {
           id: directiveId,
@@ -805,6 +820,33 @@ export default function ChatClient() {
         },
       );
       const updatedStatus = res?.status || (action === "approve" ? "active" : "rejected");
+
+      if (action === "approve") {
+        if (res?.name) {
+          setCompanionName(res.name);
+        }
+        const currentMsg = activeConversation.messages.find((m) => m.id === messageId);
+        const currentDir = currentMsg?.behavioralProposals?.find((p) => (p.directive_id || p.id) === directiveId);
+        const textToCheck = currentDir?.directive || currentDir?.value || currentDir?.behavior?.instruction || "";
+        if (textToCheck) {
+          const compNameMatch = textToCheck.match(
+            /^(?:address\s+companion\s+as|your\s+name\s+is|call\s+yourself|acknowledge\s+name\s+as|companion\s+name\s+is)\s+["“']?([^"”'.]+)["”']?/i
+          );
+          if (compNameMatch?.[1]?.trim()) {
+            setCompanionName(compNameMatch[1].trim());
+          }
+        }
+        // Refetch identity to ensure complete sync
+        fetchApi(`/teach/identity`)
+          .then(async (iRes) => {
+            if (iRes.ok) {
+              const iData = await iRes.json().catch(() => null);
+              if (iData?.name) setCompanionName(iData.name);
+            }
+          })
+          .catch(() => {});
+      }
+
       updateConversation(activeConversation.id, (conv) => ({
         ...conv,
         messages: conv.messages.map((msg) =>

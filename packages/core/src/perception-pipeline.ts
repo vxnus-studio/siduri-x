@@ -208,8 +208,10 @@ export const contextRetrievalStage: PerceptionPipelineStage = async (context) =>
 
 export const promptCompilationStage: PerceptionPipelineStage = async (context) => {
   if (!context.input || !context.contextRetrieval) return;
+  const effectiveCompanionName =
+    context.contextRetrieval.selfIdentity?.name?.trim() || context.companionName;
   const prompts = await compilePrompts({
-    companionName: context.companionName,
+    companionName: effectiveCompanionName,
     companionId: context.companionId,
     role: context.input.role,
     requestContext: context.input.requestContext,
@@ -230,8 +232,10 @@ export const promptCompilationStage: PerceptionPipelineStage = async (context) =
 
 export const cognitionPlanningStage: PerceptionPipelineStage = async (context) => {
   if (!context.input || !context.prompts || !context.sessionKey) return;
+  const effectiveCompanionName =
+    context.contextRetrieval?.selfIdentity?.name?.trim() || context.companionName;
   const plan = await generateCognitionPlan({
-    companionName: context.companionName,
+    companionName: effectiveCompanionName,
     brain: context.organs.brain,
     systemPrompt: context.prompts.systemPrompt,
     contextPrompt: context.prompts.contextPrompt,
