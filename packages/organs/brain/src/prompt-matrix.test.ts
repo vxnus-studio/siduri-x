@@ -16,7 +16,7 @@ describe('T3 Prompt Section Matrix Contract Suite', () => {
     const assembled = assembler.assemble(context);
 
     // Assertions of required sections
-    expect(sys).toContain('[SIDURI TRUSTED SYSTEM CONTEXT]');
+    expect(sys).toContain('[COMPANION TRUSTED SYSTEM CONTEXT]');
     expect(sys).toContain('[IDENTITY NUCLEUS]');
     expect(sys).toContain('You are NeutralCompanion.');
     expect(sys).toContain('[IMMUTABLE RUNTIME RULES]');
@@ -38,7 +38,7 @@ describe('T3 Prompt Section Matrix Contract Suite', () => {
     const sys = assembler.systemPrompt(context);
     const ctx = assembler.contextPrompt(context);
 
-    const idxSysCtx = sys.indexOf('[SIDURI TRUSTED SYSTEM CONTEXT]');
+    const idxSysCtx = sys.indexOf('[COMPANION TRUSTED SYSTEM CONTEXT]');
     const idxIdentity = sys.indexOf('[IDENTITY NUCLEUS]');
     const idxRules = sys.indexOf('[IMMUTABLE RUNTIME RULES]');
 

@@ -25,6 +25,7 @@ describe('PromptCompiler', () => {
     const result = await compilePrompts({
       companionName: 'Siduri',
       companionId: 'test-comp',
+      selfIdentity: { name: 'Siduri' },
       role: 'OWNER',
       requestContext: dummyContext,
       behavior: mockBehavior as any,
@@ -38,6 +39,22 @@ describe('PromptCompiler', () => {
     expect(result.systemPrompt).toContain('This is a neutral conversation context.');
     expect(result.systemPrompt).toContain('BEHAVIOR: Speak formally.');
     expect(result.contextPrompt).toBe('');
+  });
+
+  test('compiles clean neutral system prompt for blank slate without defined identity name', async () => {
+    const result = await compilePrompts({
+      companionName: 'Siduri', // Folder / instance name only
+      companionId: 'test-comp',
+      role: 'OWNER',
+      requestContext: dummyContext,
+      activeDirectives: [],
+      subsystemDiagnostics: {},
+      knowledgeData: [],
+      memoryData: [],
+    });
+
+    expect(result.systemPrompt).toContain('You are a companion.');
+    expect(result.systemPrompt).not.toContain('You are Siduri.');
   });
 
   test('formats degraded diagnostics, knowledge, and memory in context prompt', async () => {

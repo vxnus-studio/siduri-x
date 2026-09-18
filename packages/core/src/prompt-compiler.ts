@@ -109,8 +109,13 @@ export async function compilePrompts(
       ? `Requested Subtitle Language: "${subtitleLanguage}". Along with your primary speech, provide a natural subtitle translation in "${subtitleLanguage}" in the subtitle field.`
       : undefined;
 
+  const identityName = selfIdentity?.name;
+  const identityInstruction = identityName
+    ? `You are ${identityName}.`
+    : 'You are a companion.';
+
   const systemPrompt = [
-    `You are ${companionName}.`,
+    identityInstruction,
     modeInstruction,
     subtitleInstruction,
     'This is a neutral conversation context.',

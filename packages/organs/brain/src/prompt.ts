@@ -3,7 +3,7 @@ import { Message, BrainContext } from '@siduri-x/core';
 export class PromptAssembler {
   public systemPrompt(context: BrainContext): string {
     const parts = [
-      "[SIDURI TRUSTED SYSTEM CONTEXT]",
+      "[COMPANION TRUSTED SYSTEM CONTEXT]",
       "[IDENTITY NUCLEUS]",
       context.systemPrompt, // Core neutral identity config and compiled active self
       "[IMMUTABLE RUNTIME RULES]",

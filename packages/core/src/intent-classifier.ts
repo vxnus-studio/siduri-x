@@ -34,8 +34,8 @@ export function extractSearchKeywords(
 
   let query = text.trim();
 
-  // 1. Strip companion names (e.g. "Siduri", "Siduri:", "Hey Siduri,")
-  const companionTokens = ['siduri'];
+  // 1. Strip companion names (e.g. "Companion", "Siduri", "Hey companion,")
+  const companionTokens = ['companion', 'siduri'];
   if (typeof companionName === 'string' && companionName.trim()) {
     companionTokens.push(companionName.trim().toLowerCase());
   }
@@ -116,7 +116,7 @@ export function classifyInputIntent(
       /\b(?:remember that|remember:|my name is|call me)\b/i.test(normalizedMessage));
   const isSelfIdentityRequest =
     overrides?.isSelfIdentityRequest ??
-    /\b(?:who|what) are you\b|\bwho is siduri\b|\b(?:your|my) name\b|\bdo you (?:know|remember|recognize) me\b|\bwho am i\b|\btell me about yourself\b|\bdescribe yourself\b|\bwhat is your origin\b|\bwho created you\b|\bwho made you\b|\bintroduce yourself\b/.test(
+    /\b(?:who|what) are you\b|\bwho (?:is|are) (?:siduri|companion|the companion|she|he|her|him)\b|\b(?:your|my) name\b|\bdo you (?:know|remember|recognize) me\b|\bwho am i\b|\btell me about yourself\b|\bdescribe yourself\b|\bwhat is your origin\b|\bwho created you\b|\bwho made you\b|\bintroduce yourself\b/.test(
       normalizedMessage
     );
   const isGreeting =

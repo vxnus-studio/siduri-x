@@ -87,8 +87,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.12';
-  const cliVersion = options.cliVersion || '^2.0.29';
+  const coreVersion = options.coreVersion || '^2.0.13';
+  const cliVersion = options.cliVersion || '^2.0.30';
   const manifests = options.selectedManifests;
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');

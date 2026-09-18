@@ -38,7 +38,7 @@ export async function generateCognitionPlan(
 
   // Graceful baseline response when Brain is not configured or in headless passive mode
   return {
-    speech: `[Siduri ${companionName}] Acknowledged: ${perceivedText}`,
+    speech: `[Companion] Acknowledged: ${perceivedText}`,
     language: 'en',
   };
 }

@@ -194,7 +194,7 @@ describe('PromptAssembler', () => {
       recentMessages: []
     });
 
-    expect(res.messages[0].content).toContain("[SIDURI TRUSTED SYSTEM CONTEXT]");
+    expect(res.messages[0].content).toContain("[COMPANION TRUSTED SYSTEM CONTEXT]");
     expect(res.messages[0].content).toContain("I am Ganyu");
     expect(res.messages[1].content).toContain("[CONTEXTUAL AWARENESS]");
     expect(res.messages[1].content).toContain("Memories: none");

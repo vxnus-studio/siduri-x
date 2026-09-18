@@ -415,7 +415,7 @@ export async function promoteApprovedClaimToSelf(
   ) {
     const existing: SelfIdentity = (await self.getIdentity(targetCompanionId)) || {
       companionId: targetCompanionId,
-      name: 'Siduri',
+      name: '',
       version: '1.0.0',
       updatedAt: new Date().toISOString(),
     };
@@ -457,6 +457,7 @@ export async function promoteApprovedClaimToSelf(
     claim.claimType === 'relationship' ||
     predicate === 'stated_relationship' ||
     predicate === 'relationship' ||
+    predicate === 'relationship_to_companion' ||
     predicate === 'relationship_to_siduri' ||
     (predicate === 'name' && (subject.startsWith('actor:') || subject === 'user' || subject === 'primary_user')) ||
     predicate === 'preferred_address' ||
@@ -555,6 +556,7 @@ export function isSelfAffectingClaim(claim: any): boolean {
     claim.claimType === 'relationship' ||
     predicate === 'stated_relationship' ||
     predicate === 'relationship' ||
+    predicate === 'relationship_to_companion' ||
     predicate === 'relationship_to_siduri' ||
     (predicate === 'name' && (subject.startsWith('actor:') || subject === 'user' || subject === 'primary_user')) ||
     predicate === 'preferred_address' ||

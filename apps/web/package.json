@@ -1,13 +1,13 @@
 {
   "name": "web",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "private": true,
   "engines": {
     "node": ">=22.16.0"
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "test": "jest --config jest.config.json"
