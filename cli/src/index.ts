@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.30';
+export const CLI_VERSION = '2.0.32';
 
 import { colors } from './colors';
 export { colors };
@@ -312,7 +312,8 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
     });
     printSuccess('Dependencies installed successfully.');
   } catch (err: any) {
-    console.warn(`${colors.yellow}!${colors.reset} Notice: npm install had warnings or requires network: ${err.message}`);
+    console.warn(`\n${colors.yellow}! Notice: npm install failed:${colors.reset} ${err.stderr || err.message}`);
+    console.warn(`${colors.dim}Run "npm install" manually inside ${projectDir} to complete installation.${colors.reset}\n`);
   }
 
   printSection('Instance Ready');

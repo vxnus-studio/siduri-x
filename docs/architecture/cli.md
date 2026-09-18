@@ -25,6 +25,8 @@ npx @vxnus/siduri create [directory]
    - **Top-to-Downstream Progression**: Directly traverses capability organs from central cognition (Brain required) to memory, sovereign knowledge, identity, and downstream embodiment/perception.
    - **Zero Upfront Checklists**: Foundational organs (Brain, Memory, Knowledge, Behavior) go straight to their engine and configuration. Peripheral organs (Voice, Body, Mouth, Hands, Vision, Ear, Observation) prompt directly for their engine choice with a clean `None (Skip)` option.
    - **No Redundant Questions**: Completely eliminates separate boolean `? Enable <Organ>?` questions. Selecting `None` skips the organ cleanly in a single pass.
+7. **Canonical Instantiation Order & TDZ Immunity**: Sorts generated `src/index.js` organ instantiations according to the canonical lifecycle order (`brain` -> `memory` -> `knowledge` -> `behavior` -> `voice` -> `body` -> `mouth` -> `hands` -> `vision` -> `ear` -> `observation`), guaranteeing dependencies like `vision` are initialized before consumers like `observation`.
+8. **Resilient Environment Parsing**: `siduri doctor` strips enclosing quotes and ignores empty variable values from `.env` files so active shell environment variables are preserved without accidental blank overrides.
 
 ### Organ Behavior & Defaults:
 

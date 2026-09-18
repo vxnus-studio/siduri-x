@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/self',
     organType: 'behavior',
-    version: '2.0.6',
+    version: '2.0.7',
     displayName: 'Self & Persona (Identity & Directives)',
     description: 'Autonomous persona compiler, relational stances, and .self asset loader',
     entrypoint: './dist/index.js',
@@ -78,7 +78,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/brain',
     organType: 'brain',
-    version: '2.0.8',
+    version: '2.0.10',
     displayName: 'Brain (Cognition & Planning)',
     description: 'Provider-neutral LLM reasoning, response planning, and proposal generation',
     entrypoint: './dist/index.js',
@@ -165,7 +165,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/hands',
     organType: 'hands',
-    version: '2.0.1',
+    version: '2.0.2',
     displayName: 'Hands (MCP Tool Execution)',
     description: 'Model Context Protocol tool management and cryptographically authorized action execution',
     entrypoint: './dist/index.js',
@@ -219,7 +219,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/knowledge',
     organType: 'knowledge',
-    version: '2.0.5',
+    version: '2.0.6',
     displayName: 'Knowledge (Sovereign Life DB & Knowledge Packs)',
     description: 'Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs',
     entrypoint: './dist/index.js',
@@ -297,7 +297,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/memory',
     organType: 'memory',
-    version: '2.0.4',
+    version: '2.0.5',
     displayName: 'Memory (Long-term Recall & State)',
     description: 'Relational semantic claims with Full-Text Search (FTS5) and companion isolation',
     entrypoint: './dist/index.js',
@@ -322,7 +322,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     database: {
       engine: 'sqlite'
     },
-    healthCheck: 'probeMemoryHealth'
+    healthCheck: null
   },
   {
     name: '@siduri-x/observation',

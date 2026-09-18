@@ -88,8 +88,13 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^2.0.13';
-  const cliVersion = options.cliVersion || '^2.0.30';
-  const manifests = options.selectedManifests;
+  const cliVersion = options.cliVersion || '^2.0.32';
+  const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
+  const manifests = [...options.selectedManifests].sort((a, b) => {
+    const idxA = canonicalOrder.indexOf(a.organType);
+    const idxB = canonicalOrder.indexOf(b.organType);
+    return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+  });
 
   const hasMemory = manifests.some((m) => m.organType === 'memory');
   const hasVoice = manifests.some((m) => m.organType === 'voice');
