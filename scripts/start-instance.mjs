@@ -688,6 +688,12 @@ const server = createServer(async (req, res) => {
     candidatePairs.unshift({ root: canonicalPublicRoot, target: path.resolve(canonicalPublicRoot, 'index.html') });
   }
 
+  // Asset serving for companion assets (e.g. /assets/body/<name>/model.model3.json)
+  if (decodedPathname.startsWith('/assets/')) {
+    const relativeAssetPath = path.normalize(decodedPathname.slice('/assets/'.length)).replace(/^[/\\\\]+/, '');
+    candidatePairs.unshift({ root: canonicalAssetsRoot, target: path.resolve(canonicalAssetsRoot, relativeAssetPath) });
+  }
+
   // Compatibility for live2d assets
   if (decodedPathname.startsWith('/live2d/')) {
     const relativeAssetPath = path.normalize(decodedPathname.slice('/live2d/'.length)).replace(/^[/\\\\]+/, '');

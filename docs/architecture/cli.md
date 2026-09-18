@@ -27,6 +27,7 @@ npx @vxnus/siduri create [directory]
    - **No Redundant Questions**: Completely eliminates separate boolean `? Enable <Organ>?` questions. Selecting `None` skips the organ cleanly in a single pass.
 7. **Canonical Instantiation Order & TDZ Immunity**: Sorts generated `src/index.js` organ instantiations according to the canonical lifecycle order (`brain` -> `memory` -> `knowledge` -> `behavior` -> `voice` -> `body` -> `mouth` -> `hands` -> `vision` -> `ear` -> `observation`), guaranteeing dependencies like `vision` are initialized before consumers like `observation`.
 8. **Resilient Environment Parsing**: `siduri doctor` strips enclosing quotes and ignores empty variable values from `.env` files so active shell environment variables are preserved without accidental blank overrides.
+9. **Companion Static Asset Serving**: Standalone HTTP server safely serves static companion assets under `/assets/` (e.g. Live2D models, textures, animations in `assets/body/<name>/`) and `/live2d/` fallbacks with path traversal containment.
 
 ### Organ Behavior & Defaults:
 

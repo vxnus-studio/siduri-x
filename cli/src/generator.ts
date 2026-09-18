@@ -88,7 +88,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^2.0.13';
-  const cliVersion = options.cliVersion || '^2.0.32';
+  const cliVersion = options.cliVersion || '^2.0.33';
   const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
@@ -760,6 +760,12 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '',
     `  if (!normalizedPath || normalizedPath === '.' || normalizedPath === './') {`,
     `    candidatePairs.unshift({ root: canonicalPublicRoot, target: path.resolve(canonicalPublicRoot, 'index.html') });`,
+    `  }`,
+    '',
+    `  // Asset serving for companion assets (e.g. /assets/body/<name>/model.model3.json)`,
+    `  if (decodedPathname.startsWith('/assets/')) {`,
+    `    const relativeAssetPath = path.normalize(decodedPathname.slice('/assets/'.length)).replace(/^[/\\\\]+/, '');`,
+    `    candidatePairs.unshift({ root: canonicalAssetsRoot, target: path.resolve(canonicalAssetsRoot, relativeAssetPath) });`,
     `  }`,
     '',
     `  // Compatibility fallback for legacy /live2d/<modelName>/... -> ./assets/body/<modelName>/...`,
