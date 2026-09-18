@@ -112,11 +112,20 @@ const server = createServer(async (req, res) => {
   }
 
   // API: Identity info
-  if (pathname === '/me' && req.method === 'GET') {
+  if ((pathname === '/me' || pathname === '/teach/identity') && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
+    let identity = null;
+    try {
+      identity = typeof self?.getIdentity === 'function' ? await self.getIdentity(config.id) : null;
+    } catch {}
     res.end(JSON.stringify({
       id: config.id,
-      name: config.name,
+      companionId: config.id,
+      name: identity?.name || config.name || 'Siduri',
+      archetype: identity?.archetype || identity?.role,
+      origin: identity?.origin,
+      ethos: identity?.ethos,
+      version: identity?.version || '1.0.0',
       organs: Object.keys(config.organs || {}),
     }));
     return;

@@ -5,16 +5,18 @@ import React from "react";
 export interface PreferencesStarterProps {
   onSelectPrompt: (prompt: string) => void;
   className?: string;
+  companionName?: string;
 }
 
 export default function PreferencesStarter({
   onSelectPrompt,
   className = "",
+  companionName = "your companion",
 }: PreferencesStarterProps) {
   return (
     <div className={`chat-empty-state ${className}`} data-testid="preferences-starter">
       <div className="siduri-orb">✦</div>
-      <h2>Teach Siduri your preferences.</h2>
+      <h2>Teach {companionName} your preferences.</h2>
       <p>
         Choose a starting point, replace the blanks, and send it.
         Nothing becomes memory until you approve the receipt.
@@ -56,7 +58,7 @@ export default function PreferencesStarter({
         </button>
       </div>
       <p className="onboarding-privacy">
-        Teach Siduri preferences explicitly. Information is stored in
+        Teach {companionName} preferences explicitly. Information is stored in
         private memory only after you approve the receipt.
       </p>
     </div>

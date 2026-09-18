@@ -302,6 +302,7 @@ export default function ChatClient() {
   const [selectedMode, setSelectedMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const [effectiveMode, setEffectiveMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const [subtitleLanguage, setSubtitleLanguage] = useState<string>("off");
+  const [companionName, setCompanionName] = useState<string>("Siduri");
 
   // Teach Mode & .self Auto-Detection State
   const [detectedSelf, setDetectedSelf] = useState<{
@@ -387,6 +388,30 @@ export default function ChatClient() {
         }
       })
       .catch(() => setStatus("offline"));
+
+    // Fetch active companion identity
+    fetchApi(`/teach/identity`)
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json().catch(() => null);
+          if (data && data.name) {
+            setCompanionName(data.name);
+          }
+        } else {
+          // Fallback to /me
+          fetchApi(`/me`)
+            .then(async (mRes) => {
+              if (mRes.ok) {
+                const mData = await mRes.json().catch(() => null);
+                if (mData && mData.name) {
+                  setCompanionName(mData.name);
+                }
+              }
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
 
     // Check if a .self file is detected on the companion path
     fetchApi(`/teach/detected-self`)
@@ -718,6 +743,32 @@ export default function ChatClient() {
         { id: proposalId, companionId: "default" },
       );
       const updatedStatus = res?.status || (action === "approve" ? "approved" : "rejected");
+
+      // If approved, check if this proposal defined or updated companion identity/name
+      if (action === "approve") {
+        const currentMsg = activeConversation.messages.find((m) => m.id === messageId);
+        const currentProp = currentMsg?.memoryProposals?.find((p) => (p.proposal_id || p.id) === proposalId);
+        const subj = (currentProp?.subject || "").toLowerCase();
+        const pred = (currentProp?.predicate || "").toLowerCase();
+        if (
+          pred === "name" &&
+          (subj === "companion" || subj === "siduri" || subj === "self" || subj.startsWith("companion:"))
+        ) {
+          if (currentProp?.value) {
+            setCompanionName(currentProp.value);
+          }
+        }
+        // Refetch identity to ensure complete sync
+        fetchApi(`/teach/identity`)
+          .then(async (iRes) => {
+            if (iRes.ok) {
+              const iData = await iRes.json().catch(() => null);
+              if (iData?.name) setCompanionName(iData.name);
+            }
+          })
+          .catch(() => {});
+      }
+
       updateConversation(activeConversation.id, (conv) => ({
         ...conv,
         messages: conv.messages.map((msg) =>
@@ -837,6 +888,10 @@ export default function ChatClient() {
       });
 
       if (res && res.success) {
+        const newName = stagedSelfPackage.manifest?.identity?.name || stagedSelfPackage.manifest?.name;
+        if (newName) {
+          setCompanionName(newName);
+        }
         setSelfInstallNotice(
           `Installed '${stagedSelfPackage.manifest.name}' ethos (${approvedIds.length} directives active).`
         );
@@ -1406,7 +1461,10 @@ export default function ChatClient() {
                   />
                 </div>
               ) : messages.length === 0 ? (
-                <PreferencesStarter onSelectPrompt={(text) => setMessage(text)} />
+                <PreferencesStarter
+                  companionName={companionName}
+                  onSelectPrompt={(text) => setMessage(text)}
+                />
               ) : (
                 messages.map((item) => (
                   <article
@@ -1415,11 +1473,11 @@ export default function ChatClient() {
                     key={item.id}
                   >
                     <div className="message-avatar">
-                      {item.role === "user" ? "U" : "S"}
+                      {item.role === "user" ? "U" : (companionName.charAt(0).toUpperCase() || "S")}
                     </div>
                     <div className="message-body">
                       <div className="message-meta">
-                        <span>{item.role === "user" ? "You" : "Siduri"}</span>
+                        <span>{item.role === "user" ? "You" : companionName}</span>
                         {item.role === "assistant" && !item.content && !item.error && !item.interrupted && busy ? (
                           <span className="thinking-label">thinking</span>
                         ) : (
@@ -1823,10 +1881,12 @@ export default function ChatClient() {
               )}
               {busy && !isPresenceOpen && (!messages.length || messages[messages.length - 1]?.role !== "assistant") && (
                 <div className="platform-message assistant thinking-message">
-                  <div className="message-avatar">S</div>
+                  <div className="message-avatar">
+                    {companionName.charAt(0).toUpperCase() || "S"}
+                  </div>
                   <div className="message-body">
                     <div className="message-meta">
-                      <span>Siduri</span>
+                      <span>{companionName}</span>
                       <span className="thinking-label">thinking</span>
                     </div>
                     <div className="thinking-dots">
@@ -1848,10 +1908,10 @@ export default function ChatClient() {
                     event.currentTarget.form?.requestSubmit();
                   }
                 }}
-                placeholder="Message Siduri…"
+                placeholder={`Message ${companionName}…`}
                 rows={1}
                 maxLength={4000}
-                aria-label="Message Siduri"
+                aria-label={`Message ${companionName}`}
               />
               <div className="composer-bottom">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -1938,7 +1998,7 @@ export default function ChatClient() {
           </section>
         </div>
         <p className="chat-disclaimer">
-          Siduri can be uncertain. Verify important details against the
+          Responses can be uncertain. Verify important details against the
           evidence.
         </p>
       </main>

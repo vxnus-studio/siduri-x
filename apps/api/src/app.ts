@@ -273,6 +273,41 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
+  app.get('/teach/identity', attachIdentity, async (req, res) => {
+    try {
+      const companionId = (req.query.companionId as string) || Array.from(runtimes.keys())[0] || 'default';
+      const runtime = runtimes.get(companionId);
+      let identity: any = null;
+
+      if (runtime?.self && typeof (runtime.self as any).getIdentity === 'function') {
+        try {
+          identity = await (runtime.self as any).getIdentity(companionId);
+        } catch {}
+      }
+
+      if (!identity) {
+        const repo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
+        try {
+          identity = await repo.getIdentity(companionId);
+        } catch {} finally {
+          repo.close();
+        }
+      }
+
+      const configuredName = runtime?.config?.name || 'Siduri';
+      res.json({
+        companionId,
+        name: identity?.name || configuredName,
+        archetype: identity?.archetype || identity?.role,
+        origin: identity?.origin,
+        ethos: identity?.ethos,
+        version: identity?.version,
+      });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // CHAT (API context boundary validation)
   app.post('/chat', attachIdentity, async (req, res) => {
     const { id, message, history } = req.body;

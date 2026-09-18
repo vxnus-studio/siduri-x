@@ -45,22 +45,22 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 
 ### Core Domain Substrates (Persistent Continuity)
 | Package | Version | Description | Status |
-| **`@siduri-x/core`** | `^2.0.13` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
-| **`@siduri-x/self`** | `^2.0.7` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
-| **`@siduri-x/knowledge`** | `^2.0.6` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
-| **`@siduri-x/memory`** | `^2.0.5` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
+| **`@siduri-x/core`** | `^2.0.14` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
+| **`@siduri-x/self`** | `^2.0.8` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
+| **`@siduri-x/knowledge`** | `^2.0.7` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
+| **`@siduri-x/memory`** | `^2.0.6` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
 
 ### Pluggable Peripheral Organs
 | Package | Version | Description | Status |
 | :--- | :---: | :--- | :--- |
-| **`@siduri-x/brain`** | `^2.0.10` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
-| **`@siduri-x/hands`** | `^2.0.2` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
-| **`@siduri-x/ear`** | `^2.0.3` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
-| **`@siduri-x/vision`** | `^2.0.1` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
-| **`@siduri-x/body`** | `^2.0.1` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
-| **`@siduri-x/voice`** | `^2.0.2` | Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC voice conversion | **Implemented** |
-| **`@siduri-x/observation`** | `^2.0.1` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Experimental Prototype** |
-| **`@siduri-x/mouth`** | `^2.0.2` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
+| **`@siduri-x/brain`** | `^2.0.11` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
+| **`@siduri-x/hands`** | `^2.0.3` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
+| **`@siduri-x/ear`** | `^2.0.4` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
+| **`@siduri-x/vision`** | `^2.0.2` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
+| **`@siduri-x/body`** | `^2.0.2` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
+| **`@siduri-x/voice`** | `^2.0.3` | Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC voice conversion | **Implemented** |
+| **`@siduri-x/observation`** | `^2.0.2` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Experimental Prototype** |
+| **`@siduri-x/mouth`** | `^2.0.3` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
 | ~~`@siduri-x/behavior`~~ | `^1.0.6` | *Legacy compatibility package* (superseded by `@siduri-x/self`) | **Legacy / Deprecated** |
 
 ---

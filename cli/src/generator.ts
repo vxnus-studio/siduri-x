@@ -87,8 +87,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.13';
-  const cliVersion = options.cliVersion || '^2.0.33';
+  const coreVersion = options.coreVersion || '^2.0.14';
+  const cliVersion = options.cliVersion || '^2.0.34';
   const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
@@ -351,11 +351,20 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `  }`,
     '',
     `  // API: Identity info`,
-    `  if (pathname === '/me' && req.method === 'GET') {`,
+    `  if ((pathname === '/me' || pathname === '/teach/identity') && req.method === 'GET') {`,
     `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
+    `    let identity = null;`,
+    `    try {`,
+    `      identity = typeof self?.getIdentity === 'function' ? await self.getIdentity(config.id) : null;`,
+    `    } catch {}`,
     `    res.end(JSON.stringify({`,
     `      id: config.id,`,
-    `      name: config.name,`,
+    `      companionId: config.id,`,
+    `      name: identity?.name || config.name || 'Siduri',`,
+    `      archetype: identity?.archetype || identity?.role,`,
+    `      origin: identity?.origin,`,
+    `      ethos: identity?.ethos,`,
+    `      version: identity?.version || '1.0.0',`,
     `      organs: Object.keys(config.organs || {}),`,
     `    }));`,
     `    return;`,
