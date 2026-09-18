@@ -76,6 +76,7 @@ Architectural proposals, design explorations, and prospective specifications:
 | **[`rfc-life-database.md`](./rfc/rfc-life-database.md)** | The Life Database Specification & User Data Sovereignty | **Implemented** (`@siduri-x/knowledge`) |
 | **[`rfc-llm-native-self-and-relationship.md`](./rfc/rfc-llm-native-self-and-relationship.md)** | LLM-Native Self Domain & Qualitative Relational Stances | **Implemented** (`@siduri-x/self`) |
 | **[`rfc-semantic-supersession-and-teaching.md`](./rfc/rfc-semantic-supersession-and-teaching.md)** | Semantic Supersession & Teach Mode Onboarding Specification | **Implemented** (`@siduri-x/core` + `@siduri-x/self`) |
+| **[`rfc-concern-engine.md`](./rfc/rfc-concern-engine.md)** | The Concern Engine — Self-Domain Inherent Care & Behavioral Proactivity | **Proposed** (`@siduri-x/self` + `@siduri-x/knowledge`) |
 | **[`rfc-benchmarking-framework.md`](./rfc/rfc-benchmarking-framework.md)** | Performance SLA Budgets, Scaling & Microbenchmarks | **Planned** (Upcoming Benchmark Suite) |
 
 ---
