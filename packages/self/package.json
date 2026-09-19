@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/self",
-  "version": "2.0.9",
+  "version": "2.0.11",
   "description": "Siduri Self domain: Identity, personality, directional relationships, directives, ActiveSelfCompiler, and .self asset parser",
   "license": "Apache-2.0",
   "main": "dist/index.js",
@@ -18,7 +18,7 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-x/core": "workspace:*"
+    "@siduri-x/core": "^2.0.15"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
