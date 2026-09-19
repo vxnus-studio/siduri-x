@@ -29,6 +29,7 @@ npx @vxnus/siduri create [directory]
 8. **Resilient Environment Parsing**: `siduri doctor` strips enclosing quotes and ignores empty variable values from `.env` files so active shell environment variables are preserved without accidental blank overrides.
 9. **Companion Static Asset Serving**: Standalone HTTP server safely serves static companion assets under `/assets/` (e.g. Live2D models, textures, animations in `assets/body/default/` or custom folders) and `/live2d/` fallbacks with path traversal containment.
 10. **Project Directory Decoupling & Standardized Asset Structure**: The setup wizard prompts for `Project directory:` (e.g. `Companion`, `PrivateCompanion`, without forcing kebab-case, rejecting numbers and pre-existing folders). The folder name is treated strictly as instance/workspace metadata; companion identity name is never injected into the AI and is only established via Self (`.self` persona manifest or chat proposal approval via the Truth Gate). Asset paths standardize on a generic `default/` structure (`assets/body/default/`, `assets/voice/default/`, `assets/self/default.self`), completely decoupled from project folder names.
+11. **Persona Asset Scaffolding & Standalone Teach Mode Integration**: When configuring base persona directives during creation (`Now`), `assets/self/default.self` is generated and written to disk with configured archetype, ethos, and directives. The standalone HTTP server exposes `/teach/detected-self`, `/teach/upload-self`, and `/teach/install-self` endpoints, enabling native Web UI persona detection, live banner prompts, and proposal review.
 
 ### Organ Behavior & Defaults:
 
@@ -55,6 +56,7 @@ my-companion/
 ├── siduri.schema.json    # Composed JSON Schema from organ manifests
 ├── .env.example          # Organ-scoped environment variables
 ├── README.md             # Composition-specific guide
+├── assets/               # Scaffolded assets (assets/self/default.self, assets/body/, assets/voice/)
 ├── public/               # Bundled mobile-friendly Next.js web client export
 └── src/
     └── index.js          # Direct SiduriRuntime bootstrapping with explicit organ factories

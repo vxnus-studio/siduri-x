@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.37';
+export const CLI_VERSION = '2.0.38';
 
 import { colors } from './colors';
 export { colors };
@@ -311,6 +311,26 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
     }
   } else if (files.createAssetsBodyDir) {
     await mkdir(path.join(projectDir, 'assets/body'), { recursive: true });
+  }
+
+  // Write all additional generated files (such as assets/self/default.self or other assets)
+  const handledKeys = new Set([
+    'package.json',
+    'siduri.config.json',
+    'siduri.schema.json',
+    '.env.example',
+    'README.md',
+    'src/index.js',
+    'public/index.html',
+    'createAssetsDirs',
+    'createAssetsBodyDir',
+  ]);
+
+  for (const [relPath, content] of Object.entries(files)) {
+    if (handledKeys.has(relPath) || typeof content !== 'string') continue;
+    const destPath = path.join(projectDir, relPath);
+    await mkdir(path.dirname(destPath), { recursive: true });
+    await writeFile(destPath, content, 'utf8');
   }
 
   // If local knowledge archive is configured with a download URL, automatically fetch and unpack it

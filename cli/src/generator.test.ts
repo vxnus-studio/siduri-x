@@ -64,6 +64,18 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
       environment: [{ name: 'VOICEVOX_URL', default: 'http://localhost:50021' }],
       services: [{ name: 'VOICEVOX', kind: 'http_service' }],
     },
+    self: {
+      name: '@siduri-x/self',
+      organType: 'behavior',
+      version: '1.0.0',
+      displayName: 'Self (Active Persona & Directives)',
+      entrypoint: './dist/index.js',
+      factory: 'ActiveSelfCompiler',
+      configKey: 'behavior',
+      configSchema: { type: 'object', properties: { provider: { type: 'string' } } },
+      environment: [],
+      services: [],
+    },
   };
 
   test('Composition A: Brain only', () => {
@@ -235,6 +247,40 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     expect(chatStreamSlice).toContain("const payload = JSON.parse(body || '{}');");
     expect(chatSlice).toContain("channel: 'direct'");
     expect(chatStreamSlice).toContain("channel: 'direct'");
+  });
+
+  test('Composition F: Brain + Self persona manifest & Teach Mode endpoints', () => {
+    const files = generateInstanceFiles({
+      name: 'BrattyCompanion',
+      selectedManifests: [MOCK_MANIFESTS.brain, MOCK_MANIFESTS.self],
+      organConfigs: {
+        behavior: {
+          provider: 'active_self',
+          mode: 'custom',
+          archetype: 'Bratty little sister',
+          ethos: 'bratty, warmth, smug',
+          directive: 'Speak as bratty little sister, calling me onii-chan',
+          selfPath: './assets/self/default.self',
+        },
+      },
+    });
+
+    // 1. Assets directory and .self file created in memory
+    expect(files.createAssetsDirs).toContain('assets/self');
+    expect(files['assets/self/default.self']).toBeDefined();
+    expect(files['assets/self/default.self']).toContain('archetype: "Bratty little sister"');
+    expect(files['assets/self/default.self']).toContain('ethos: "bratty, warmth, smug"');
+    expect(files['assets/self/default.self']).toContain('Speak as bratty little sister, calling me onii-chan');
+    expect(files['assets/self/default.self']).toContain('name: "BrattyCompanion"');
+
+    // 2. src/index.js imports scanDirective
+    const srcIndexJs = files['src/index.js'];
+    expect(srcIndexJs).toContain("import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser, scanDirective } from '@siduri-x/self';");
+
+    // 3. Teach Mode endpoints are generated
+    expect(srcIndexJs).toContain("pathname === '/teach/detected-self'");
+    expect(srcIndexJs).toContain("pathname === '/teach/upload-self'");
+    expect(srcIndexJs).toContain("pathname === '/teach/install-self'");
   });
 });
 
