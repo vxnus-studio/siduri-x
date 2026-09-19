@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.40';
+export const CLI_VERSION = '2.0.41';
 
 import { colors } from './colors';
 export { colors };

@@ -273,9 +273,9 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     expect(files['assets/self/default.self']).toContain('Prioritize empirical evidence and speak concisely');
     expect(files['assets/self/default.self']).toContain('name: "ResearchPartner"');
 
-    // 2. src/index.js imports scanDirective
+    // 2. src/index.js imports scanDirective and compilePersonaDocument
     const srcIndexJs = files['src/index.js'];
-    expect(srcIndexJs).toContain("import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser, scanDirective } from '@siduri-x/self';");
+    expect(srcIndexJs).toContain("import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser, scanDirective, compilePersonaDocument } from '@siduri-x/self';");
 
     // 3. Teach Mode endpoints are generated
     expect(srcIndexJs).toContain("pathname === '/teach/detected-self'");

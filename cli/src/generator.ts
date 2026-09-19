@@ -214,7 +214,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   ];
   for (const m of manifests) {
     if (m.name === '@siduri-x/self') {
-      importLines.push(`import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser, scanDirective } from '@siduri-x/self';`);
+      importLines.push(`import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser, scanDirective, compilePersonaDocument } from '@siduri-x/self';`);
     } else {
       importLines.push(`import { ${m.factory} } from '${m.name}';`);
     }
@@ -417,7 +417,9 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `      }`,
     '',
     `      const content = await readFile(matchedFilePath, 'utf8');`,
-    `      const parsed = SelfPackageParser.parse(content);`,
+    `      const parsed = typeof compilePersonaDocument === 'function'`,
+    `        ? await compilePersonaDocument(content, { brain: runtime?.brain, companionId })`,
+    `        : SelfPackageParser.parse(content);`,
     `      let alreadyInstalled = false;`,
     `      if (typeof self?.getIdentity === 'function') {`,
     `        try {`,
@@ -453,19 +455,22 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    let body = '';`,
     `    req.on('data', (chunk) => { body += chunk; });`,
     `    req.on('end', async () => {`,
-    `      if (typeof SelfPackageParser === 'undefined') {`,
+    `      if (typeof compilePersonaDocument === 'undefined' && typeof SelfPackageParser === 'undefined') {`,
     `        res.writeHead(400, { 'Content-Type': 'application/json' });`,
     `        res.end(JSON.stringify({ error: 'Self organ is not configured' }));`,
     `        return;`,
     `      }`,
     `      try {`,
-    `        const { content } = JSON.parse(body || '{}');`,
+    `        const { content, companionId } = JSON.parse(body || '{}');`,
     `        if (!content) {`,
     `          res.writeHead(400, { 'Content-Type': 'application/json' });`,
     `          res.end(JSON.stringify({ error: 'Missing content' }));`,
     `          return;`,
     `        }`,
-    `        const parsed = SelfPackageParser.parse(content);`,
+    `        const targetId = companionId || config.id || 'default';`,
+    `        const parsed = typeof compilePersonaDocument === 'function'`,
+    `          ? await compilePersonaDocument(content, { brain: runtime?.brain, companionId: targetId })`,
+    `          : SelfPackageParser.parse(content);`,
     `        res.writeHead(200, { 'Content-Type': 'application/json' });`,
     `        res.end(JSON.stringify(parsed));`,
     `      } catch (err) {`,

@@ -69,8 +69,8 @@ directives:
     expect(result.scannedDirectives[1].approvedByDefault).toBe(false);
   });
 
-  it('falls back to deterministic YAML/JSON parser when Brain is not provided', async () => {
-    const result = await compilePersonaDocument(validYaml);
+  it('falls back to deterministic YAML/JSON parser when fallbackToParser is true and Brain is not provided', async () => {
+    const result = await compilePersonaDocument(validYaml, { fallbackToParser: true });
 
     expect(result.isValid).toBe(true);
     expect(result.compiledBy).toBe('parser');
@@ -79,13 +79,20 @@ directives:
     expect(result.scannedDirectives[0].id).toBe('dir-1');
   });
 
-  it('falls back to deterministic parser when Brain throws an error', async () => {
+  it('rejects without Brain by default (no fallback)', async () => {
+    const result = await compilePersonaDocument(validYaml);
+    expect(result.isValid).toBe(false);
+    expect(result.compiledBy).toBe('none');
+    expect(result.errors[0]).toContain('Brain organ with compilePersona capability is required');
+  });
+
+  it('falls back to deterministic parser when Brain throws an error and fallbackToParser is true', async () => {
     const failingBrain: BrainOrgan = {
       generatePlan: jest.fn(),
       compilePersona: jest.fn().mockRejectedValue(new Error('API quota exceeded')),
     };
 
-    const result = await compilePersonaDocument(validYaml, { brain: failingBrain });
+    const result = await compilePersonaDocument(validYaml, { brain: failingBrain, fallbackToParser: true });
 
     expect(result.isValid).toBe(true);
     expect(result.compiledBy).toBe('parser');

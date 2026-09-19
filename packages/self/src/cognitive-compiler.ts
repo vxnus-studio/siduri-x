@@ -29,10 +29,22 @@ export async function compilePersonaDocument(
   content: string,
   options: CompilePersonaOptions = {}
 ): Promise<SelfPackageParseResult> {
-  const { brain, companionId, fallbackToParser = true } = options;
+  const { brain, companionId, fallbackToParser = false } = options;
 
   // 1. Try Brain Cognitive Compiler if available
+  if (!brain || typeof brain.compilePersona !== 'function') {
+    if (!fallbackToParser) {
+      return {
+        isValid: false,
+        compiledBy: 'none',
+        scannedDirectives: [],
+        errors: ['Brain organ with compilePersona capability is required. Falling back to static parsing is prohibited to enforce Truth Gate distillation.'],
+      };
+    }
+  }
+
   if (brain && typeof brain.compilePersona === 'function') {
+
     try {
       const compilation = await brain.compilePersona(content, { companionId });
       if (compilation && compilation.isValid && compilation.manifest) {
@@ -106,7 +118,16 @@ export async function compilePersonaDocument(
     }
   }
 
-  // 2. Fallback to deterministic parser
+  // 2. Fallback to deterministic parser (strictly gated by fallbackToParser)
+  if (!fallbackToParser) {
+    return {
+      isValid: false,
+      compiledBy: 'none',
+      scannedDirectives: [],
+      errors: ['Brain organ compilation failed or produced an invalid manifest. Static parser fallback is prohibited to preserve Truth Gate integrity.'],
+    };
+  }
+
   try {
     const parsed = SelfPackageParser.parse(content);
     return {
