@@ -5,8 +5,6 @@ import { colors } from '../colors';
 export async function configureVoice(
   _context: OrganConfiguratorContext
 ): Promise<OrganConfigurationResult> {
-  const companionSlug = _context.companionName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
-
   const { provider } = await inquirer.prompt<{ provider: string }>({
     type: 'list',
     name: 'provider',
@@ -36,8 +34,8 @@ export async function configureVoice(
 
   if (provider === 'rvc') {
     console.log(`\n  ${colors.cyan}ℹ RVC Voice Model Setup:${colors.reset}`);
-    console.log(`  • ${colors.dim}Voice Weights:${colors.reset} Place your trained weights (.pth) in: ${colors.green}./assets/voice/${companionSlug}/${companionSlug}.pth${colors.reset}`);
-    console.log(`  • ${colors.dim}Feature Index:${colors.reset} Place optional .index in: ${colors.green}./assets/voice/${companionSlug}/${companionSlug}.index${colors.reset}`);
+    console.log(`  • ${colors.dim}Voice Weights:${colors.reset} Place your trained weights (.pth) in: ${colors.green}./assets/voice/default/default.pth${colors.reset}`);
+    console.log(`  • ${colors.dim}Feature Index:${colors.reset} Place optional .index in: ${colors.green}./assets/voice/default/default.index${colors.reset}`);
     console.log(`  • ${colors.dim}RVC Service:${colors.reset}   Ensure your headless RVC microservice is running before voice inference.\n`);
 
     const rvcAnswers = await inquirer.prompt([
@@ -45,13 +43,13 @@ export async function configureVoice(
         type: 'input',
         name: 'modelPath',
         message: 'RVC Model Path (.pth weights):',
-        default: `./assets/voice/${companionSlug}/${companionSlug}.pth`,
+        default: './assets/voice/default/default.pth',
       },
       {
         type: 'input',
         name: 'indexPath',
         message: 'RVC Feature Index Path (.index, optional):',
-        default: `./assets/voice/${companionSlug}/${companionSlug}.index`,
+        default: './assets/voice/default/default.index',
       },
       {
         type: 'input',
@@ -94,7 +92,7 @@ export async function configureVoice(
       rvc: {
         enabled: true,
         serviceUrl: rvcAnswers.serviceUrl.trim(),
-        modelName: companionSlug,
+        modelName: 'default',
         modelPath: rvcAnswers.modelPath.trim(),
         indexPath: rvcAnswers.indexPath.trim() || undefined,
         pitchShift,

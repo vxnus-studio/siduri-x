@@ -85,10 +85,9 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
-  const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^2.0.15';
-  const cliVersion = options.cliVersion || '^2.0.36';
+  const cliVersion = options.cliVersion || '^2.0.37';
   const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
@@ -228,7 +227,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     if (m.name === '@siduri-x/self') {
       instantiationLines.push(`const self = new SqliteSelfRepository({ dbPath: path.resolve(rootDir, 'siduri.sqlite') });`);
       instantiationLines.push(`const behavior = new ActiveSelfCompiler(config.organs.behavior);`);
-      instantiationLines.push(`const selfFile = path.resolve(rootDir, config.organs.behavior?.selfPath || 'assets/self/${companionSlug}.self');`);
+      instantiationLines.push(`const selfFile = path.resolve(rootDir, config.organs.behavior?.selfPath || 'assets/self/default.self');`);
       instantiationLines.push(`try {`);
       instantiationLines.push(`  const selfRaw = await readFile(selfFile, 'utf8').catch(() => null);`);
       instantiationLines.push(`  if (selfRaw) {`);
@@ -909,11 +908,11 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const createAssetsDirs: string[] = [];
 
   if (hasBody) {
-    createAssetsDirs.push(`assets/body/${companionSlug}`);
+    createAssetsDirs.push('assets/body/default');
     readmeLines.push(
       '',
       '### Body & Avatar Models',
-      `Place your Live2D Cubism model assets into \`./assets/body/${companionSlug}/\`:`,
+      'Place your Live2D Cubism model assets into `./assets/body/default/`:',
       '- `model.model3.json`',
       '- `model.moc3`',
       '- textures directory'
@@ -921,13 +920,13 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   }
 
   if (hasVoice) {
-    createAssetsDirs.push(`assets/voice/${companionSlug}`);
+    createAssetsDirs.push('assets/voice/default');
     readmeLines.push(
       '',
       '### Voice & RVC Models',
-      `Place your character RVC voice models into \`./assets/voice/${companionSlug}/\`:`,
-      `- \`${companionSlug}.pth\` (Target voice weights)`,
-      `- \`${companionSlug}.index\` (Feature index file)`
+      'Place your character RVC voice models into `./assets/voice/default/`:',
+      '- `default.pth` (Target voice weights)',
+      '- `default.index` (Feature index file)'
     );
   }
 
@@ -947,12 +946,12 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   if (manifests.some((m) => m.organType === 'behavior')) {
     createAssetsDirs.push('assets/self');
     if (behaviorConfig?.mode === 'custom' || behaviorConfig?.archetype) {
-      const selfRelPath = `assets/self/${companionSlug}.self`;
+      const selfRelPath = 'assets/self/default.self';
       const selfContent = [
         `specVersion: "2.0.0"`,
         `kind: "self"`,
-        `id: "${companionSlug}-self"`,
-        `name: "${instanceName} Persona"`,
+        `id: "default-self"`,
+        `name: "Default Persona"`,
         `version: "1.0.0"`,
         `author:`,
         `  name: "Operator"`,

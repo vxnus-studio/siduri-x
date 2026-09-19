@@ -172,12 +172,12 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
 
     // Body & voice asset directories requested
     expect(files.createAssetsBodyDir).toBe(true);
-    expect(files.createAssetsDirs).toContain('assets/body/companion-full');
-    expect(files.createAssetsDirs).toContain('assets/voice/companion-full');
+    expect(files.createAssetsDirs).toContain('assets/body/default');
+    expect(files.createAssetsDirs).toContain('assets/voice/default');
 
     // README mentions Live2D model assets & prerequisites
-    expect(files['README.md']).toContain('assets/body/companion-full');
-    expect(files['README.md']).toContain('assets/voice/companion-full');
+    expect(files['README.md']).toContain('assets/body/default');
+    expect(files['README.md']).toContain('assets/voice/default');
     expect(files['README.md']).toContain('Prerequisites');
 
     // No docker compose generated (Docker completely removed, host-native runtime)

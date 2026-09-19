@@ -4,9 +4,6 @@ import { OrganConfiguratorContext, OrganConfigurationResult } from './types';
 export async function configureBehavior(
   _context: OrganConfiguratorContext
 ): Promise<OrganConfigurationResult> {
-  const companionName = _context.companionName || 'Companion';
-  const companionSlug = companionName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
-
   const { personaMode } = await inquirer.prompt<{ personaMode: 'now' | 'later' }>({
     type: 'list',
     name: 'personaMode',
@@ -65,7 +62,7 @@ export async function configureBehavior(
   const archetype = personaAnswers.archetype.trim() || 'Knowledge Assistant & Research Partner';
   const ethos = personaAnswers.ethos.trim() || 'Direct technical candor, thoughtful, concise, and loyal';
   const directive = personaAnswers.directive.trim() || 'Speak concisely and stay in character without sycophantic filler';
-  const selfPath = `./assets/self/${companionSlug}.self`;
+  const selfPath = './assets/self/default.self';
 
   return {
     config: {

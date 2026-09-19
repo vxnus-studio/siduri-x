@@ -381,6 +381,20 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.summary?.['Model Path']).toBe('./assets/body/sparkle/model.model3.json');
     });
 
+    test('Body configurator defaults model path to assets/body/default', async () => {
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ provider: 'live2d' })
+        .mockResolvedValueOnce({
+          modelSource: '',
+        });
+
+      const result = await configureBody({ companionName: 'MyCompanion', manifest: bodyManifest });
+      expect(result.config.provider).toBe('live2d');
+      expect(result.config.modelPath).toBe('./assets/body/default/model.model3.json');
+      expect(result.config.modelUrl).toBe('/assets/body/default/model.model3.json');
+      expect(result.summary?.['Model Path']).toBe('./assets/body/default/model.model3.json');
+    });
+
     test('Hands configurator configures MCP tool execution timeout', async () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ provider: 'mcp' })
@@ -421,7 +435,7 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.config.provider).toBe('active_self');
       expect(result.config.mode).toBe('custom');
       expect(result.config.archetype).toBe('System Sentinel');
-      expect(result.config.selfPath).toBe('./assets/self/sparkle.self');
+      expect(result.config.selfPath).toBe('./assets/self/default.self');
     });
 
     test('Vision configurator configures OpenRouter vision model', async () => {

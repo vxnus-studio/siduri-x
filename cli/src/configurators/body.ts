@@ -21,8 +21,6 @@ export async function configureBody(
     };
   }
 
-  const companionSlug = _context.companionName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
-
   const { modelSource } = await inquirer.prompt<{
     modelSource: string;
   }>([
@@ -30,13 +28,17 @@ export async function configureBody(
       type: 'input',
       name: 'modelSource',
       message: 'Live2D Model path / URL (.model3.json):',
-      default: `./assets/body/${companionSlug}/model.model3.json`,
+      default: './assets/body/default/model.model3.json',
     },
   ]);
 
-  const modelPath = modelSource.trim() || `./assets/body/${companionSlug}/model.model3.json`;
+  const modelPath = modelSource.trim() || './assets/body/default/model.model3.json';
   const isHttpOrAbsolute = modelPath.startsWith('http://') || modelPath.startsWith('https://') || modelPath.startsWith('/');
-  const webModelUrl = isHttpOrAbsolute ? modelPath : `/assets/body/${companionSlug}/model.model3.json`;
+  const webModelUrl = isHttpOrAbsolute
+    ? modelPath
+    : modelPath.startsWith('./')
+      ? modelPath.slice(1)
+      : `/${modelPath}`;
 
   return {
     config: {
