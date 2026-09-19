@@ -353,6 +353,45 @@ describe('@siduri-x/self Domain Package', () => {
       expect(projection.winningDirectives).toHaveLength(1);
       expect(projection.winningDirectives[0].id).toBe('d-winner');
     });
+
+    it('accepts lowercase, uppercase, and mixed-case active directive statuses', async () => {
+      const context = {
+        companionId: 'comp-1',
+        directives: [
+          {
+            id: 'd-lower',
+            companionId: 'comp-1',
+            priority: 50,
+            directive: 'Lowercase active rule',
+            status: 'active' as any,
+            category: 'behavioral' as const,
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: 'd-upper',
+            companionId: 'comp-1',
+            priority: 60,
+            directive: 'Uppercase ACTIVE rule',
+            status: 'ACTIVE' as any,
+            category: 'behavioral' as const,
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: 'd-mixed',
+            companionId: 'comp-1',
+            priority: 70,
+            directive: 'Mixed case Active rule',
+            status: 'Active' as any,
+            category: 'behavioral' as const,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      };
+
+      const projection = await compiler.compileProjection(context);
+      expect(projection.winningDirectives).toHaveLength(3);
+      expect(projection.activeIds).toEqual(['d-mixed', 'd-upper', 'd-lower']);
+    });
   });
 
   describe('SelfPackageParser & Teach Mode Ingestion', () => {

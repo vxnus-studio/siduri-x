@@ -30,7 +30,8 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
     // 1. Identify superseded directives
     const supersededIds = new Set<string>();
     for (const d of directives) {
-      if (d.status === 'ACTIVE' && d.supersedesId) {
+      const status = String(d.status || '').toLowerCase();
+      if (status === 'active' && d.supersedesId) {
         supersededIds.add(d.supersedesId);
       }
     }
@@ -48,10 +49,11 @@ export class ActiveSelfCompiler implements BehaviorOrgan {
         continue;
       }
 
-      // Status check
-      if (d.status !== 'ACTIVE') {
+      // Status check (case-insensitive: accepts 'active', 'ACTIVE', 'Active')
+      const status = String(d.status || '').toLowerCase();
+      if (status !== 'active') {
         excludedIds.push(d.id);
-        diagnostics[d.id] = `state_${String(d.status).toLowerCase()}`;
+        diagnostics[d.id] = `state_${status}`;
         continue;
       }
 

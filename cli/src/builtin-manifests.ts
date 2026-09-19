@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/self',
     organType: 'behavior',
-    version: '2.0.7',
+    version: '2.0.9',
     displayName: 'Self & Persona (Identity & Directives)',
     description: 'Autonomous persona compiler, relational stances, and .self asset loader',
     entrypoint: './dist/index.js',
