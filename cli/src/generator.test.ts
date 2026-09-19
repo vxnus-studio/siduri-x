@@ -251,15 +251,15 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
 
   test('Composition F: Brain + Self persona manifest & Teach Mode endpoints', () => {
     const files = generateInstanceFiles({
-      name: 'BrattyCompanion',
+      name: 'ResearchPartner',
       selectedManifests: [MOCK_MANIFESTS.brain, MOCK_MANIFESTS.self],
       organConfigs: {
         behavior: {
           provider: 'active_self',
           mode: 'custom',
-          archetype: 'Bratty little sister',
-          ethos: 'bratty, warmth, smug',
-          directive: 'Speak as bratty little sister, calling me onii-chan',
+          archetype: 'Technical Research Specialist',
+          ethos: 'analytical, thoughtful, concise',
+          directive: 'Prioritize empirical evidence and speak concisely',
           selfPath: './assets/self/default.self',
         },
       },
@@ -268,10 +268,10 @@ describe('Instance Generator Composition Invariants (Phase 3)', () => {
     // 1. Assets directory and .self file created in memory
     expect(files.createAssetsDirs).toContain('assets/self');
     expect(files['assets/self/default.self']).toBeDefined();
-    expect(files['assets/self/default.self']).toContain('archetype: "Bratty little sister"');
-    expect(files['assets/self/default.self']).toContain('ethos: "bratty, warmth, smug"');
-    expect(files['assets/self/default.self']).toContain('Speak as bratty little sister, calling me onii-chan');
-    expect(files['assets/self/default.self']).toContain('name: "BrattyCompanion"');
+    expect(files['assets/self/default.self']).toContain('archetype: "Technical Research Specialist"');
+    expect(files['assets/self/default.self']).toContain('ethos: "analytical, thoughtful, concise"');
+    expect(files['assets/self/default.self']).toContain('Prioritize empirical evidence and speak concisely');
+    expect(files['assets/self/default.self']).toContain('name: "ResearchPartner"');
 
     // 2. src/index.js imports scanDirective
     const srcIndexJs = files['src/index.js'];

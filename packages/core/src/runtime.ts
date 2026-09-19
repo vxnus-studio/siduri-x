@@ -713,7 +713,7 @@ export async function promoteApprovedClaimToKnowledge(
         predicate.includes('game') ||
         predicate.includes('character') ||
         predicate.includes('weapon') ||
-        value.toLowerCase().includes('genshin')
+        predicate.includes('roster')
       ) {
         inferredDomain = 'gaming';
       } else if (

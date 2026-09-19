@@ -24,15 +24,15 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
     await organ.inventory.saveItem({
       id: 'inv-1',
       companionId: 'test-comp',
-      entityName: 'Furina',
+      entityName: 'Astra',
       domain: 'game_character',
-      properties: { game: 'Genshin Impact', element: 'Hydro' },
+      properties: { game: 'Fantasy RPG', element: 'Cosmic' },
       updatedAt: new Date().toISOString(),
     });
 
-    const context = await organ.queryContext('test-comp', 'Furina');
+    const context = await organ.queryContext('test-comp', 'Astra');
     expect(context).toHaveLength(1);
-    expect(context[0]).toContain('Furina (game_character)');
+    expect(context[0]).toContain('Astra (game_character)');
 
     organ.close();
   });
@@ -83,7 +83,7 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
       }
       const searchPayload = {
         revision: 'rev-mock-1',
-        results: [{ id: 'chunk-1', content: 'Mock Furina fact', revision: 'rev-mock-1', citations: [{ sourceId: 'mock-src', chunkId: 'c-1' }] }],
+        results: [{ id: 'chunk-1', content: 'Mock Astra fact', revision: 'rev-mock-1', citations: [{ sourceId: 'mock-src', chunkId: 'c-1' }] }],
       };
       return {
         ok: true,
@@ -110,7 +110,7 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
     });
 
     expect(organ.eAdapter).toBeDefined();
-    const results = await organ.search('Furina');
+    const results = await organ.search('Astra');
     expect(Array.isArray(results)).toBe(true);
 
     organ.close();
@@ -154,12 +154,12 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
         const restSearchPayload = {
           items: [
             {
-              entity_id: 'genshin:character:furina',
+              entity_id: 'lore:character:astra',
               kind: 'character',
-              slug: 'furina',
-              name: 'Furina',
+              slug: 'astra',
+              name: 'Astra',
               section: 'Profile',
-              content: 'Furina is the Hydro Archon Focalors vessel in Fontaine.',
+              content: 'Astra is the guardian of the celestial sanctuary.',
               rank: 0.95,
             },
           ],
@@ -191,9 +191,9 @@ describe('UnifiedKnowledgeOrgan Unit Tests', () => {
       packId: '@vxnus/e-teyvat',
     });
 
-    const results = await organ.search('Furina');
+    const results = await organ.search('Astra');
     expect(results).toHaveLength(1);
-    expect(results[0].content).toContain('Furina is the Hydro Archon');
+    expect(results[0].content).toContain('Astra is the guardian');
     expect(results[0].provenance).toBe('@vxnus/e-teyvat');
 
     organ.close();

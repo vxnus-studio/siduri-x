@@ -7,9 +7,9 @@ describe('FixtureObservationOrgan', () => {
     ] })) };
     const organ = new FixtureObservationOrgan(vision, 1000, 2);
     const frame = new Uint8Array([1, 2, 3]);
-    const result = await organ.ingest(frame, 'fixture-genshin', 'fixture-vision');
+    const result = await organ.ingest(frame, 'fixture-screen', 'fixture-vision');
 
-    expect(result.observation).toMatchObject({ sourceName: 'fixture-genshin', providerId: 'fixture-vision', confidence: 0.9 });
+    expect(result.observation).toMatchObject({ sourceName: 'fixture-screen', providerId: 'fixture-vision', confidence: 0.9 });
     expect(result.observation?.evidenceId).toMatch(/^evidence_/);
     expect(JSON.stringify(result.observation)).not.toContain('1,2,3');
     expect(vision.analyze).toHaveBeenCalledWith(expect.stringContaining('data:image/png;base64'), expect.any(String));

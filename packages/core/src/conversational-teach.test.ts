@@ -1065,19 +1065,19 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
       companionId,
       subject: 'assistant',
       predicate: 'name',
-      value: 'Hu Tao',
+      value: 'Athena',
       claimType: 'semantic',
     } as any);
 
     await runtime.approveProposal(nameClaim.id, { companionId });
     const identityAfterClaim = await self.getIdentity(companionId);
-    expect(identityAfterClaim?.name).toBe('Hu Tao');
+    expect(identityAfterClaim?.name).toBe('Athena');
 
-    // 2. Propose and approve behavioral directive "Address companion as Hu Tao The 77th"
+    // 2. Propose and approve behavioral directive "Address companion as Athena Prime"
     const dir = {
       id: 'dir-name-test-1',
       companionId,
-      directive: 'Address companion as Hu Tao The 77th',
+      directive: 'Address companion as Athena Prime',
       priority: 80,
       status: 'pending' as any,
       category: 'relational' as any,
@@ -1087,7 +1087,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
 
     await runtime.approveDirective(dir.id, { companionId });
     const identityAfterDirective = await self.getIdentity(companionId);
-    expect(identityAfterDirective?.name).toBe('Hu Tao The 77th');
+    expect(identityAfterDirective?.name).toBe('Athena Prime');
 
     db.close();
   });

@@ -110,7 +110,7 @@ describe('CroppedVisionAdapter', () => {
     (spawn as jest.Mock).mockImplementation(() => createMockProcess(Buffer.from('CROPPED', 'utf8'), 0));
 
     mockProvider.analyze.mockResolvedValueOnce(JSON.stringify([
-      { entity: 'party_member', value: 'Venti', confidence: 0.9, ocr_text: 'Venti' }
+      { entity: 'party_member', value: 'Ranger', confidence: 0.9, ocr_text: 'Ranger' }
     ]));
 
     const adapter = new CroppedVisionAdapter(mockProvider, { name: 'hud', x: 0, y: 0, width: 100, height: 100 }, true);
@@ -119,7 +119,7 @@ describe('CroppedVisionAdapter', () => {
 
     expect(result.length).toBe(2);
     expect(result[0].entity).toBe('active_character');
-    expect(result[0].value).toBe('Venti');
+    expect(result[0].value).toBe('Ranger');
     expect(result[0].source_crop).toBe('hud');
   });
 });
@@ -128,7 +128,7 @@ describe('expandPartyList', () => {
   test('expands numbered list', () => {
     const input: VisionReading[] = [{
       entity: 'party_list',
-      value: 'Venti(1), Zhongli(2)',
+      value: 'Ranger(1), Paladin(2)',
       confidence: 1.0,
       source_crop: 'hud'
     }];
@@ -136,11 +136,11 @@ describe('expandPartyList', () => {
     expect(output.length).toBe(4);
     expect(output[0].entity).toBe('party_list');
     expect(output[1].entity).toBe('active_character');
-    expect(output[1].value).toBe('Venti');
+    expect(output[1].value).toBe('Ranger');
     expect(output[2].entity).toBe('party_member');
-    expect(output[2].value).toBe('Venti');
+    expect(output[2].value).toBe('Ranger');
     expect(output[3].entity).toBe('party_member');
-    expect(output[3].value).toBe('Zhongli');
+    expect(output[3].value).toBe('Paladin');
   });
 });
 
@@ -158,7 +158,7 @@ describe('MultiPassVisionAdapter', () => {
       { entity: 'scene', value: 'combat', confidence: 0.9 }
     ]));
     provider2.analyze.mockResolvedValueOnce(JSON.stringify([
-      { entity: 'party_member', value: 'Zhongli', confidence: 0.8 }
+      { entity: 'party_member', value: 'Paladin', confidence: 0.8 }
     ]));
 
     const adapter = new MultiPassVisionAdapter([
