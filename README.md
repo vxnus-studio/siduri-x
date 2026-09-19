@@ -19,9 +19,10 @@ Instead of treating memory as an unverified vector dump that silently drifts ove
 > [!NOTE]
 > **Getting Started & Repository Guide**
 >
-> - **Looking to experiment with a local testbed?** You can scaffold a standalone companion instance using the development CLI:
+> - **Looking to experiment with a local testbed?** You can scaffold a standalone companion instance using the CLI:
 >   ```bash
->   npx @vxnus/siduri create my-companion
+>   npx siduri create my-companion
+>   # or: npx @vxnus/siduri create my-companion
 >   ```
 >   The CLI guides you through an interactive setup and scaffolds a testbed companion instance with the organs and configurations you select.
 > - **About this repository:** This repository (`siduri-x`) houses the monorepo for the core engine, architectural contracts, and `@siduri-x/*` packages.
@@ -46,7 +47,7 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 ### Core Domain Substrates (Persistent Continuity)
 | Package | Version | Description | Status |
 | **`@siduri-x/core`** | `^2.0.16` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
-| **`@siduri-x/self`** | `^2.0.12` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
+| **`@siduri-x/self`** | `^2.0.13` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
 | **`@siduri-x/knowledge`** | `^2.0.7` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
 | **`@siduri-x/memory`** | `^2.0.6` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
 
@@ -65,14 +66,15 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 
 ---
 
-## Quick Start (`@vxnus/siduri`)
+## Quick Start (`siduri` / `@vxnus/siduri`)
 
 To create and run your own standalone companion, you can scaffold an instance anywhere on your machine using the CLI:
 
 ### 1. Create a Standalone Companion
 
 ```bash
-npx @vxnus/siduri create my-siduri
+npx siduri create my-siduri
+# or: npx @vxnus/siduri create my-siduri
 ```
 
 The CLI dynamically discovers installed `@siduri-x/*` organ manifests and guides you through an interactive setup:
@@ -97,7 +99,8 @@ Siduri uses a unified, zero-configuration SQLite database (`siduri.sqlite`) with
 Inspects environment variables, external service declarations, local database readiness, and executes organ health probes:
 
 ```bash
-npx @vxnus/siduri doctor
+npx siduri doctor
+# or: npx @vxnus/siduri doctor
 ```
 
 ---

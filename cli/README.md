@@ -1,11 +1,12 @@
-# @vxnus/siduri
+# Siduri CLI (`siduri` / `@vxnus/siduri`)
 
 Experimental CLI for creating, diagnosing, and managing standalone Siduri companions powered by the `@siduri-x/*` organ ecosystem.
 
 Requires Node.js >=22.16.0.
 
 ```bash
-npx @vxnus/siduri create my-companion
+npx siduri create my-companion
+# or: npx @vxnus/siduri create my-companion
 ```
 
 ## Prerequisites
