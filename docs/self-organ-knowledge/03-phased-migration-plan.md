@@ -3,13 +3,13 @@
 > **Status:** FULLY IMPLEMENTED AND VERIFIED (All 6 Phases Complete ✅)  
 > **Philosophy:** Zero backward compatibility compromises. Complete eradication of PostgreSQL. Pure architectural boundaries.  
 > **Execution Summary:**  
-> - **Phase 1 (Pure SQLite Foundation):** `324e7644` (SiduriDatabase with WAL & FTS5 in `@siduri-x/core`)  
-> - **Phase 2 (Domain Extraction):** `18959d4d` (`@siduri-x/self`, `@siduri-x/knowledge`, `@siduri-x/memory`)  
+> - **Phase 1 (Pure SQLite Foundation):** `324e7644` (SiduriDatabase with WAL & FTS5 in `@sidurijs/core`)  
+> - **Phase 2 (Domain Extraction):** `18959d4d` (`@sidurijs/self`, `@sidurijs/knowledge`, `@sidurijs/memory`)  
 > - **Phase 3 (Purify Organs):** `18959d4d` (Demoted behavior, renamed eknowledge)  
 > - **Phase 4 (Runtime Refactor):** `fce27d8e` (4-stream parallel retrieval + life context prompt injection)  
 > - **Phase 5 (Teach Mode & .self):** `11fb10dd` (`/teach/upload-self`, `/teach/install-self`, batch reviews)  
 > - **Phase 6 (Purge PostgreSQL):** `3b57c79a` (Zero pg deps, SqliteMemoryStore, 29/29 turbo tasks verified)  
-> **Substrates:** Single unified `siduri.sqlite` (SQLite WAL mode + FTS5), `@siduri-x/eknowledge` for external packs.  
+> **Substrates:** Single unified `siduri.sqlite` (SQLite WAL mode + FTS5), `@sidurijs/eknowledge` for external packs.  
 > **Canonical Hierarchy:**  
 > - **Top-Level Domains:** `packages/core`, `packages/self`, `packages/knowledge`, `packages/memory`  
 > - **Peripheral Organs:** `packages/organs/{brain, ear, voice, mouth, vision, hands, body, observation, eknowledge}`  
@@ -27,10 +27,10 @@ flowchart TD
     end
 
     subgraph CoreDomains["packages/ (Core Consciousness Substrates)"]
-        Core["@siduri-x/core\n(Runtime, Truth Gate, Event Bus)"]
-        Self["@siduri-x/self\n(Active Self Compiler, .self Parser, Identity)"]
-        Knowledge["@siduri-x/knowledge\n(Life DB Typed Repositories)"]
-        Memory["@siduri-x/memory\n(Episodic Store & FTS5 Search)"]
+        Core["@sidurijs/core\n(Runtime, Truth Gate, Event Bus)"]
+        Self["@sidurijs/self\n(Active Self Compiler, .self Parser, Identity)"]
+        Knowledge["@sidurijs/knowledge\n(Life DB Typed Repositories)"]
+        Memory["@sidurijs/memory\n(Episodic Store & FTS5 Search)"]
     end
 
     subgraph Organs["packages/organs/ (Pluggable Peripherals with organ-manifest.json)"]
@@ -211,20 +211,20 @@ flowchart LR
 
 **Goal:** Establish `packages/self`, `packages/knowledge`, and `packages/memory` as first-class domain packages directly under `packages/`.
 
-### 2.1 Create `@siduri-x/self` (`packages/self`)
+### 2.1 Create `@sidurijs/self` (`packages/self`)
 * **Responsibilities:**
   - `SelfRepository`: Reads/writes identity, personality sliders, directional relationships, and directives in `siduri.sqlite`.
-  - `ActiveSelfCompiler`: Merged from old `@siduri-x/behavior`. Projects active traits and winning directives into `<active_self>` system prompt tokens.
+  - `ActiveSelfCompiler`: Merged from old `@sidurijs/behavior`. Projects active traits and winning directives into `<active_self>` system prompt tokens.
   - `SelfPackageParser`: Parses and validates `.self` YAML bundles.
   - `scanDirective`: Safety scanner for prompt injection defense.
 
-### 2.2 Rebuild `@siduri-x/knowledge` (`packages/knowledge`)
+### 2.2 Rebuild `@sidurijs/knowledge` (`packages/knowledge`)
 * **Responsibilities:**
   - Replaces external pack fetching with **Internal Sovereign Life DB**.
   - Provides typed repositories: `InventoryRepo`, `FinanceRepo`, `ScheduleRepo`, `PreferencesRepo`.
   - Exposes `queryLifeContext(queryText: string): Promise<LifeContextResult>`.
 
-### 2.3 Rebuild `@siduri-x/memory` (`packages/memory`)
+### 2.3 Rebuild `@sidurijs/memory` (`packages/memory`)
 * **Responsibilities:**
   - Pure SQLite FTS5 implementation replacing `PostgresMemoryOrgan`.
   - Methods: `recordEvent()`, `searchClaims(query: string, limit?: number)`, `proposeClaim()`, `approveClaim()`.
@@ -250,21 +250,21 @@ flowchart LR
 * **Updated `EXPECTED_ORGANS`:**
   ```typescript
   const EXPECTED_ORGANS = [
-    { dir: 'brain', name: '@siduri-x/brain', organType: 'brain', configKey: 'brain' },
-    { dir: 'ear', name: '@siduri-x/ear', organType: 'ear', configKey: 'ear' },
-    { dir: 'voice', name: '@siduri-x/voice', organType: 'voice', configKey: 'voice' },
-    { dir: 'mouth', name: '@siduri-x/mouth', organType: 'mouth', configKey: 'mouth' },
-    { dir: 'vision', name: '@siduri-x/vision', organType: 'vision', configKey: 'vision' },
-    { dir: 'hands', name: '@siduri-x/hands', organType: 'hands', configKey: 'hands' },
-    { dir: 'body', name: '@siduri-x/body', organType: 'body', configKey: 'body' },
-    { dir: 'observation', name: '@siduri-x/observation', organType: 'observation', configKey: 'observation' },
-    { dir: 'eknowledge', name: '@siduri-x/eknowledge', organType: 'eknowledge', configKey: 'eknowledge' },
+    { dir: 'brain', name: '@sidurijs/brain', organType: 'brain', configKey: 'brain' },
+    { dir: 'ear', name: '@sidurijs/ear', organType: 'ear', configKey: 'ear' },
+    { dir: 'voice', name: '@sidurijs/voice', organType: 'voice', configKey: 'voice' },
+    { dir: 'mouth', name: '@sidurijs/mouth', organType: 'mouth', configKey: 'mouth' },
+    { dir: 'vision', name: '@sidurijs/vision', organType: 'vision', configKey: 'vision' },
+    { dir: 'hands', name: '@sidurijs/hands', organType: 'hands', configKey: 'hands' },
+    { dir: 'body', name: '@sidurijs/body', organType: 'body', configKey: 'body' },
+    { dir: 'observation', name: '@sidurijs/observation', organType: 'observation', configKey: 'observation' },
+    { dir: 'eknowledge', name: '@sidurijs/eknowledge', organType: 'eknowledge', configKey: 'eknowledge' },
   ];
   ```
 
 ---
 
-## Phase 4: Core Runtime Refactor (`@siduri-x/core`)
+## Phase 4: Core Runtime Refactor (`@sidurijs/core`)
 
 **Goal:** Simplify `SiduriRuntime` to coordinate the 3 core substrates, the Truth Gate, and pluggable organs.
 
@@ -329,7 +329,7 @@ export class SiduriRuntime {
   ```bash
   pnpm remove pg @types/pg --recursive
   ```
-* Delete all `.sql` PostgreSQL migration files in `@siduri-x/memory`.
+* Delete all `.sql` PostgreSQL migration files in `@sidurijs/memory`.
 
 ### 6.2 Full Verification Suite
 1. **Build & Typecheck:**
@@ -339,14 +339,14 @@ export class SiduriRuntime {
    ```
 2. **Execute Boundary & Unit Tests:**
    ```bash
-   pnpm --filter @siduri-x/core test
-   pnpm --filter @siduri-x/self test
-   pnpm --filter @siduri-x/knowledge test
-   pnpm --filter @siduri-x/memory test
+   pnpm --filter @sidurijs/core test
+   pnpm --filter @sidurijs/self test
+   pnpm --filter @sidurijs/knowledge test
+   pnpm --filter @sidurijs/memory test
    ```
 3. **Run API Integration & SSRF Tests:**
    ```bash
-   pnpm --filter @siduri-x/api test
+   pnpm --filter @sidurijs/api test
    ```
 4. **Smoke Test Single Binary:**
    - Launch runtime with zero external database dependencies.

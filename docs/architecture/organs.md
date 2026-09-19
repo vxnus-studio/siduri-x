@@ -2,23 +2,23 @@
 
 > **Status:** Updated for Clean Architecture & Pure SQLite Substrates  
 > **Architecture Topology:**
-> - **Top-Level Domains (`packages/`):** `@siduri-x/core`, `@siduri-x/self`, `@siduri-x/knowledge` (Life DB), `@siduri-x/memory`
+> - **Top-Level Domains (`packages/`):** `@sidurijs/core`, `@sidurijs/self`, `@sidurijs/knowledge` (Life DB), `@sidurijs/memory`
 > - **Peripheral Organs (`packages/organs/`):** `brain`, `hands`, `ear`, `vision`, `voice`, `body`, `observation`, `mouth`
 
 ---
 
 ## 1. Core Domains (`packages/`)
 
-- **Core (`@siduri-x/core`)**: Central runtime protocol, `SiduriRuntime`, `ResponseGatingEngine` (Truth Gate), Action Policy Engine, and `SiduriDatabase` (unified SQLite WAL + FTS5 foundation).
-- **Self (`@siduri-x/self`)**: Agent identity, personality traits (warmth, formality, sarcasm, verbosity, curiosity), directional relationships, `ActiveSelfCompiler`, and `.self` package parser.
-- **Knowledge (`@siduri-x/knowledge`)**: Unified Knowledge Domain. Houses both the internal Sovereign Life Database (`SqliteLifeDatabase`: inventory, finance, schedule, preferences) and external portable E knowledge packs (`EKnowledgeAdapter`) with SSRF hardening.
-- **Memory (`@siduri-x/memory`)**: Pure SQLite FTS5 episodic memory store. Tracks conversation episodes, claims lifecycle (`PENDING` -> `APPROVED`), and BM25 relevance search. Zero external database dependencies.
+- **Core (`@sidurijs/core`)**: Central runtime protocol, `SiduriRuntime`, `ResponseGatingEngine` (Truth Gate), Action Policy Engine, and `SiduriDatabase` (unified SQLite WAL + FTS5 foundation).
+- **Self (`@sidurijs/self`)**: Agent identity, personality traits (warmth, formality, sarcasm, verbosity, curiosity), directional relationships, `ActiveSelfCompiler`, and `.self` package parser.
+- **Knowledge (`@sidurijs/knowledge`)**: Unified Knowledge Domain. Houses both the internal Sovereign Life Database (`SqliteLifeDatabase`: inventory, finance, schedule, preferences) and external portable E knowledge packs (`EKnowledgeAdapter`) with SSRF hardening.
+- **Memory (`@sidurijs/memory`)**: Pure SQLite FTS5 episodic memory store. Tracks conversation episodes, claims lifecycle (`PENDING` -> `APPROVED`), and BM25 relevance search. Zero external database dependencies.
 
 ---
 
 ## 2. Pluggable Peripheral Organs (`packages/organs/`)
 
-Each organ implements the canonical `@siduri-x/core` organ interface and publishes an `organ-manifest.json`:
+Each organ implements the canonical `@sidurijs/core` organ interface and publishes an `organ-manifest.json`:
 
 - **Brain (`packages/organs/brain`)**: Implements provider-neutral LLM reasoning (`OpenAICompatibleBrain`, `OpenRouterBrain`). Enforces the `ResponsePlan` schema with internal monologue, structured memory proposals, and action intents.
 - **Hands (`packages/organs/hands`)**: Tool execution and Model Context Protocol (MCP) organ. Enforces cryptographic `AuthorizationCapability` checks verified by `ActionPolicyEngine`.
@@ -33,4 +33,4 @@ Each organ implements the canonical `@siduri-x/core` organ interface and publish
 
 ## 3. Deprecated / Superseded Packages
 
-- ~~**Behavior (`@siduri-x/behavior`)**~~: Merged into `@siduri-x/self`. The `ActiveSelfCompiler` in `@siduri-x/self` implements the `BehaviorOrgan` interface for full backward compatibility.
+- ~~**Behavior (`@sidurijs/behavior`)**~~: Merged into `@sidurijs/self`. The `ActiveSelfCompiler` in `@sidurijs/self` implements the `BehaviorOrgan` interface for full backward compatibility.

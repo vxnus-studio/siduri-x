@@ -4,16 +4,16 @@ Status: **RELEASE READY WITH EXPLICIT LIMITATIONS** (Verified on `main`)
 
 Siduri-X is implemented as a decoupled, 10-organ cognition and runtime architecture:
 
-- **Brain (`@siduri-x/brain`)**: Implemented using OpenRouter and OpenAI-compatible structured generation with deadline-bound execution.
-- **Memory (`@siduri-x/memory`)**: Implemented via SQLite adapter with WAL mode, FTS5 BM25 indexing, immutability on approved claims (`supersedes`), and strict `companion_id` isolation.
-- **Self / Behavior (`@siduri-x/self`)**: Implemented `ActiveSelfCompiler` (superseding legacy `@siduri-x/behavior`) preserving safety constraints and excluding pending directives.
-- **Voice (`@siduri-x/voice`)**: Implemented priority queue with multi-TTS (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC support.
-- **Hands (`@siduri-x/hands`)**: Implemented tool execution and Model Context Protocol (MCP) with `ActionPolicyEngine` capability authorization and tamper-evident audit chaining.
-- **Knowledge (`@siduri-x/knowledge`)**: Implemented bounds-checked E knowledge integration with citation tracking.
-- **Vision (`@siduri-x/vision`)**: Implemented visual observation and OCR perception adapters.
-- **Body (`@siduri-x/body`)**: Implemented Live2D and avatar experience adapters.
-- **Ear (`@siduri-x/ear`)**: Implemented sensory audio and text input ingestion.
-- **Observation (`@siduri-x/observation`)**: Implemented bounded SHA-256 frame digestion and deduplication.
+- **Brain (`@sidurijs/brain`)**: Implemented using OpenRouter and OpenAI-compatible structured generation with deadline-bound execution.
+- **Memory (`@sidurijs/memory`)**: Implemented via SQLite adapter with WAL mode, FTS5 BM25 indexing, immutability on approved claims (`supersedes`), and strict `companion_id` isolation.
+- **Self / Behavior (`@sidurijs/self`)**: Implemented `ActiveSelfCompiler` (superseding legacy `@sidurijs/behavior`) preserving safety constraints and excluding pending directives.
+- **Voice (`@sidurijs/voice`)**: Implemented priority queue with multi-TTS (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC support.
+- **Hands (`@sidurijs/hands`)**: Implemented tool execution and Model Context Protocol (MCP) with `ActionPolicyEngine` capability authorization and tamper-evident audit chaining.
+- **Knowledge (`@sidurijs/knowledge`)**: Implemented bounds-checked E knowledge integration with citation tracking.
+- **Vision (`@sidurijs/vision`)**: Implemented visual observation and OCR perception adapters.
+- **Body (`@sidurijs/body`)**: Implemented Live2D and avatar experience adapters.
+- **Ear (`@sidurijs/ear`)**: Implemented sensory audio and text input ingestion.
+- **Observation (`@sidurijs/observation`)**: Implemented bounded SHA-256 frame digestion and deduplication.
 - **CLI (`@vxnus/siduri`)**: Dynamic manifest discovery, instance generator, `doctor` health probes, and `db push` migrations.
 - **Orchestrator API (`apps/api`)**: Implemented localhost-bound (`127.0.0.1`) Express runtime with neutral context mapping and gating endpoints.
 

@@ -4,7 +4,7 @@ Status: integration baseline; behavioral extraction incomplete
 
 - **OpenRouter**: Used for Brain and Vision.
 - **Voice Synthesis**: Voice adapter connects to Edge-TTS cloud endpoints, or manages local engines (Voicevox, Piper, Kokoro) via HTTP/runtime.
-- **E Knowledge Packs**: `@siduri-x/knowledge` loads a validated local E pack
+- **E Knowledge Packs**: `@sidurijs/knowledge` loads a validated local E pack
   and exposes its cited retrieval results through `KnowledgeOrgan`.
 
 Siduri installs or selects the pack path during companion creation. The Hub

@@ -1,8 +1,8 @@
 # Companion Runtime
 
-Status: Production Modular Pipeline (`@siduri-x/core`)
+Status: Production Modular Pipeline (`@sidurijs/core`)
 
-The canonical `SiduriRuntime` orchestrator is located in `@siduri-x/core` (`packages/core/src/runtime.ts`). It serves as the local, neutral orchestration hub for companion perception, cognition, action gating, memory settlement, and experience dispatch.
+The canonical `SiduriRuntime` orchestrator is located in `@sidurijs/core` (`packages/core/src/runtime.ts`). It serves as the local, neutral orchestration hub for companion perception, cognition, action gating, memory settlement, and experience dispatch.
 
 ## Architecture & Modular Pipeline
 
@@ -19,16 +19,16 @@ To prevent God-object anti-patterns and enforce strict single-responsibility bou
 
 3. **Context Retrieval (4 Parallel Streams)** (`packages/core/src/context-retriever.ts`):
    - Queries all four context streams concurrently in a single pass with graceful degradation:
-     - **Stream A (External Knowledge)**: Cited external packs via `@siduri-x/knowledge` (`EKnowledgeAdapter`).
-     - **Stream B (Episodic Memory)**: Verified claims via `@siduri-x/memory` (FTS5 BM25 relevance).
-     - **Stream C (Self Directives)**: Active behavioral directives from `@siduri-x/self` (`SelfRepository`).
-     - **Stream D (Life DB Context)**: Sovereign facts (inventory, finances, schedule, preferences) from `@siduri-x/knowledge`.
+     - **Stream A (External Knowledge)**: Cited external packs via `@sidurijs/knowledge` (`EKnowledgeAdapter`).
+     - **Stream B (Episodic Memory)**: Verified claims via `@sidurijs/memory` (FTS5 BM25 relevance).
+     - **Stream C (Self Directives)**: Active behavioral directives from `@sidurijs/self` (`SelfRepository`).
+     - **Stream D (Life DB Context)**: Sovereign facts (inventory, finances, schedule, preferences) from `@sidurijs/knowledge`.
    - Preserves native `EvidenceRecord` metadata and citation provenance per contract T4.
    - Isolates organ/domain failures into structured subsystem diagnostics without crashing the cognition cycle.
 
 4. **Prompt Compilation** (`packages/core/src/prompt-compiler.ts`):
    - Compiles neutral system prompt and layered context prompt.
-   - Injects active persona directives compiled by `ActiveSelfCompiler` (`@siduri-x/self`).
+   - Injects active persona directives compiled by `ActiveSelfCompiler` (`@sidurijs/self`).
    - Injects sovereign `LIFE CONTEXT` block from Life DB queries.
    - Formats contextual knowledge citations and memory context.
    - Emits bounded fallback prompts if context retrieval degrades.
@@ -87,4 +87,4 @@ The companion runtime strictly complies with the Siduri-X neutral contracts:
 - **T4**: Evidence Chain (native `EvidenceRecord` preservation and citation provenance).
 - **T5**: Experience Events (unified event stream for voice, body, text).
 - **T6**: Security Operations (durable capability signing and audit chaining).
-- **T7**: Release Evidence & Zero-Dependency Invariants (clean packaging, `@siduri-x/core` has 0 external dependencies).
+- **T7**: Release Evidence & Zero-Dependency Invariants (clean packaging, `@sidurijs/core` has 0 external dependencies).

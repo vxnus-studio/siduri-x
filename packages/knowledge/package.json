@@ -1,6 +1,6 @@
 {
-  "name": "@siduri-x/knowledge",
-  "version": "2.0.7",
+  "name": "@sidurijs/knowledge",
+  "version": "1.0.0",
   "description": "Siduri Knowledge domain: Internal Sovereign Life DB (Inventory, Finance, Schedule, Preferences)",
   "license": "Apache-2.0",
   "main": "dist/index.js",
@@ -25,7 +25,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-x/core": "workspace:*",
+    "@sidurijs/core": "workspace:*",
     "@vxnus/e": "^0.1.5",
     "@vxnus/e-knowledge": "^0.1.5",
     "undici": "^8.10.2"

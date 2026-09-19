@@ -395,6 +395,33 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.summary?.['Model Path']).toBe('./assets/body/default/model.model3.json');
     });
 
+    test('Body configurator configures VRM 3D avatar with lookAt mode', async () => {
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ provider: 'vrm' })
+        .mockResolvedValueOnce({
+          modelSource: './assets/body/vroid/model.vrm',
+          lookAtMode: 'cursor',
+        });
+
+      const result = await configureBody({ companionName: 'VRoidCompanion', manifest: bodyManifest });
+      expect(result.config.provider).toBe('vrm');
+      expect(result.config.format).toBe('vrm');
+      expect(result.config.modelPath).toBe('./assets/body/vroid/model.vrm');
+      expect(result.config.modelUrl).toBe('/assets/body/vroid/model.vrm');
+      expect((result.config as any).vrm?.lookAtMode).toBe('cursor');
+      expect(result.summary?.Provider).toBe('VRM (3D Avatar)');
+      expect(result.summary?.['LookAt Mode']).toBe('cursor');
+    });
+
+    test('Body configurator disables body when none is selected', async () => {
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ provider: 'none' });
+
+      const result = await configureBody({ companionName: 'HeadlessCompanion', manifest: bodyManifest });
+      expect(result.config.provider).toBe('none');
+      expect(result.summary?.Provider).toBe('None (Headless)');
+    });
+
     test('Hands configurator configures MCP tool execution timeout', async () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ provider: 'mcp' })
@@ -540,10 +567,10 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(config.organs.voice.speakerId).toBe(2);
 
       // Verify explicit imports in src/index.js
-      expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@siduri-x/brain'");
-      expect(files['src/index.js']).toContain("import { SqliteMemoryStore } from '@siduri-x/memory'");
-      expect(files['src/index.js']).toContain("import { UnifiedKnowledgeOrgan } from '@siduri-x/knowledge'");
-      expect(files['src/index.js']).toContain("import { VoiceAdapter } from '@siduri-x/voice'");
+      expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@sidurijs/brain'");
+      expect(files['src/index.js']).toContain("import { SqliteMemoryStore } from '@sidurijs/memory'");
+      expect(files['src/index.js']).toContain("import { UnifiedKnowledgeOrgan } from '@sidurijs/knowledge'");
+      expect(files['src/index.js']).toContain("import { VoiceAdapter } from '@sidurijs/voice'");
     });
   });
 });

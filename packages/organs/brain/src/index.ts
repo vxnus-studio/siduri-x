@@ -1,4 +1,4 @@
-import { BrainOrgan, BrainContext, ResponsePlan, Message, RetrievalPlan, RequestContext, PersonaCompilationResult } from '@siduri-x/core';
+import { BrainOrgan, BrainContext, ResponsePlan, Message, RetrievalPlan, RequestContext, PersonaCompilationResult } from '@sidurijs/core';
 import { PromptAssembler } from './prompt';
 import { z } from 'zod';
 

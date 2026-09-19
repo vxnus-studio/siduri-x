@@ -1,1 +1,1 @@
-export * from '@siduri-x/core';
+export * from '@sidurijs/core';

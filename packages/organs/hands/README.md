@@ -1,4 +1,4 @@
-# @siduri-x/hands
+# @sidurijs/hands
 
 Hands Organ for Siduri: Model Context Protocol (MCP) server integration, tool execution, action lifecycle tracking, and cryptographic policy-driven action enforcement.
 
@@ -14,7 +14,7 @@ Hands Organ for Siduri: Model Context Protocol (MCP) server integration, tool ex
 ## Usage
 
 ```typescript
-import { DefaultHandsOrgan } from '@siduri-x/hands';
+import { DefaultHandsOrgan } from '@sidurijs/hands';
 
 const hands = new DefaultHandsOrgan({
   defaultTimeoutMs: 15000,

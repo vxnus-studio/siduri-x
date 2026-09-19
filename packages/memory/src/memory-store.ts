@@ -8,7 +8,7 @@ import {
   MemoryScope,
   MemoryQueryOptions,
   SourceEvent,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 import {
   EpisodicMemoryStore,
   MemoryEventInput,

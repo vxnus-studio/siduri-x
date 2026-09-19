@@ -11,7 +11,7 @@ import {
   verifyCapabilitySignature,
   computeParametersHash,
   getOrGenerateLocalActionPolicySecret,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 import { validateInputSchema } from './schema-validator';
 import {
   MCPClientProvider,

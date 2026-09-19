@@ -1,7 +1,7 @@
 # RFC: VRM (`.vrm`) Body Support & 3D Embodiment Specification
 
-> **Status:** Proposed  
-> **Target Subsystems:** `packages/organs/body` (`@siduri-x/body`), `packages/core` (`@siduri-x/core`), `cli` (`builtin-manifests.ts`), Client WebGL Renderers  
+> **Status:** Accepted / Implemented (Core, Body Organ, Manifests & CLI)  
+> **Target Subsystems:** `packages/organs/body` (`@sidurijs/body`), `packages/core` (`@sidurijs/core`), `cli` (`builtin-manifests.ts`), Client WebGL Renderers  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
 
 ---
@@ -9,10 +9,10 @@
 ## 1. Executive Summary & Context
 
 Siduri-X decouples the companion's embodiment state machine from the physical or graphical rendering client. Under this clean architecture:
-- **Backend / Organ Layer (`@siduri-x/body`)**: Headless embodiment state machine tracking companion presence, expression state, speech synchronization, and trigger actions while managing model references and metadata without requiring GPU or native OpenGL/WebGL runtime bindings.
+- **Backend / Organ Layer (`@sidurijs/body`)**: Headless embodiment state machine tracking companion presence, expression state, speech synchronization, and trigger actions while managing model references and metadata without requiring GPU or native OpenGL/WebGL runtime bindings.
 - **Frontend / Client Layer (`apps/web` or external render client)**: Visual presentation layer that interprets embodiment snapshots and lifecycle events, rendering avatars inside an interactive canvas.
 
-Currently, `@siduri-x/body` is tailored specifically for Live2D Cubism (`.model3.json`) models through `provider: 'live2d'`. However, humanoid 3D avatars adhering to the open **VRM 3D Avatar Standard** (`.vrm`, based on glTF 2.0) are widely adopted across VTubing, metaverses, and conversational AI agents.
+Currently, `@sidurijs/body` is tailored specifically for Live2D Cubism (`.model3.json`) models through `provider: 'live2d'`. However, humanoid 3D avatars adhering to the open **VRM 3D Avatar Standard** (`.vrm`, based on glTF 2.0) are widely adopted across VTubing, metaverses, and conversational AI agents.
 
 This RFC defines the architectural design, configuration schemas, state mappings, and lifecycle integration necessary to support VRM avatars as first-class citizens in Siduri-X.
 
@@ -20,7 +20,7 @@ This RFC defines the architectural design, configuration schemas, state mappings
 
 ## 2. Problem Statement
 
-### 2.1 Format Monoculture in `@siduri-x/body`
+### 2.1 Format Monoculture in `@sidurijs/body`
 `organ-manifest.json` and `builtin-manifests.ts` currently restrict the body organ provider to:
 ```json
 "provider": {
@@ -52,7 +52,7 @@ The Body organ must provide a unified, renderer-agnostic representation capable 
                                   │
                                   ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                   @siduri-x/body (Backend Organ)                 │
+│                   @sidurijs/body (Backend Organ)                 │
 │                                                                  │
 │  • Headless state machine (idle, speaking, acting)               │
 │  • Provider & format abstraction ('live2d' | 'vrm' | 'none')     │
@@ -76,8 +76,8 @@ The Body organ must provide a unified, renderer-agnostic representation capable 
 
 ### 3.1 Preserving Headless Decoupling
 Consistent with the Siduri Clean Architecture:
-- `@siduri-x/body` remains **100% headless and JavaScript/TypeScript runtime compatible** (Node.js / Bun).
-- No WebGL, Three.js, Canvas, or GPU dependencies are introduced into `@siduri-x/body` or `@siduri-x/core`.
+- `@sidurijs/body` remains **100% headless and JavaScript/TypeScript runtime compatible** (Node.js / Bun).
+- No WebGL, Three.js, Canvas, or GPU dependencies are introduced into `@sidurijs/body` or `@sidurijs/core`.
 - The Body organ is responsible for semantic intent (e.g., "be happy", "look at user", "nod"), while the presentation layer handles vertex deformation, shaders, and bone transformation matrices.
 
 ---
@@ -170,7 +170,7 @@ Update the manifest to declare `vrm` as a valid provider and expand descriptions
 
 ```json
 {
-  "name": "@siduri-x/body",
+  "name": "@sidurijs/body",
   "organType": "body",
   "version": "2.1.0",
   "displayName": "Body (Live2D & VRM Avatar State)",
@@ -249,7 +249,7 @@ When `speaking`, visemes generated or derived from audio analysis or phonemes ma
 
 ---
 
-## 6. Client Rendering Strategy (`@siduri-x/client` / Web)
+## 6. Client Rendering Strategy (`@sidurijs/client` / Web)
 
 When the client layer receives a `BodySnapshot` indicating `format: 'vrm'`:
 1. Dynamically load the 3D pipeline (`three` + `@pixiv/three-vrm`).
@@ -278,7 +278,7 @@ When the client layer receives a `BodySnapshot` indicating `format: 'vrm'`:
    - Implement updated `NeutralBodyOrganConfig`, `BodySnapshot`, and export `VRMAdapter`.
    - Add auto-detection logic based on file extension.
 2. **Step 2: Manifest Updates**:
-   - Update `organ-manifest.json` in `@siduri-x/body`.
+   - Update `organ-manifest.json` in `@sidurijs/body`.
    - Update `cli/src/builtin-manifests.ts` and CLI schemas.
 3. **Step 3: Verification**:
    - Add unit tests in `packages/organs/body/src/index.test.ts` validating VRM configurations, auto-detection, and snapshots.

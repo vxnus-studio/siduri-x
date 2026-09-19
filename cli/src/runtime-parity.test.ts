@@ -89,7 +89,7 @@ describe('Localweb and CLI Standalone 1:1 Runtime & Chat Parity', () => {
 
   test('Generated CLI standalone src/index.js routes /chat through dispatchCompanionChat', () => {
     const mockManifest: any = {
-      name: '@siduri-x/brain',
+      name: '@sidurijs/brain',
       organType: 'brain',
       version: '1.0.0',
       displayName: 'Brain',
@@ -106,7 +106,7 @@ describe('Localweb and CLI Standalone 1:1 Runtime & Chat Parity', () => {
     const srcIndexJs = files['src/index.js'];
 
     // Ensures single source of truth import
-    expect(srcIndexJs).toContain("import { SiduriRuntime, dispatchCompanionChat, validateCompanionConfig } from '@siduri-x/core';");
+    expect(srcIndexJs).toContain("import { SiduriRuntime, dispatchCompanionChat, validateCompanionConfig } from '@sidurijs/core';");
     expect(srcIndexJs).toContain('validateCompanionConfig(config, schema);');
 
     // Ensures /chat uses dispatchCompanionChat directly without ad-hoc runtimeResult envelope

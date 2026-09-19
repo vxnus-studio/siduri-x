@@ -1,4 +1,4 @@
-# @siduri-x/mouth
+# @sidurijs/mouth
 
 Output communication and presentation decoupling organ in the Siduri cognitive architecture.
 
@@ -37,7 +37,7 @@ import {
   DefaultMouthOrgan,
   BufferedMouthChannel,
   EventEmitterMouthChannel,
-} from '@siduri-x/mouth';
+} from '@sidurijs/mouth';
 
 const mouth = new DefaultMouthOrgan({
   voice: voiceOrganInstance, // optional VoiceOrgan coordination

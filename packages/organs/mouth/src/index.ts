@@ -11,7 +11,7 @@ import {
   ExperienceAdapter,
   ExperienceEvent,
   ExperienceAdapterResult,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 
 export * from './channels';
 

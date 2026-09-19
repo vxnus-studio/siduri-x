@@ -1,7 +1,7 @@
 import {
   EpisodicEvent,
   MemoryClaim,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 
 export type {
   EpisodicEvent,

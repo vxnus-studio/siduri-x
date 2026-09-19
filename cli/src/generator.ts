@@ -86,8 +86,8 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.16';
-  const cliVersion = options.cliVersion || '^2.0.41';
+  const coreVersion = options.coreVersion || '^1.0.0';
+  const cliVersion = options.cliVersion || '^2.1.0';
   const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
@@ -101,24 +101,24 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const hasMouth = manifests.some((m) => m.organType === 'mouth');
   const hasVision = manifests.some((m) => m.organType === 'vision');
 
-  const voiceConfig = options.organConfigs?.voice || options.organConfigs?.['@siduri-x/voice'];
+  const voiceConfig = options.organConfigs?.voice || options.organConfigs?.['@sidurijs/voice'];
   const isVoicevox = hasVoice && (!voiceConfig || voiceConfig.provider === 'voicevox');
 
   // 1. package.json
   const dependencies: Record<string, string> = {};
   if (options.localPath) {
     const repoPath = options.localPath.replace(/\\/g, '/');
-    dependencies['@siduri-x/core'] = `file:${repoPath}/packages/core`;
+    dependencies['@sidurijs/core'] = `file:${repoPath}/packages/core`;
     for (const m of manifests) {
-      const organRel = ['@siduri-x/memory', '@siduri-x/knowledge', '@siduri-x/self'].includes(m.name)
-        ? `packages/${m.name.slice('@siduri-x/'.length)}`
-        : `packages/organs/${m.name.slice('@siduri-x/'.length)}`;
+      const organRel = ['@sidurijs/memory', '@sidurijs/knowledge', '@sidurijs/self'].includes(m.name)
+        ? `packages/${m.name.slice('@sidurijs/'.length)}`
+        : `packages/organs/${m.name.slice('@sidurijs/'.length)}`;
       dependencies[m.name] = `file:${repoPath}/${organRel}`;
     }
   } else {
-    dependencies['@siduri-x/core'] = coreVersion;
+    dependencies['@sidurijs/core'] = coreVersion;
     for (const m of manifests) {
-      dependencies[m.name] = `^${m.version || '2.0.1'}`;
+      dependencies[m.name] = `^${m.version || '1.0.0'}`;
     }
   }
 
@@ -210,11 +210,11 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `import { readFile, stat, readdir } from 'node:fs/promises';`,
     `import path from 'node:path';`,
     `import { fileURLToPath } from 'node:url';`,
-    `import { SiduriRuntime, dispatchCompanionChat, validateCompanionConfig } from '@siduri-x/core';`,
+    `import { SiduriRuntime, dispatchCompanionChat, validateCompanionConfig } from '@sidurijs/core';`,
   ];
   for (const m of manifests) {
-    if (m.name === '@siduri-x/self') {
-      importLines.push(`import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser, scanDirective, compilePersonaDocument } from '@siduri-x/self';`);
+    if (m.name === '@sidurijs/self') {
+      importLines.push(`import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser, scanDirective, compilePersonaDocument } from '@sidurijs/self';`);
     } else {
       importLines.push(`import { ${m.factory} } from '${m.name}';`);
     }
@@ -224,7 +224,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const organMapEntries: string[] = [];
 
   for (const m of manifests) {
-    if (m.name === '@siduri-x/self') {
+    if (m.name === '@sidurijs/self') {
       instantiationLines.push(`const self = new SqliteSelfRepository({ dbPath: path.resolve(rootDir, 'siduri.sqlite') });`);
       instantiationLines.push(`const behavior = new ActiveSelfCompiler(config.organs.behavior);`);
       // NOTE: .self file is NOT auto-installed on startup.
@@ -233,13 +233,13 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
       organMapEntries.push(`  behavior,`);
       organMapEntries.push(`  self,`);
 
-    } else if (m.name === '@siduri-x/memory') {
+    } else if (m.name === '@sidurijs/memory') {
       instantiationLines.push(`const memory = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
       organMapEntries.push(`  ${m.configKey},`);
-    } else if (m.name === '@siduri-x/knowledge') {
+    } else if (m.name === '@sidurijs/knowledge') {
       instantiationLines.push(`const knowledge = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
       organMapEntries.push(`  ${m.configKey},`);
-    } else if (m.name === '@siduri-x/observation') {
+    } else if (m.name === '@sidurijs/observation') {
       const visionArg = hasVision ? 'vision' : '{ analyze: async () => JSON.stringify({ readings: [] }) }';
       instantiationLines.push(`const observation = new ${m.factory}(${visionArg});`);
       organMapEntries.push(`  ${m.configKey},`);
@@ -738,7 +738,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    return;`,
     `  }`,
     '',
-    `  // API: Chat interaction (routed through canonical dispatchCompanionChat from @siduri-x/core)`,
+    `  // API: Chat interaction (routed through canonical dispatchCompanionChat from @sidurijs/core)`,
     `  if ((pathname === '/chat' || pathname === '/api/chat') && req.method === 'POST') {`,
     `    let body = '';`,
     `    req.on('data', (chunk) => { body += chunk; });`,
@@ -1111,7 +1111,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     );
   }
 
-  const knowledgeConfig = options.organConfigs?.knowledge || options.organConfigs?.['@siduri-x/knowledge'];
+  const knowledgeConfig = options.organConfigs?.knowledge || options.organConfigs?.['@sidurijs/knowledge'];
   if (manifests.some((m) => m.organType === 'knowledge') && knowledgeConfig?.packPath) {
     const cleanPackDir = String(knowledgeConfig.packPath).replace(/^\.\//, '');
     createAssetsDirs.push(cleanPackDir);
@@ -1122,7 +1122,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     );
   }
 
-  const behaviorConfig = options.organConfigs?.behavior || options.organConfigs?.['@siduri-x/self'];
+  const behaviorConfig = options.organConfigs?.behavior || options.organConfigs?.['@sidurijs/self'];
   let selfPersonaFile: { path: string; content: string } | null = null;
   if (manifests.some((m) => m.organType === 'behavior')) {
     createAssetsDirs.push('assets/self');

@@ -9,7 +9,7 @@ import {
   LifePreference,
 } from './index';
 
-describe('@siduri-x/knowledge Domain Package (Internal Life DB)', () => {
+describe('@sidurijs/knowledge Domain Package (Internal Life DB)', () => {
   let tmpDir: string;
   let dbPath: string;
   let lifeDb: SqliteLifeDatabase;

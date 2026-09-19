@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp } from './app';
 import { SiduriRuntime } from './runtime';
-import { BrainContext, ResponsePlan, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult } from '@siduri-x/core';
+import { BrainContext, ResponsePlan, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult } from '@sidurijs/core';
 
 describe('T7 Release Readiness End-to-End Verification Suite', () => {
   let mockBrain: any;

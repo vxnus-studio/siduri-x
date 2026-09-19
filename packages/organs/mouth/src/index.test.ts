@@ -1,7 +1,7 @@
 import { DefaultMouthOrgan } from './index';
-import { MouthUtterance, MouthChannel, ExperienceEvent } from '@siduri-x/core';
+import { MouthUtterance, MouthChannel, ExperienceEvent } from '@sidurijs/core';
 
-describe('@siduri-x/mouth - DefaultMouthOrgan', () => {
+describe('@sidurijs/mouth - DefaultMouthOrgan', () => {
   const sampleUtterance: MouthUtterance = {
     utteranceId: 'utt-100',
     companionId: 'test-companion',

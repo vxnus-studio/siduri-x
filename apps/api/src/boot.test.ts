@@ -1,5 +1,5 @@
 import { bootCompanion, isDisabled, createBrain, createMemory, createVoice, createKnowledge, createVision, createBehavior, createBody, createHands, createEar, createMouth, createSelf, createObservation } from './boot';
-import { FixtureObservationOrgan } from '@siduri-x/observation';
+import { FixtureObservationOrgan } from '@sidurijs/observation';
 
 describe('Canonical bootCompanion & Organ Factory Suite', () => {
   const originalEnv = process.env;
@@ -38,8 +38,17 @@ describe('Canonical bootCompanion & Organ Factory Suite', () => {
     const behavior = createBehavior({ provider: 'active_self' });
     expect(behavior).toBeDefined();
 
-    const body = createBody({ provider: 'none' });
-    expect(body).toBeUndefined();
+    const bodyNone = createBody({ provider: 'none' });
+    expect(bodyNone).toBeUndefined();
+
+    const bodyLive2d = createBody({ provider: 'live2d', modelPath: './assets/avatar.model3.json' });
+    expect(bodyLive2d).toBeDefined();
+    expect((bodyLive2d as any).format).toBe('live2d');
+
+    const bodyVrm = createBody({ provider: 'vrm', modelPath: './assets/avatar.vrm', vrm: { lookAtMode: 'camera' } });
+    expect(bodyVrm).toBeDefined();
+    expect((bodyVrm as any).format).toBe('vrm');
+    expect((bodyVrm as any).vrmOptions?.lookAtMode).toBe('camera');
 
     const hands = createHands();
     expect(hands).toBeDefined();

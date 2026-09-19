@@ -1,11 +1,11 @@
 # CLI Architecture & Reference (`@vxnus/siduri`)
 
-> **Status:** Implemented (`v2.0.0`+) — Clean Architecture with Pure SQLite (`siduri.sqlite`)  
+> **Status:** Implemented (`v2.1.0`+) — Clean Architecture with Pure SQLite (`siduri.sqlite`)  
 > **Ecosystem:** Zero external database dependencies. PostgreSQL removed.
 
 ---
 
-The Siduri CLI (`@vxnus/siduri`) provides tooling to dynamically discover `@siduri-x/*` organ manifests, scaffold standalone ESM companion instances, and run local environment & service diagnostics.
+The Siduri CLI (`@vxnus/siduri`) provides tooling to dynamically discover `@sidurijs/*` organ manifests, scaffold standalone ESM companion instances, and run local environment & service diagnostics.
 
 ---
 
@@ -16,7 +16,7 @@ npx @vxnus/siduri create [directory]
 ```
 
 ### Architecture Invariants:
-1. **Dynamic Manifest Discovery**: Discovers installed or workspace `@siduri-x/*` packages by inspecting their `organ-manifest.json`.
+1. **Dynamic Manifest Discovery**: Discovers installed or workspace `@sidurijs/*` packages by inspecting their `organ-manifest.json`.
 2. **Cognition Authority**: Brain is required for cognition planning. All other organs can be freely selected or omitted.
 3. **No Monolithic Bundling**: Scaffolds a clean project containing only the selected organ dependencies and standard Node.js ESM imports.
 4. **Blank-Slate Neutrality**: Generates purely neutral configuration without embedding predeclared personas or private memories (per [`BLANK_SLATE_CONTRACT.md`](../contracts/blank-slate-contract.md)).
@@ -51,7 +51,7 @@ npx @vxnus/siduri create [directory]
 
 ```text
 my-companion/
-├── package.json          # ESM package referencing selected @siduri-x/* packages
+├── package.json          # ESM package referencing selected @sidurijs/* packages
 ├── siduri.config.json    # Selected organ configurations
 ├── siduri.schema.json    # Composed JSON Schema from organ manifests
 ├── .env.example          # Organ-scoped environment variables
@@ -74,4 +74,4 @@ Inspects the companion directory and runs:
 - **Environment Checks**: Validates required and optional environment variables per organ.
 - **Service Availability**: Validates reachability for external endpoints (e.g. VTS WebSocket, RVC API).
 - **Storage Readiness**: Validates local SQLite database access and permissions.
-- **Health Probes**: Executes organ-level health probes exposed by `@siduri-x/*` organs.
+- **Health Probes**: Executes organ-level health probes exposed by `@sidurijs/*` organs.

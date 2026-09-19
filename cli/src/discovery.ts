@@ -74,7 +74,7 @@ export class OrganRegistry {
       }
     }
 
-    // Always merge canonical built-in @siduri-x/* organ manifests as fallback for ones that weren't found
+    // Always merge canonical built-in @sidurijs/* organ manifests as fallback for ones that weren't found
     for (const builtinManifest of BUILTIN_ORGAN_MANIFESTS) {
       if (!registry.get(builtinManifest.organType)) {
         registry.register(builtinManifest);

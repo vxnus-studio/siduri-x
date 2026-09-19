@@ -1,7 +1,7 @@
 # Siduri Memory Architecture & Drivers Guide
 
 > **Status:** Superseeded / Legacy Reference (Historical Documentation)  
-> **Current Architecture:** Implemented in `@siduri-x/memory` via **Pure SQLite FTS5** (`siduri.sqlite`). PostgreSQL has been completely purged from the codebase as part of Phase 6 of the Clean Architecture Migration.
+> **Current Architecture:** Implemented in `@sidurijs/memory` via **Pure SQLite FTS5** (`siduri.sqlite`). PostgreSQL has been completely purged from the codebase as part of Phase 6 of the Clean Architecture Migration.
 
 ---
 
@@ -11,8 +11,8 @@
 > The documentation below outlines the earlier PostgreSQL (`pg`) implementation and historical driver exploration.
 >
 > **Canonical Current State:**
-> - Memory is now an isolated domain package: **`@siduri-x/memory`**.
-> - It is backed directly by **SQLite with WAL mode and built-in FTS5** (Full-Text Search BM25 ranking) via `SiduriDatabase` in `@siduri-x/core`.
+> - Memory is now an isolated domain package: **`@sidurijs/memory`**.
+> - It is backed directly by **SQLite with WAL mode and built-in FTS5** (Full-Text Search BM25 ranking) via `SiduriDatabase` in `@sidurijs/core`.
 > - Zero external database setup (`DATABASE_URL`, PostgreSQL containers, `pg` driver) is needed. The database boots in `< 20ms`.
 > - For the current architecture and contract, see:
 >   - [`docs/self-organ-knowledge/01-domain-architecture.md`](../self-organ-knowledge/01-domain-architecture.md)
@@ -42,7 +42,7 @@ Every memory table tracks `companion_id`, scoping memory events to specific comp
 ## 2. Historical Implementation: Native PostgreSQL (`pg`) [LEGACY]
 
 ### Overview
-In earlier prototypes (v0.1.x – v0.2.x), `@siduri-x/memory` was built directly on native `pg` (`node-postgres`) with SQL migration scripts.
+In earlier prototypes (v0.1.x – v0.2.x), `@sidurijs/memory` was built directly on native `pg` (`node-postgres`) with SQL migration scripts.
 
 ### Historical Schema Structure (`001_initial_schema.sql`)
 - `memory_claims`: Authoritative semantic and episodic claims.
@@ -55,7 +55,7 @@ In earlier prototypes (v0.1.x – v0.2.x), `@siduri-x/memory` was built directly
 
 ## 3. Current Implemented Architecture: Pure SQLite FTS5
 
-The canonical `@siduri-x/memory` implementation now provides:
+The canonical `@sidurijs/memory` implementation now provides:
 1. **Episodic Event Ingestion:** `recordEvent()`, `getRecentEvents()`.
 2. **Claim Proposal & Truth Gating:** `proposeClaim()`, `approveClaim()`, `rejectClaim()`, `getApprovedClaims()`.
 3. **BM25 Search:** Sub-millisecond keyword and claim retrieval via `searchClaims()`.

@@ -1,6 +1,6 @@
 import { OpenAICompatibleBrain, OpenRouterBrain } from './index';
 import { PromptAssembler } from './prompt';
-import { BrainContext } from '@siduri-x/core';
+import { BrainContext } from '@sidurijs/core';
 
 // Mock fetch
 global.fetch = jest.fn();

@@ -7,7 +7,7 @@ import {
   ClaimProposalInput,
 } from './index';
 
-describe('@siduri-x/memory Domain Package (Pure SQLite FTS5)', () => {
+describe('@sidurijs/memory Domain Package (Pure SQLite FTS5)', () => {
   let tmpDir: string;
   let dbPath: string;
   let store: SqliteMemoryStore;

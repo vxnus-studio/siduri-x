@@ -1,9 +1,9 @@
 {
-  "name": "@siduri-x/body",
+  "name": "@sidurijs/body",
   "organType": "body",
-  "version": "2.0.1",
-  "displayName": "Body (Live2D & Avatar State)",
-  "description": "Renderer-agnostic avatar expression and embodiment event adapter",
+  "version": "1.0.0",
+  "displayName": "Body (Live2D & VRM Avatar State)",
+  "description": "Renderer-agnostic avatar expression and embodiment event adapter supporting Live2D (.model3.json) and VRM (.vrm)",
   "entrypoint": "./dist/index.js",
   "factory": "NeutralBodyOrgan",
   "configKey": "body",
@@ -17,8 +17,18 @@
         "type": "string",
         "enum": [
           "live2d",
+          "vrm",
           "none"
         ]
+      },
+      "format": {
+        "type": "string",
+        "enum": [
+          "live2d",
+          "vrm",
+          "auto"
+        ],
+        "default": "auto"
       },
       "initialExpression": {
         "type": "string",
@@ -26,11 +36,41 @@
       },
       "modelPath": {
         "type": "string",
-        "description": "Path to local Live2D Cubism model (.model3.json)"
+        "description": "Path to local Live2D Cubism (.model3.json) or VRM (.vrm) model file"
       },
       "modelUrl": {
         "type": "string",
-        "description": "Relative web or remote HTTP URL to Live2D Cubism model"
+        "description": "Relative web or remote HTTP URL to Live2D Cubism (.model3.json) or VRM (.vrm) model file"
+      },
+      "vrm": {
+        "type": "object",
+        "properties": {
+          "specVersion": {
+            "type": "string",
+            "enum": [
+              "0.x",
+              "1.0",
+              "auto"
+            ],
+            "default": "auto"
+          },
+          "lookAtMode": {
+            "type": "string",
+            "enum": [
+              "camera",
+              "cursor",
+              "head",
+              "none"
+            ],
+            "default": "camera"
+          },
+          "defaultPose": {
+            "type": "string"
+          },
+          "expressionMapping": {
+            "type": "object"
+          }
+        }
       }
     }
   },

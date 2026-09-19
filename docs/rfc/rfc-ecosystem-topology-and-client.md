@@ -1,7 +1,7 @@
-# RFC: Ecosystem Topology — Unscoped `siduri` Orchestrator & Scoped `@siduri-x/*` Modules
+# RFC: Ecosystem Topology — Unscoped `siduri` Orchestrator & Scoped `@sidurijs/*` Modules
 
-> **Status:** Proposed  
-> **Target Subsystems:** `cli` (`siduri`), `apps/web` (`@siduri-x/client`), `@siduri-x/*` organ ecosystem  
+> **Status:** Accepted (CLI Unscoped `siduri` v1.0.0 & Packaging Topology Implemented; Client Distribution Decoupled)  
+> **Target Subsystems:** `cli` (`siduri`), `apps/web` (`@sidurijs/client`), `@sidurijs/*` organ ecosystem  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
 
 ---
@@ -11,8 +11,8 @@
 As the Siduri companion framework evolves beyond an experimental monolith towards an extensible, pluggable runtime, package naming and domain boundaries must reflect their architectural roles:
 
 1. **Unscoped Package (`siduri`)**: The gatherer, entrypoint, project scaffolder, and lifecycle orchestrator.
-2. **Scoped Namespace (`@siduri-x/*`)**: Truly modular, independently versionable building blocks, capability organs, and client layers.
-3. **Decoupled Client (`@siduri-x/client`)**: Extraction of the presentation and interaction layer (web interface, client SDK, and static dist) away from raw file dumping in the CLI generator.
+2. **Scoped Namespace (`@sidurijs/*`)**: Truly modular, independently versionable building blocks, capability organs, and client layers.
+3. **Decoupled Client (`@sidurijs/client`)**: Extraction of the presentation and interaction layer (web interface, client SDK, and static dist) away from raw file dumping in the CLI generator.
 
 This RFC formalizes the ecosystem hierarchy, package separation, and client extraction strategy.
 
@@ -32,9 +32,9 @@ Currently, the CLI is published under `@vxnus/siduri` (or workspace `cli`) and p
 - **Headless Inefficiency**: Deployments seeking a daemon, headless agent, Discord bot, or CLI-only companion are still forced to carry and serve static web assets.
 
 ### 2.2 Namespace Inconsistency
-The ecosystem currently features a mix of `@vxnus/*`, `@siduri-x/*`, and private packages. Standardizing the ecosystem provides clear conceptual ownership:
+The ecosystem currently features a mix of `@vxnus/*`, `@sidurijs/*`, and private packages. Standardizing the ecosystem provides clear conceptual ownership:
 - `siduri`: The singular brand and developer-facing hub.
-- `@siduri-x/*`: The modular, interoperable components of the Siduri engine.
+- `@sidurijs/*`: The modular, interoperable components of the Siduri engine.
 
 ---
 
@@ -53,11 +53,11 @@ The ecosystem currently features a mix of `@vxnus/*`, `@siduri-x/*`, and private
        (dynamic / optional)     (installed dependencies)
                 │                        │
 ┌───────────────┴────────────────────────┴───────────────┐
-│                     @siduri-x/*                        │
+│                     @sidurijs/*                        │
 │            (Scoped - Modular Capabilities)             │
-│  • @siduri-x/core         • @siduri-x/brain-openrouter │
-│  • @siduri-x/memory-sqlite• @siduri-x/voice-voicevox   │
-│  • @siduri-x/body-live2d  • @siduri-x/client           │
+│  • @sidurijs/core         • @sidurijs/brain-openrouter │
+│  • @sidurijs/memory-sqlite• @sidurijs/voice-voicevox   │
+│  • @sidurijs/body-live2d  • @sidurijs/client           │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -70,18 +70,18 @@ The ecosystem currently features a mix of `@vxnus/*`, `@siduri-x/*`, and private
   - `siduri reset [directory]`: State-clearing utility restoring companions to Blank Slate compliance.
   - Runtime Host: Harness assembling instantiated organs into the canonical lifecycle order (`boot` -> `tick` -> `shutdown`).
 
-### 3.2 `@siduri-x/*` (Scoped) — Modular Organs & Layers
+### 3.2 `@sidurijs/*` (Scoped) — Modular Organs & Layers
 All pluggable organs adhere to standard organ manifest contracts (`organ-manifest.json`):
-- `@siduri-x/core`: Base contracts, runtime interfaces, event bus, and shared types.
-- `@siduri-x/brain-*`: Cognitive planners and LLM inference providers.
-- `@siduri-x/memory-*`: Sovereign episodic and semantic storage engines.
-- `@siduri-x/self`: Dynamic behavior delivery, directive lifecycle, and active prompt compilation.
-- `@siduri-x/voice-*`, `@siduri-x/body-*`, `@siduri-x/mouth-*`, `@siduri-x/hands-*`: Perception, sensory, and actuation organs.
-- **`@siduri-x/client`**: Dedicated presentation, interaction, and communication package.
+- `@sidurijs/core`: Base contracts, runtime interfaces, event bus, and shared types.
+- `@sidurijs/brain-*`: Cognitive planners and LLM inference providers.
+- `@sidurijs/memory-*`: Sovereign episodic and semantic storage engines.
+- `@sidurijs/self`: Dynamic behavior delivery, directive lifecycle, and active prompt compilation.
+- `@sidurijs/voice-*`, `@sidurijs/body-*`, `@sidurijs/mouth-*`, `@sidurijs/hands-*`: Perception, sensory, and actuation organs.
+- **`@sidurijs/client`**: Dedicated presentation, interaction, and communication package.
 
 ---
 
-## 4. `@siduri-x/client` Specification
+## 4. `@sidurijs/client` Specification
 
 ### 4.1 Why `client` Over `web`?
 - **Protocol-Agnostic Boundary**: While the initial implementation packages the responsive Next.js web application, naming the package `client` establishes it as the general companion consumption layer.
@@ -91,7 +91,7 @@ All pluggable organs adhere to standard organ manifest contracts (`organ-manifes
 
 ### 4.2 Package Structure & Exports
 ```text
-packages/client/ (or apps/web published as @siduri-x/client)
+packages/client/ (or apps/web published as @sidurijs/client)
 ├── dist/
 │   ├── web/              # Exported static UI bundle (Next.js out)
 │   ├── index.js          # ESM entrypoint
@@ -118,7 +118,7 @@ export class SiduriClient {
 ```
 
 ### 4.3 Scaffolding & Runtime Decoupling
-With `@siduri-x/client` as a peer dependency:
+With `@sidurijs/client` as a peer dependency:
 
 1. **Generation (`siduri create`)**:
    - The CLI no longer copies megabytes of raw static files into `public/`.
@@ -127,37 +127,37 @@ With `@siduri-x/client` as a peer dependency:
      {
        "dependencies": {
          "siduri": "^2.0.0",
-         "@siduri-x/client": "^2.0.0",
-         "@siduri-x/brain-openrouter": "^2.0.0"
+         "@sidurijs/client": "^2.0.0",
+         "@sidurijs/brain-openrouter": "^2.0.0"
        }
      }
      ```
 2. **Serving (`src/index.js`)**:
    - The companion server imports the client package directly:
      ```javascript
-     import { getClientDistPath } from '@siduri-x/client';
+     import { getClientDistPath } from '@sidurijs/client';
      import serveStatic from 'serve-static';
 
      // Serve UI directly from node_modules dependency
      app.use('/', serveStatic(getClientDistPath()));
      ```
 3. **Seamless Upgrades**:
-   - Running `npm update @siduri-x/client` updates the frontend instantly without touching instance configuration or asset directories.
+   - Running `npm update @sidurijs/client` updates the frontend instantly without touching instance configuration or asset directories.
 4. **Headless Companions**:
-   - Omitting `@siduri-x/client` creates lean, headless daemons for background autonomous workers or chat platform integrations.
+   - Omitting `@sidurijs/client` creates lean, headless daemons for background autonomous workers or chat platform integrations.
 
 ---
 
 ## 5. Migration Strategy & Compatibility
 
-1. **Phase 1 (Documentation & RFC)**: Establish community consensus on `siduri` and `@siduri-x/client`.
+1. **Phase 1 (Documentation & RFC)**: Establish community consensus on `siduri` and `@sidurijs/client`.
 2. **Phase 2 (Client Package Extraction)**:
-   - Configure `apps/web` (or `packages/client`) to publish as `@siduri-x/client`.
+   - Configure `apps/web` (or `packages/client`) to publish as `@sidurijs/client`.
    - Export static asset paths via `getClientDistPath()` and publish clean ESM bundles.
 3. **Phase 3 (CLI Refactor & Rename)**:
    - Rename `@vxnus/siduri` package to `siduri`.
    - Remove `copy-web-dist.cjs` and inline static generation from `generator.ts`.
-   - Update `generator.ts` template to import `@siduri-x/client`.
+   - Update `generator.ts` template to import `@sidurijs/client`.
 4. **Phase 4 (Deprecation & Forwarding)**:
    - Publish deprecation notice on `@vxnus/siduri` pointing users to `siduri`.
 
@@ -165,7 +165,7 @@ With `@siduri-x/client` as a peer dependency:
 
 ## 6. Open Questions
 
-1. **Should `@siduri-x/client` support server-side rendering (SSR)?**  
+1. **Should `@sidurijs/client` support server-side rendering (SSR)?**  
    *Current consensus:* No. Static SPA/SSG distribution keeps companion runtime dependencies minimal (zero Next.js server runtime required in production).
 2. **Monorepo location:**  
-   Should `apps/web` remain in `apps/web` with package name `@siduri-x/client`, or migrate to `packages/client`?
+   Should `apps/web` remain in `apps/web` with package name `@sidurijs/client`, or migrate to `packages/client`?

@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Status: Composable standalone configuration schema (`@siduri-x/*` ecosystem)
+Status: Composable standalone configuration schema (`@sidurijs/*` ecosystem)
 
 The `siduri.config.json` determines the identity and active organ composition of a Siduri companion.
 

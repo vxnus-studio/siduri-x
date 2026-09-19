@@ -1,12 +1,12 @@
 # E Knowledge Integration
 
-> **Status:** Merged into `@siduri-x/knowledge` (`UnifiedKnowledgeOrgan`)  
+> **Status:** Merged into `@sidurijs/knowledge` (`UnifiedKnowledgeOrgan`)  
 > **Package Location:** `packages/knowledge`  
-> **Note on Naming:** External cited packs and remote providers are managed via `EKnowledgeAdapter` within `@siduri-x/knowledge`, unified alongside the sovereign Life Database.
+> **Note on Naming:** External cited packs and remote providers are managed via `EKnowledgeAdapter` within `@sidurijs/knowledge`, unified alongside the sovereign Life Database.
 
 ---
 
-Siduri consumes external E knowledge packs through `@siduri-x/knowledge`.
+Siduri consumes external E knowledge packs through `@sidurijs/knowledge`.
 
 ## Installation & Configuration
 
@@ -50,7 +50,7 @@ At boot, `EKnowledgeAdapter` inside `UnifiedKnowledgeOrgan` loads and validates 
 
 ## Security & SSRF Hardening
 
-`@siduri-x/knowledge` includes strict SSRF defenses for all external knowledge requests:
+`@sidurijs/knowledge` includes strict SSRF defenses for all external knowledge requests:
 - Rejection of private, loopback, link-local, and cloud metadata IPs (`169.254.169.254`, etc.)
 - Open redirect filtering
 - DNS resolution checks prior to outbound fetches

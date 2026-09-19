@@ -90,7 +90,7 @@ Humans do not operate on thousands of discrete `if/then` scripts; they operate o
 
 #### Tier 1: Macro Boundaries (When Scripting IS Necessary)
 * **Scope**: Hard channel, audience, or security boundaries.
-* **Mechanism**: Handled by `@siduri-x/self` (`ActiveSelfCompiler`).
+* **Mechanism**: Handled by `@sidurijs/self` (`ActiveSelfCompiler`).
 * **Example**:
   - `channel == "public"` $\rightarrow$ Inject: *"Maintain professional distance. Do not reference private session context."*
   - `channel == "operator"` $\rightarrow$ Inject: *"Diagnostic mode: prioritize structured factual outputs."*
@@ -118,7 +118,7 @@ User: "You did amazing today, I'm really glad I have you around."
 Assistant: "H-huh? Don't make it weird. I was just doing what was necessary, okay? Don't flatter yourself."
 ```
 
-Coupled with the Brain's `internalMonologue` in `@siduri-x/brain` (which allows the model to privately appraise the user's intent before synthesizing candidate speech), the AI naturally inhabits the character's reaction without mechanical rigidity.
+Coupled with the Brain's `internalMonologue` in `@sidurijs/brain` (which allows the model to privately appraise the user's intent before synthesizing candidate speech), the AI naturally inhabits the character's reaction without mechanical rigidity.
 
 ---
 
@@ -136,7 +136,7 @@ $$\text{Storage Format} \neq \text{Inference Format}$$
 2. **The Truth Gate & Ingestion**:
    Directives do not silently alter active cognition; they enter as `PENDING` candidates evaluated through human operator review.
 3. **The Active Self Compiler**:
-   At runtime, `@siduri-x/self` (`ActiveSelfCompiler`) compiles only the relevant slice: the immutable anchor, current relational stance, channel-specific active directives, and dialogue exemplars.
+   At runtime, `@sidurijs/self` (`ActiveSelfCompiler`) compiles only the relevant slice: the immutable anchor, current relational stance, channel-specific active directives, and dialogue exemplars.
 
 By refusing to collapse identity, behavior, preference, and memory into a single flat document, Siduri ensures that companions remain faithful to who they are, clear about what they know, and grounded in their relationship with the user.
 
@@ -149,14 +149,14 @@ Upon stress-testing the cognitive spectrum against real-world user data (e.g., *
 Disentangling memory is not merely about avoiding persona drift inside the companion—it reveals a fundamental architectural boundary between **Companion Memory** and **The Life Database**:
 
 1. **The Core Realization:**  
-   - **Companion Memory (`@siduri-x/memory`)** is inherently *subjective, relational, and organic*. It represents how the companion experiences, remembers, and perceives interactions with the human counterpart (impressions, shared history, inside jokes, promises).
+   - **Companion Memory (`@sidurijs/memory`)** is inherently *subjective, relational, and organic*. It represents how the companion experiences, remembers, and perceives interactions with the human counterpart (impressions, shared history, inside jokes, promises).
    - However, concrete user facts—such as account rosters, game inventories, financial expenses, schedules, and objective tastes—are **not** companion memories. They belong to the **user's sovereign reality**.
 2. **The Risk of Conflation:**  
    When deterministic user state is forced into semantic vector memory, the system inevitably succumbs to mathematical and factual drift (e.g. hallucinating expense sums or misremembering owned assets).
 3. **The Architectural Resolution:**  
    Rather than multiplying organs or splitting databases arbitrarily, this separation establishes the **Life Database** as an external, user-owned, structured substrate:
    - The Life Database remains local, encrypted, and owned by the user across model swaps.
-   - The companion's existing organs interface with it deterministically: reading/reasoning via knowledge & query tools, and mutating via audited tool contracts in `@siduri-x/hands`.
+   - The companion's existing organs interface with it deterministically: reading/reasoning via knowledge & query tools, and mutating via audited tool contracts in `@sidurijs/hands`.
 
 For the formal schema taxonomy, domain models, and organ interaction workflows, see the dedicated architectural specification:  
 👉 **[RFC: The Life Database Specification & User Data Sovereignty](../rfc/rfc-life-database.md)**

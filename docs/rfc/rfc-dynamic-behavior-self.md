@@ -1,20 +1,20 @@
 # RFC: Dynamic Behavior Delivery & The `.self` Asset Specification
 
-> **Status:** Implemented (Adopted in `@siduri-x/self` and `apps/api` Teach Mode)  
+> **Status:** Implemented (Adopted in `@sidurijs/self` and `apps/api` Teach Mode)  
 > **Canonical Specification:** [`docs/self-organ-knowledge/02-self-asset-and-teach-mode.md`](../self-organ-knowledge/02-self-asset-and-teach-mode.md)  
-> **Target Subsystems:** `@siduri-x/self`, `@siduri-x/core`, `apps/api` (`/teach/upload-self`, `/teach/install-self`)  
+> **Target Subsystems:** `@sidurijs/self`, `@sidurijs/core`, `apps/api` (`/teach/upload-self`, `/teach/install-self`)  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
 
 > [!NOTE]
 > **STATUS UPDATE: IMPLEMENTED**  
-> This RFC's proposed architecture (Option 1: Teach-Mode Ingestion via Batch Proposal + Schema-Validated `.self` v1.0.0 Package) has been fully implemented across `@siduri-x/self` (`SelfPackageParser`, `scanDirective`, `ActiveSelfCompiler`) and `apps/api` (Teach Mode ingestion endpoints).
+> This RFC's proposed architecture (Option 1: Teach-Mode Ingestion via Batch Proposal + Schema-Validated `.self` v1.0.0 Package) has been fully implemented across `@sidurijs/self` (`SelfPackageParser`, `scanDirective`, `ActiveSelfCompiler`) and `apps/api` (Teach Mode ingestion endpoints).
 
 ---
 
 ## 1. Executive Summary & Problem Statement
 
 In the Sumerian cosmological architecture of Siduri:
-- **Siduri (`@siduri-x/*`)** is the **Consciousness**: The runtime, memory, reasoning, action gating, and sensory processing engine.
+- **Siduri (`@sidurijs/*`)** is the **Consciousness**: The runtime, memory, reasoning, action gating, and sensory processing engine.
 - **É (`@vxnus/e*`)** is the **House**: The asset distribution layer supplying installable body (`.model3.json` / `.vrm`), voice (`.pth` / `.onnx`), knowledge (`.epack`), and behavior.
 
 ### The Static vs. Dynamic Tension
@@ -33,19 +33,19 @@ This document evaluates the architectural options for distributing behavior via 
 > **Verdict:** Preferred & Recommended Architecture
 
 ### 2.1 Core Architectural Principles
-1. **Zero Storage Redundancy:** Does not require modifying `@siduri-x/memory` or altering its schema. The memory organ's existing lifecycle (`source event → pending candidate → approved active`) already possesses the machinery needed for directives, priorities, and audit tracking.
+1. **Zero Storage Redundancy:** Does not require modifying `@sidurijs/memory` or altering its schema. The memory organ's existing lifecycle (`source event → pending candidate → approved active`) already possesses the machinery needed for directives, priorities, and audit tracking.
 2. **Strict Human-in-the-Loop Verification:** Downloading or uploading a behavior package never mutates active runtime behavior silently. Ingestion is treated as an intentional **Batch Memory Proposal**.
-3. **Living Runtime Evolution:** Directives become living records in Siduri's local database that dynamically adapt, supersede, decay, and compile through `@siduri-x/self` (`ActiveSelfCompiler`, formerly `@siduri-x/behavior`).
+3. **Living Runtime Evolution:** Directives become living records in Siduri's local database that dynamically adapt, supersede, decay, and compile through `@sidurijs/self` (`ActiveSelfCompiler`, formerly `@sidurijs/behavior`).
 
 > [!IMPORTANT]
 > ### Perspective: Universal Text Upload vs. Dedicated `.self` Format
 > **The Universal Ingestion Hypothesis:**  
-> Because Option 1 routes all behavior through Teach Mode's batch proposal pipeline, **it theoretically does not even require a locked `.self` format**. A user could upload *any* text format—Markdown character notes, plain `.txt`, system prompt dumps, SillyTavern JSON/PNG cards, or prose lore descriptions. `@siduri-x/brain` can extract directives, stances, and traits from freeform text and present them in the chat proposal card for approval.
+> Because Option 1 routes all behavior through Teach Mode's batch proposal pipeline, **it theoretically does not even require a locked `.self` format**. A user could upload *any* text format—Markdown character notes, plain `.txt`, system prompt dumps, SillyTavern JSON/PNG cards, or prose lore descriptions. `@sidurijs/brain` can extract directives, stances, and traits from freeform text and present them in the chat proposal card for approval.
 >
 > **The Critical Caveat — Intellectual Property & Marketplace Moat:**  
 > While allowing arbitrary text uploads maximizes friction-free UX, **it eliminates the intellectual property (IP) asset standard for creators and the É marketplace**:
 > - If behavior is just freeform text, it cannot be packaged, licensed, cryptographically signed, or monetized on the É Hub. Creators have no protection against plagiarism or commoditization.
-> - **The `.self` standard establishes the IP boundary:** It bundles verified author signatures, licensing terms, calibrated multi-dimensional trait vectors, and explicit motion/expression triggers wired to `@siduri-x/body` and `@siduri-x/voice`.
+> - **The `.self` standard establishes the IP boundary:** It bundles verified author signatures, licensing terms, calibrated multi-dimensional trait vectors, and explicit motion/expression triggers wired to `@sidurijs/body` and `@sidurijs/voice`.
 > - **Recommended Stance:** Teach Mode can support freeform text ingestion for personal ad-hoc teaching, but **`.self` remains the official, signed asset specification for É ecosystem distribution and creator IP.**
 
 ---
@@ -65,7 +65,7 @@ To eliminate memory pollution and provide clear intentionality, the Siduri UI an
 │ • Raw chat history   │ • EVERY observation, fact, or │ • AI Brain salience  │
 │   kept for context   │   directive creates a PENDING │   evaluates chat     │
 │ • Zero writes to     │   proposal                    │ • Only high-value    │
-│   @siduri-x/memory   │ • Requires user approval      │   events proposed    │
+│   @sidurijs/memory   │ • Requires user approval      │   events proposed    │
 │ • Perfect for quick  │ • Contains "Upload .self"     │ • Requires user      │
 │   untracked chats    │   ingestion action            │   approval           │
 └──────────────────────┴───────────────────────────────┴──────────────────────┘
@@ -73,7 +73,7 @@ To eliminate memory pollution and provide clear intentionality, the Siduri UI an
 
 #### 1. Casual Mode (Zero Memory Drift)
 - Chat turns maintain conversational context strictly in volatile memory.
-- No facts, user claims, or behavioral shifts are submitted to `@siduri-x/memory`.
+- No facts, user claims, or behavioral shifts are submitted to `@sidurijs/memory`.
 - Protects the companion from forming unintended impressions during casual chit-chat or shared demonstrations.
 
 #### 2. Teach Mode (Strict Governance & Pack Ingestion)
@@ -83,7 +83,7 @@ To eliminate memory pollution and provide clear intentionality, the Siduri UI an
 
 #### 3. Hybrid Mode (Autonomous Salience Filter)
 - Standard day-to-day companion workflow.
-- `@siduri-x/brain` applies an importance/salience scoring gate to conversation turns.
+- `@sidurijs/brain` applies an importance/salience scoring gate to conversation turns.
 - Low-significance banter is ignored; only pivotal facts or explicit behavioral feedback produce `PENDING` memory proposals for user review.
 
 ---
@@ -96,8 +96,8 @@ sequenceDiagram
     actor User as User / Operator
     participant UI as Siduri Chat UI (Teach Mode)
     participant Core as Siduri Runtime / Brain
-    participant Mem as Memory Organ (@siduri-x/memory)
-    participant Beh as Self / Behavior (@siduri-x/self)
+    participant Mem as Memory Organ (@sidurijs/memory)
+    participant Beh as Self / Behavior (@sidurijs/self)
 
     User->>UI: Selects "Teach Mode" & uploads "elena-tsundere.self"
     UI->>Core: Ingest .self payload
@@ -141,7 +141,7 @@ To thoroughly evaluate all pathways, the following alternative models are preser
 ### Option 2: Declarative State Machine & Reactive Rule Engine
 Rather than unpacking directives into generic memory, `.self` defines an explicit **Finite State Machine (FSM)**:
 - **Format:** YAML/JSON detailing states (`neutral`, `affectionate`, `guarded`), transition triggers (`on: TRUST_INCREASED`), and state-specific directives.
-- **Execution:** `@siduri-x/self` (`ActiveSelfCompiler`) maintains an active FSM pointer and evaluates transitions based on experience events and context metrics.
+- **Execution:** `@sidurijs/self` (`ActiveSelfCompiler`) maintains an active FSM pointer and evaluates transitions based on experience events and context metrics.
 - **Pros:** Highly predictable character arcs and multi-phase personalities.
 - **Cons:** Rigid authoring requirements; difficult for non-technical users to modify dynamically without re-authoring the state tree.
 
@@ -222,9 +222,9 @@ dialogueExamples:
 
 ## 6. Implementation Checklist
 
-- [ ] **Protocol Definition** (`packages/protocol` in É and `@siduri-x/core`):
+- [ ] **Protocol Definition** (`packages/protocol` in É and `@sidurijs/core`):
   - Add schema validator for `specVersion: "1.0.0"`, `kind: "behavior"` (`.self`).
-- [ ] **Teach Mode Parser** (`@siduri-x/self` / API):
+- [ ] **Teach Mode Parser** (`@sidurijs/self` / API):
   - Implement batch proposal transformation mapping `.self` directives $\rightarrow$ `PendingCandidate[]`.
   - Integrate unsafe instruction pattern screening.
 - [ ] **UI Controls & Mode Switcher** (`apps/web`):

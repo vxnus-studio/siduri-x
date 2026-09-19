@@ -1,4 +1,4 @@
-import { BrainOrgan } from '@siduri-x/core';
+import { BrainOrgan } from '@sidurijs/core';
 import { SelfPackageParseResult, SelfPackageManifest, ScannedDirective } from './types';
 import { scanDirective } from './safety-scanner';
 import { SelfPackageParser } from './self-parser';

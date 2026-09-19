@@ -1,4 +1,4 @@
-import { KnowledgeItem, KnowledgeOrgan } from '@siduri-x/core';
+import { KnowledgeItem, KnowledgeOrgan } from '@sidurijs/core';
 import type { LoadedPack } from '@vxnus/e-knowledge';
 import type { KnowledgeProvider, RetrievalResult, KnowledgePackManifest, RetrievalRequest, RetrievalResponse } from '@vxnus/e';
 import { Agent, Dispatcher, Dispatcher1Wrapper } from 'undici';

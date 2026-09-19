@@ -41,7 +41,7 @@ for (const rel of packagePaths) {
   }
 }
 
-const cliVer = allPackageVersions['@vxnus/siduri'] || '2.0.0';
+const cliVer = allPackageVersions['siduri'] || allPackageVersions['@vxnus/siduri'] || '1.0.0';
 let hasDiff = false;
 
 function updateFile(relativePath, transformFn) {
@@ -68,7 +68,7 @@ function updateFile(relativePath, transformFn) {
 updateFile('README.md', (content) => {
   let res = content;
   for (const [pkgName, version] of Object.entries(allPackageVersions)) {
-    if (pkgName === '@vxnus/siduri') continue;
+    if (pkgName === 'siduri' || pkgName === '@vxnus/siduri') continue;
     const regex = new RegExp(`(\\|\\s*\\*\\*\\\`${pkgName}\\\`\\*\\*\\s*\\|\\s*\`)\\^[0-9]+\\.[0-9]+\\.[0-9]+(\`\\s*\\|)`, 'g');
     res = res.replace(regex, `$1^${version}$2`);
   }
@@ -95,7 +95,7 @@ updateFile('apps/siduri-web-astro/src/layouts/Layout.astro', (content) => {
 updateFile('apps/siduri-web-astro/src/components/OrgansMatrix.astro', (content) => {
   let res = content;
   for (const [pkgName, version] of Object.entries(allPackageVersions)) {
-    if (pkgName === '@vxnus/siduri') continue;
+    if (pkgName === 'siduri' || pkgName === '@vxnus/siduri') continue;
     const regex = new RegExp(`(pkg:\\s*"${pkgName}",\\s*\\n\\s*version:\\s*")\\^[0-9]+\\.[0-9]+\\.[0-9]+(")`, 'g');
     res = res.replace(regex, `$1^${version}$2`);
   }
@@ -112,7 +112,7 @@ updateFile('cli/src/index.ts', (content) => {
 
 // 7. Sync coreVersion and cliVersion in cli/src/generator.ts
 updateFile('cli/src/generator.ts', (content) => {
-  const coreVer = allPackageVersions['@siduri-x/core'] || '2.0.0';
+  const coreVer = allPackageVersions['@sidurijs/core'] || '2.0.0';
   return content
     .replace(/coreVersion \|\| '\^[0-9]+\.[0-9]+\.[0-9]+'/g, `coreVersion || '^${coreVer}'`)
     .replace(/cliVersion \|\| '\^[0-9]+\.[0-9]+\.[0-9]+'/g, `cliVersion || '^${cliVer}'`);

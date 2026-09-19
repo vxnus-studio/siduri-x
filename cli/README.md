@@ -1,12 +1,11 @@
-# Siduri CLI (`siduri` / `@vxnus/siduri`)
+# Siduri CLI (`@vxnus/siduri`)
 
-Experimental CLI for creating, diagnosing, and managing standalone Siduri companions powered by the `@siduri-x/*` organ ecosystem.
+Experimental CLI for creating, diagnosing, and managing standalone Siduri companions powered by the `@sidurijs/*` organ ecosystem.
 
 Requires Node.js >=22.16.0.
 
 ```bash
-npx siduri create my-companion
-# or: npx @vxnus/siduri create my-companion
+npx @vxnus/siduri create my-companion
 ```
 
 ## Prerequisites
@@ -19,7 +18,7 @@ npx siduri create my-companion
 
 ## Features
 
-- **Manifest-Driven Organ Discovery**: Dynamically discovers installed `@siduri-x/*` organs and generates custom, standalone ESM instance code.
+- **Manifest-Driven Organ Discovery**: Dynamically discovers installed `@sidurijs/*` organs and generates custom, standalone ESM instance code.
 - **Interactive Configuration Wizard**: Model catalog discovery for OpenRouter, manifest inspection for E Knowledge Hub, and guided organ parameters.
 - **Zero Monolithic Bundling**: Scaffolds standard Node.js ESM projects with explicit dependency trees.
 - **Diagnostics (`siduri doctor`)**: Runs environment variable validation, schema conformance checks, storage writeability verification, external service endpoint probing, and organ health probes.
@@ -37,7 +36,7 @@ The interactive wizard allows you to name your companion, configure organ provid
 
 ```text
 my-companion/
-├── package.json          # ESM package referencing only selected @siduri-x/* organs
+├── package.json          # ESM package referencing only selected @sidurijs/* organs
 ├── siduri.config.json    # Selected organ configurations
 ├── siduri.schema.json    # Composed JSON Schema from organ manifests
 ├── .env.example          # Only environment variables required by selected organs
@@ -49,7 +48,7 @@ my-companion/
 ### 2. Run Diagnostics
 
 ```bash
-npx @vxnus/siduri doctor [directory]
+npx siduri doctor [directory]
 ```
 
 Inspects active configuration, checks required/optional environment variables, and executes health probes.
@@ -57,10 +56,19 @@ Inspects active configuration, checks required/optional environment variables, a
 ### 3. Database Management
 
 ```bash
-npx @vxnus/siduri db push [directory]
+npx siduri db push [directory]
+npx siduri db reset [directory]
 ```
 
-Inspects the instance storage configuration. Under the SQLite unified foundation, schema initialization and table creation are handled natively and automatically at boot.
+SQLite manages migrations and schemas automatically in-process.
+
+### 4. Instance Reset
+
+```bash
+npx siduri reset [directory]
+```
+
+Clears SQLite databases and cached state to return the companion to Blank Slate.
 
 ## Local Development
 

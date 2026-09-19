@@ -1,13 +1,13 @@
 # RFC: The Life Database Specification & User Data Sovereignty
 
-> **Status:** Implemented (Adopted in `@siduri-x/knowledge` & `SiduriDatabase`)  
+> **Status:** Implemented (Adopted in `@sidurijs/knowledge` & `SiduriDatabase`)  
 > **Canonical Specification:** [`docs/self-organ-knowledge/01-domain-architecture.md`](../self-organ-knowledge/01-domain-architecture.md)  
-> **Target Subsystems:** `@siduri-x/knowledge` (Life DB), `SiduriDatabase` (`siduri.sqlite`), `@siduri-x/core` (`LifeDatabase` contract)  
+> **Target Subsystems:** `@sidurijs/knowledge` (Life DB), `SiduriDatabase` (`siduri.sqlite`), `@sidurijs/core` (`LifeDatabase` contract)  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
 
 > [!NOTE]
 > **STATUS UPDATE: IMPLEMENTED & EXTENDED TO GENERIC PRIMITIVES**  
-> The Life Database is fully implemented as the sovereign Knowledge domain substrate in `@siduri-x/knowledge` (`SqliteLifeDatabase`), backed by `siduri.sqlite`. To prevent schema churn when new life categories arise, the storage model is organized into **4 generic structural primitives** (`life_entities`, `life_events`, `life_tasks`, `life_schedule`), while maintaining 100% backward compatibility for legacy domain tables (`life_inventory`, `life_finance`, `life_preferences`). State mutations pass strictly through the **Truth Gate**.
+> The Life Database is fully implemented as the sovereign Knowledge domain substrate in `@sidurijs/knowledge` (`SqliteLifeDatabase`), backed by `siduri.sqlite`. To prevent schema churn when new life categories arise, the storage model is organized into **4 generic structural primitives** (`life_entities`, `life_events`, `life_tasks`, `life_schedule`), while maintaining 100% backward compatibility for legacy domain tables (`life_inventory`, `life_finance`, `life_preferences`). State mutations pass strictly through the **Truth Gate**.
 
 ---
 
@@ -28,7 +28,7 @@ The **Life Database** introduces a fundamental architectural separation:
 ```text
 ┌─────────────────────────────────────────┬─────────────────────────────────────────┐
 │        COMPANION MEMORY                 │            LIFE DATABASE                │
-│       (@siduri-x/memory)                │      (User Sovereign Substrate)         │
+│       (@sidurijs/memory)                │      (User Sovereign Substrate)         │
 ├─────────────────────────────────────────┼─────────────────────────────────────────┤
 │ • Subjective & Relational               │ • Objective & Factual                   │
 │ • "How did our interaction feel?"       │ • "What actually exists in user's life?"│
@@ -92,7 +92,7 @@ A companion cannot arbitrarily mutate the user's Life Database through hallucina
    - Extracted candidate facts targeting knowledge (e.g. `subject: 'entity:*'`, `'task:*'`, `'event:*'`) are quarantined in `memory_claims` as `PENDING`.
    - Invisible to context retrieval until explicit human approval (`POST /knowledge/proposals/approve`).
    - Approval invokes `promoteApprovedClaimToKnowledge`, committing mutations to `siduri.sqlite`.
-2. **Direct Intent Execution (`@siduri-x/hands`)**:
+2. **Direct Intent Execution (`@sidurijs/hands`)**:
    - Explicit operational commands (e.g., *"Save my new laptop serial number"*, *"Log $14 for lunch"*) bypass conversational learning and execute via signed `HandsOrgan` tool contracts (`life:save_entity`, `life:log_event`, `life:upsert_schedule`, `life:update_task`).
    - Requires cryptographically valid `AuthorizationCapability` tokens and appends tamper-evident audit records to `action_audit_log`.
 

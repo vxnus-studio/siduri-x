@@ -5,7 +5,7 @@ import {
   SelfDirective,
   SelfRelationship,
   SelfDialogueExample,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 import { SelfRepository } from './types';
 
 export interface SqliteSelfRepositoryOptions {

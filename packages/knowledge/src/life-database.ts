@@ -1,4 +1,4 @@
-import { SiduriDatabase } from '@siduri-x/core';
+import { SiduriDatabase } from '@sidurijs/core';
 import {
   LifeDatabase,
   LifeContextResult,

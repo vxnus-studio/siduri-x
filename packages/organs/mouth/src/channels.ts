@@ -4,7 +4,7 @@ import {
   MouthMedium,
   FormattedMouthOutput,
   MouthStreamChunk,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 
 export interface BufferedMouthChannelOptions {
   id?: string;

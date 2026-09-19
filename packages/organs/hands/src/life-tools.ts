@@ -1,4 +1,4 @@
-import { ToolDefinition } from '@siduri-x/core';
+import { ToolDefinition } from '@sidurijs/core';
 import { ToolHandler } from './index';
 
 export interface LifeToolsOptions {

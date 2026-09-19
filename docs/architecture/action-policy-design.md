@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > **Implementation Status: Fully Implemented (v2.0.0+)**  
-> The architectural boundaries, P0/P1 requirements, and separation of powers proposed in this document are fully realized in `@siduri-x/core` and `@siduri-x/hands`:
+> The architectural boundaries, P0/P1 requirements, and separation of powers proposed in this document are fully realized in `@sidurijs/core` and `@sidurijs/hands`:
 > - **Action Policy Boundary**: Implemented via `ActionPolicyEngine` (`packages/core/src/action-policy.ts`) and wired into `SiduriRuntime`.
 > - **Cryptographic Capability Enforcement**: Actions require tamper-evident HMAC capability tokens signed by `ActionPolicyEngine` and verified by `HandsOrgan`.
 > - **Provenance Propagation**: `RequestContext` (actor, session, companion, channel, capabilities) is strictly propagated into `ActionExecutionRequest`.

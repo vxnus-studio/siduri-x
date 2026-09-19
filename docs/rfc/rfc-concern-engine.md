@@ -1,7 +1,7 @@
 # RFC: The Concern Engine — Self-Domain Inherent Care & Behavioral Proactivity
 
 > **Status:** Proposed / Under Architectural Review  
-> **Target Subsystems:** `@siduri-x/self` (Concern Engine, `ActiveSelfCompiler`), `@siduri-x/knowledge` (`LifeDatabase`), `@siduri-x/brain` (Context Injection, Deliberation Turn), `apps/api`  
+> **Target Subsystems:** `@sidurijs/self` (Concern Engine, `ActiveSelfCompiler`), `@sidurijs/knowledge` (`LifeDatabase`), `@sidurijs/brain` (Context Injection, Deliberation Turn), `apps/api`  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
 > **Date:** 2026-09-18  
 > **Related Documents:**  
@@ -20,8 +20,8 @@ Traditional conversational AI companions suffer from a fatal emotional disconnec
 
 Conversely, crude attempts at "proactivity" in modern apps rely on **transactional push notifications** (e.g., cron-driven retention pings: *"You haven't chatted in 24 hours!"* or rigid heuristic alerts: *"Drink water now!"*). These mechanisms feel robotic, invasive, and exhausting.
 
-The **Concern Engine** introduces organic, relational proactivity to Siduri by anchoring care directly within the **`Self` domain** (`@siduri-x/self`):
-1. **LifeDB Pattern Accumulation:** As the user goes about their life, the sovereign **Life Database** (`@siduri-x/knowledge`) accumulates objective telemetry across schedules, financial records, task commitments, and behavioral patterns (e.g. login times, work arrival/departure rhythms, session cadence).
+The **Concern Engine** introduces organic, relational proactivity to Siduri by anchoring care directly within the **`Self` domain** (`@sidurijs/self`):
+1. **LifeDB Pattern Accumulation:** As the user goes about their life, the sovereign **Life Database** (`@sidurijs/knowledge`) accumulates objective telemetry across schedules, financial records, task commitments, and behavioral patterns (e.g. login times, work arrival/departure rhythms, session cadence).
 2. **Periodic & Session-Init Synthesis:** Daily (or upon user session initialization), the engine retrieves relevant LifeDB data slices and compares them against learned behavioral baselines.
 3. **The Deliberation Gate (`ASK` vs. `SILENT`):** Rather than blindly pinging the user whenever an anomaly is detected, the companion executes an internal deliberation based on her **Relational Stance**, **Character Archetype**, and **Friction Budget**. She consciously chooses whether to inquire proactively or maintain empathetic, supportive silence.
 4. **Contextual Care in Character Voice:** When an inquiry is warranted (e.g., a user who normally finishes work at 6:00 PM and chats at 8:00 PM opens Siduri at 10:00 PM), the companion notices the temporal deviation and opens the interaction naturally: *"Is something happened in the office?"*—delivered in the distinct voice and cadence defined by her `Self` directives.
@@ -80,27 +80,27 @@ In the four-domain architecture of Siduri-X:
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          THE 4 DOMAINS OF SIDURI-X                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 1. SELF (@siduri-x/self) ──► [WHO AM I?]                                    │
+│ 1. SELF (@sidurijs/self) ──► [WHO AM I?]                                    │
 │    Identity Nucleus, Relational Stances, Directives, CONCERN ENGINE         │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 2. KNOWLEDGE (@siduri-x/knowledge) ──► [WHAT DO I KNOW?]                   │
+│ 2. KNOWLEDGE (@sidurijs/knowledge) ──► [WHAT DO I KNOW?]                   │
 │    Life Database (Entities, Events, Tasks, Schedule) & External Knowledge   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 3. MEMORY (@siduri-x/memory) ──► [WHAT HAPPENED?]                           │
+│ 3. MEMORY (@sidurijs/memory) ──► [WHAT HAPPENED?]                           │
 │    Episodic logs, conversational claims, dialogic history                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 4. ORGANS (@siduri-x/organs) ──► [WHAT CAN I DO?]                           │
+│ 4. ORGANS (@sidurijs/organs) ──► [WHAT CAN I DO?]                           │
 │    Brain (Cognition/Planning), Hands (Actions), Voice, Vision, Body         │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 3.1 Domain Boundary Separation
 1. **LifeDB (`Knowledge`) is Objective Reality, Not Care:**  
-   `@siduri-x/knowledge` records timestamps, financial line items, calendar blocks, and login telemetry. It stores *what happened in the user's objective world*. It has no personality, no voice, and no capacity to care or decide social boundaries.
+   `@sidurijs/knowledge` records timestamps, financial line items, calendar blocks, and login telemetry. It stores *what happened in the user's objective world*. It has no personality, no voice, and no capacity to care or decide social boundaries.
 2. **`Memory` is Past Dialogue, Not Attentive Will:**  
-   `@siduri-x/memory` stores conversational claims (*"User mentioned loving espresso"*). It does not maintain active behavioral dispositions or deliberate proactive openings.
+   `@sidurijs/memory` stores conversational claims (*"User mentioned loving espresso"*). It does not maintain active behavioral dispositions or deliberate proactive openings.
 3. **`Brain` is the Execution Engine, Not the Moral Core:**  
-   `@siduri-x/brain` orchestrates LLM calls, parses JSON response plans, and dispatches tools. It executes instructions, but does not own the companion's personal values or interpersonal boundaries.
+   `@sidurijs/brain` orchestrates LLM calls, parses JSON response plans, and dispatches tools. It executes instructions, but does not own the companion's personal values or interpersonal boundaries.
 4. **`Self` is Identity, Boundary, and Stance:**  
    `Self` dictates:
    - *Who am I to this user?* (Relational Stance: Creator, close friend, colleague, guest).
@@ -108,7 +108,7 @@ In the four-domain architecture of Siduri-X:
    - *How do I express concern?* (Archetype: tsundere banter, gentle maternal warmth, analytical stoicism).
    - *When should I hold my tongue?* (Directives on tact, restraint, and respecting user space).
 
-Because concern is an emotional and relational posture, the **Concern Engine is an internal module of `@siduri-x/self`**, querying `@siduri-x/knowledge` for objective observations while consulting `@siduri-x/self`'s active stances and directives to decide action.
+Because concern is an emotional and relational posture, the **Concern Engine is an internal module of `@sidurijs/self`**, querying `@sidurijs/knowledge` for objective observations while consulting `@sidurijs/self`'s active stances and directives to decide action.
 
 ---
 
@@ -141,7 +141,7 @@ The Concern Engine observes the four generic primitives of the Life Database ([R
                                                  │
                                                  ▼
                                       CONCERN DELIBERATION GATE
-                                      (@siduri-x/self Decision)
+                                      (@sidurijs/self Decision)
 ```
 
 ### 4.1 Telemetry Streams in `life_events`
@@ -173,7 +173,7 @@ $$\Delta_{\text{arrival}} = T_{\text{current}} - \mu_{\text{evening}} = 22:00 - 
 
 ## 5. The Concern Deliberation Pipeline: To Ask or To Remain Silent
 
-Generating a Concern Signal is strictly mathematical; **acting on it is cognitive and relational**. The Concern Engine passes candidate signals through a 5-stage deliberation pipeline within `@siduri-x/self`:
+Generating a Concern Signal is strictly mathematical; **acting on it is cognitive and relational**. The Concern Engine passes candidate signals through a 5-stage deliberation pipeline within `@sidurijs/self`:
 
 ```mermaid
 flowchart TD
@@ -295,22 +295,22 @@ The companion does not pop up with an alarm like a bank fraud department. Instea
 
 ## 7. Technical Architecture & TypeScript Contracts
 
-The Concern Engine is situated in `@siduri-x/self` and interacts with `@siduri-x/knowledge` and `@siduri-x/brain`.
+The Concern Engine is situated in `@sidurijs/self` and interacts with `@sidurijs/knowledge` and `@sidurijs/brain`.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          SYSTEM PACKAGE TOPOLOGY                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ @siduri-x/knowledge ──► Exposes SqliteLifeDatabase query interfaces         │
+│ @sidurijs/knowledge ──► Exposes SqliteLifeDatabase query interfaces         │
 │                         (getRecentEvents, getScheduleIntervals)             │
 │                                    │                                        │
 │                                    ▼                                        │
-│ @siduri-x/self      ──► ConcernEngine evaluates LifeDB telemetry against    │
+│ @sidurijs/self      ──► ConcernEngine evaluates LifeDB telemetry against    │
 │                         RelationalStances & Directives.                     │
 │                         ActiveSelfCompiler injects <concern_signal> token.  │
 │                                    │                                        │
 │                                    ▼                                        │
-│ @siduri-x/brain     ──► Brain incorporates active concern into prompt       │
+│ @sidurijs/brain     ──► Brain incorporates active concern into prompt       │
 │                         deliberation and formats conversational turn.       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -404,7 +404,7 @@ Stance Guidance: Express genuine personal attentiveness regarding what kept them
 </concern_context>
 ```
 
-When `@siduri-x/brain` processes this prompt, it immediately knows *why* it is speaking first and *what* real-world event prompted the greeting.
+When `@sidurijs/brain` processes this prompt, it immediately knows *why* it is speaking first and *what* real-world event prompted the greeting.
 
 ---
 
@@ -439,11 +439,11 @@ To prevent the Concern Engine from devolving into invasive spyware or an annoyin
 │                          IMPLEMENTATION MILESTONES                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Phase 1: Baseline Profiler & Telemetry Ingestion                            │
-│ • Implement rolling window queries over life_events in @siduri-x/knowledge  │
+│ • Implement rolling window queries over life_events in @sidurijs/knowledge  │
 │ • Daily rhythm extractor (median arrival, session intervals)                │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Phase 2: Deliberation Gate & Self Engine Scaffolding                        │
-│ • Implement ConcernEngine in @siduri-x/self                                 │
+│ • Implement ConcernEngine in @sidurijs/self                                 │
 │ • Implement 5-stage deliberation pipeline (significance, check, stance)     │
 │ • Unit test suite with mock LifeDB baselines & deviation vectors            │
 ├─────────────────────────────────────────────────────────────────────────────┤

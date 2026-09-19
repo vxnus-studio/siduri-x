@@ -12,6 +12,7 @@ import {
   type AvatarExpression,
   type AvatarAction,
 } from "../../components/live2d";
+import { VRMCanvas } from "../../components/vrm";
 import { postJson, fetchApi, postStream, interruptChat } from "../../lib/api";
 import {
   SearchIcon,
@@ -307,6 +308,8 @@ export default function ChatClient() {
   const [isPresenceOpen, setIsPresenceOpen] = useState(false);
   const [activeAvatarEvent, setActiveAvatarEvent] = useState<ActiveAvatarEvent | null>(null);
   const [avatarModelUrl, setAvatarModelUrl] = useState<string | undefined>(undefined);
+  const [avatarFormat, setAvatarFormat] = useState<'live2d' | 'vrm' | 'unknown'>('unknown');
+  const [avatarVrmConfig, setAvatarVrmConfig] = useState<any>(undefined);
   const [selectedMode, setSelectedMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const [effectiveMode, setEffectiveMode] = useState<'casual' | 'teach' | 'hybrid'>('hybrid');
   const [subtitleLanguage, setSubtitleLanguage] = useState<string>("off");
@@ -371,23 +374,51 @@ export default function ChatClient() {
           setStatus("online");
           if (data.organs?.body?.modelUrl) {
             setAvatarModelUrl(data.organs.body.modelUrl);
-          } else {
-            // Check discovered models from /api/models/body
-            fetchApi(`/api/models/body`)
-              .then(async (mRes) => {
-                if (mRes.ok) {
-                  const mData = await mRes.json().catch(() => ({}));
-                  const models: string[] = mData.models || [];
-                  const customModel = models.find((m) => m !== "default");
-                  if (customModel) {
-                    setAvatarModelUrl(`/assets/body/${customModel}/model.model3.json`);
-                  } else if (models.length > 0 && models[0] !== "default") {
-                    setAvatarModelUrl(`/assets/body/${models[0]}/model.model3.json`);
+            const ref = data.organs.body.modelUrl.toLowerCase();
+            if (ref.endsWith('.vrm')) {
+              setAvatarFormat('vrm');
+            } else {
+              setAvatarFormat('live2d');
+            }
+          }
+
+          // Fetch authoritative body organ snapshot
+          fetchApi(`/body/snapshot`)
+            .then(async (bRes) => {
+              if (bRes.ok) {
+                const bData = await bRes.json().catch(() => null);
+                if (bData?.snapshot) {
+                  if (bData.snapshot.modelUrl) {
+                    setAvatarModelUrl(bData.snapshot.modelUrl);
+                  }
+                  if (bData.snapshot.format) {
+                    setAvatarFormat(bData.snapshot.format);
+                  }
+                  if (bData.snapshot.vrmOptions) {
+                    setAvatarVrmConfig(bData.snapshot.vrmOptions);
                   }
                 }
-              })
-              .catch(() => {});
-          }
+              } else if (!data.organs?.body?.modelUrl) {
+                // Check discovered models from /api/models/body as fallback
+                fetchApi(`/api/models/body`)
+                  .then(async (mRes) => {
+                    if (mRes.ok) {
+                      const mData = await mRes.json().catch(() => ({}));
+                      const models: string[] = mData.models || [];
+                      const customModel = models.find((m) => m !== "default");
+                      if (customModel) {
+                        setAvatarModelUrl(`/assets/body/${customModel}/model.model3.json`);
+                        setAvatarFormat('live2d');
+                      } else if (models.length > 0 && models[0] !== "default") {
+                        setAvatarModelUrl(`/assets/body/${models[0]}/model.model3.json`);
+                        setAvatarFormat('live2d');
+                      }
+                    }
+                  })
+                  .catch(() => {});
+              }
+            })
+            .catch(() => {});
         } else {
           setStatus("online");
         }
@@ -1375,16 +1406,30 @@ export default function ChatClient() {
             >
               {isPresenceOpen ? (
                 <div className="avatar-presence-area" data-testid="avatar-presence-area">
-                  <AvatarCanvas
-                    modelUrl={avatarModelUrl}
-                    expression={activeAvatarEvent?.expression || "neutral"}
-                    action={activeAvatarEvent?.action || "idle"}
-                    state={activeAvatarEvent?.state || "idle"}
-                    speechId={activeAvatarEvent?.speechId}
-                    lipSyncValue={activeAvatarEvent?.lipSyncValue}
-                    durationMs={activeAvatarEvent?.durationMs}
-                    className="w-full h-full"
-                  />
+                  {avatarFormat === "vrm" || avatarModelUrl?.toLowerCase().endsWith(".vrm") ? (
+                    <VRMCanvas
+                      modelUrl={avatarModelUrl}
+                      expression={activeAvatarEvent?.expression || "neutral"}
+                      action={activeAvatarEvent?.action || "idle"}
+                      state={activeAvatarEvent?.state || "idle"}
+                      speechId={activeAvatarEvent?.speechId}
+                      lipSyncValue={activeAvatarEvent?.lipSyncValue}
+                      durationMs={activeAvatarEvent?.durationMs}
+                      vrmConfig={avatarVrmConfig}
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <AvatarCanvas
+                      modelUrl={avatarModelUrl}
+                      expression={activeAvatarEvent?.expression || "neutral"}
+                      action={activeAvatarEvent?.action || "idle"}
+                      state={activeAvatarEvent?.state || "idle"}
+                      speechId={activeAvatarEvent?.speechId}
+                      lipSyncValue={activeAvatarEvent?.lipSyncValue}
+                      durationMs={activeAvatarEvent?.durationMs}
+                      className="w-full h-full"
+                    />
+                  )}
                 </div>
               ) : messages.length === 0 ? (
                 <PreferencesStarter

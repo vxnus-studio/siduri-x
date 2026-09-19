@@ -1,7 +1,7 @@
 # RFC: Semantic Supersession & Teach Mode Onboarding Specification
 
 > **Status:** Accepted & Implemented  
-> **Target Systems:** `@siduri-x/core` (`SiduriDatabase`), `@siduri-x/self` (`ActiveSelfCompiler`), `@siduri-x/memory`, Web Chat App  
+> **Target Systems:** `@sidurijs/core` (`SiduriDatabase`), `@sidurijs/self` (`ActiveSelfCompiler`), `@sidurijs/memory`, Web Chat App  
 > **Related Documents:**  
 > - [T2 Memory State Machine](../contracts/t2-memory-state-machine.md)  
 > - [T3 Active Self Contract](../contracts/t3-active-self-contract.md)  
@@ -55,7 +55,7 @@ const SINGLE_VALUE_PREDICATES = new Set([
 
 When a claim or directive matching any single-value predicate is approved:
 1. **State Transition:** All prior `active` or `pending` records for the same `(subject, predicate)` are atomically transitioned to `status = 'superseded'`.
-2. **Exclusion from Active Self:** Only directives with `status = 'active'` are admitted into `@siduri-x/self` compilation. Outdated instructions are omitted from the LLM prompt.
+2. **Exclusion from Active Self:** Only directives with `status = 'active'` are admitted into `@sidurijs/self` compilation. Outdated instructions are omitted from the LLM prompt.
 3. **Auditability:** Superseded claims remain queryable by operators or temporal historical queries (`"What was my name before?"`) without polluting current behavioral context.
 4. **Tie-Break Determinism:** When priorities are identical, recency (`createdAt` descending) acts as the decisive tie-breaker (`newest wins`).
 

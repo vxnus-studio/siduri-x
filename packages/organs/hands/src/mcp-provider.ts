@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { ToolDefinition } from '@siduri-x/core';
+import { ToolDefinition } from '@sidurijs/core';
 
 export interface MCPProviderConfig {
   serverName: string;

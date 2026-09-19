@@ -7,7 +7,7 @@ import {
   LifeEntity,
   LifeEvent,
   LifeTask,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 import {
   InventoryRepository,
   FinanceRepository,

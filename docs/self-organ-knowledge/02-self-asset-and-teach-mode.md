@@ -1,7 +1,7 @@
 # The `.self` Asset Specification & Teach Mode Ingestion Pipeline
 
 > **Status:** Specification & Delivery Architecture  
-> **Target Systems:** `@siduri-x/core`, `apps/web`, `apps/api`, `@vxnus/e-hub`  
+> **Target Systems:** `@sidurijs/core`, `apps/web`, `apps/api`, `@vxnus/e-hub`  
 > **Related Documents:**  
 > - [01. Domain Architecture & Contracts](file:///home/zagin/Projects/vxnus-studio/projects/siduri-x/docs/self-organ-knowledge/01-domain-architecture.md)  
 > - [03. Phased Migration Plan](file:///home/zagin/Projects/vxnus-studio/projects/siduri-x/docs/self-organ-knowledge/03-phased-migration-plan.md)  

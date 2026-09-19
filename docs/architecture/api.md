@@ -43,7 +43,7 @@ The API is a single deployable Express process (`apps/api`):
 - **Timeout (`timeout`)**: When requests exceed wall-clock deadlines, the client displays `[TIMED OUT]` with *"Response timed out."*
 
 ## 6. LLM Provider Error Propagation & Diagnostics
-- **Upstream Error Extraction**: `@siduri-x/brain` inspects upstream HTTP error bodies (`response.text()`) from OpenRouter / OpenAI-compatible providers rather than discarding details.
+- **Upstream Error Extraction**: `@sidurijs/brain` inspects upstream HTTP error bodies (`response.text()`) from OpenRouter / OpenAI-compatible providers rather than discarding details.
 - **Fatal Error Gating**: HTTP statuses `400` (Bad Request), `401` (Unauthorized), `402` (Payment Required / Insufficient credits), `403` (Forbidden), and `404` (Model not found) are marked fatal and abort immediately rather than exhausting backoff retries.
 - **Diagnostic Classification**: `apps/web` identifies error signatures (authentication failures, credits exhausted, rate limits, missing models, context window overflow, request timeout, upstream 5xx outages) and displays an in-character message (*"I couldn't complete the response."*) paired with an actionable diagnosis hint and collapsible technical trace drawer.
 - **Direct Completion Fallback**: When an LLM returns direct text output rather than calling the `submitResponsePlan` function tool, the brain gracefully extracts the text into speech instead of throwing a parsing error.

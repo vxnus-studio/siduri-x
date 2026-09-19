@@ -1,6 +1,6 @@
 {
-  "name": "@siduri-x/api",
-  "version": "2.0.19",
+  "name": "@sidurijs/api",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
@@ -15,18 +15,18 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-x/body": "workspace:*",
-    "@siduri-x/brain": "workspace:*",
-    "@siduri-x/core": "workspace:*",
-    "@siduri-x/ear": "workspace:*",
-    "@siduri-x/hands": "workspace:*",
-    "@siduri-x/knowledge": "workspace:*",
-    "@siduri-x/memory": "workspace:*",
-    "@siduri-x/mouth": "workspace:*",
-    "@siduri-x/observation": "workspace:*",
-    "@siduri-x/self": "workspace:*",
-    "@siduri-x/vision": "workspace:*",
-    "@siduri-x/voice": "workspace:*",
+    "@sidurijs/body": "workspace:*",
+    "@sidurijs/brain": "workspace:*",
+    "@sidurijs/core": "workspace:*",
+    "@sidurijs/ear": "workspace:*",
+    "@sidurijs/hands": "workspace:*",
+    "@sidurijs/knowledge": "workspace:*",
+    "@sidurijs/memory": "workspace:*",
+    "@sidurijs/mouth": "workspace:*",
+    "@sidurijs/observation": "workspace:*",
+    "@sidurijs/self": "workspace:*",
+    "@sidurijs/vision": "workspace:*",
+    "@sidurijs/voice": "workspace:*",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"

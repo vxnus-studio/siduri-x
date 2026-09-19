@@ -4,8 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createCorsOptions } from './cors';
 import { SiduriRuntime, dispatchCompanionChat } from './runtime';
-import { SelfPackageParser, SqliteSelfRepository, scanDirective, compilePersonaDocument } from '@siduri-x/self';
-import { FixtureObservationOrgan } from '@siduri-x/observation';
+import { SelfPackageParser, SqliteSelfRepository, scanDirective, compilePersonaDocument } from '@sidurijs/self';
+import { FixtureObservationOrgan } from '@sidurijs/observation';
 import { attachIdentity, requireAuth, Identity, isLocalRequest } from './auth';
 import { mapRequestContext } from './context-mapper';
 import {
@@ -74,6 +74,21 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
   app.get('/mouth/health', (req, res) => {
     const hasMouth = Array.from(runtimes.values()).some((r) => Boolean(r.mouth));
     res.json({ provider: "siduri-mouth", configured: hasMouth });
+  });
+  app.get('/body/health', (req, res) => {
+    const hasBody = Array.from(runtimes.values()).some((r) => Boolean(r.body));
+    res.json({ provider: "siduri-body", configured: hasBody });
+  });
+  app.get('/body/snapshot', (req, res) => {
+    const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime || !runtime.body) {
+      return res.status(404).json({ error: "Body organ not configured for companion" });
+    }
+    const snapshot = typeof (runtime.body as any).getSnapshot === 'function'
+      ? (runtime.body as any).getSnapshot()
+      : null;
+    res.json({ snapshot });
   });
   app.get('/mouth/channels', (req, res) => {
     const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
@@ -158,6 +173,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       const parsed = await compilePersonaDocument(content, {
         brain: runtime?.brain,
         companionId,
+        fallbackToParser: true,
       });
 
       let alreadyInstalled = false;
@@ -199,6 +215,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       const parsed = await compilePersonaDocument(content, {
         brain: runtime?.brain,
         companionId: targetId,
+        fallbackToParser: true,
       });
       res.json(parsed);
     } catch (e: any) {

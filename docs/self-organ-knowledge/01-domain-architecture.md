@@ -2,7 +2,7 @@
 
 > **Status:** Canonical Clean Specification  
 > **Philosophy:** Zero backward compatibility compromises. Pure SQLite (`siduri.sqlite`). Pure architectural boundaries.  
-> **Target Subsystems:** `@siduri-x/core`, `@siduri-x/self`, `@siduri-x/knowledge`, `@siduri-x/memory`, `@siduri-x/organs/*`  
+> **Target Subsystems:** `@sidurijs/core`, `@sidurijs/self`, `@sidurijs/knowledge`, `@sidurijs/memory`, `@sidurijs/organs/*`  
 > **Related Documents:**  
 > - [02. The `.self` Asset Specification & Teach Mode](file:///home/zagin/Projects/vxnus-studio/projects/siduri-x/docs/self-organ-knowledge/02-self-asset-and-teach-mode.md)  
 > - [03. Phased Engineering Roadmap](file:///home/zagin/Projects/vxnus-studio/projects/siduri-x/docs/self-organ-knowledge/03-phased-migration-plan.md)  
@@ -14,12 +14,12 @@
 Siduri-X structures artificial consciousness into **four discrete semantic domains**, governed by one gatekeeping authority and orchestrated by one cognitive organ:
 
 ```text
-                                SIDURI RUNTIME (@siduri-x/core)
+                                SIDURI RUNTIME (@sidurijs/core)
                                              │
                  ┌───────────────────────────┼───────────────────────────┐
                  │                           │                           │
                SELF                      KNOWLEDGE                     MEMORY
-          (@siduri-x/self)          (@siduri-x/knowledge)        (@siduri-x/memory)
+          (@sidurijs/self)          (@sidurijs/knowledge)        (@sidurijs/memory)
           [ Who am I? ]             [ What do I know? ]          [ What happened? ]
                  │                           │                           │
                  └───────────────────────────┼───────────────────────────┘
@@ -48,7 +48,7 @@ All three persistent continuity substrates (`Self`, `Knowledge`, `Memory`) are b
 3. **Values & Guardrails:** Ethical baselines and compile-time prompt barriers.
 4. **Behavioral Dispositions:** Active compiled directives governing demeanor and expression.
 5. **Directional Relationships:** Subjective stance toward specific entities (e.g., *Siduri $\rightarrow$ Kur*).
-6. **Active Self Compiler:** Merged from legacy `@siduri-x/behavior`. Projects active traits and winning directives into `<active_self>` prompt tokens.
+6. **Active Self Compiler:** Merged from legacy `@sidurijs/behavior`. Projects active traits and winning directives into `<active_self>` prompt tokens.
 
 ### 2.2 Interface Contract: `SelfRepository`
 ```typescript
@@ -103,7 +103,7 @@ export interface SelfRepository {
 ## 3. Domain 2: Knowledge (`What do I believe / know?`) — `packages/knowledge`
 
 ### 3.1 The Life Database (Internal Sovereign Knowledge)
-`@siduri-x/knowledge` is the home of the user's sovereign Life DB, stored in typed relational tables inside `siduri.sqlite`:
+`@sidurijs/knowledge` is the home of the user's sovereign Life DB, stored in typed relational tables inside `siduri.sqlite`:
 * `life_inventory`: Accounts, game rosters (Genshin UIDs, weapons, characters), owned hardware, software subscriptions.
 * `life_finance`: Expense logs, recurring bills, monthly budgets (enables exact arithmetic without LLM drift).
 * `life_schedule`: Deadlines, routines, focus hours, commitments.
@@ -124,7 +124,7 @@ export interface LifeDatabase {
 ## 4. Domain 3: Memory (`What happened?`) — `packages/memory`
 
 ### 4.1 Pure Episodic Experience (SQLite + FTS5)
-`@siduri-x/memory` records raw experience and historical interaction turns without conflating them with personality or user accounts.
+`@sidurijs/memory` records raw experience and historical interaction turns without conflating them with personality or user accounts.
 
 Backed by SQLite FTS5, it provides sub-millisecond lexical and BM25 relevance search without requiring PostgreSQL:
 
@@ -168,13 +168,13 @@ While the user's sovereign Life DB is internal (`packages/knowledge`), searching
 ┌────────────────────────────────────────────────────────────┐
 │                       siduri.sqlite                        │
 ├──────────────────────────────┬─────────────────────────────┤
-│      @siduri-x/self          │    @siduri-x/knowledge      │
+│      @sidurijs/self          │    @sidurijs/knowledge      │
 │  • self_identity             │  • life_inventory           │
 │  • self_personality          │  • life_finance             │
 │  • self_directives           │  • life_schedule            │
 │  • self_relationships        │  • life_preferences         │
 ├──────────────────────────────┴─────────────────────────────┤
-│                    @siduri-x/memory                        │
+│                    @sidurijs/memory                        │
 │  • memory_events (raw episodic turns)                      │
 │  • memory_claims (durable asserted facts)                  │
 │  • memory_search (FTS5 BM25 virtual table index)           │

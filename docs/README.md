@@ -45,7 +45,7 @@ Detailed subsystem and organ-level specifications:
 - **[The Truth Gate & Anchor](./architecture/truth-gate.md)** — Two-tier reality model: memory proposal staging and runtime response/evidence gating.
 - **[Organs Reference](./architecture/organs.md)** — Detailed responsibilities and package mapping for all 4 domains and 8 peripheral organs.
 - **[Companion Runtime](./architecture/companion-runtime.md)** — `SiduriRuntime` orchestration pipeline, 4-stream parallel context retrieval, and life context injection.
-- **[External Knowledge & E-Packs](./architecture/knowledge-e.md)** — `@siduri-x/knowledge` client, cited context, and SSRF hardening.
+- **[External Knowledge & E-Packs](./architecture/knowledge-e.md)** — `@sidurijs/knowledge` client, cited context, and SSRF hardening.
 - **[Action Policy Design](./architecture/action-policy-design.md)** — Cryptographic action capabilities, MCP execution, and audit chaining.
 - **[API Reference](./architecture/api.md)** — REST API surface including `/chat`, `/chat/stream`, `/teach/upload-self`, and `/teach/install-self`.
 - **[CLI Reference](./architecture/cli.md)** — `@vxnus/siduri` CLI reference, dynamic organ discovery, and diagnostic tools.
@@ -53,6 +53,7 @@ Detailed subsystem and organ-level specifications:
 - **[Development Guide](./architecture/development.md)** — Local development environment, building, and running.
 - **[Testing Strategy](./architecture/testing.md)** — Test suite layout, invariant assertions, and clean-machine verification.
 - **[Subsystem Integrations](./architecture/integrations.md)** — External adapters (Voice Synthesis, Live2D, OpenRouter).
+- **[Third-Party Organ & Asset Licensing Guide](./third-party-organ-licensing.md)** — Upstream licensing compliance, Live2D/VOICEVOX runtime downloading, and commercial thresholds.
 - **[Limitations & Boundaries](./architecture/limitations.md)** — System boundaries and non-goals.
 
 ### Historical Migration Archives (Superseded)
@@ -60,7 +61,7 @@ The following documents record historical prototypes, past migration milestones,
 - **[Historical Migration & V1 Notes](./architecture/migration.md)** — Early prototype notes porting Python `siduri/` to TypeScript.
 - **[Historical PostgreSQL Memory Driver Guide](./architecture/memory.md)** — Superseded `pg` exploration prior to the Phase 6 Pure SQLite migration.
 - **[Historical Single-Owner Migration Plan](./architecture/single-owner-phased-migration.md)** — Historical plan for stripping multi-audience columns from PostgreSQL.
-- **[Legacy Behavior Organ Reference](./architecture/behavior.md)** — Superseded reference for `@siduri-x/behavior` (merged into `@siduri-x/self`).
+- **[Legacy Behavior Organ Reference](./architecture/behavior.md)** — Superseded reference for `@sidurijs/behavior` (merged into `@sidurijs/self`).
 - **[Organ Decoupling Philosophy Note](./architecture/siduri-organ-architecture.md)** — Foundational decoupling principles.
 
 ---
@@ -72,11 +73,11 @@ Architectural proposals, design explorations, and prospective specifications:
 | Document | Title | Status |
 | :--- | :--- | :--- |
 | **[`rfc-siduri-self-organ-knowledge.md`](./rfc/rfc-siduri-self-organ-knowledge.md)** | Core Self, Organs, Knowledge, and Memory Architecture | **Implemented** (Adopted in `self-organ-knowledge/`) |
-| **[`rfc-dynamic-behavior-self.md`](./rfc/rfc-dynamic-behavior-self.md)** | Dynamic Behavior Delivery & The `.self` Asset Specification | **Implemented** (`@siduri-x/self` + Teach Mode) |
-| **[`rfc-life-database.md`](./rfc/rfc-life-database.md)** | The Life Database Specification & User Data Sovereignty | **Implemented** (`@siduri-x/knowledge`) |
-| **[`rfc-llm-native-self-and-relationship.md`](./rfc/rfc-llm-native-self-and-relationship.md)** | LLM-Native Self Domain & Qualitative Relational Stances | **Implemented** (`@siduri-x/self`) |
-| **[`rfc-semantic-supersession-and-teaching.md`](./rfc/rfc-semantic-supersession-and-teaching.md)** | Semantic Supersession & Teach Mode Onboarding Specification | **Implemented** (`@siduri-x/core` + `@siduri-x/self`) |
-| **[`rfc-concern-engine.md`](./rfc/rfc-concern-engine.md)** | The Concern Engine — Self-Domain Inherent Care & Behavioral Proactivity | **Proposed** (`@siduri-x/self` + `@siduri-x/knowledge`) |
+| **[`rfc-dynamic-behavior-self.md`](./rfc/rfc-dynamic-behavior-self.md)** | Dynamic Behavior Delivery & The `.self` Asset Specification | **Implemented** (`@sidurijs/self` + Teach Mode) |
+| **[`rfc-life-database.md`](./rfc/rfc-life-database.md)** | The Life Database Specification & User Data Sovereignty | **Implemented** (`@sidurijs/knowledge`) |
+| **[`rfc-llm-native-self-and-relationship.md`](./rfc/rfc-llm-native-self-and-relationship.md)** | LLM-Native Self Domain & Qualitative Relational Stances | **Implemented** (`@sidurijs/self`) |
+| **[`rfc-semantic-supersession-and-teaching.md`](./rfc/rfc-semantic-supersession-and-teaching.md)** | Semantic Supersession & Teach Mode Onboarding Specification | **Implemented** (`@sidurijs/core` + `@sidurijs/self`) |
+| **[`rfc-concern-engine.md`](./rfc/rfc-concern-engine.md)** | The Concern Engine — Self-Domain Inherent Care & Behavioral Proactivity | **Proposed** (`@sidurijs/self` + `@sidurijs/knowledge`) |
 | **[`rfc-benchmarking-framework.md`](./rfc/rfc-benchmarking-framework.md)** | Performance SLA Budgets, Scaling & Microbenchmarks | **Planned** (Upcoming Benchmark Suite) |
 
 ---

@@ -1,5 +1,5 @@
 import { compilePersonaDocument } from './cognitive-compiler';
-import { BrainOrgan } from '@siduri-x/core';
+import { BrainOrgan } from '@sidurijs/core';
 
 describe('Cognitive Persona Compiler', () => {
   const validYaml = `

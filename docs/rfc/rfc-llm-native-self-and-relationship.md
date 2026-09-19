@@ -1,7 +1,7 @@
 # RFC: LLM-Native Self Domain & Relational Stance Architecture (Purging Pseudo-Math)
 
 > **Status:** Proposed / Under Team Discussion  
-> **Target Subsystems:** `@siduri-x/self`, `@siduri-x/core`, `@siduri-x/brain`, `apps/api`, `cli`, `apps/web`  
+> **Target Subsystems:** `@sidurijs/self`, `@sidurijs/core`, `@sidurijs/brain`, `apps/api`, `cli`, `apps/web`  
 > **Authors:** Kur Zagin & Siduri Architecture Team  
 > **Date:** 2026-09-13  
 > **Related Documents:**  
@@ -14,7 +14,7 @@
 
 ## 1. Executive Summary
 
-In early iterations of Siduri-X, continuous floating-point sliders (`warmth: 0.35`, `formality: 0.60`, `sarcasm: 0.75`, `trustScore: 0.85`) and integer priority ranks (`priority: 95`) were introduced into `@siduri-x/self` and SQLite schema (`self_personality`, `self_relationships`).
+In early iterations of Siduri-X, continuous floating-point sliders (`warmth: 0.35`, `formality: 0.60`, `sarcasm: 0.75`, `trustScore: 0.85`) and integer priority ranks (`priority: 95`) were introduced into `@sidurijs/self` and SQLite schema (`self_personality`, `self_relationships`).
 
 This RFC proposes **completely purging pseudo-mathematical variables** from the `Self` domain in favor of an **LLM-native cognitive architecture**:
 
@@ -323,13 +323,13 @@ Elena: "Hmph. Don't misunderstand, I just couldn't stand seeing that syntax in o
 
 ## 8. Migration & Implementation Plan
 
-### Phase 1: Core Domain Refactoring (`@siduri-x/core` & `@siduri-x/self`)
+### Phase 1: Core Domain Refactoring (`@sidurijs/core` & `@sidurijs/self`)
 - [ ] Remove `PersonalityTraits` interface and `self_personality` table from `siduri-db.ts`.
 - [ ] Update `SelfRelationship` to use semantic `role`, `stance`, and `conventions` instead of `trustScore` and `familiarity`.
-- [ ] Remove `priority: number` from `SelfDirective` and `BehaviorProposalSchema` in `@siduri-x/brain`.
+- [ ] Remove `priority: number` from `SelfDirective` and `BehaviorProposalSchema` in `@sidurijs/brain`.
 - [ ] Update `ActiveSelfCompiler` to render the clean tiered prompt (Identity + Guardrails + Relational Stances + Behavioral Directives + Exemplars).
 
-### Phase 2: Ingestion & Parser Refactoring (`@siduri-x/self` & API)
+### Phase 2: Ingestion & Parser Refactoring (`@sidurijs/self` & API)
 - [ ] Update `SelfPackageParser` to support `.self` v2.0 schema.
 - [ ] Update `apps/api` Teach Mode endpoints (`/teach/upload-self`, `/teach/install-self`) to handle tiered directives and relational stances without personality floats.
 

@@ -12,7 +12,7 @@ import {
   SelfRelationship,
 } from './index';
 
-describe('@siduri-x/self Domain Package', () => {
+describe('@sidurijs/self Domain Package', () => {
   let tmpDir: string;
   let dbPath: string;
 

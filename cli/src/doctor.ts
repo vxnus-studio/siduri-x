@@ -107,7 +107,7 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<DoctorRepo
         name: `Manifest resolution: ${organKey}`,
         status: 'FAIL',
         message: `Could not resolve package manifest for configured organ '${organKey}'.`,
-        remediation: `Ensure @siduri-x/${organKey} is installed in package.json and npm install has been run.`,
+        remediation: `Ensure @sidurijs/${organKey} is installed in package.json and npm install has been run.`,
       });
     } else {
       selectedManifests.push(m);

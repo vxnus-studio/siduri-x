@@ -1,7 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { ActionPolicyEngine, RequestContext } from '@siduri-x/core';
+import { ActionPolicyEngine, RequestContext } from '@sidurijs/core';
 import { DefaultHandsOrgan } from './index';
 
 describe('Hands Organ - Full MCP Protocol Integration Suite', () => {

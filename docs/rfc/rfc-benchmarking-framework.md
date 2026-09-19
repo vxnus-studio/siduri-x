@@ -2,7 +2,7 @@
 
 > **Status:** Planned (Target Milestone: Next Benchmark Release)  
 > **RFC Number:** 0004  
-> **Target Systems:** `@siduri-x/core`, `@siduri-x/memory` (SQLite FTS5), `@siduri-x/self`, `@siduri-x/knowledge` (Life DB), `packages/benchmarks`  
+> **Target Systems:** `@sidurijs/core`, `@sidurijs/memory` (SQLite FTS5), `@sidurijs/self`, `@sidurijs/knowledge` (Life DB), `packages/benchmarks`  
 > **Authors:** Siduri Architecture & Runtime Engineering  
 > **Related Documents:**  
 > - [The Truth Gate & Anchor Architecture](../architecture/truth-gate.md)  
@@ -51,18 +51,18 @@ Incoming Input / Sensory Perception
 ## 3. What Must Be Benchmarked
 
 ### 3.1. Microbenchmarks (Subsystem Throughput)
-- **Response Gating Engine (`@siduri-x/core` - `gating.ts`)**:
+- **Response Gating Engine (`@sidurijs/core` - `gating.ts`)**:
   - `stageResponse()` and `evaluateGate()` evaluation throughput (operations/second) across varying evidence chain depths ($N = 1$ to $N = 50$).
   - Sensitivity filtering performance (standard vs. restricted claims and companion boundary isolation).
-- **Action Policy & Capability Engine (`@siduri-x/hands` / `action-policy.ts`)**:
+- **Action Policy & Capability Engine (`@sidurijs/hands` / `action-policy.ts`)**:
   - HMAC/cryptographic capability token verification speed.
   - Rate of tool argument schema validation against JSON schema bounds.
-- **Perception Deduplication (`@siduri-x/observation`)**:
+- **Perception Deduplication (`@sidurijs/observation`)**:
   - SHA-256 visual frame hashing, temporal sliding window queries, and deduplication speed on high-frequency frame streams.
-- **Prompt Compiler (`@siduri-x/core` - `prompt-compiler.ts`)**:
+- **Prompt Compiler (`@sidurijs/core` - `prompt-compiler.ts`)**:
   - Dynamic directive merging and markdown context rendering overhead.
 
-### 3.2. Memory Subsystem & Database Scaling (`@siduri-x/memory`)
+### 3.2. Memory Subsystem & Database Scaling (`@sidurijs/memory`)
 - **Dataset Scaling Curves**: Measure p50, p95, and p99 query latency across simulated database sizes:
   - Small ($1,000$ claims / $500$ messages)
   - Medium ($10,000$ claims / $5,000$ messages)
@@ -75,10 +75,10 @@ Incoming Input / Sensory Perception
 
 ### 3.3. End-to-End Pipeline & Streaming Performance
 - **Time to First Chunk (TTFC)**:
-  - User text input to first SSE token chunk emission via `@siduri-x/mouth`.
-- **Speech Synthesis Pipeline Latency (`@siduri-x/voice`)**:
+  - User text input to first SSE token chunk emission via `@sidurijs/mouth`.
+- **Speech Synthesis Pipeline Latency (`@sidurijs/voice`)**:
   - End-to-end latency from text token receipt $\to$ TTS synthesis (Piper / VOICEVOX / Edge-TTS) $\to$ RVC post-processing $\to$ PCM audio playback buffer.
-- **Audio Sensory Transcribe Cycle (`@siduri-x/ear`)**:
+- **Audio Sensory Transcribe Cycle (`@sidurijs/ear`)**:
   - Audio chunk buffer ingestion $\to$ STT transcription $\to$ intent normalization.
 
 ### 3.4. Security, Gate Stress & Adversarial Load
@@ -122,7 +122,7 @@ Using `tinybench`:
 
 ```typescript
 import { Bench } from 'tinybench';
-import { ResponseGatingEngine, StagedResponsePlan, EvidenceRecord } from '@siduri-x/core';
+import { ResponseGatingEngine, StagedResponsePlan, EvidenceRecord } from '@sidurijs/core';
 
 export async function runGatingBenchmark() {
   const bench = new Bench({ time: 1000 });
@@ -164,7 +164,7 @@ export async function runGatingBenchmark() {
 ```typescript
 import { Bench } from 'tinybench';
 import { generateSyntheticClaims } from '../common/fixture-generator';
-import { MemoryDatabaseAdapter } from '@siduri-x/memory';
+import { MemoryDatabaseAdapter } from '@sidurijs/memory';
 
 export async function runMemoryScaleBenchmark(adapter: MemoryDatabaseAdapter) {
   const counts = [1_000, 10_000, 100_000];

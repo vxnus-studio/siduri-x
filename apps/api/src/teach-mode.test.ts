@@ -3,11 +3,11 @@ import os from 'os';
 import path from 'path';
 import request from 'supertest';
 import { createApp } from './app';
-import { SqliteSelfRepository } from '@siduri-x/self';
+import { SqliteSelfRepository } from '@sidurijs/self';
 
 // Mock SqliteSelfRepository
-jest.mock('@siduri-x/self', () => {
-  const originalModule = jest.requireActual('@siduri-x/self');
+jest.mock('@sidurijs/self', () => {
+  const originalModule = jest.requireActual('@sidurijs/self');
   return {
     ...originalModule,
     SqliteSelfRepository: jest.fn().mockImplementation(() => ({

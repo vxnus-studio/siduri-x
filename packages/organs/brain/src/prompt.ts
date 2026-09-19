@@ -1,4 +1,4 @@
-import { Message, BrainContext } from '@siduri-x/core';
+import { Message, BrainContext } from '@sidurijs/core';
 
 export class PromptAssembler {
   public systemPrompt(context: BrainContext): string {

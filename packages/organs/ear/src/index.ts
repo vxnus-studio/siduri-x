@@ -4,7 +4,7 @@ import {
   HardenedEarPerception,
   EarLimitsConfig,
   EarIngestOptions,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 
 export interface EarOrganConfig extends EarLimitsConfig {
   defaultSource?: string;

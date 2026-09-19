@@ -1,4 +1,4 @@
-# @siduri-x/voice
+# @sidurijs/voice
 
 The canonical Voice Synthesis organ for Siduri-X.
 
@@ -25,7 +25,7 @@ When prompted, select `voice` and choose your TTS provider (`edge-tts`, `voicevo
 If you are programmatically bootstrapping a Siduri instance:
 
 ```typescript
-import { VoiceAdapter } from '@siduri-x/voice';
+import { VoiceAdapter } from '@sidurijs/voice';
 
 // 1. Instantiate the Voice Adapter with your preferred TTS Provider
 const voice = new VoiceAdapter({

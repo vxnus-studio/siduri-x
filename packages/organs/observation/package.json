@@ -1,6 +1,6 @@
 {
-  "name": "@siduri-x/observation",
-  "version": "2.0.2",
+  "name": "@sidurijs/observation",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -8,7 +8,7 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-x/core": "workspace:*"
+    "@sidurijs/core": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

@@ -1,4 +1,4 @@
-import { VoiceOrgan, AudioEvent, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult, validateExperienceEvent } from '@siduri-x/core';
+import { VoiceOrgan, AudioEvent, ExperienceAdapter, ExperienceEvent, ExperienceAdapterResult, validateExperienceEvent } from '@sidurijs/core';
 import { Synthesizer, EdgeTtsSynthesizer, VoicevoxSynthesizer, PiperSynthesizer, KokoroSynthesizer, RvcPostProcessor } from './synthesizers';
 import { RvcPostProcessorConfig } from './synthesizers/rvc';
 

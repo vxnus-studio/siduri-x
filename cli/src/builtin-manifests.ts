@@ -2,7 +2,7 @@ import { OrganManifest } from './manifest';
 
 export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
-    name: '@siduri-x/self',
+    name: '@sidurijs/self',
     organType: 'behavior',
     version: '2.0.12',
     displayName: 'Self & Persona (Identity & Directives)',
@@ -42,11 +42,11 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: null
   },
   {
-    name: '@siduri-x/body',
+    name: '@sidurijs/body',
     organType: 'body',
-    version: '2.0.1',
-    displayName: 'Body (Live2D & Avatar State)',
-    description: 'Renderer-agnostic avatar expression and embodiment event adapter',
+    version: '2.1.0',
+    displayName: 'Body (Live2D & VRM Avatar State)',
+    description: 'Renderer-agnostic avatar expression and embodiment event adapter supporting Live2D (.model3.json) and VRM (.vrm)',
     entrypoint: './dist/index.js',
     factory: 'NeutralBodyOrgan',
     configKey: 'body',
@@ -56,17 +56,45 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
       properties: {
         provider: {
           type: 'string',
-          enum: ['live2d', 'none']
+          enum: ['live2d', 'vrm', 'none']
+        },
+        format: {
+          type: 'string',
+          enum: ['live2d', 'vrm', 'auto'],
+          default: 'auto'
         },
         initialExpression: {
           type: 'string',
           default: 'neutral'
         },
         modelPath: {
-          type: 'string'
+          type: 'string',
+          description: 'Path to local Live2D Cubism (.model3.json) or VRM (.vrm) model file'
         },
         modelUrl: {
-          type: 'string'
+          type: 'string',
+          description: 'Relative web or remote HTTP URL to Live2D Cubism (.model3.json) or VRM (.vrm) model file'
+        },
+        vrm: {
+          type: 'object',
+          properties: {
+            specVersion: {
+              type: 'string',
+              enum: ['0.x', '1.0', 'auto'],
+              default: 'auto'
+            },
+            lookAtMode: {
+              type: 'string',
+              enum: ['camera', 'cursor', 'head', 'none'],
+              default: 'camera'
+            },
+            defaultPose: {
+              type: 'string'
+            },
+            expressionMapping: {
+              type: 'object'
+            }
+          }
         }
       }
     },
@@ -76,7 +104,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: null
   },
   {
-    name: '@siduri-x/brain',
+    name: '@sidurijs/brain',
     organType: 'brain',
     version: '2.0.13',
     displayName: 'Brain (Cognition & Planning)',
@@ -132,7 +160,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: 'probeBrainHealth'
   },
   {
-    name: '@siduri-x/ear',
+    name: '@sidurijs/ear',
     organType: 'ear',
     version: '2.0.3',
     displayName: 'Ear (Perception Ingress)',
@@ -163,7 +191,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: null
   },
   {
-    name: '@siduri-x/hands',
+    name: '@sidurijs/hands',
     organType: 'hands',
     version: '2.0.2',
     displayName: 'Hands (MCP Tool Execution)',
@@ -217,7 +245,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: 'probeHandsHealth'
   },
   {
-    name: '@siduri-x/knowledge',
+    name: '@sidurijs/knowledge',
     organType: 'knowledge',
     version: '2.0.6',
     displayName: 'Knowledge (Sovereign Life DB & Knowledge Packs)',
@@ -295,7 +323,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: null
   },
   {
-    name: '@siduri-x/memory',
+    name: '@sidurijs/memory',
     organType: 'memory',
     version: '2.0.5',
     displayName: 'Memory (Long-term Recall & State)',
@@ -325,7 +353,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: null
   },
   {
-    name: '@siduri-x/observation',
+    name: '@sidurijs/observation',
     organType: 'observation',
     version: '2.0.1',
     displayName: 'Observation (Screen Perception & Frame Ingest)',
@@ -343,7 +371,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: null
   },
   {
-    name: '@siduri-x/vision',
+    name: '@sidurijs/vision',
     organType: 'vision',
     version: '2.0.1',
     displayName: 'Vision (Visual Perception & OCR)',
@@ -390,7 +418,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: 'probeVisionHealth'
   },
   {
-    name: '@siduri-x/voice',
+    name: '@sidurijs/voice',
     organType: 'voice',
     version: '2.0.2',
     displayName: 'Voice (Speech Synthesis & Voice Conversion)',
@@ -465,7 +493,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: null
   },
   {
-    name: '@siduri-x/mouth',
+    name: '@sidurijs/mouth',
     organType: 'mouth',
     version: '2.0.2',
     displayName: 'Mouth (Communication & UI Delivery)',

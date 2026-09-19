@@ -7,14 +7,14 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
   const corePackageJsonPath = path.resolve(__dirname, '../package.json');
 
   const EXPECTED_ORGANS = [
-    { dir: 'brain', name: '@siduri-x/brain', organType: 'brain', configKey: 'brain' },
-    { dir: 'ear', name: '@siduri-x/ear', organType: 'ear', configKey: 'ear' },
-    { dir: 'voice', name: '@siduri-x/voice', organType: 'voice', configKey: 'voice' },
-    { dir: 'mouth', name: '@siduri-x/mouth', organType: 'mouth', configKey: 'mouth' },
-    { dir: 'vision', name: '@siduri-x/vision', organType: 'vision', configKey: 'vision' },
-    { dir: 'hands', name: '@siduri-x/hands', organType: 'hands', configKey: 'hands' },
-    { dir: 'body', name: '@siduri-x/body', organType: 'body', configKey: 'body' },
-    { dir: 'observation', name: '@siduri-x/observation', organType: 'observation', configKey: 'observation' },
+    { dir: 'brain', name: '@sidurijs/brain', organType: 'brain', configKey: 'brain' },
+    { dir: 'ear', name: '@sidurijs/ear', organType: 'ear', configKey: 'ear' },
+    { dir: 'voice', name: '@sidurijs/voice', organType: 'voice', configKey: 'voice' },
+    { dir: 'mouth', name: '@sidurijs/mouth', organType: 'mouth', configKey: 'mouth' },
+    { dir: 'vision', name: '@sidurijs/vision', organType: 'vision', configKey: 'vision' },
+    { dir: 'hands', name: '@sidurijs/hands', organType: 'hands', configKey: 'hands' },
+    { dir: 'body', name: '@sidurijs/body', organType: 'body', configKey: 'body' },
+    { dir: 'observation', name: '@sidurijs/observation', organType: 'observation', configKey: 'observation' },
   ];
 
   it('package.json has zero dependencies on @siduri-x organ packages', () => {
@@ -26,7 +26,7 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
     };
 
     const organDeps = Object.keys(allDeps).filter(
-      (dep) => dep.startsWith('@siduri-x/') && dep !== '@siduri-x/core'
+      (dep) => dep.startsWith('@sidurijs/') && dep !== '@sidurijs/core'
     );
 
     expect(organDeps).toEqual([]);
@@ -43,8 +43,8 @@ describe('Architecture: Core & Organ Package Boundaries (Phase 2)', () => {
       for (const line of lines) {
         if (
           (line.includes('import ') || line.includes('require(') || line.includes('export * from')) &&
-          line.includes('@siduri-x/') &&
-          !line.includes('@siduri-x/core')
+          line.includes('@sidurijs/') &&
+          !line.includes('@sidurijs/core')
         ) {
           forbiddenImports.push({ file, match: line.trim() });
         }

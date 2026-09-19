@@ -21,11 +21,10 @@ Instead of treating memory as an unverified vector dump that silently drifts ove
 >
 > - **Looking to experiment with a local testbed?** You can scaffold a standalone companion instance using the CLI:
 >   ```bash
->   npx siduri create my-companion
->   # or: npx @vxnus/siduri create my-companion
+>   npx @vxnus/siduri create my-companion
 >   ```
 >   The CLI guides you through an interactive setup and scaffolds a testbed companion instance with the organs and configurations you select.
-> - **About this repository:** This repository (`siduri-x`) houses the monorepo for the core engine, architectural contracts, and `@siduri-x/*` packages.
+> - **About this repository:** This repository (`siduri-x`) houses the monorepo for the core engine, architectural contracts, and `@sidurijs/*` packages.
 > - **Feedback & Collaboration:** We warmly welcome bug reports, architectural critiques, and community contributions.
 
 ---
@@ -35,53 +34,52 @@ Instead of treating memory as an unverified vector dump that silently drifts ove
 - **Single-Owner, Local-First Perimeter**: Siduri explores a personal, single-owner companion running on a local workstation. Rather than a multi-tenant cloud service with complex RBAC partitions, the local machine is the primary security boundary.
 - **Blank Slate Model**: Rather than arriving with a scripted backstory or pre-baked persona, an instance begins with an empty relational slate, investigating how personality and communication nuances might grow organically through interaction.
 - **Audited Memory Proposals (The Truth Gate)**: Staged candidate memories must be confirmed before becoming persistent local facts, aiming to prevent prompt injection and conversational hallucination from silently corrupting long-term beliefs.
-- **Modular Capability Organs**: Capabilities (reasoning, voice, vision, embodiment, tool calling) are separated into pluggable `@siduri-x/*` packages with standard ESM resolution.
+- **Modular Capability Organs**: Capabilities (reasoning, voice, vision, embodiment, tool calling) are separated into pluggable `@sidurijs/*` packages with standard ESM resolution.
 - **Sovereign Data Storage**: Personal data (such as inventory, finance, and schedules) lives in structured SQLite tables, separating factual life data from subjective conversational memory.
 
 ---
 
-## Canonical Packages (`@siduri-x/*`)
+## Canonical Packages (`@sidurijs/*`)
 
 All canonical Siduri-X domain substrates and peripheral organs are independently distributed:
 
 ### Core Domain Substrates (Persistent Continuity)
 | Package | Version | Description | Status |
-| **`@siduri-x/core`** | `^2.0.16` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
-| **`@siduri-x/self`** | `^2.0.13` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
-| **`@siduri-x/knowledge`** | `^2.0.7` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
-| **`@siduri-x/memory`** | `^2.0.6` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
+| **`@sidurijs/core`** | `^1.0.0` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
+| **`@sidurijs/self`** | `^1.0.0` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
+| **`@sidurijs/knowledge`** | `^1.0.0` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
+| **`@sidurijs/memory`** | `^1.0.0` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
 
 ### Pluggable Peripheral Organs
 | Package | Version | Description | Status |
 | :--- | :---: | :--- | :--- |
-| **`@siduri-x/brain`** | `^2.0.13` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
-| **`@siduri-x/hands`** | `^2.0.3` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
-| **`@siduri-x/ear`** | `^2.0.4` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
-| **`@siduri-x/vision`** | `^2.0.2` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
-| **`@siduri-x/body`** | `^2.0.2` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
-| **`@siduri-x/voice`** | `^2.0.3` | Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC voice conversion | **Implemented** |
-| **`@siduri-x/observation`** | `^2.0.2` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Experimental Prototype** |
-| **`@siduri-x/mouth`** | `^2.0.3` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
-| ~~`@siduri-x/behavior`~~ | `^1.0.6` | *Legacy compatibility package* (superseded by `@siduri-x/self`) | **Legacy / Deprecated** |
+| **`@sidurijs/brain`** | `^1.0.0` | Provider-neutral LLM reasoning, response planning, and proposal generation | **Implemented** |
+| **`@sidurijs/hands`** | `^1.0.0` | Tool execution, cryptographic action policy capability verification, and MCP integration | **Implemented** |
+| **`@sidurijs/ear`** | `^1.0.0` | Multi-modal sensory input ingestion, audio transcription, and MIME bounds validation | **Implemented** |
+| **`@sidurijs/vision`** | `^1.0.0` | Visual observation, cropping, and multi-pass OCR perception adapter | **Implemented** |
+| **`@sidurijs/body`** | `^1.0.0` | Renderer-agnostic avatar expression state machine and embodiment event adapter | **Implemented** |
+| **`@sidurijs/voice`** | `^1.0.0` | Queued speech synthesis (Edge-TTS, Kokoro, Piper, VOICEVOX) and RVC voice conversion | **Implemented** |
+| **`@sidurijs/observation`** | `^1.0.0` | Evidence extraction, SHA-256 frame deduplication, and OCR reading ingest | **Experimental Prototype** |
+| **`@sidurijs/mouth`** | `^1.0.0` | Output communication, SSE token streaming, Live2D visemes, SSML, and channel sinks | **Implemented** |
+| ~~`@sidurijs/behavior`~~ | `^1.0.6` | *Legacy compatibility package* (superseded by `@sidurijs/self`) | **Legacy / Deprecated** |
 
 ---
 
-## Quick Start (`siduri` / `@vxnus/siduri`)
+## Quick Start (`@vxnus/siduri`)
 
 To create and run your own standalone companion, you can scaffold an instance anywhere on your machine using the CLI:
 
 ### 1. Create a Standalone Companion
 
 ```bash
-npx siduri create my-siduri
-# or: npx @vxnus/siduri create my-siduri
+npx @vxnus/siduri create my-siduri
 ```
 
-The CLI dynamically discovers installed `@siduri-x/*` organ manifests and guides you through an interactive setup:
+The CLI dynamically discovers installed `@sidurijs/*` organ manifests and guides you through an interactive setup:
 
 ```text
 my-siduri/
-├── package.json          # ESM package referencing only selected @siduri-x/* organs
+├── package.json          # ESM package referencing only selected @sidurijs/* organs
 ├── siduri.config.json    # Selected organ configurations
 ├── siduri.schema.json    # Composed JSON Schema from organ manifests
 ├── .env.example          # Only environment variables required by selected organs
@@ -99,8 +97,7 @@ Siduri uses a unified, zero-configuration SQLite database (`siduri.sqlite`) with
 Inspects environment variables, external service declarations, local database readiness, and executes organ health probes:
 
 ```bash
-npx siduri doctor
-# or: npx @vxnus/siduri doctor
+npx @vxnus/siduri doctor
 ```
 
 ---
@@ -125,6 +122,7 @@ Explore the architecture and specifications behind Siduri:
 - [CLI Reference & Diagnostics](docs/architecture/cli.md)
 - [Canonical Release Status](docs/release-status.md)
 - [Safety & Verification Contracts](docs/contracts/t7-release-evidence-contract.md)
+- [Third-Party Organ & Asset Licensing](docs/third-party-organ-licensing.md)
 
 
 ---

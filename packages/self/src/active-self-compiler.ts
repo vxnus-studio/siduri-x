@@ -3,7 +3,7 @@ import {
   BehaviorOrgan,
   BehaviorContext,
   ActiveSelfProjection as CoreActiveSelfProjection,
-} from '@siduri-x/core';
+} from '@sidurijs/core';
 import {
   SelfCompilationContext,
   ActiveSelfProjection,

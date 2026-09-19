@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createApp } from './app';
 import { SiduriRuntime } from './runtime';
-import { UnifiedKnowledgeOrgan } from '@siduri-x/knowledge';
+import { UnifiedKnowledgeOrgan } from '@sidurijs/knowledge';
 
 describe('Life Database & UnifiedKnowledgeOrgan API Integration', () => {
   const testDbPath = path.resolve(__dirname, '../test-api-knowledge.sqlite');

@@ -1,17 +1,17 @@
-# Behavior Organ (`@siduri-x/behavior`)
+# Behavior Organ (`@sidurijs/behavior`)
 
-> **Status:** Legacy / Deprecated (Superseded by `@siduri-x/self`)  
-> **Current Architecture:** All identity, personality, directives, and Active Self compilation have been unified into **`@siduri-x/self`**.
+> **Status:** Legacy / Deprecated (Superseded by `@sidurijs/self`)  
+> **Current Architecture:** All identity, personality, directives, and Active Self compilation have been unified into **`@sidurijs/self`**.
 
 ---
 
 > [!NOTE]
-> **MIGRATION NOTICE: MERGED INTO `@siduri-x/self`**
+> **MIGRATION NOTICE: MERGED INTO `@sidurijs/self`**
 >
-> As part of Phase 2 & 3 of the Clean Architecture Migration, `@siduri-x/behavior` was demoted from organ status and unified with the Self domain in `@siduri-x/self`.
+> As part of Phase 2 & 3 of the Clean Architecture Migration, `@sidurijs/behavior` was demoted from organ status and unified with the Self domain in `@sidurijs/self`.
 >
 > - **Canonical Implementation:** `packages/self/src/active-self-compiler.ts` implements both `ActiveSelfCompiler` and the `BehaviorOrgan` interface for backward compatibility.
-> - **Package Location:** Top-level domain package `@siduri-x/self`.
+> - **Package Location:** Top-level domain package `@sidurijs/self`.
 > - For full details, see:
 >   - [`docs/self-organ-knowledge/01-domain-architecture.md`](../self-organ-knowledge/01-domain-architecture.md)
 >   - [`docs/self-organ-knowledge/02-self-asset-and-teach-mode.md`](../self-organ-knowledge/02-self-asset-and-teach-mode.md)

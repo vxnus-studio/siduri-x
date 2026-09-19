@@ -1,4 +1,4 @@
-import { VisionOrgan } from '@siduri-x/core';
+import { VisionOrgan } from '@sidurijs/core';
 import { createHash } from 'node:crypto';
 
 export interface ObservationReading {

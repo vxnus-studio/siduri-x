@@ -1,8 +1,8 @@
 import { SiduriRuntime, dispatchCompanionChat } from './runtime';
-import { DefaultHandsOrgan } from '@siduri-x/hands';
-import { DefaultEarOrgan } from '@siduri-x/ear';
-import { DefaultMouthOrgan } from '@siduri-x/mouth';
-import { ActionPolicyEngine, RequestContext } from '@siduri-x/core';
+import { DefaultHandsOrgan } from '@sidurijs/hands';
+import { DefaultEarOrgan } from '@sidurijs/ear';
+import { DefaultMouthOrgan } from '@sidurijs/mouth';
+import { ActionPolicyEngine, RequestContext } from '@sidurijs/core';
 
 describe('Siduri Runtime Orchestration', () => {
   test('handles concurrent context retrieval and graceful degradation', async () => {

@@ -1,4 +1,4 @@
-import { KnowledgeItem, KnowledgeOrgan } from '@siduri-x/core';
+import { KnowledgeItem, KnowledgeOrgan } from '@sidurijs/core';
 import {
   LifeDatabase,
   LifeContextResult,

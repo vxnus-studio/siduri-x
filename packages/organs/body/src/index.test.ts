@@ -1,4 +1,4 @@
-import { NeutralBodyOrgan, Live2DAdapter, BodySnapshot } from './index';
+import { NeutralBodyOrgan, Live2DAdapter, VRMAdapter, BodySnapshot } from './index';
 
 describe('NeutralBodyOrgan', () => {
   let organ: NeutralBodyOrgan;
@@ -196,5 +196,94 @@ describe('NeutralBodyOrgan', () => {
 
     organ.completeAction();
     expect(organ.state).toBe('idle');
+  });
+
+  describe('VRM / 3D Embodiment Support (RFC)', () => {
+    test('auto-detects live2d format from .model3.json or .json extensions', () => {
+      const live2dOrgan = new NeutralBodyOrgan({
+        modelPath: './assets/body/avatar/model.model3.json',
+      });
+      expect(live2dOrgan.format).toBe('live2d');
+      expect(live2dOrgan.getSnapshot().format).toBe('live2d');
+      live2dOrgan.cleanup();
+    });
+
+    test('auto-detects vrm format from .vrm extension', () => {
+      const vrmOrgan = new NeutralBodyOrgan({
+        modelUrl: 'https://cdn.example.com/avatars/companion.vrm',
+      });
+      expect(vrmOrgan.format).toBe('vrm');
+      expect(vrmOrgan.getSnapshot().format).toBe('vrm');
+      vrmOrgan.cleanup();
+    });
+
+    test('respects explicit format override and provider setting', () => {
+      const explicitVrm = new NeutralBodyOrgan({
+        provider: 'vrm',
+        modelUrl: 'https://cdn.example.com/asset-without-extension',
+      });
+      expect(explicitVrm.format).toBe('vrm');
+      expect(explicitVrm.getSnapshot().format).toBe('vrm');
+      explicitVrm.cleanup();
+
+      const forcedFormat = new NeutralBodyOrgan({
+        format: 'live2d',
+        modelPath: './model.vrm',
+      });
+      expect(forcedFormat.format).toBe('live2d');
+      forcedFormat.cleanup();
+    });
+
+    test('VRMAdapter defaults provider and format to vrm and retains vrm options', () => {
+      const vrm = new VRMAdapter({
+        modelPath: './assets/avatar.vrm',
+        vrm: {
+          specVersion: '1.0',
+          lookAtMode: 'cursor',
+          defaultPose: 'idle_a',
+          expressionMapping: { joy: 'happy' },
+        },
+      });
+
+      expect(vrm).toBeInstanceOf(NeutralBodyOrgan);
+      expect(vrm.format).toBe('vrm');
+      expect(vrm.vrmOptions).toEqual({
+        specVersion: '1.0',
+        lookAtMode: 'cursor',
+        defaultPose: 'idle_a',
+        expressionMapping: { joy: 'happy' },
+      });
+
+      const snapshot = vrm.getSnapshot();
+      expect(snapshot.format).toBe('vrm');
+      expect(snapshot.vrmOptions?.lookAtMode).toBe('cursor');
+      expect(snapshot.vrmOptions?.specVersion).toBe('1.0');
+      vrm.cleanup();
+    });
+
+    test('handleEvent includes format in response metadata', async () => {
+      const vrm = new VRMAdapter({
+        modelPath: './avatar.vrm',
+      });
+
+      const res = await vrm.handleEvent({
+        eventId: 'evt-avatar-vrm-1',
+        companionId: 'companion-3d',
+        responseId: 'resp-200',
+        correlationId: 'corr-200',
+        channel: 'public',
+        approval: 'APPROVED',
+        kind: 'avatar',
+        lifecycle: 'STARTED',
+        evidenceIds: [],
+        expression: 'happy',
+        createdAt: new Date().toISOString(),
+      });
+
+      expect(res.accepted).toBe(true);
+      expect(res.metadata?.format).toBe('vrm');
+      expect(res.metadata?.expression).toBe('happy');
+      vrm.cleanup();
+    });
   });
 });

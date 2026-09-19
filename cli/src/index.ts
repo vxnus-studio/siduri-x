@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.41';
+export const CLI_VERSION = '2.1.0';
 
 import { colors } from './colors';
 export { colors };
@@ -115,7 +115,7 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
   const availableManifests = registry.getAll();
 
   if (availableManifests.length === 0) {
-    throw new Error('No @siduri-x/* organ packages found. Please ensure organs are installed or in workspace.');
+    throw new Error('No @sidurijs/* organ packages found. Please ensure organs are installed or in workspace.');
   }
 
   printSection('Project Details');
@@ -334,7 +334,7 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
   }
 
   // If local knowledge archive is configured with a download URL, automatically fetch and unpack it
-  const knowledgeConfig = organConfigs.knowledge || organConfigs['@siduri-x/knowledge'];
+  const knowledgeConfig = organConfigs.knowledge || organConfigs['@sidurijs/knowledge'];
   if (knowledgeConfig?.pack?.mode === 'local' && knowledgeConfig?.pack?.archiveUrl) {
     const packRelDir = (knowledgeConfig.packPath || 'assets/knowledge/pack').replace(/^\.\//, '');
     const packDest = path.join(projectDir, packRelDir);
@@ -374,7 +374,7 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
   console.log(`  npm run doctor                ${colors.dim}# Run diagnostic health probes${colors.reset}`);
   console.log(`  npm start                     ${colors.dim}# Start Web Companion & Memory Console at http://localhost:3000${colors.reset}\n`);
 
-  const voiceConfig = organConfigs.voice || organConfigs['@siduri-x/voice'];
+  const voiceConfig = organConfigs.voice || organConfigs['@sidurijs/voice'];
   if (voiceConfig?.provider === 'voicevox') {
     console.log(`  ${colors.cyan}ℹ Voice Runtime:${colors.reset} ${colors.dim}VOICEVOX engine (~1.5GB) will auto-download to ~/.voicevox/engine/ and launch on port 50021 on first 'npm start' (if not already running).${colors.reset}\n`);
   } else if (voiceConfig?.rvc?.enabled) {
@@ -584,12 +584,12 @@ async function main(): Promise<void> {
   }
 
   printHeader();
-  console.log('Usage: npx @vxnus/siduri create [directory] [--local]');
-  console.log('       npx @vxnus/siduri reset [directory]');
-  console.log('       npx @vxnus/siduri doctor [directory]');
-  console.log('       npx @vxnus/siduri db push [directory]');
-  console.log('       npx @vxnus/siduri db reset [directory]');
-  console.log('       npx @vxnus/siduri --version\n');
+  console.log('Usage: npx siduri create [directory] [--local]');
+  console.log('       npx siduri reset [directory]');
+  console.log('       npx siduri doctor [directory]');
+  console.log('       npx siduri db push [directory]');
+  console.log('       npx siduri db reset [directory]');
+  console.log('       npx siduri --version\n');
 }
 
 if (require.main === module) {

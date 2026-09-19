@@ -256,5 +256,34 @@ describe("Siduri Chat Presence and Preferences Mode Switch", () => {
       expect(mobile430Proj.ndcMinY).toBeGreaterThan(-1.0);
       expect(mobile430Proj.ndcMaxY).toBeLessThan(1.0);
     });
+
+    test("G. Maps Siduri canonical expressions to VRM 3D blendshape presets", () => {
+      const { mapExpressionToVRMPreset } = require("../../components/vrm/expressions");
+
+      expect(mapExpressionToVRMPreset("happy")).toBe("happy");
+      expect(mapExpressionToVRMPreset("joy")).toBe("happy");
+      expect(mapExpressionToVRMPreset("concerned")).toBe("sad");
+      expect(mapExpressionToVRMPreset("sad")).toBe("sad");
+      expect(mapExpressionToVRMPreset("thinking")).toBe("relaxed");
+      expect(mapExpressionToVRMPreset("relaxed")).toBe("relaxed");
+      expect(mapExpressionToVRMPreset("surprised")).toBe("surprised");
+      expect(mapExpressionToVRMPreset("neutral")).toBe("neutral");
+      expect(mapExpressionToVRMPreset(undefined)).toBe("neutral");
+    });
+
+    test("H. Identifies VRM format from model extension or format snapshot", () => {
+      function resolveFormat(format?: string, modelUrl?: string) {
+        if (format === 'vrm' || modelUrl?.toLowerCase().endsWith('.vrm')) {
+          return 'vrm';
+        }
+        return 'live2d';
+      }
+
+      expect(resolveFormat('vrm', '/assets/model')).toBe('vrm');
+      expect(resolveFormat(undefined, '/assets/model.vrm')).toBe('vrm');
+      expect(resolveFormat('live2d', '/assets/model.vrm')).toBe('vrm');
+      expect(resolveFormat('live2d', '/assets/model.model3.json')).toBe('live2d');
+      expect(resolveFormat(undefined, '/assets/model.model3.json')).toBe('live2d');
+    });
   });
 });

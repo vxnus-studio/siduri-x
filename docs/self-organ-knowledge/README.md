@@ -2,7 +2,7 @@
 
 > **Status:** Architecture Blueprint & Canonical Clean Specification  
 > **Philosophy:** Zero backward compatibility compromises. Complete eradication of PostgreSQL. Pure architectural boundaries.  
-> **Target Subsystems:** `@siduri-x/core`, `@siduri-x/self`, `@siduri-x/knowledge`, `@siduri-x/memory`, `siduri.sqlite`, `@vxnus/e-hub`  
+> **Target Subsystems:** `@sidurijs/core`, `@sidurijs/self`, `@sidurijs/knowledge`, `@sidurijs/memory`, `siduri.sqlite`, `@vxnus/e-hub`  
 > **Source RFCs:**  
 > - [RFC: Siduri-X Self, Organs, Knowledge, and Memory Architecture](file:///home/zagin/Projects/vxnus-studio/projects/siduri-x/docs/rfc/rfc-siduri-self-organ-knowledge.md)  
 > - [RFC: Dynamic Behavior Delivery & The `.self` Asset Specification](file:///home/zagin/Projects/vxnus-studio/projects/siduri-x/docs/rfc/rfc-dynamic-behavior-self.md)  
@@ -25,14 +25,14 @@ This documentation suite establishes the **canonical clean architecture** for Si
 
 ```mermaid
 flowchart TD
-    subgraph SiduriRuntime["Siduri Agent Runtime (@siduri-x/core)"]
+    subgraph SiduriRuntime["Siduri Agent Runtime (@sidurijs/core)"]
         Brain["Cognitive Organ: Brain\n(Reasoning, Planning, Tool Dispatch)"]
     end
 
     subgraph CoreConsciousness["Core Consciousness Substrates (packages/)"]
-        Self["@siduri-x/self\n(Who am I?)\n• Identity\n• Personality Traits\n• Active Self Compiler\n• .self Package Parser"]
-        Knowledge["@siduri-x/knowledge\n(What do I believe / know?)\n• Life DB: Inventories, Finances, Schedules\n• Typed Sovereign Repositories"]
-        Memory["@siduri-x/memory\n(What happened?)\n• Episodic Events & Turns\n• SQLite FTS5 Full-Text Search"]
+        Self["@sidurijs/self\n(Who am I?)\n• Identity\n• Personality Traits\n• Active Self Compiler\n• .self Package Parser"]
+        Knowledge["@sidurijs/knowledge\n(What do I believe / know?)\n• Life DB: Inventories, Finances, Schedules\n• Typed Sovereign Repositories"]
+        Memory["@sidurijs/memory\n(What happened?)\n• Episodic Events & Turns\n• SQLite FTS5 Full-Text Search"]
     end
 
     subgraph PluggableOrgans["Pluggable Peripherals (packages/organs/)"]

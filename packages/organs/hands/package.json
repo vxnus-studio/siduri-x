@@ -1,6 +1,6 @@
 {
-  "name": "@siduri-x/hands",
-  "version": "2.0.3",
+  "name": "@sidurijs/hands",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@siduri-x/core": "workspace:*"
+    "@sidurijs/core": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

@@ -1,14 +1,14 @@
-import { OpenAICompatibleBrain, OpenRouterBrain } from '@siduri-x/brain';
-import { SqliteMemoryStore } from '@siduri-x/memory';
-import { VoiceAdapter, VoiceConfig } from '@siduri-x/voice';
-import { UnifiedKnowledgeOrgan, UnifiedKnowledgeConfig } from '@siduri-x/knowledge';
-import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@siduri-x/vision';
-import { ActiveSelfCompiler, SqliteSelfRepository } from '@siduri-x/self';
-import { Live2DAdapter, Live2DAdapterConfig } from '@siduri-x/body';
-import { FixtureObservationOrgan } from '@siduri-x/observation';
-import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@siduri-x/hands';
-import { DefaultEarOrgan, EarOrganConfig } from '@siduri-x/ear';
-import { DefaultMouthOrgan, DefaultMouthOrganConfig } from '@siduri-x/mouth';
+import { OpenAICompatibleBrain, OpenRouterBrain } from '@sidurijs/brain';
+import { SqliteMemoryStore } from '@sidurijs/memory';
+import { VoiceAdapter, VoiceConfig } from '@sidurijs/voice';
+import { UnifiedKnowledgeOrgan, UnifiedKnowledgeConfig } from '@sidurijs/knowledge';
+import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@sidurijs/vision';
+import { ActiveSelfCompiler, SqliteSelfRepository } from '@sidurijs/self';
+import { Live2DAdapter, VRMAdapter, NeutralBodyOrganConfig } from '@sidurijs/body';
+import { FixtureObservationOrgan } from '@sidurijs/observation';
+import { DefaultHandsOrgan, DefaultHandsOrganConfig } from '@sidurijs/hands';
+import { DefaultEarOrgan, EarOrganConfig } from '@sidurijs/ear';
+import { DefaultMouthOrgan, DefaultMouthOrganConfig } from '@sidurijs/mouth';
 import { SiduriRuntime } from './runtime';
 
 export interface AppBrainConfig {
@@ -36,7 +36,7 @@ export interface AppBootCompanionConfig {
   knowledge?: UnifiedKnowledgeConfig;
   vision?: OpenRouterVisionConfig;
   behavior?: AppBehaviorConfig;
-  body?: Live2DAdapterConfig;
+  body?: NeutralBodyOrganConfig;
   hands?: DefaultHandsOrganConfig;
   ear?: EarOrganConfig;
   mouth?: DefaultMouthOrganConfig;
@@ -102,10 +102,14 @@ export function createBehavior(config?: AppBehaviorConfig) {
   return isDisabled(config) ? undefined : new ActiveSelfCompiler();
 }
 
-export function createBody(config?: Live2DAdapterConfig & { provider?: string }) {
-  return isDisabled(config)
-    ? undefined
-    : new Live2DAdapter(config);
+export function createBody(config?: NeutralBodyOrganConfig) {
+  if (isDisabled(config)) {
+    return undefined;
+  }
+  if (config?.provider === 'vrm' || config?.format === 'vrm') {
+    return new VRMAdapter(config);
+  }
+  return new Live2DAdapter(config);
 }
 
 export function createHands(config?: DefaultHandsOrganConfig & { provider?: string }) {
