@@ -325,7 +325,7 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
   <header>
     <div class="brand">
       <h1>◈ SIDURI</h1>
-      <span id="companion-display-name" style="font-weight: 600; color: #fff;">${instanceName}</span>
+      <span id="companion-display-name" style="font-weight: 600; color: #fff;">Companion</span>
       <div class="badges">
         ${organBadges}
       </div>
@@ -351,7 +351,7 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
         <div class="chat-pane">
           <div id="messages" class="messages-container">
             <div class="message companion">
-              <div class="meta companion-meta">${instanceName}</div>
+              <div class="meta companion-meta">Companion</div>
               Hello! I am your Siduri companion. How can I help you today?
             </div>
           </div>
@@ -416,7 +416,7 @@ export function generateWebHtml(instanceName: string, manifests: OrganManifest[]
 
   <script>
     let currentClaims = [];
-    let companionName = '${instanceName}';
+    let companionName = 'Companion';
 
     function updateCompanionName(newName) {
       if (!newName || typeof newName !== 'string' || !newName.trim()) return;

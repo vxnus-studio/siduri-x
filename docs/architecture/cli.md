@@ -28,6 +28,7 @@ npx @vxnus/siduri create [directory]
 7. **Canonical Instantiation Order & TDZ Immunity**: Sorts generated `src/index.js` organ instantiations according to the canonical lifecycle order (`brain` -> `memory` -> `knowledge` -> `behavior` -> `voice` -> `body` -> `mouth` -> `hands` -> `vision` -> `ear` -> `observation`), guaranteeing dependencies like `vision` are initialized before consumers like `observation`.
 8. **Resilient Environment Parsing**: `siduri doctor` strips enclosing quotes and ignores empty variable values from `.env` files so active shell environment variables are preserved without accidental blank overrides.
 9. **Companion Static Asset Serving**: Standalone HTTP server safely serves static companion assets under `/assets/` (e.g. Live2D models, textures, animations in `assets/body/<name>/`) and `/live2d/` fallbacks with path traversal containment.
+10. **Project Directory Decoupling & True Self Identity**: The setup wizard prompts for `Project directory:` (e.g. `Companion`, `PrivateCompanion`, without forcing kebab-case, rejecting numbers and pre-existing folders). The folder name is treated strictly as instance/workspace metadata; companion identity name is never injected into the AI and is only established via Self (`.self` persona manifest or chat proposal approval via the Truth Gate).
 
 ### Organ Behavior & Defaults:
 

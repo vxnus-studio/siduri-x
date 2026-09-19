@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '2.0.35';
+export const CLI_VERSION = '2.0.36';
 
 import { colors } from './colors';
 export { colors };
@@ -32,24 +32,34 @@ export function printSuccess(message: string): void {
 }
 
 export function projectDirectoryName(value: string): string {
-  const slug = value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return slug || 'siduri';
+  return (value || '').trim() || 'Companion';
+}
+
+export function validateProjectDirectory(value: string): true | string {
+  const trimmed = (value || '').trim();
+  if (!trimmed) {
+    return 'Please enter a project directory.';
+  }
+  if (/^\d+$/.test(trimmed) || !isNaN(Number(trimmed))) {
+    return 'Project directory cannot be a number.';
+  }
+  const resolved = path.resolve(process.cwd(), trimmed);
+  if (fs.existsSync(resolved)) {
+    return `Directory "${trimmed}" already exists in the current directory.`;
+  }
+  return true;
 }
 
 export function formatReviewSummary(
-  companionName: string,
+  projectDirName: string,
   selectedManifests: OrganManifest[],
   organSummaries: Record<string, Record<string, unknown>>
 ): string {
   const lines: string[] = [];
 
-  lines.push(`\n${colors.cyan}── Review ${companionName} ${'─'.repeat(Math.max(2, 42 - (companionName.length + 9)))}${colors.reset}\n`);
-  lines.push(`  ${colors.bold}Companion${colors.reset}`);
-  lines.push(`    ${colors.dim}Name:${colors.reset}     ${companionName}\n`);
+  lines.push(`\n${colors.cyan}── Review ${projectDirName} ${'─'.repeat(Math.max(2, 42 - (projectDirName.length + 9)))}${colors.reset}\n`);
+  lines.push(`  ${colors.bold}Project${colors.reset}`);
+  lines.push(`    ${colors.dim}Directory:${colors.reset} ${projectDirName}\n`);
 
   for (const m of selectedManifests) {
     const isRequired = m.organType === 'brain';
@@ -108,22 +118,43 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
     throw new Error('No @siduri-x/* organ packages found. Please ensure organs are installed or in workspace.');
   }
 
-  printSection('Companion Details');
-  const basicAnswers = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'name',
-      message: 'Companion name:',
-      default: 'Siduri',
-      validate: nonEmpty,
-    },
-  ]);
+  printSection('Project Details');
 
-  const companionName = basicAnswers.name;
-  const projectDir = targetDir ? path.resolve(process.cwd(), targetDir) : path.resolve(process.cwd(), projectDirectoryName(companionName));
+  let projectDirName: string;
+  if (targetDir) {
+    const check = validateProjectDirectory(targetDir);
+    if (check !== true) {
+      console.warn(`${colors.yellow}!${colors.reset} Provided directory "${targetDir}" is invalid: ${check}\n`);
+      const dirAnswers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'directory',
+          message: 'Project directory:',
+          default: 'Companion',
+          validate: validateProjectDirectory,
+        },
+      ]);
+      projectDirName = dirAnswers.directory.trim();
+    } else {
+      projectDirName = targetDir.trim();
+    }
+  } else {
+    const dirAnswers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'directory',
+        message: 'Project directory:',
+        default: 'Companion',
+        validate: validateProjectDirectory,
+      },
+    ]);
+    projectDirName = dirAnswers.directory.trim();
+  }
+
+  const projectDir = path.resolve(process.cwd(), projectDirName);
 
   printSection('Organ Configuration');
-  console.log(`${colors.dim}Configuring capability organs for ${companionName} sequentially from cognition to physical embodiment.${colors.reset}\n`);
+  console.log(`${colors.dim}Configuring capability organs for ${projectDirName} sequentially from cognition to physical embodiment.${colors.reset}\n`);
 
   // Canonical organ presentation order: Cognition -> Memory/State -> Identity -> Embodiment & Peripheral
   const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
@@ -145,7 +176,7 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
     printSection(sectionTitle);
 
     const res: OrganConfigurationResult = await configureOrgan(m, {
-      companionName,
+      companionName: projectDirName,
       existingConfig: organConfigs[m.configKey],
     });
 
@@ -160,12 +191,12 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
 
   // 2. Final Review and Edit Loop
   while (true) {
-    console.log(formatReviewSummary(companionName, selectedManifests, organSummaries));
+    console.log(formatReviewSummary(projectDirName, selectedManifests, organSummaries));
 
     const { reviewAction } = await inquirer.prompt<{ reviewAction: string }>({
       type: 'list',
       name: 'reviewAction',
-      message: `Create ${companionName} with this configuration?`,
+      message: `Create ${projectDirName} with this configuration?`,
       choices: [
         { name: 'Yes, create', value: 'create' },
         { name: 'Go back and edit', value: 'edit' },
@@ -214,7 +245,7 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
         printSection(sectionTitle);
 
         const res = await configureOrgan(m, {
-          companionName,
+          companionName: projectDirName,
           existingConfig: organConfigs[m.configKey],
         });
 
@@ -241,7 +272,7 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
 
   // 4. Generate Instance Files
   const files = generateInstanceFiles({
-    name: companionName,
+    name: projectDirName,
     selectedManifests,
     organConfigs,
     localPath: options?.localPath,

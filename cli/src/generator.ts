@@ -88,7 +88,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const companionSlug = instanceName.toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'default';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^2.0.15';
-  const cliVersion = options.cliVersion || '^2.0.35';
+  const cliVersion = options.cliVersion || '^2.0.36';
   const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
@@ -234,7 +234,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
       instantiationLines.push(`  if (selfRaw) {`);
       instantiationLines.push(`    const parsedSelf = SelfPackageParser.parse(selfRaw);`);
       instantiationLines.push(`    if (parsedSelf.isValid && parsedSelf.manifest) {`);
-      instantiationLines.push(`      await self.setIdentity({ companionId: config.id || 'default', name: parsedSelf.manifest.identity?.name || config.name, archetype: parsedSelf.manifest.identity?.archetype, version: parsedSelf.manifest.version || '1.0.0', updatedAt: new Date().toISOString() });`);
+      instantiationLines.push(`      await self.setIdentity({ companionId: config.id || 'default', name: parsedSelf.manifest.identity?.name || '', archetype: parsedSelf.manifest.identity?.archetype, version: parsedSelf.manifest.version || '1.0.0', updatedAt: new Date().toISOString() });`);
       instantiationLines.push(`      if (parsedSelf.manifest.directives) {`);
       instantiationLines.push(`        await self.commitDirectives(config.id || 'default', parsedSelf.manifest.directives.map((d) => ({ id: d.id, companionId: config.id || 'default', directive: d.directive, category: (d.category || 'behavioral'), status: 'active', priority: d.priority || 50, createdAt: new Date().toISOString() })));`);
       instantiationLines.push(`      }`);
@@ -360,7 +360,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    res.end(JSON.stringify({`,
     `      id: config.id,`,
     `      companionId: config.id,`,
-    `      name: identity?.name || config.name || 'Siduri',`,
+    `      name: identity?.name || undefined,`,
     `      archetype: identity?.archetype || identity?.role,`,
     `      origin: identity?.origin,`,
     `      ethos: identity?.ethos,`,
@@ -959,7 +959,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
         `license: "MIT"`,
         ``,
         `identity:`,
-        `  name: "${instanceName}"`,
+        `  name: "${(behaviorConfig.name || behaviorConfig.companionName || '').replace(/"/g, '\\"')}"`,
         `  archetype: "${(behaviorConfig.archetype || 'Knowledge Assistant & Research Partner').replace(/"/g, '\\"')}"`,
         `  origin: "Constructed companion"`,
         `  ethos: "${(behaviorConfig.ethos || 'Direct technical candor, thoughtful, concise, and loyal').replace(/"/g, '\\"')}"`,
