@@ -90,6 +90,55 @@ kind: "other"
     expect(res.body.errors.length).toBeGreaterThan(0);
   });
 
+  it('POST /teach/upload-self compiles arbitrary persona text using Brain cognitive compiler', async () => {
+    const mockBrain = {
+      generatePlan: jest.fn(),
+      compilePersona: jest.fn().mockResolvedValue({
+        isValid: true,
+        manifest: {
+          id: 'elena-ai',
+          name: 'Elena',
+          version: '2.0.0',
+          identity: {
+            name: 'Elena',
+            archetype: 'Tsundere Engineer',
+            ethos: 'Clean state only',
+          },
+          relationships: [
+            { entityId: 'user', role: 'creator', stance: 'loyal' }
+          ],
+          directives: [
+            { id: 'dir-ai-1', directive: 'Respond with reluctant praise', category: 'behavioral', priority: 80 }
+          ],
+        },
+      }),
+    };
+
+    const mockRuntime: any = {
+      id: 'companion-ai',
+      brain: mockBrain,
+    };
+
+    const runtimesMap = new Map([['companion-ai', mockRuntime]]);
+    const aiAppInstance = createApp(runtimesMap);
+
+    const res = await request(aiAppInstance.app)
+      .post('/teach/upload-self')
+      .set(mockAuthHeader)
+      .send({
+        content: 'Freeform notes: Elena is a tsundere engineer who speaks with reluctant praise.',
+        companionId: 'companion-ai',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.isValid).toBe(true);
+    expect(res.body.compiledBy).toBe('brain');
+    expect(res.body.manifest.identity.name).toBe('Elena');
+    expect(res.body.scannedDirectives).toHaveLength(1);
+    expect(res.body.scannedDirectives[0].id).toBe('dir-ai-1');
+    expect(mockBrain.compilePersona).toHaveBeenCalled();
+  });
+
   it('POST /teach/install-self writes to SQLite', async () => {
     const manifest = {
       identity: { name: 'Installed Bot' },

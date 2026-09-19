@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createCorsOptions } from './cors';
 import { SiduriRuntime, dispatchCompanionChat } from './runtime';
-import { SelfPackageParser, SqliteSelfRepository, scanDirective } from '@siduri-x/self';
+import { SelfPackageParser, SqliteSelfRepository, scanDirective, compilePersonaDocument } from '@siduri-x/self';
 import { FixtureObservationOrgan } from '@siduri-x/observation';
 import { attachIdentity, requireAuth, Identity, isLocalRequest } from './auth';
 import { mapRequestContext } from './context-mapper';
@@ -155,7 +155,10 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       }
 
       const content = await fs.promises.readFile(matchedFilePath, 'utf8');
-      const parsed = SelfPackageParser.parse(content);
+      const parsed = await compilePersonaDocument(content, {
+        brain: runtime?.brain,
+        companionId,
+      });
 
       let alreadyInstalled = false;
       const repo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
@@ -189,9 +192,14 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
 
   app.post('/teach/upload-self', requireAuth, async (req, res) => {
     try {
-      const { content } = req.body;
+      const { content, companionId } = req.body;
       if (!content) return res.status(400).json({ error: "Missing content" });
-      const parsed = SelfPackageParser.parse(content);
+      const targetId = companionId || Array.from(runtimes.keys())[0] || 'default';
+      const runtime = runtimes.get(targetId);
+      const parsed = await compilePersonaDocument(content, {
+        brain: runtime?.brain,
+        companionId: targetId,
+      });
       res.json(parsed);
     } catch (e: any) {
       res.status(500).json({ error: e.message });

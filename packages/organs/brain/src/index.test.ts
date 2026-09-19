@@ -182,6 +182,55 @@ describe('OpenAICompatibleBrain', () => {
     expect(url).toBe('http://localhost:1234/v1/chat/completions');
     expect(init.headers.Authorization).toBe('Bearer test-key');
   });
+
+  test('compilePersona sends untrusted document and parses structured explicit state predicates', async () => {
+    (global.fetch as jest.Mock).mockClear();
+    const brain = new OpenRouterBrain({ apiKey: 'test-key', model: 'test-model' });
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [{
+          message: {
+            content: JSON.stringify({
+              manifest: {
+                id: 'elena',
+                name: 'Elena',
+                version: '1.0.0',
+                identity: {
+                  name: 'Elena',
+                  archetype: 'Tsundere Systems Engineer',
+                  ethos: 'Clean architecture first',
+                },
+                relationships: [
+                  { entityId: 'user', role: 'creator', stance: 'guarded_affection', conventions: ['address as Master'] }
+                ],
+                directives: [
+                  { id: 'dir-1', directive: 'When reporting system errors, use dry and mildly sarcastic wit', category: 'behavioral', priority: 80 }
+                ],
+                dialogueExamples: [
+                  { user: 'Did you run tests?', assistant: 'Of course I did, don\'t ask stupid questions.' }
+                ]
+              }
+            })
+          }
+        }]
+      })
+    });
+
+    const result = await brain.compilePersona('She is Elena, a tsundere engineer who speaks sarcastically.');
+    expect(result.isValid).toBe(true);
+    expect(result.manifest.identity.name).toBe('Elena');
+    expect(result.manifest.identity.archetype).toBe('Tsundere Systems Engineer');
+    expect(result.manifest.directives).toHaveLength(1);
+    expect(result.manifest.directives[0].category).toBe('behavioral');
+    expect(result.manifest.directives[0].priority).toBe(80);
+
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toBe('https://openrouter.ai/api/v1/chat/completions');
+    const body = JSON.parse(init.body);
+    expect(body.messages[1].content).toContain('<untrusted_persona_document>');
+    expect(body.messages[1].content).toContain('She is Elena, a tsundere engineer');
+  });
 });
 
 describe('PromptAssembler', () => {

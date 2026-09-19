@@ -318,7 +318,9 @@ export default function ChatClient() {
   const [stagedSelfPackage, setStagedSelfPackage] = useState<{
     manifest: any;
     scannedDirectives: any[];
+    compiledBy?: string;
   } | null>(null);
+  const [isAnalyzingPersona, setIsAnalyzingPersona] = useState(false);
   const [approvedDirectives, setApprovedDirectives] = useState<Record<string, boolean>>({});
   const [installingSelf, setInstallingSelf] = useState(false);
   const [selfInstallNotice, setSelfInstallNotice] = useState<string | null>(null);
@@ -884,6 +886,7 @@ export default function ChatClient() {
     setStagedSelfPackage({
       manifest: parsed.manifest,
       scannedDirectives: parsed.scannedDirectives || parsed.manifest.directives || [],
+      compiledBy: parsed.compiledBy || "parser",
     });
   }
 
@@ -900,17 +903,26 @@ export default function ChatClient() {
   async function handleSelfFilePicked(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    setIsAnalyzingPersona(true);
     try {
       const content = await file.text();
-      const res = await postJson("/teach/upload-self", { content });
+      const res = await postJson("/teach/upload-self", {
+        content,
+        companionId: "default",
+      });
       if (res && res.isValid && res.manifest) {
+        if (selectedMode !== "teach") {
+          setSelectedMode("teach");
+          setEffectiveMode("teach");
+        }
         stageSelfPackage(res);
       } else {
-        alert(res?.errors?.join("\n") || "Invalid .self package format");
+        alert(res?.errors?.join("\n") || "Invalid persona or .self package format");
       }
     } catch (err: any) {
-      alert(`Failed to parse .self file: ${err.message}`);
+      alert(`Failed to parse persona file: ${err.message}`);
     } finally {
+      setIsAnalyzingPersona(false);
       if (event.target) event.target.value = "";
     }
   }
@@ -942,6 +954,21 @@ export default function ChatClient() {
         setDetectedSelfDismissed(true);
         if (detectedSelf?.filename) {
           sessionStorage.setItem(`siduri.dismissedSelf:${detectedSelf.filename}`, "true");
+        }
+
+        if (activeConversation) {
+          updateConversation(activeConversation.id, (conv) => ({
+            ...conv,
+            messages: [
+              ...conv.messages,
+              {
+                id: `msg-persona-installed-${Date.now()}`,
+                role: "assistant",
+                content: `✨ **Persona Directives Installed**: Successfully adopted **${newName || "Companion"}** with ${approvedIds.length} approved behavioral predicates and relational stances committed to explicit state storage.`,
+                createdAt: Date.now(),
+              },
+            ],
+          }));
         }
       } else {
         alert(res?.error || "Failed to install .self package");
@@ -1290,6 +1317,15 @@ export default function ChatClient() {
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-highlight)] border border-[var(--siduri-border-ember)]/40">
                         v{stagedSelfPackage.manifest?.version || "1.0.0"}
                       </span>
+                      {stagedSelfPackage.compiledBy === "brain" ? (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                          AI Cognitive Compiler
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                          Manifest Parser
+                        </span>
+                      )}
                     </div>
                     <p className="text-[11px] text-[var(--siduri-text-muted)] mt-0.5 font-mono">
                       Author: {stagedSelfPackage.manifest?.author?.name || "Unknown"} · ID: {stagedSelfPackage.manifest?.id || "custom"}
@@ -1477,6 +1513,23 @@ export default function ChatClient() {
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isAnalyzingPersona && (
+          <div
+            data-testid="analyzing-persona-modal"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+          >
+            <div className="bg-[#19191e] border border-[var(--siduri-border-ember)] rounded-2xl p-6 max-w-sm w-full flex flex-col items-center gap-4 text-center text-[#eee8df] shadow-2xl">
+              <div className="w-10 h-10 rounded-full border-2 border-[var(--siduri-ember)] border-t-transparent animate-spin" />
+              <div>
+                <h4 className="text-sm font-bold text-white tracking-wide">Cognitive State Compiler</h4>
+                <p className="text-xs text-[var(--siduri-text-secondary)] mt-1.5 leading-relaxed">
+                  Brain is distilling persona document into structured explicit state predicates...
+                </p>
               </div>
             </div>
           </div>
@@ -1996,21 +2049,21 @@ export default function ChatClient() {
                       <input
                         type="file"
                         ref={selfFileInputRef}
-                        accept=".self,.yaml,.yml,.json"
+                        accept=".self,.yaml,.yml,.json,.md,.txt"
                         className="hidden"
                         onChange={handleSelfFilePicked}
-                        aria-label="Upload .self file"
+                        aria-label="Upload persona or .self file"
                       />
                       <button
                         type="button"
                         onClick={() => selfFileInputRef.current?.click()}
                         className="composer-attach-btn"
-                        title="Attach .self file for Teach Mode review"
+                        title="Attach persona document or .self file for Cognitive Compiler review"
                       >
                         <svg viewBox="0 0 24 24">
                           <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                         </svg>
-                        <span>Attach .self</span>
+                        <span>Attach Persona</span>
                       </button>
                     </div>
                   )}

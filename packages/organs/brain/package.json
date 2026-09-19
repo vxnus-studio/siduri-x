@@ -1,6 +1,6 @@
 {
   "name": "@siduri-x/brain",
-  "version": "2.0.12",
+  "version": "2.0.13",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@siduri-x/core": "workspace:*",
+    "@siduri-x/core": "^2.0.16",
     "zod": "^4.6.2"
   },
   "devDependencies": {

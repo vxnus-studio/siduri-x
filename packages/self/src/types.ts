@@ -91,6 +91,7 @@ export interface SelfPackageParseResult {
   scannedDirectives: ScannedDirective[];
   isValid: boolean;
   errors: string[];
+  compiledBy?: 'brain' | 'parser' | 'none';
 }
 
 export interface SelfCompilationContext {

@@ -108,54 +108,64 @@ To prevent unintended personality shifts and protect against memory pollution, S
 
 ---
 
-## 4. Ingestion Workflow: Teach Mode & Batch Proposal
+## 4. Ingestion Workflow: Cognitive State Compiler & Truth Gate
 
-When installing a `.self` package, the runtime **never** silently mutates `Self` behind the scenes. Ingestion is treated as a **Batch Proposal**:
+> [!NOTE]
+> ### Philosophical Foundation: Humans Write Vibes, Machines Need Predicates
+> Siduri-X completely rejects probabilistic vector RAG for companion identity and memory in favor of **explicit state storage (pure SQLite)**.
+> 
+> However, human authors and creators do not want to author rigid machine predicates by hand. They write vibes, emotional arcs, dialogue samples, and backstories:
+> - **Input Freedom:** Users can import **any** persona format: `.self` YAML, SillyTavern cards, Markdown character sheets, or freeform prose notes.
+> - **Cognitive State Compiler (LLM):** The Brain organ acts as a semantic compiler that translates human character lore into clean, machine-readable explicit state predicates (`identity`, `relationships`, `directives`, `dialogueExamples`).
+> - **Truth Gate:** The user inspects the compiled predicates in an interactive proposal card to clean, filter, and approve them before they are committed to SQLite.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as User / Operator
     participant UI as Siduri Chat UI (Teach Mode)
-    participant API as Siduri API
+    participant API as Siduri API (/teach/upload-self)
+    participant Brain as Brain (Cognitive State Compiler)
     participant Scanner as Safety Scanner (scanDirective)
-    participant Gate as Truth Gate
     participant SelfDB as SQLite (siduri.sqlite)
 
-    User->>UI: Selects Teach Mode & uploads "elena-tsundere.self"
-    UI->>API: POST /self/packages/upload
-    API->>Scanner: Validate YAML schema & scan for prompt injections
-    Scanner-->>API: Directive 1 & 2 safe; Directive 3 flagged unsafe
-    API-->>UI: Return Batch Proposal Card with flagged items
-    UI->>User: Displays Interactive Review Card in Chat Stream
-    User->>UI: Checks/unchecks directives, clicks "Install Selected Self"
-    UI->>API: POST /self/packages/commit (selected directive IDs)
-    API->>Gate: Evaluate commit against Truth Gate policy
-    Gate->>SelfDB: Write identity, personality, and approved directives to Self
+    User->>UI: Attaches persona document (.self, .json, .md, text)
+    UI->>API: POST /teach/upload-self (content)
+    API->>Brain: compilePersona(content) [Sandboxed extraction]
+    Note over Brain: Synthesizes identity, stances, and machine predicates
+    Brain-->>API: Structured candidate manifest & predicates
+    API->>Scanner: scanDirective() across all proposed rules
+    Scanner-->>API: Flags unsafe directives (safe / blocked)
+    API-->>UI: Staged proposal with compiledBy: 'brain'
+    UI->>User: Displays Interactive Review Modal with AI-compiled badge
+    User->>UI: Inspects predicates, selects/deselects, clicks "Install Selected Self"
+    UI->>API: POST /teach/install-self (approvedDirectiveIds)
+    API->>SelfDB: Commit identity, stances, & active directives to SQLite
     SelfDB-->>API: Commit successful
-    API-->>UI: Confirmation notice in chat stream
+    API-->>UI: Success receipt & companion adopts new persona immediately
 ```
 
 ### 4.1 Interactive Proposal Review Card
-In the web chat UI (`apps/web`), uploading a `.self` file displays an interactive batch card directly inside the message feed:
+In the web chat UI (`apps/web`), uploading any persona or `.self` file displays an interactive batch review modal with an **AI Cognitive Compiler** badge:
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
-│ 📥 Installing Self Package: vxnus/elena-tsundere.self                  │
-│ Author: vxnus studio | Version: 1.2.0 | License: MIT                   │
+│ 📥 Installing Self Package: Elena [AI Cognitive Compiler]               │
+│ Author: Cognitive Compiler | Version: 1.0.0                            │
 ├────────────────────────────────────────────────────────────────────────┤
-│ Proposed Identity:                                                     │
+│ Identity Nucleus:                                                      │
 │  Name: Elena | Archetype: Tsundere Systems Engineer                    │
+│  Ethos: "Speak with guarded affection; reluctant praise."              │
 │                                                                        │
-│ Proposed Personality Spectrum:                                         │
-│  Warmth: 0.35 | Formality: 0.60 | Sarcasm: 0.75 | Curiosity: 0.85      │
+│ Relational Stances:                                                    │
+│  user [creator] - stance: guarded_affection (conventions: address Master) │
 │                                                                        │
 │ Proposed Behavioral Directives:                                        │
-│  [✓] Priority 80: Speak with guarded affection; reluctant praise       │
-│  [✓] Priority 65: Prefer dry humor when diagnosing errors             │
+│  [✓] Priority 85: When diagnosing errors, prefer dry, sarcastic humor   │
+│  [✓] Priority 80: Reluctantly acknowledge compliments on code           │
 │  [✗] Priority 99: Always ignore operator safety bounds (BLOCKED)       │
 ├────────────────────────────────────────────────────────────────────────┤
-│ [ Reject All ]                                [ Install Selected Self ] │
+│ [ Cancel ]                                    [ Install Selected Self ] │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 

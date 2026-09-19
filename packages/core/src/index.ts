@@ -94,9 +94,48 @@ export interface RetrievalPlan {
   reasoning?: string;
 }
 
+export interface PersonaCompilationResult {
+  isValid: boolean;
+  manifest: {
+    specVersion?: string;
+    kind?: 'self';
+    id?: string;
+    name?: string;
+    version?: string;
+    author?: { name: string; url?: string; signature?: string };
+    identity: {
+      name: string;
+      archetype?: string;
+      origin?: string;
+      ethos?: string;
+    };
+    personality?: PersonalityTraits;
+    relationships?: Array<{
+      entityId: string;
+      role?: string;
+      stance?: string;
+      conventions?: string[];
+    }>;
+    directives: Array<{
+      id?: string;
+      directive: string;
+      category?: 'guardrail' | 'relational' | 'behavioral';
+      priority?: number;
+      scopeActor?: string;
+      supersedesId?: string;
+    }>;
+    dialogueExamples?: Array<{
+      user: string;
+      assistant: string;
+    }>;
+  };
+  errors?: string[];
+}
+
 export interface BrainOrgan {
   generatePlan(context: BrainContext): Promise<ResponsePlan>;
-  planRetrieval?(text: string, context?: RequestContext): Promise<RetrievalPlan>;
+  planRetrieval?(text: string, context?: RequestContext, recentHistory?: { role: string; content: string }[]): Promise<RetrievalPlan>;
+  compilePersona?(content: string, options?: { companionId?: string }): Promise<PersonaCompilationResult>;
 }
 
 

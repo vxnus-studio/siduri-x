@@ -86,7 +86,7 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^2.0.15';
+  const coreVersion = options.coreVersion || '^2.0.16';
   const cliVersion = options.cliVersion || '^2.0.38';
   const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {

@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/self',
     organType: 'behavior',
-    version: '2.0.11',
+    version: '2.0.12',
     displayName: 'Self & Persona (Identity & Directives)',
     description: 'Autonomous persona compiler, relational stances, and .self asset loader',
     entrypoint: './dist/index.js',
@@ -78,7 +78,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@siduri-x/brain',
     organType: 'brain',
-    version: '2.0.10',
+    version: '2.0.13',
     displayName: 'Brain (Cognition & Planning)',
     description: 'Provider-neutral LLM reasoning, response planning, and proposal generation',
     entrypoint: './dist/index.js',
