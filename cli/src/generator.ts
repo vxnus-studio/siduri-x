@@ -227,21 +227,12 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     if (m.name === '@siduri-x/self') {
       instantiationLines.push(`const self = new SqliteSelfRepository({ dbPath: path.resolve(rootDir, 'siduri.sqlite') });`);
       instantiationLines.push(`const behavior = new ActiveSelfCompiler(config.organs.behavior);`);
-      instantiationLines.push(`const selfFile = path.resolve(rootDir, config.organs.behavior?.selfPath || 'assets/self/default.self');`);
-      instantiationLines.push(`try {`);
-      instantiationLines.push(`  const selfRaw = await readFile(selfFile, 'utf8').catch(() => null);`);
-      instantiationLines.push(`  if (selfRaw) {`);
-      instantiationLines.push(`    const parsedSelf = SelfPackageParser.parse(selfRaw);`);
-      instantiationLines.push(`    if (parsedSelf.isValid && parsedSelf.manifest) {`);
-      instantiationLines.push(`      await self.setIdentity({ companionId: config.id || 'default', name: parsedSelf.manifest.identity?.name || '', archetype: parsedSelf.manifest.identity?.archetype, version: parsedSelf.manifest.version || '1.0.0', updatedAt: new Date().toISOString() });`);
-      instantiationLines.push(`      if (parsedSelf.manifest.directives) {`);
-      instantiationLines.push(`        await self.commitDirectives(config.id || 'default', parsedSelf.manifest.directives.map((d) => ({ id: d.id, companionId: config.id || 'default', directive: d.directive, category: (d.category || 'behavioral'), status: 'active', priority: d.priority || 50, createdAt: new Date().toISOString() })));`);
-      instantiationLines.push(`      }`);
-      instantiationLines.push(`    }`);
-      instantiationLines.push(`  }`);
-      instantiationLines.push(`} catch {}`);
+      // NOTE: .self file is NOT auto-installed on startup.
+      // It is detected by GET /teach/detected-self and surfaced in the chat UI
+      // for user review and approval via the inline persona proposal card.
       organMapEntries.push(`  behavior,`);
       organMapEntries.push(`  self,`);
+
     } else if (m.name === '@siduri-x/memory') {
       instantiationLines.push(`const memory = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
       organMapEntries.push(`  ${m.configKey},`);
