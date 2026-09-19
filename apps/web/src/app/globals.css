@@ -679,6 +679,39 @@ a {
   white-space: pre-wrap;
 }
 
+.self-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(160, 120, 220, 0.12);
+  border: 1px solid rgba(160, 120, 220, 0.3);
+  border-radius: 8px;
+  padding: 4px 10px 4px 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--siduri-text-secondary, #b8afc4);
+}
+
+.self-attachment-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.self-attachment-name {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--siduri-text, #ded9e0);
+  font-weight: 500;
+}
+
+.self-attachment-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
 .message-translation {
   margin: 7px 0 0;
   color: #96919c;
@@ -1180,7 +1213,195 @@ a {
 }
 
 /* Truth Gate Card */
+/* ── Self Persona Proposal Card (inline in chat bubble) ── */
+.self-proposal-card {
+  margin-top: 12px;
+  border: 1px solid rgba(160, 120, 220, 0.25);
+  border-radius: 10px;
+  background: rgba(30, 25, 40, 0.7);
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.self-proposal-card.self-proposal-installed {
+  border-color: rgba(80, 200, 120, 0.3);
+  background: rgba(20, 35, 25, 0.6);
+}
+
+.self-proposal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  gap: 8px;
+}
+
+.self-proposal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: rgba(160, 120, 220, 0.9);
+}
+
+.self-proposal-installed .self-proposal-badge {
+  color: rgba(80, 200, 120, 0.9);
+}
+
+.self-proposal-meta {
+  font-size: 11px;
+  color: var(--siduri-text-secondary, #9b94a8);
+}
+
+.self-proposal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 11px;
+}
+
+.self-proposal-count {
+  color: var(--siduri-text-secondary, #9b94a8);
+  flex: 1;
+}
+
+.self-proposal-link {
+  color: rgba(160, 120, 220, 0.85);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.self-proposal-link:hover { text-decoration: underline; }
+
+.self-proposal-directives {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.self-directive-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  opacity: 0.6;
+}
+
+.self-directive-row.checked {
+  background: rgba(160, 120, 220, 0.08);
+  border-color: rgba(160, 120, 220, 0.2);
+  opacity: 1;
+}
+
+.self-directive-row.blocked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.self-directive-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.self-directive-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+}
+
+.self-directive-tag {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+  color: var(--siduri-text-secondary, #9b94a8);
+}
+
+.self-directive-safe {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--siduri-online, #4ade80);
+}
+
+.self-directive-blocked {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--siduri-danger, #f87171);
+  font-weight: 600;
+}
+
+.self-directive-text {
+  margin: 0;
+  font-size: 12px;
+  color: #e8e2ef;
+  line-height: 1.5;
+  font-family: var(--font-serif);
+}
+
+.self-proposal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.self-proposal-btn-reject {
+  padding: 5px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--siduri-text-secondary, #9b94a8);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.self-proposal-btn-reject:hover { color: #fff; }
+
+.self-proposal-btn-install {
+  padding: 5px 16px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--siduri-ember, #c87941);
+  color: #151214;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.self-proposal-btn-install:hover { filter: brightness(1.1); }
+.self-proposal-btn-install:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.self-proposal-installed-note {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: rgba(80, 200, 120, 0.85);
+  font-family: var(--font-serif);
+}
+
 .truth-gate-card {
+
   margin-top: 12px;
   padding: 10px 14px;
   border-radius: 8px;

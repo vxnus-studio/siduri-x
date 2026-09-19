@@ -97,6 +97,13 @@ type ChatMessage = {
   gate?: GateEvaluationData;
   memoryProposals?: MemoryProposalData[];
   behavioralProposals?: BehavioralProposalData[];
+  selfAttachment?: { filename: string };
+  selfProposal?: {
+    manifest: any;
+    scannedDirectives: any[];
+    compiledBy?: string;
+    status?: 'pending' | 'installed' | 'rejected';
+  };
   createdAt: number;
   interrupted?: boolean;
   interruptionReason?: string;
@@ -315,15 +322,10 @@ export default function ChatClient() {
     alreadyInstalled?: boolean;
   } | null>(null);
   const [detectedSelfDismissed, setDetectedSelfDismissed] = useState(false);
-  const [stagedSelfPackage, setStagedSelfPackage] = useState<{
-    manifest: any;
-    scannedDirectives: any[];
-    compiledBy?: string;
-  } | null>(null);
-  const [isAnalyzingPersona, setIsAnalyzingPersona] = useState(false);
-  const [approvedDirectives, setApprovedDirectives] = useState<Record<string, boolean>>({});
-  const [installingSelf, setInstallingSelf] = useState(false);
   const [selfInstallNotice, setSelfInstallNotice] = useState<string | null>(null);
+  // Per-message directive approval state: msgId -> { directiveId -> checked }
+  const [selfDirectiveState, setSelfDirectiveState] = useState<Record<string, Record<string, boolean>>>({});
+  const [installingSelfMsgId, setInstallingSelfMsgId] = useState<string | null>(null);
   const selfFileInputRef = useRef<HTMLInputElement>(null);
 
   // Evidence & Truth Gate UI state
@@ -870,113 +872,183 @@ export default function ChatClient() {
     }
   }
 
-  function stageSelfPackage(parsed: any) {
-    if (!parsed || !parsed.manifest) return;
-    const initialApproved: Record<string, boolean> = {};
-    if (Array.isArray(parsed.scannedDirectives)) {
-      parsed.scannedDirectives.forEach((d: any) => {
-        initialApproved[d.id] = d.approvedByDefault ?? d.scanResult?.safe ?? true;
-      });
-    } else if (Array.isArray(parsed.manifest?.directives)) {
-      parsed.manifest.directives.forEach((d: any) => {
-        initialApproved[d.id] = true;
-      });
-    }
-    setApprovedDirectives(initialApproved);
-    setStagedSelfPackage({
+  function buildSelfProposal(parsed: any): ChatMessage['selfProposal'] {
+    if (!parsed?.manifest) return undefined;
+    const scannedDirectives = parsed.scannedDirectives || parsed.manifest?.directives || [];
+    return {
       manifest: parsed.manifest,
-      scannedDirectives: parsed.scannedDirectives || parsed.manifest.directives || [],
-      compiledBy: parsed.compiledBy || "parser",
+      scannedDirectives,
+      compiledBy: parsed.compiledBy || 'parser',
+      status: 'pending',
+    };
+  }
+
+  function initDirectiveState(msgId: string, proposal: NonNullable<ChatMessage['selfProposal']>) {
+    const initial: Record<string, boolean> = {};
+    proposal.scannedDirectives.forEach((d: any) => {
+      initial[d.id] = d.approvedByDefault ?? d.scanResult?.safe ?? true;
     });
+    setSelfDirectiveState((prev) => ({ ...prev, [msgId]: initial }));
   }
 
   function handleImportDetectedSelf() {
     if (!detectedSelf?.parsed) return;
-    // Automatically transition to Teach Mode when importing detected .self
-    if (selectedMode !== "teach") {
-      setSelectedMode("teach");
-      setEffectiveMode("teach");
+    if (selectedMode !== 'teach') {
+      setSelectedMode('teach');
+      setEffectiveMode('teach');
     }
-    stageSelfPackage(detectedSelf.parsed);
+    // Build a synthetic chat exchange for the detected .self
+    let conversation = activeConversation;
+    if (!conversation) {
+      conversation = createConversation();
+      setConversations((current) => [conversation as Conversation, ...current]);
+      setActiveId(conversation.id);
+    }
+    const proposal = buildSelfProposal(detectedSelf.parsed);
+    if (!proposal) return;
+    const name = proposal.manifest?.identity?.name || proposal.manifest?.name || 'persona';
+    const userMsgId = newId();
+    const assistantMsgId = newId();
+    const summary = `I've reviewed **${detectedSelf.filename}** detected on your companion path and compiled the persona **"${name}"**.\n\nFound **${proposal.scannedDirectives.length} behavioral directive${proposal.scannedDirectives.length !== 1 ? 's' : ''}**. Review and approve below.`;
+    updateConversation(conversation.id, (current) => ({
+      ...current,
+      messages: [
+        ...current.messages,
+        { id: userMsgId, role: 'user', content: 'Import detected persona file.', selfAttachment: { filename: detectedSelf.filename || '.self' }, createdAt: Date.now() } as ChatMessage,
+        { id: assistantMsgId, role: 'assistant', content: summary, selfProposal: proposal, createdAt: Date.now() } as ChatMessage,
+      ],
+      updatedAt: Date.now(),
+    }));
+    initDirectiveState(assistantMsgId, proposal);
+    setDetectedSelfDismissed(true);
   }
 
   async function handleSelfFilePicked(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    setIsAnalyzingPersona(true);
+    if (event.target) event.target.value = '';
+
+    const content = await file.text();
+    const filename = file.name;
+
+    let conversation = activeConversation;
+    if (!conversation) {
+      conversation = createConversation();
+      setConversations((current) => [conversation as Conversation, ...current]);
+      setActiveId(conversation.id);
+    }
+
+    const userMsgId = newId();
+    const userMsg: ChatMessage = {
+      id: userMsgId,
+      role: 'user',
+      content: 'Teach Siduri from this persona file.',
+      selfAttachment: { filename },
+      createdAt: Date.now(),
+    };
+
+    const assistantMsgId = newId();
+    const assistantPlaceholder: ChatMessage = { id: assistantMsgId, role: 'assistant', content: '', createdAt: Date.now() };
+
+    updateConversation(conversation.id, (current) => ({
+      ...current,
+      title: current.messages.length === 0 ? `Persona: ${filename}` : current.title,
+      messages: [...current.messages, userMsg, assistantPlaceholder],
+      updatedAt: Date.now(),
+    }));
+
+    setBusy(true);
+    setStatus('streaming');
+
     try {
-      const content = await file.text();
-      const res = await postJson("/teach/upload-self", {
-        content,
-        companionId: "default",
-      });
+      const res = await postJson('/teach/upload-self', { content, companionId: 'default' });
+
       if (res && res.isValid && res.manifest) {
-        if (selectedMode !== "teach") {
-          setSelectedMode("teach");
-          setEffectiveMode("teach");
+        const proposal = buildSelfProposal(res);
+        const name = proposal?.manifest?.identity?.name || proposal?.manifest?.name || 'persona';
+        const directiveCount = proposal?.scannedDirectives?.length ?? 0;
+        const compiledBy = res.compiledBy === 'brain' ? 'AI Cognitive Compiler' : 'Manifest Parser';
+        const summary = `I've reviewed **${filename}** and compiled the persona **"${name}"** using the ${compiledBy}.\n\nFound **${directiveCount} behavioral directive${directiveCount !== 1 ? 's' : ''}**. Review and approve the directives below.`;
+
+        updateConversation(conversation.id, (current) => ({
+          ...current,
+          messages: current.messages.map((m) =>
+            m.id === assistantMsgId ? { ...m, content: summary, selfProposal: proposal } : m
+          ),
+          updatedAt: Date.now(),
+        }));
+
+        if (proposal) initDirectiveState(assistantMsgId, proposal);
+
+        if (selectedMode !== 'teach') {
+          setSelectedMode('teach');
+          setEffectiveMode('teach');
         }
-        stageSelfPackage(res);
       } else {
-        alert(res?.errors?.join("\n") || "Invalid persona or .self package format");
+        const errText = res?.errors?.join('\n') || 'Invalid persona or .self package format';
+        updateConversation(conversation.id, (current) => ({
+          ...current,
+          messages: current.messages.map((m) =>
+            m.id === assistantMsgId ? { ...m, error: errText, content: 'Could not compile this persona file.' } : m
+          ),
+          updatedAt: Date.now(),
+        }));
       }
     } catch (err: any) {
-      alert(`Failed to parse persona file: ${err.message}`);
+      const errText = `Failed to parse persona file: ${err.message}`;
+      updateConversation(conversation.id, (current) => ({
+        ...current,
+        messages: current.messages.map((m) =>
+          m.id === assistantMsgId ? { ...m, error: errText, content: 'Could not compile this persona file.' } : m
+        ),
+        updatedAt: Date.now(),
+      }));
     } finally {
-      setIsAnalyzingPersona(false);
-      if (event.target) event.target.value = "";
+      setBusy(false);
+      setStatus('online');
     }
   }
 
-  async function handleInstallStagedSelf() {
-    if (!stagedSelfPackage?.manifest) return;
-    setInstallingSelf(true);
+  async function handleInstallSelfProposal(msgId: string, proposal: NonNullable<ChatMessage['selfProposal']>) {
+    const approved = selfDirectiveState[msgId] || {};
+    const approvedIds = Object.entries(approved).filter(([, v]) => v).map(([id]) => id);
+    setInstallingSelfMsgId(msgId);
     try {
-      const approvedIds = Object.entries(approvedDirectives)
-        .filter(([, approved]) => approved)
-        .map(([id]) => id);
-
-      const res = await postJson("/teach/install-self", {
-        companionId: "default",
-        manifest: stagedSelfPackage.manifest,
+      const res = await postJson('/teach/install-self', {
+        companionId: 'default',
+        manifest: proposal.manifest,
         approvedDirectiveIds: approvedIds,
       });
 
       if (res && res.success) {
-        const newName = stagedSelfPackage.manifest?.identity?.name || stagedSelfPackage.manifest?.name;
-        if (newName) {
-          setCompanionName(newName);
-        }
-        setSelfInstallNotice(
-          `Installed '${stagedSelfPackage.manifest.name}' ethos (${approvedIds.length} directives active).`
-        );
-        setTimeout(() => setSelfInstallNotice(null), 6000);
-        setStagedSelfPackage(null);
-        setDetectedSelfDismissed(true);
-        if (detectedSelf?.filename) {
-          sessionStorage.setItem(`siduri.dismissedSelf:${detectedSelf.filename}`, "true");
-        }
+        const newName = proposal.manifest?.identity?.name || proposal.manifest?.name;
+        if (newName) setCompanionName(newName);
 
+        // Mark proposal as installed on the message
         if (activeConversation) {
           updateConversation(activeConversation.id, (conv) => ({
             ...conv,
-            messages: [
-              ...conv.messages,
-              {
-                id: `msg-persona-installed-${Date.now()}`,
-                role: "assistant",
-                content: `✨ **Persona Directives Installed**: Successfully adopted **${newName || "Companion"}** with ${approvedIds.length} approved behavioral predicates and relational stances committed to explicit state storage.`,
-                createdAt: Date.now(),
-              },
-            ],
+            messages: conv.messages.map((m) =>
+              m.id === msgId
+                ? { ...m, selfProposal: { ...m.selfProposal!, status: 'installed' } }
+                : m
+            ),
           }));
         }
+
+        setSelfInstallNotice(`Installed '${proposal.manifest.name}' ethos (${approvedIds.length} directives active).`);
+        setTimeout(() => setSelfInstallNotice(null), 6000);
+        setDetectedSelfDismissed(true);
+        if (detectedSelf?.filename) {
+          sessionStorage.setItem(`siduri.dismissedSelf:${detectedSelf.filename}`, 'true');
+        }
       } else {
-        alert(res?.error || "Failed to install .self package");
+        alert(res?.error || 'Failed to install .self package');
       }
     } catch (err: any) {
       alert(`Install error: ${err.message}`);
     } finally {
-      setInstallingSelf(false);
+      setInstallingSelfMsgId(null);
     }
   }
 
@@ -1293,247 +1365,6 @@ export default function ChatClient() {
           </div>
         )}
 
-        {/* Staged .self Batch Proposal Modal for Teach Mode */}
-        {stagedSelfPackage && (
-          <div
-            data-testid="staged-self-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Review and install .self package"
-          >
-            <div className="relative w-full max-w-2xl max-h-[90vh] bg-[#141418] border border-[var(--siduri-border-ember)] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[#eee8df]">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--siduri-border-subtle)] bg-[#19191e]/90">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--siduri-tint-med)] border border-[var(--siduri-border-ember)] flex items-center justify-center">
-                    <PackageIcon size={20} className="text-[var(--siduri-ember-highlight)]" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-                        {stagedSelfPackage.manifest?.name || "Self Ethos Package"}
-                      </h3>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--siduri-tint-low)] text-[var(--siduri-ember-highlight)] border border-[var(--siduri-border-ember)]/40">
-                        v{stagedSelfPackage.manifest?.version || "1.0.0"}
-                      </span>
-                      {stagedSelfPackage.compiledBy === "brain" ? (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                          AI Cognitive Compiler
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                          Manifest Parser
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-[var(--siduri-text-muted)] mt-0.5 font-mono">
-                      Author: {stagedSelfPackage.manifest?.author?.name || "Unknown"} · ID: {stagedSelfPackage.manifest?.id || "custom"}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setStagedSelfPackage(null)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--siduri-text-muted)] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
-                  aria-label="Close review"
-                >
-                  <CloseIcon size={16} />
-                </button>
-              </div>
-
-              {/* Modal Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
-                {/* Identity Nucleus */}
-                <div className="p-3.5 rounded-xl bg-[#1a1a20] border border-[var(--siduri-border-subtle)] space-y-1.5">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-highlight)] font-semibold">
-                    Identity Nucleus
-                  </span>
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-sm font-bold text-white">
-                      {stagedSelfPackage.manifest?.identity?.name}
-                    </span>
-                    {stagedSelfPackage.manifest?.identity?.archetype && (
-                      <span className="text-xs text-[var(--siduri-text-secondary)]">
-                        · {stagedSelfPackage.manifest.identity.archetype}
-                      </span>
-                    )}
-                  </div>
-                  {stagedSelfPackage.manifest?.identity?.ethos && (
-                    <p className="text-xs text-[var(--siduri-text-secondary)] italic leading-relaxed pt-1">
-                      "{stagedSelfPackage.manifest.identity.ethos}"
-                    </p>
-                  )}
-                </div>
-
-                {/* Relationships (if present) */}
-                {Array.isArray(stagedSelfPackage.manifest?.relationships) &&
-                  stagedSelfPackage.manifest.relationships.length > 0 && (
-                    <div className="p-3.5 rounded-xl bg-[#1a1a20] border border-[var(--siduri-border-subtle)] space-y-2">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-highlight)] font-semibold">
-                        Relational Stances
-                      </span>
-                      <div className="space-y-2">
-                        {stagedSelfPackage.manifest.relationships.map((rel: any, idx: number) => (
-                          <div key={idx} className="text-xs space-y-1 p-2 rounded-lg bg-black/30 border border-white/5">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-white font-mono">{rel.entityId}</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[var(--siduri-text-secondary)]">
-                                {rel.role || "user"}
-                              </span>
-                              <span className="text-[10px] text-[var(--siduri-ember-highlight)] font-mono">
-                                stance: {rel.stance}
-                              </span>
-                            </div>
-                            {Array.isArray(rel.conventions) && rel.conventions.length > 0 && (
-                              <ul className="list-disc list-inside text-[11px] text-[var(--siduri-text-secondary)] space-y-0.5 pl-1">
-                                {rel.conventions.map((c: string, cIdx: number) => (
-                                  <li key={cIdx}>{c}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                {/* Directives Batch Proposal */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--siduri-ember-highlight)] font-semibold">
-                      Directives Review ({Object.values(approvedDirectives).filter(Boolean).length} of {stagedSelfPackage.scannedDirectives.length} selected)
-                    </span>
-                    <div className="flex gap-2 text-[11px]">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const all: Record<string, boolean> = {};
-                          stagedSelfPackage.scannedDirectives.forEach((d: any) => {
-                            all[d.id] = true;
-                          });
-                          setApprovedDirectives(all);
-                        }}
-                        className="text-[var(--siduri-ember-highlight)] hover:underline cursor-pointer"
-                      >
-                        Select All
-                      </button>
-                      <span className="text-[var(--siduri-text-muted)]">·</span>
-                      <button
-                        type="button"
-                        onClick={() => setApprovedDirectives({})}
-                        className="text-[var(--siduri-text-muted)] hover:underline cursor-pointer"
-                      >
-                        Deselect All
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                    {stagedSelfPackage.scannedDirectives.map((d: any, idx: number) => {
-                      const isApproved = Boolean(approvedDirectives[d.id]);
-                      const isSafe = d.scanResult?.safe !== false;
-                      return (
-                        <div
-                          key={d.id || idx}
-                          onClick={() =>
-                            setApprovedDirectives((prev) => ({
-                              ...prev,
-                              [d.id]: !prev[d.id],
-                            }))
-                          }
-                          className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
-                            isApproved
-                              ? "bg-[#1f1d1b] border-[var(--siduri-border-ember)]/60"
-                              : "bg-[#16161a]/60 border-[var(--siduri-border-subtle)] opacity-70"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isApproved}
-                            onChange={() => {}}
-                            className="mt-0.5 rounded cursor-pointer accent-[var(--siduri-ember)]"
-                          />
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex items-center flex-wrap gap-1.5 text-[10px] font-mono">
-                              <span className="text-[var(--siduri-text-muted)]">{d.id}</span>
-                              <span className="px-1.5 py-0.2 rounded bg-white/5 text-[var(--siduri-text-secondary)]">
-                                {d.category || "behavioral"}
-                              </span>
-                              {d.priority && (
-                                <span className="text-[var(--siduri-text-dim)]">P{d.priority}</span>
-                              )}
-                              {isSafe ? (
-                                <span className="text-[var(--siduri-online)] text-[10px] font-sans inline-flex items-center gap-1">
-                                  <CheckIcon size={12} className="shrink-0" />
-                                  <span>Safe</span>
-                                </span>
-                              ) : (
-                                <span className="text-[var(--siduri-danger)] text-[10px] font-sans font-semibold inline-flex items-center gap-1">
-                                  <AlertTriangleIcon size={12} className="shrink-0" />
-                                  <span>Blocked: {d.scanResult?.reason || "Flagged"}</span>
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-white leading-relaxed">{d.directive}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="p-4 border-t border-[var(--siduri-border-subtle)] bg-[#19191e]/90 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStagedSelfPackage(null)}
-                  disabled={installingSelf}
-                  className="px-4 py-2 rounded-xl text-xs text-[var(--siduri-text-secondary)] hover:text-white hover:bg-white/5 transition-all cursor-pointer font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleInstallStagedSelf}
-                  disabled={installingSelf || Object.values(approvedDirectives).filter(Boolean).length === 0}
-                  className="px-5 py-2 rounded-xl text-xs font-semibold bg-[var(--siduri-ember)] text-[#151214] hover:brightness-110 shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2"
-                >
-                  {installingSelf ? (
-                    <>
-                      <span>Installing…</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Install Selected Self</span>
-                      <span className="px-1.5 py-0.5 rounded bg-black/20 text-[10px] font-mono">
-                        {Object.values(approvedDirectives).filter(Boolean).length}
-                      </span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isAnalyzingPersona && (
-          <div
-            data-testid="analyzing-persona-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
-          >
-            <div className="bg-[#19191e] border border-[var(--siduri-border-ember)] rounded-2xl p-6 max-w-sm w-full flex flex-col items-center gap-4 text-center text-[#eee8df] shadow-2xl">
-              <div className="w-10 h-10 rounded-full border-2 border-[var(--siduri-ember)] border-t-transparent animate-spin" />
-              <div>
-                <h4 className="text-sm font-bold text-white tracking-wide">Cognitive State Compiler</h4>
-                <p className="text-xs text-[var(--siduri-text-secondary)] mt-1.5 leading-relaxed">
-                  Brain is distilling persona document into structured explicit state predicates...
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="flex flex-col flex-1 min-h-0 w-full overflow-hidden relative">
           <section className="conversation-surface" aria-label="Private chat">
@@ -1642,6 +1473,13 @@ export default function ChatClient() {
                         </div>
                       ) : (
                         <>
+                          {item.selfAttachment && (
+                            <div className="self-attachment-chip">
+                              <span className="self-attachment-icon" aria-hidden="true">📎</span>
+                              <span className="self-attachment-name">{item.selfAttachment.filename}</span>
+                              <span className="self-attachment-label">persona</span>
+                            </div>
+                          )}
                           <p className="message-primary">{item.content}</p>
                           {item.interrupted && (
                             <p className="message-interrupted-footnote text-xs text-[var(--siduri-text-dim)] italic mt-1">
@@ -1717,6 +1555,134 @@ export default function ChatClient() {
                                   </button>
                                 </div>
                               </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Self Persona Proposal Card — inline in chat, no modal */}
+                      {item.role === 'assistant' && item.selfProposal && (() => {
+                        const proposal = item.selfProposal;
+                        const msgId = item.id;
+                        const directives = proposal.scannedDirectives;
+                        const dirState = selfDirectiveState[msgId] || {};
+                        const approvedCount = Object.values(dirState).filter(Boolean).length;
+                        const isInstalled = proposal.status === 'installed';
+                        const isInstalling = installingSelfMsgId === msgId;
+
+                        return (
+                          <div className={`self-proposal-card ${isInstalled ? 'self-proposal-installed' : ''}`}>
+                            <div className="self-proposal-header">
+                              <span className="self-proposal-badge">
+                                {isInstalled ? (
+                                  <><CheckIcon size={12} className="shrink-0" /><span>PERSONA INSTALLED</span></>
+                                ) : (
+                                  <><PackageIcon size={12} className="shrink-0" /><span>PERSONA PROPOSAL</span></>
+                                )}
+                              </span>
+                              <span className="self-proposal-meta">
+                                {proposal.manifest?.name || 'Self Package'}
+                                {' · '}
+                                <span className="font-mono opacity-60">{proposal.compiledBy === 'brain' ? 'AI' : 'Parser'}</span>
+                              </span>
+                            </div>
+
+                            {!isInstalled && directives.length > 0 && (
+                              <>
+                                <div className="self-proposal-toolbar">
+                                  <span className="self-proposal-count">
+                                    {approvedCount} of {directives.length} selected
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="self-proposal-link"
+                                    onClick={() => {
+                                      const all: Record<string, boolean> = {};
+                                      directives.forEach((d: any) => { all[d.id] = true; });
+                                      setSelfDirectiveState((prev) => ({ ...prev, [msgId]: all }));
+                                    }}
+                                  >Select all</button>
+                                  <span className="opacity-40">·</span>
+                                  <button
+                                    type="button"
+                                    className="self-proposal-link opacity-60"
+                                    onClick={() => setSelfDirectiveState((prev) => ({ ...prev, [msgId]: {} }))}
+                                  >None</button>
+                                </div>
+
+                                <div className="self-proposal-directives">
+                                  {directives.map((d: any, idx: number) => {
+                                    const checked = Boolean(dirState[d.id]);
+                                    const safe = d.scanResult?.safe !== false;
+                                    return (
+                                      <div
+                                        key={d.id || idx}
+                                        className={`self-directive-row ${checked ? 'checked' : ''} ${!safe ? 'blocked' : ''}`}
+                                        onClick={() => setSelfDirectiveState((prev) => ({
+                                          ...prev,
+                                          [msgId]: { ...(prev[msgId] || {}), [d.id]: !checked },
+                                        }))}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={checked}
+                                          onChange={() => {}}
+                                          className="shrink-0 mt-0.5 accent-[var(--siduri-ember)] cursor-pointer"
+                                        />
+                                        <div className="self-directive-body">
+                                          <div className="self-directive-meta">
+                                            <span className="opacity-50 font-mono">{d.id}</span>
+                                            <span className="self-directive-tag">{d.category || 'behavioral'}</span>
+                                            {!safe && (
+                                              <span className="self-directive-blocked">
+                                                <AlertTriangleIcon size={10} className="shrink-0" />
+                                                Blocked
+                                              </span>
+                                            )}
+                                            {safe && checked && (
+                                              <span className="self-directive-safe">
+                                                <CheckIcon size={10} className="shrink-0" />
+                                                Safe
+                                              </span>
+                                            )}
+                                          </div>
+                                          <p className="self-directive-text">{d.directive}</p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="self-proposal-actions">
+                                  <button
+                                    type="button"
+                                    className="self-proposal-btn-reject"
+                                    onClick={() => updateConversation(item.id ? activeConversation!.id : '', (conv) => ({
+                                      ...conv,
+                                      messages: conv.messages.map((m) =>
+                                        m.id === msgId ? { ...m, selfProposal: { ...m.selfProposal!, status: 'rejected' } } : m
+                                      ),
+                                    }))}
+                                    disabled={isInstalling}
+                                  >
+                                    Reject
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="self-proposal-btn-install"
+                                    onClick={() => handleInstallSelfProposal(msgId, proposal)}
+                                    disabled={isInstalling || approvedCount === 0}
+                                  >
+                                    {isInstalling ? 'Installing…' : `Install ${approvedCount} directive${approvedCount !== 1 ? 's' : ''}`}
+                                  </button>
+                                </div>
+                              </>
+                            )}
+
+                            {isInstalled && (
+                              <p className="self-proposal-installed-note">
+                                ✨ {proposal.manifest?.identity?.name || proposal.manifest?.name} adopted — behavioral predicates committed to explicit state.
+                              </p>
                             )}
                           </div>
                         );

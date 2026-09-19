@@ -53,6 +53,9 @@ The following invariants have been verified in unit test suites and mock fixture
 18. **Cognitive Persona Compiler & Truth Gate Ingestion Pipeline (P0)**:
     Replaced rigid schema-locked `.self` parsing with an LLM-driven Cognitive State Compiler in `@siduri-x/self` and `@siduri-x/brain`. Translates arbitrary persona documents (freeform text, Markdown lore, SillyTavern JSON, or legacy `.self` YAML) into clean, machine-readable explicit state predicates (`identity`, `relationships`, `directives` with categories and priorities, `dialogueExamples`). Passes candidate directives through `scanDirective` for Truth Gate review before committing to SQLite. Gracefully falls back to deterministic parsing when offline or without an LLM key.
 
+19. **In-Chat Persona Proposal Card — No Modal (P1)**:
+    `.self` file attachment is now fully surfaced in the chat timeline. Picking a persona file injects a visible user message (with a `📎 filename [persona]` chip) followed by an AI reply that compiles the document. The approval UI renders as an inline `self-proposal-card` directly in the assistant chat bubble — identical UX pattern to the Truth Gate card — with a directive checklist, Select All/None controls, and Install/Reject buttons. No overlay modal, no flow interruption. On install the card transitions to a "PERSONA INSTALLED" state in-place. `web` bumped to `0.2.15`.
+
 ---
 
 ## 2. Explicit Product Limitations
