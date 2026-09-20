@@ -35,6 +35,28 @@ Despite earlier intentions in [`docs/self-organ-knowledge/01-domain-architecture
 3. **Ontological Flattening:**  
    Objective user reality (e.g. an account UID, a calendar deadline, an active window title) is flattened into semantic strings scored by text search, rather than represented as typed, verifiable state.
 
+### 1.3 Why Remove the Wording: Easier and Expansive Definition
+Removing the word **"memory"** is not merely an aesthetic or semantic exercise—**it drastically simplifies and clarifies system definition**.
+
+As long as we keep the word "memory" in the vocabulary, system design gets trapped in ambiguous, circular debates:
+- *"Is this long-term memory or short-term memory?"*
+- *"Should this fact be chunked, embedded into vectors, or stored in a semantic graph?"*
+- *"Does the model 'remember' this if it only gets retrieved when prompted?"*
+
+When we discard the word entirely, we expand our view and ask plain, functional questions about what Siduri actually needs to do:
+- **"Siduri needs to remember chat per session."**  
+  Immediate conversational coherence during an active interaction. When we talk, Siduri shouldn't forget what was said two turns ago in the active window.
+- **"Siduri needs to know my life."**  
+  The objective facts of the user's everyday reality: hardware, gaming rosters, finances, schedules, subscriptions, and dietary preferences.
+- **"Siduri needs to know what is happening on my screen."**  
+  Real-time situational awareness: active window titles, IDE diffs, OCR text, and live visual context.
+- **"Siduri needs to stay Siduri."**  
+  Her own personality, tone, ethical guardrails, demeanor, and relationship stance toward the user.
+- **"Siduri needs to audit past occurrences."**  
+  An append-only record of past tool runs, commands, and historical conversation transcripts for debugging or review.
+
+By shedding the word "memory," each of these requirements becomes straightforward to define, architect, and optimize using purpose-built tools instead of trying to shoehorn all of them into an overloaded "memory" database.
+
 ---
 
 ## 2. The Core Principle: What Does Siduri Actually Need?
