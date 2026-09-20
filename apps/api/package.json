@@ -21,7 +21,7 @@
     "@sidurijs/ear": "workspace:*",
     "@sidurijs/hands": "workspace:*",
     "@sidurijs/knowledge": "workspace:*",
-    "@sidurijs/memory": "workspace:*",
+    "@sidurijs/archive": "workspace:*",
     "@sidurijs/mouth": "workspace:*",
     "@sidurijs/observation": "workspace:*",
     "@sidurijs/self": "workspace:*",

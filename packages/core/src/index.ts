@@ -54,7 +54,7 @@ export interface CompanionConfig {
   name: string;
   brain: OrganConfig;
   voice: OrganConfig;
-  memory: OrganConfig;
+  archive: OrganConfig;
   knowledge: OrganConfig;
   behavior: OrganConfig;
   body: OrganConfig;
@@ -233,43 +233,8 @@ export interface DialogueHistory {
   clear(sessionKey?: string): void;
 }
 
-/**
- * @deprecated The 'Memory' metaphor has been deconstructed into sovereign primitives per RFC VX-26-13:
- * - Companion identity, traits, & directives -> `SelfRepository` (@sidurijs/self)
- * - User life state (hardware, schedules, finances) -> `LifeDatabase` (@sidurijs/knowledge)
- * - Working dialogue continuity -> `DialogueHistory` / `SessionHistoryManager`
- * - Audited cold history & search -> `ArchiveLedger` (@sidurijs/archive)
- * Retained for backwards compatibility.
- */
-export interface MemoryOrgan {
-  initialize(companionId: string): Promise<void>;
-  proposeClaim(claim: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
-  searchClaims(query: string, scopeOrOptions?: MemoryScope | MemoryQueryOptions, limit?: number): Promise<Claim[]>;
-  getClaims(limit?: number): Promise<Claim[]>;
-  getPendingClaims(limit?: number): Promise<Claim[]>;
-  getApprovedClaims?(companionId?: string, limit?: number): Promise<any[]>;
-  approveClaim(id: string): Promise<void>;
-  rejectClaim(id: string): Promise<void>;
-  markClaimSessionOnly?(id: string): Promise<void>;
-  expireClaim?(id: string): Promise<void>;
-  revokeClaim?(id: string, reason?: string): Promise<void>;
 
-  getDirectives(companionId?: string): Promise<BehaviorDirective[]>;
-  proposeDirective(directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'> & { companionId?: string }): Promise<BehaviorDirective>;
-  approveDirective(id: string, companionId?: string): Promise<void>;
-  rejectDirective(id: string, companionId?: string): Promise<void>;
-  revokeDirective(id: string, companionId?: string): Promise<void>;
-  disableDirective(id: string, companionId?: string): Promise<void>;
-  expireDirective?(id: string, companionId?: string): Promise<void>;
-  supersedeClaim?(id: string, replacement: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;
-  updateClaim?(
-    id: string,
-    updates: Partial<Pick<Claim, 'subject' | 'predicate' | 'value' | 'scope' | 'sensitivity' | 'confidence' | 'validFrom' | 'validUntil'>>
-  ): Promise<Claim>;
-  resetMemory?(): Promise<void>;
-  addSourceEvent?(event: SourceEvent): Promise<SourceEvent>;
-  getSourceEvent?(id: string): Promise<SourceEvent | undefined>;
-}
+
 
 // Voice Queue
 export interface AudioEvent {

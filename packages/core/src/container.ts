@@ -1,6 +1,5 @@
 import {
   BrainOrgan,
-  MemoryOrgan,
   ArchiveLedger,
   VoiceOrgan,
   KnowledgeOrgan,
@@ -29,7 +28,7 @@ export interface SiduriRuntimeConfig {
   name: string;
   brain?: OrganConfig | Record<string, unknown>;
   voice?: OrganConfig | Record<string, unknown>;
-  memory?: OrganConfig | Record<string, unknown>;
+  archive?: OrganConfig | Record<string, unknown>;
   knowledge?: OrganConfig | Record<string, unknown>;
   behavior?: OrganConfig | Record<string, unknown>;
   body?: OrganConfig | Record<string, unknown>;
@@ -48,7 +47,6 @@ export interface SiduriRuntimeConfig {
 
 export interface RuntimeOrgans {
   brain?: BrainOrgan;
-  memory?: MemoryOrgan;
   archive?: ArchiveLedger;
   voice?: VoiceOrgan | ExperienceAdapter;
   knowledge?: KnowledgeOrgan;
@@ -63,6 +61,8 @@ export interface RuntimeOrgans {
   externalKnowledge?: EKnowledgeOrgan;
   actionStore?: ActionStore;
   actionPolicy?: ActionPolicyEngine;
+  memory?: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -114,7 +114,6 @@ export class CompanionContainer {
 
   // Direct organ accessors
   get brain() { return this.organs.brain; }
-  get memory() { return this.organs.memory; }
   get archive() { return this.organs.archive; }
   get voice() { return this.organs.voice; }
   get knowledge() { return this.organs.knowledge; }
@@ -130,9 +129,6 @@ export class CompanionContainer {
   get externalKnowledge() { return this.organs.externalKnowledge; }
 
   async initialize(): Promise<void> {
-    if (this.organs.memory && typeof this.organs.memory.initialize === 'function') {
-      await this.organs.memory.initialize(this.id);
-    }
     if (this.organs.hands && typeof this.organs.hands.listTools === 'function') {
       const tools = await this.organs.hands.listTools();
       for (const tool of tools) {

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 // Direct monorepo dist imports
 import { SiduriRuntime, dispatchCompanionChat } from '../packages/core/dist/index.js';
 import { OpenAICompatibleBrain, OpenRouterBrain } from '../packages/organs/brain/dist/index.js';
-import { SqliteMemoryStore } from '../packages/memory/dist/index.js';
+import { SqliteArchiveLedger } from '../packages/archive/dist/index.js';
 import { UnifiedKnowledgeOrgan } from '../packages/knowledge/dist/index.js';
 import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser } from '../packages/self/dist/index.js';
 import { DefaultEarOrgan } from '../packages/organs/ear/dist/index.js';
@@ -56,7 +56,7 @@ try {
 const brain = config.organs?.brain?.provider === 'openai-compatible'
   ? new OpenAICompatibleBrain(config.organs.brain)
   : new OpenRouterBrain(config.organs.brain);
-const memory = new SqliteMemoryStore({ ...config.organs.memory, dbPath: path.resolve(rootDir, config.organs.memory?.dbPath || 'siduri.sqlite') });
+const archive = new SqliteArchiveLedger({ ...config.organs?.archive, dbPath: path.resolve(rootDir, config.organs?.archive?.dbPath || config.organs?.memory?.dbPath || 'siduri.sqlite') });
 const knowledge = new UnifiedKnowledgeOrgan({ ...config.organs.knowledge, dbPath: path.resolve(rootDir, config.organs.knowledge?.dbPath || 'siduri.sqlite') });
 const self = new SqliteSelfRepository({ dbPath: path.resolve(rootDir, 'siduri.sqlite') });
 const behavior = new ActiveSelfCompiler(config.organs.behavior);
@@ -65,7 +65,7 @@ const hands = new DefaultHandsOrgan({ knowledge: knowledge.lifeDb || knowledge }
 
 const runtime = new SiduriRuntime(config.id, config, {
   brain,
-  memory,
+  archive,
   knowledge,
   behavior,
   self,
@@ -135,7 +135,8 @@ const server = createServer(async (req, res) => {
   if ((pathname === '/memory' || pathname === '/memory/claims' || pathname === '/api/memory/claims') && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     try {
-      const claims = typeof memory?.getAllClaims === 'function' ? await memory.getAllClaims() : (typeof memory?.getClaims === 'function' ? await memory.getClaims() : []);
+      // Memory organ removed (RFC VX-26-13). Claims now route through self directives.
+      const claims = typeof self?.getAllDirectives === 'function' ? await self.getAllDirectives(config.id) : [];
       res.end(JSON.stringify({ claims, items: claims }));
     } catch (e) {
       res.end(JSON.stringify({ claims: [], items: [] }));
@@ -147,7 +148,8 @@ const server = createServer(async (req, res) => {
   if (pathname === '/memory/proposals' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     try {
-      const proposals = typeof memory?.getPendingClaims === 'function' ? await memory.getPendingClaims() : [];
+      // Memory organ removed (RFC VX-26-13). Proposals now route through self directives.
+      const proposals = typeof self?.getPendingDirectives === 'function' ? await self.getPendingDirectives(config.id) : [];
       res.end(JSON.stringify({ proposals }));
     } catch (e) {
       res.end(JSON.stringify({ proposals: [] }));
@@ -159,10 +161,10 @@ const server = createServer(async (req, res) => {
   if ((pathname === '/memory/behavioral' || pathname === '/api/memory/directives') && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     try {
-      const directives = typeof memory?.getDirectives === 'function' ? await memory.getDirectives() : [
-        { domain: 'personality', name: 'Active Self Tone', content: 'Warm, empathetic, and thoughtful conversational style.' },
-        { domain: 'cognition', name: 'Authoritative Memory', content: 'Ground responses in verified claims and personal history.' }
-      ];
+      // Memory organ removed (RFC VX-26-13). Directives now route through self.
+      const directives = typeof self?.getActiveDirectives === 'function'
+        ? await self.getActiveDirectives(config.id)
+        : (typeof self?.getAllDirectives === 'function' ? await self.getAllDirectives(config.id) : []);
       res.end(JSON.stringify({ directives }));
     } catch (e) {
       res.end(JSON.stringify({ directives: [] }));
@@ -184,7 +186,7 @@ const server = createServer(async (req, res) => {
           return;
         }
         if (pathname.endsWith('approve')) {
-          let target = 'memory';
+          let target = 'self';
           let status = 'approved';
           let name = null;
           if (pathname.includes('behavioral')) {
@@ -199,10 +201,8 @@ const server = createServer(async (req, res) => {
             status = 'active';
           } else if (typeof runtime?.approveProposal === 'function') {
             const resData = await runtime.approveProposal(claimId, { companionId: config.id });
-            target = resData?.target || 'knowledge';
+            target = resData?.target || 'self';
             name = resData?.name;
-          } else if (typeof memory?.approveClaim === 'function') {
-            await memory.approveClaim(claimId);
           }
           if (!name && typeof self?.getIdentity === 'function') {
             try {
@@ -219,8 +219,8 @@ const server = createServer(async (req, res) => {
             } else if (typeof self?.rejectDirective === 'function') {
               await self.rejectDirective(claimId, config.id);
             }
-          } else if (typeof memory?.rejectClaim === 'function') {
-            await memory.rejectClaim(claimId);
+          } else if (typeof runtime?.rejectProposal === 'function') {
+            await runtime.rejectProposal(claimId, { companionId: config.id });
           }
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ rejected: true, id: claimId, status: 'rejected' }));
@@ -501,17 +501,16 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // API: Memory & State Reset (Return to blank slate)
+  // API: State Reset (Return to blank slate)
   if ((pathname === '/api/reset' || pathname === '/memory/reset' || pathname === '/dev/memory/reset') && req.method === 'POST') {
     try {
       const { DatabaseSync } = await import('node:sqlite');
-      const dbPath = path.resolve(rootDir, config.organs.memory?.dbPath || 'siduri.sqlite');
+      const dbPath = path.resolve(rootDir, config.organs?.archive?.dbPath || 'siduri.sqlite');
       if (fs.existsSync(dbPath)) {
         const db = new DatabaseSync(dbPath);
         try {
           const tables = [
-            'memory_claims',
-            'memory_events',
+            'archive_events',
             'self_directives',
             'self_relationships',
             'self_identity',

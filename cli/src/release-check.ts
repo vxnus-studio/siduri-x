@@ -29,7 +29,6 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
     { name: '@sidurijs/self', dir: 'packages/self', isOrgan: false, tarName: `sidurijs-self-${getPkgVer('packages/self')}.tgz` },
     { name: '@sidurijs/knowledge', dir: 'packages/knowledge', isOrgan: false, tarName: `sidurijs-knowledge-${getPkgVer('packages/knowledge')}.tgz` },
     { name: '@sidurijs/archive', dir: 'packages/archive', isOrgan: false, tarName: `sidurijs-archive-${getPkgVer('packages/archive')}.tgz` },
-    { name: '@sidurijs/memory', dir: 'packages/memory', isOrgan: false, tarName: `sidurijs-memory-${getPkgVer('packages/memory')}.tgz` },
     { name: '@sidurijs/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: `sidurijs-brain-${getPkgVer('packages/organs/brain')}.tgz` },
     { name: '@sidurijs/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: `sidurijs-ear-${getPkgVer('packages/organs/ear')}.tgz` },
     { name: '@sidurijs/vision', dir: 'packages/organs/vision', isOrgan: true, tarName: `sidurijs-vision-${getPkgVer('packages/organs/vision')}.tgz` },
@@ -38,7 +37,7 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
     { name: '@sidurijs/voice', dir: 'packages/organs/voice', isOrgan: true, tarName: `sidurijs-voice-${getPkgVer('packages/organs/voice')}.tgz` },
     { name: '@sidurijs/mouth', dir: 'packages/organs/mouth', isOrgan: true, tarName: `sidurijs-mouth-${getPkgVer('packages/organs/mouth')}.tgz` },
     { name: '@sidurijs/observation', dir: 'packages/organs/observation', isOrgan: true, tarName: `sidurijs-observation-${getPkgVer('packages/organs/observation')}.tgz` },
-    { name: '@vxnus/siduri', dir: 'cli', isOrgan: false, tarName: `vxnus-siduri-${getPkgVer('cli')}.tgz` },
+    { name: 'siduri', dir: 'cli', isOrgan: false, tarName: `siduri-${getPkgVer('cli')}.tgz` },
   ];
 
   let packagesChecked = 0;
@@ -97,7 +96,7 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
 
 
 
-      if (pkg.name === '@vxnus/siduri') {
+      if (pkg.name === 'siduri') {
         if (!pkgJson.bin || !pkgJson.bin.siduri) {
           errors.push(`${pkg.name}: bin.siduri field missing in package.json`);
         }

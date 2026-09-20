@@ -1,6 +1,5 @@
 import {
   BrainOrgan,
-  MemoryOrgan,
   ArchiveLedger,
   VoiceOrgan,
   KnowledgeOrgan,
@@ -60,8 +59,8 @@ export interface PerceptionPipelineContext {
   perception: CompanionPerception;
   organs: {
     brain?: BrainOrgan;
-    memory?: MemoryOrgan;
     archive?: ArchiveLedger;
+    memory?: any;
     voice?: VoiceOrgan | ExperienceAdapter;
     knowledge?: KnowledgeOrgan;
     vision?: VisionOrgan;

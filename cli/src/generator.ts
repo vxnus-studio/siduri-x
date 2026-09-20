@@ -87,15 +87,15 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^1.0.0';
-  const cliVersion = options.cliVersion || '^2.1.0';
-  const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
+  const cliVersion = options.cliVersion || '^1.0.0';
+  const canonicalOrder = ['brain', 'archive', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
     const idxB = canonicalOrder.indexOf(b.organType);
     return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
   });
 
-  const hasMemory = manifests.some((m) => m.organType === 'memory');
+  const hasArchive = manifests.some((m) => m.organType === 'archive');
   const hasVoice = manifests.some((m) => m.organType === 'voice');
   const hasBody = manifests.some((m) => m.organType === 'body');
   const hasMouth = manifests.some((m) => m.organType === 'mouth');
@@ -110,7 +110,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     const repoPath = options.localPath.replace(/\\/g, '/');
     dependencies['@sidurijs/core'] = `file:${repoPath}/packages/core`;
     for (const m of manifests) {
-      const organRel = ['@sidurijs/memory', '@sidurijs/knowledge', '@sidurijs/self'].includes(m.name)
+      const organRel = ['@sidurijs/archive', '@sidurijs/knowledge', '@sidurijs/self'].includes(m.name)
         ? `packages/${m.name.slice('@sidurijs/'.length)}`
         : `packages/organs/${m.name.slice('@sidurijs/'.length)}`;
       dependencies[m.name] = `file:${repoPath}/${organRel}`;
@@ -131,7 +131,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   };
 
   const devDependencies: Record<string, string> = {
-    '@vxnus/siduri': cliVersion,
+    siduri: cliVersion,
   };
 
   const packageJsonObj = {
@@ -233,8 +233,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
       organMapEntries.push(`  behavior,`);
       organMapEntries.push(`  self,`);
 
-    } else if (m.name === '@sidurijs/memory') {
-      instantiationLines.push(`const memory = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
+    } else if (m.name === '@sidurijs/archive') {
+      instantiationLines.push(`const archive = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
       organMapEntries.push(`  ${m.configKey},`);
     } else if (m.name === '@sidurijs/knowledge') {
       instantiationLines.push(`const knowledge = new ${m.factory}({ ...config.organs.${m.configKey}, dbPath: path.resolve(rootDir, config.organs.${m.configKey}?.dbPath || 'siduri.sqlite') });`);
@@ -1044,7 +1044,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     '- **Environment**: Valid `.env` file (configured from `.env.example`)',
   ];
 
-  if (hasMemory) {
+  if (hasArchive) {
     readmeLines.push(
       '- **Database**: Embedded SQLite (`siduri.sqlite`). Automatically initialized with WAL mode and FTS5 full-text indexing with zero external setup.',
     );

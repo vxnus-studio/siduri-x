@@ -1,18 +1,18 @@
-# CLI Architecture & Reference (`@vxnus/siduri`)
+# CLI Architecture & Reference (`siduri` / `@vxnus/siduri`)
 
-> **Status:** Implemented (`v2.1.0`+) — Clean Architecture with Pure SQLite (`siduri.sqlite`)  
+> **Status:** Implemented (`v1.0.0`+) — Clean Architecture with Pure SQLite (`siduri.sqlite`)  
 > **Ecosystem:** Zero external database dependencies. PostgreSQL removed.
 
 ---
 
-The Siduri CLI (`@vxnus/siduri`) provides tooling to dynamically discover `@sidurijs/*` organ manifests, scaffold standalone ESM companion instances, and run local environment & service diagnostics.
+The Siduri CLI (`siduri`, also available as `@vxnus/siduri`) provides tooling to dynamically discover `@sidurijs/*` organ manifests, scaffold standalone ESM companion instances, and run local environment & service diagnostics.
 
 ---
 
 ## 1. Standalone Companion Creation (`siduri create`)
 
 ```bash
-npx @vxnus/siduri create [directory]
+npx siduri create [directory]
 ```
 
 ### Architecture Invariants:

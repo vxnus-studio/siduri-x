@@ -83,7 +83,7 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
       const runtime = new SiduriRuntime('companion-adv', { name: 'AdvCompanion' } as any, {
         brain: mockBrain as any,
         memory: mockMemory as any,
-      });
+      } as any);
 
       await runtime.handleUserMessage('What is my favorite color?', baseOwnerContext);
 
@@ -106,7 +106,7 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
       const runtime = new SiduriRuntime('companion-A', { name: 'AdvA' } as any, {
         brain: mockBrain as any,
         memory: mockMemory as any,
-      });
+      } as any);
 
       await runtime.handleUserMessage('Query', {
         ...baseOwnerContext,
@@ -436,7 +436,7 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
       const runtime = new SiduriRuntime('companion-adv', { name: 'AdvCompanion' } as any, {
         brain: mockBrain as any,
         memory: failingMemory as any,
-      });
+      } as any);
 
       const response = await runtime.handleUserMessage('Hello companion', baseOwnerContext);
 

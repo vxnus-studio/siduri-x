@@ -13,13 +13,13 @@ describe('Discovery & Dynamic Composition System Tests (Phase 3)', () => {
 
     const organTypes = registry.getAvailableOrganTypes().sort();
     expect(organTypes).toEqual([
+      'archive',
       'behavior',
       'body',
       'brain',
       'ear',
       'hands',
       'knowledge',
-      'memory',
       'mouth',
       'observation',
       'vision',
@@ -71,7 +71,7 @@ describe('Discovery & Dynamic Composition System Tests (Phase 3)', () => {
     const manifests = registry.getAll();
     expect(manifests.length).toBe(11);
     expect(registry.get('brain')).toBeDefined();
-    expect(registry.get('memory')).toBeDefined();
+    expect(registry.get('archive')).toBeDefined();
     expect(registry.get('mouth')).toBeDefined();
   });
 });

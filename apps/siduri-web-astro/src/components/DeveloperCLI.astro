@@ -30,7 +30,7 @@ Next steps for technical developers:
   {
     id: "create",
     name: "siduri create (testbed)",
-    command: "npx @vxnus/siduri create test-companion",
+    command: "npx siduri create test-companion",
     purpose:
       "Interactive prototype wizard. Dynamically discovers organ manifests and scaffolds an isolated test instance for local experimentation.",
     outputSnippet: `── Project Details ───────────────────────────
@@ -52,7 +52,7 @@ Next steps for technical developers:
 
 Next steps:
   cd test-companion
-  npx @vxnus/siduri doctor
+  npx siduri doctor
   npm start`,
   },
   {
@@ -70,7 +70,7 @@ Next steps:
   {
     id: "doctor",
     name: "siduri doctor",
-    command: "npx @vxnus/siduri doctor",
+    command: "npx siduri doctor",
     purpose:
       "Probes active configuration, validates required and optional environment variables, checks SQLite storage permissions, and executes organ health assertions.",
     outputSnippet: `[siduri doctor] Running companion diagnostics...

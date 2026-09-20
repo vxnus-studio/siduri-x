@@ -48,7 +48,7 @@ Detailed subsystem and organ-level specifications:
 - **[External Knowledge & E-Packs](./architecture/knowledge-e.md)** — `@sidurijs/knowledge` client, cited context, and SSRF hardening.
 - **[Action Policy Design](./architecture/action-policy-design.md)** — Cryptographic action capabilities, MCP execution, and audit chaining.
 - **[API Reference](./architecture/api.md)** — REST API surface including `/chat`, `/chat/stream`, `/teach/upload-self`, and `/teach/install-self`.
-- **[CLI Reference](./architecture/cli.md)** — `@vxnus/siduri` CLI reference, dynamic organ discovery, and diagnostic tools.
+- **[CLI Reference](./architecture/cli.md)** — `siduri` / `@vxnus/siduri` CLI reference, dynamic organ discovery, and diagnostic tools.
 - **[Configuration Guide](./architecture/configuration.md)** — Runtime and companion YAML/JSON configuration.
 - **[Development Guide](./architecture/development.md)** — Local development environment, building, and running.
 - **[Testing Strategy](./architecture/testing.md)** — Test suite layout, invariant assertions, and clean-machine verification.

@@ -21,8 +21,9 @@ Instead of treating memory as an unverified vector dump that silently drifts ove
 >
 > - **Looking to experiment with a local testbed?** You can scaffold a standalone companion instance using the CLI:
 >   ```bash
->   npx @vxnus/siduri create my-companion
+>   npx siduri create my-companion
 >   ```
+>   *(or `npx @vxnus/siduri create my-companion`)*
 >   The CLI guides you through an interactive setup and scaffolds a testbed companion instance with the organs and configurations you select.
 > - **About this repository:** This repository (`siduri-x`) houses the monorepo for the core engine, architectural contracts, and `@sidurijs/*` packages.
 > - **Feedback & Collaboration:** We warmly welcome bug reports, architectural critiques, and community contributions.
@@ -48,7 +49,7 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 | **`@sidurijs/core`** | `^1.0.0` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
 | **`@sidurijs/self`** | `^1.0.0` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
 | **`@sidurijs/knowledge`** | `^1.0.0` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
-| **`@sidurijs/memory`** | `^1.0.0` | Pure SQLite FTS5 episodic memory store and verified claim retrieval | **Implemented** |
+| **`@sidurijs/archive`** | `^1.0.0` | Append-only interaction ledger, source events, and SQLite FTS5 event search | **Implemented** |
 
 ### Pluggable Peripheral Organs
 | Package | Version | Description | Status |
@@ -65,15 +66,16 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 
 ---
 
-## Quick Start (`@vxnus/siduri`)
+## Quick Start (`siduri`)
 
 To create and run your own standalone companion, you can scaffold an instance anywhere on your machine using the CLI:
 
 ### 1. Create a Standalone Companion
 
 ```bash
-npx @vxnus/siduri create my-siduri
+npx siduri create my-siduri
 ```
+*(Alternative scoped alias: `npx @vxnus/siduri create my-siduri`)*
 
 The CLI dynamically discovers installed `@sidurijs/*` organ manifests and guides you through an interactive setup:
 
@@ -97,7 +99,7 @@ Siduri uses a unified, zero-configuration SQLite database (`siduri.sqlite`) with
 Inspects environment variables, external service declarations, local database readiness, and executes organ health probes:
 
 ```bash
-npx @vxnus/siduri doctor
+npx siduri doctor
 ```
 
 ---

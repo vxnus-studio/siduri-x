@@ -1,5 +1,5 @@
 import { OpenAICompatibleBrain, OpenRouterBrain } from '@sidurijs/brain';
-import { SqliteMemoryStore } from '@sidurijs/memory';
+import { SqliteArchiveLedger } from '@sidurijs/archive';
 import { VoiceAdapter, VoiceConfig } from '@sidurijs/voice';
 import { UnifiedKnowledgeOrgan, UnifiedKnowledgeConfig } from '@sidurijs/knowledge';
 import { OpenRouterVisionAdapter, OpenRouterVisionConfig } from '@sidurijs/vision';
@@ -33,6 +33,7 @@ export interface AppBootCompanionConfig {
   brain?: AppBrainConfig;
   voice?: VoiceConfig;
   memory?: { provider?: string; connectionString?: string; maxConnections?: number; dbPath?: string; [key: string]: unknown };
+  archive?: { provider?: string; dbPath?: string; [key: string]: unknown };
   knowledge?: UnifiedKnowledgeConfig;
   vision?: OpenRouterVisionConfig;
   behavior?: AppBehaviorConfig;
@@ -130,10 +131,14 @@ export function createMouth(config?: DefaultMouthOrganConfig & { provider?: stri
     : new DefaultMouthOrgan({ ...config, voice });
 }
 
-export function createMemory(config?: { provider?: string; connectionString?: string; maxConnections?: number; dbPath?: string }) {
+export function createArchive(config?: { provider?: string; dbPath?: string }) {
   if (isDisabled(config)) return undefined;
   const defaultPath = process.env.NODE_ENV === 'test' ? ':memory:' : 'siduri.sqlite';
-  return new SqliteMemoryStore({ dbPath: config?.dbPath || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || defaultPath });
+  return new SqliteArchiveLedger({ dbPath: config?.dbPath || process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || defaultPath });
+}
+
+export function createMemory(config?: { provider?: string; connectionString?: string; maxConnections?: number; dbPath?: string }) {
+  return createArchive(config);
 }
 
 export function createSelf(config?: { dbPath?: string; provider?: string }) {
@@ -160,7 +165,7 @@ export async function bootCompanion(
   const organs = (config as any)?.organs || {};
 
   const brain = createBrain(organs.brain || config?.brain);
-  const memory = createMemory(organs.memory || (config as any)?.memory);
+  const archive = createArchive(organs.archive || organs.memory || (config as any)?.archive || (config as any)?.memory);
   const selfRepo = createSelf(organs.self || (config as any)?.self);
   const voice = createVoice(organs.voice || config?.voice);
   const knowledge = createKnowledge(organs.knowledge || config?.knowledge);
@@ -172,13 +177,9 @@ export async function bootCompanion(
   const mouth = createMouth(organs.mouth || config?.mouth, voice);
   const observation = options?.observationOrgan;
 
-  if (memory && typeof (memory as any).runMigrations === 'function') {
-    await (memory as any).runMigrations().catch((e: any) => console.warn("Migrations warning:", e.message));
-  }
-
   const runtime = new SiduriRuntime(id, config as any, {
     brain,
-    memory,
+    archive,
     voice,
     knowledge,
     vision,

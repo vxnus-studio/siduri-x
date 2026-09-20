@@ -17,6 +17,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@sidurijs/archive':
+        specifier: workspace:*
+        version: link:../../packages/archive
       '@sidurijs/body':
         specifier: workspace:*
         version: link:../../packages/organs/body
@@ -35,9 +38,6 @@ importers:
       '@sidurijs/knowledge':
         specifier: workspace:*
         version: link:../../packages/knowledge
-      '@sidurijs/memory':
-        specifier: workspace:*
-        version: link:../../packages/memory
       '@sidurijs/mouth':
         specifier: workspace:*
         version: link:../../packages/organs/mouth
@@ -262,31 +262,6 @@ importers:
       undici:
         specifier: ^8.10.2
         version: 8.10.2
-    devDependencies:
-      '@types/jest':
-        specifier: ^30.0.0
-        version: 30.0.0
-      '@types/node':
-        specifier: ^26.5.1
-        version: 26.5.1
-      jest:
-        specifier: ^30.5.1
-        version: 30.5.1(@types/node@26.5.1)(ts-node@10.9.2(@types/node@26.5.1)(typescript@5.9.3))
-      ts-jest:
-        specifier: ^29.4.12
-        version: 29.4.12(@babel/core@7.29.7)(@jest/transform@30.5.1)(@jest/types@30.5.1)(babel-jest@30.5.1(@babel/core@7.29.7))(jest-util@30.5.1)(jest@30.5.1(@types/node@26.5.1)(ts-node@10.9.2(@types/node@26.5.1)(typescript@5.9.3)))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
-  packages/memory:
-    dependencies:
-      '@sidurijs/archive':
-        specifier: workspace:*
-        version: link:../archive
-      '@sidurijs/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/jest':
         specifier: ^30.0.0

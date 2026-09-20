@@ -195,7 +195,7 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
       const runtime = new SiduriRuntime('comp-casual', { name: 'CasualBot' } as any, {
         memory: mockMemory as any,
         brain: mockBrain as any,
-      });
+      } as any);
 
       const casualContext: RequestContext = {
         companionId: 'comp-casual',
@@ -256,7 +256,7 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
       const runtime = new SiduriRuntime('comp-teach', { name: 'TeachBot' } as any, {
         memory: mockMemory as any,
         brain: mockBrain as any,
-      });
+      } as any);
 
       const teachContext: RequestContext = {
         companionId: 'comp-teach',
@@ -312,7 +312,7 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
       const runtime = new SiduriRuntime('comp-infer', { name: 'InferBot' } as any, {
         memory: mockMemory as any,
         brain: mockBrain as any,
-      });
+      } as any);
 
       // No explicit mode override in context
       const defaultContext: RequestContext = {

@@ -21,7 +21,7 @@ const packagePaths = [
   'packages/core/package.json',
   'packages/self/package.json',
   'packages/knowledge/package.json',
-  'packages/memory/package.json',
+  'packages/archive/package.json',
   'packages/organs/body/package.json',
   'packages/organs/brain/package.json',
   'packages/organs/ear/package.json',

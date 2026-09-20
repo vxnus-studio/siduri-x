@@ -46,7 +46,7 @@ export async function configureOrgan(
       return configureBrain(ctx, options.brainOptions);
     case 'knowledge':
       return configureKnowledge(ctx, options.knowledgeOptions);
-    case 'memory':
+    case 'archive':
       return configureMemory(ctx);
     case 'voice':
       return configureVoice(ctx);

@@ -35,7 +35,7 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
   const registry = OrganRegistry.discover();
   const brainManifest = registry.get('brain')!;
   const knowledgeManifest = registry.get('knowledge')!;
-  const memoryManifest = registry.get('memory')!;
+  const archiveManifest = registry.get('archive')!;
   const voiceManifest = registry.get('voice')!;
   const bodyManifest = registry.get('body')!;
   const handsManifest = registry.get('hands')!;
@@ -283,7 +283,7 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ provider: 'sqlite' });
 
-      const result = await configureMemory({ companionName: 'Sparkle', manifest: memoryManifest });
+      const result = await configureMemory({ companionName: 'Sparkle', manifest: archiveManifest });
       expect(result.config.provider).toBe('sqlite');
       expect(result.summary?.Database).toBe('SQLite (WAL + FTS5)');
       expect(result.summary?.Storage).toBe('siduri.sqlite');
@@ -519,10 +519,10 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
     test('formatReviewSummary displays actual configuration values and metadata', () => {
       const summaryOutput = formatReviewSummary(
         'Sparkle',
-        [brainManifest, memoryManifest, knowledgeManifest, voiceManifest],
+        [brainManifest, archiveManifest, knowledgeManifest, voiceManifest],
         {
           brain: { Provider: 'OpenRouter', Model: 'openai/gpt-4o-mini' },
-          memory: { Database: 'SQLite (WAL + FTS5)', Storage: 'siduri.sqlite' },
+          archive: { Database: 'SQLite (WAL + FTS5)', Storage: 'siduri.sqlite' },
           knowledge: { Source: 'E Knowledge Hub', Provider: 'E Teyvat', Package: '@vxnus/e-teyvat', Version: '1.2.0' },
           voice: { Provider: 'VOICEVOX', 'Speaker ID': 1 },
         }
@@ -532,7 +532,7 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(summaryOutput).toContain('Brain');
       expect(summaryOutput).toContain('OpenRouter');
       expect(summaryOutput).toContain('openai/gpt-4o-mini');
-      expect(summaryOutput).toContain('Memory');
+      expect(summaryOutput).toContain('Archive');
       expect(summaryOutput).toContain('SQLite');
       expect(summaryOutput).toContain('siduri.sqlite');
       expect(summaryOutput).toContain('Knowledge');
@@ -546,14 +546,14 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
     test('generateInstanceFiles accurately embeds configured organ values in siduri.config.json', () => {
       const organConfigs = {
         brain: { provider: 'openrouter', model: 'openai/gpt-4o-mini', apiKeyEnv: 'OPENROUTER_API_KEY' },
-        memory: { provider: 'sqlite' },
+        archive: { provider: 'sqlite' },
         knowledge: { provider: 'e-hub', registryUrl: 'https://e.vxnus.xyz/api/v1/knowledge', packId: '@vxnus/e-teyvat' },
         voice: { provider: 'voicevox', speakerId: 2, baseUrl: 'http://localhost:50021' },
       };
 
       const files = generateInstanceFiles({
         name: 'Sparkle',
-        selectedManifests: [brainManifest, memoryManifest, knowledgeManifest, voiceManifest],
+        selectedManifests: [brainManifest, archiveManifest, knowledgeManifest, voiceManifest],
         organConfigs,
       });
 
@@ -561,14 +561,14 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(config.name).toBe('Sparkle');
       expect(config.organs.brain.provider).toBe('openrouter');
       expect(config.organs.brain.model).toBe('openai/gpt-4o-mini');
-      expect(config.organs.memory.provider).toBe('sqlite');
+      expect(config.organs.archive.provider).toBe('sqlite');
       expect(config.organs.knowledge.provider).toBe('e-hub');
       expect(config.organs.knowledge.packId).toBe('@vxnus/e-teyvat');
       expect(config.organs.voice.speakerId).toBe(2);
 
       // Verify explicit imports in src/index.js
       expect(files['src/index.js']).toContain("import { OpenRouterBrain } from '@sidurijs/brain'");
-      expect(files['src/index.js']).toContain("import { SqliteMemoryStore } from '@sidurijs/memory'");
+      expect(files['src/index.js']).toContain("import { SqliteArchiveLedger } from '@sidurijs/archive'");
       expect(files['src/index.js']).toContain("import { UnifiedKnowledgeOrgan } from '@sidurijs/knowledge'");
       expect(files['src/index.js']).toContain("import { VoiceAdapter } from '@sidurijs/voice'");
     });

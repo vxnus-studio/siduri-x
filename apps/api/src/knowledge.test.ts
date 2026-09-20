@@ -38,16 +38,27 @@ describe('Life Database & UnifiedKnowledgeOrgan API Integration', () => {
       }),
     };
 
+    const claimsStore: any[] = [];
     const memory: any = {
       initialize: async () => {},
-      proposeClaim: async (claim: any) => (knowledge.lifeDb as any).db.proposeClaim(claim),
-      getClaims: async (limit?: number) => (knowledge.lifeDb as any).db.getAllClaims(undefined, limit || 500),
+      proposeClaim: async (claim: any) => {
+        const c = { id: claim.id || `claim-${Date.now()}`, status: 'pending', ...claim };
+        claimsStore.push(c);
+        return c;
+      },
+      getClaims: async (limit?: number) => claimsStore.slice(0, limit || 500),
       getPendingClaims: async (limit?: number) =>
-        (knowledge.lifeDb as any).db.getAllClaims(undefined, limit || 500).filter((c: any) => c.status === 'pending'),
-      approveClaim: async (id: string) => (knowledge.lifeDb as any).db.approveClaim(id),
-      rejectClaim: async (id: string) => (knowledge.lifeDb as any).db.rejectClaim(id),
+        claimsStore.filter((c) => c.status === 'pending').slice(0, limit || 500),
+      approveClaim: async (id: string) => {
+        const found = claimsStore.find((c) => c.id === id);
+        if (found) found.status = 'approved';
+      },
+      rejectClaim: async (id: string) => {
+        const found = claimsStore.find((c) => c.id === id);
+        if (found) found.status = 'rejected';
+      },
       searchClaims: async () => [],
-      getApprovedClaims: async () => [],
+      getApprovedClaims: async () => claimsStore.filter((c) => c.status === 'approved'),
       getDirectives: async () => [],
     };
 
@@ -223,7 +234,7 @@ describe('Life Database & UnifiedKnowledgeOrgan API Integration', () => {
 
   test('Truth Gate candidate proposal approval commits Life DB mutations', async () => {
     // Stage a candidate proposal targeting Life DB
-    const proposal = await (knowledge.lifeDb as any).db.proposeClaim({
+    const proposal = await (runtime.container.organs.memory as any).proposeClaim({
       id: 'prop-task-gate',
       companionId: 'test-comp',
       subject: 'task:buy-filter',

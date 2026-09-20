@@ -33,55 +33,25 @@ describe('CompanionContainer & Direct Domain Access', () => {
     expect(cleared).toBe(1);
   });
 
-  test('delegates memory operations directly on the memory organ', async () => {
-    const mockMemory = {
-      initialize: jest.fn().mockResolvedValue(undefined),
-      getClaims: jest.fn().mockResolvedValue([{ id: 'claim-1' }]),
-      getPendingClaims: jest.fn().mockResolvedValue([{ id: 'claim-pending-1' }]),
-      getDirectives: jest.fn().mockResolvedValue([{ id: 'dir-1' }]),
-      approveClaim: jest.fn().mockResolvedValue(undefined),
-      rejectClaim: jest.fn().mockResolvedValue(undefined),
-      updateClaim: jest.fn().mockResolvedValue({ id: 'claim-1', value: 'updated' }),
-      approveDirective: jest.fn().mockResolvedValue(undefined),
-      rejectDirective: jest.fn().mockResolvedValue(undefined),
-      revokeDirective: jest.fn().mockResolvedValue(undefined),
-      disableDirective: jest.fn().mockResolvedValue(undefined),
-      resetMemory: jest.fn().mockResolvedValue(undefined),
+  test('delegates archive operations directly on the archive organ', async () => {
+    const mockArchive = {
+      recordEvent: jest.fn().mockResolvedValue(undefined),
+      getRecentEvents: jest.fn().mockResolvedValue([{ id: 'evt-1' }]),
+      searchEvents: jest.fn().mockResolvedValue([{ id: 'evt-1' }]),
     };
 
     const container = new CompanionContainer('test-comp', { name: 'Test' } as any, {
-      memory: mockMemory as any,
+      archive: mockArchive as any,
     });
 
-    expect(await container.memory!.getClaims(10)).toEqual([{ id: 'claim-1' }]);
-    expect(mockMemory.getClaims).toHaveBeenCalledWith(10);
+    expect(await container.archive!.getRecentEvents('test-comp', 10)).toEqual([{ id: 'evt-1' }]);
+    expect(mockArchive.getRecentEvents).toHaveBeenCalledWith('test-comp', 10);
 
-    expect(await container.memory!.getPendingClaims()).toEqual([{ id: 'claim-pending-1' }]);
-    expect(await container.memory!.getDirectives()).toEqual([{ id: 'dir-1' }]);
+    expect(await container.archive!.searchEvents!('test-comp', 'query', 5)).toEqual([{ id: 'evt-1' }]);
+    expect(mockArchive.searchEvents).toHaveBeenCalledWith('test-comp', 'query', 5);
 
-    await container.memory!.approveClaim('c-1');
-    expect(mockMemory.approveClaim).toHaveBeenCalledWith('c-1');
-
-    await container.memory!.rejectClaim('c-2');
-    expect(mockMemory.rejectClaim).toHaveBeenCalledWith('c-2');
-
-    await container.memory!.updateClaim!('c-1', { value: 'updated' } as any);
-    expect(mockMemory.updateClaim).toHaveBeenCalledWith('c-1', { value: 'updated' });
-
-    await container.memory!.approveDirective('d-1');
-    expect(mockMemory.approveDirective).toHaveBeenCalledWith('d-1');
-
-    await container.memory!.rejectDirective('d-2');
-    expect(mockMemory.rejectDirective).toHaveBeenCalledWith('d-2');
-
-    await container.memory!.revokeDirective('d-3');
-    expect(mockMemory.revokeDirective).toHaveBeenCalledWith('d-3');
-
-    await container.memory!.disableDirective('d-4');
-    expect(mockMemory.disableDirective).toHaveBeenCalledWith('d-4');
-
-    await container.memory!.resetMemory!();
-    expect(mockMemory.resetMemory).toHaveBeenCalled();
+    await container.archive!.recordEvent({ id: 'evt-2' } as any);
+    expect(mockArchive.recordEvent).toHaveBeenCalledWith({ id: 'evt-2' });
   });
 
   test('configures SqliteActionStore when actionStore is sqlite', () => {

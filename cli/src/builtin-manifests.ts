@@ -323,14 +323,14 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
     healthCheck: null
   },
   {
-    name: '@sidurijs/memory',
-    organType: 'memory',
-    version: '2.0.5',
-    displayName: 'Memory (Long-term Recall & State)',
-    description: 'Relational semantic claims with Full-Text Search (FTS5) and companion isolation',
+    name: '@sidurijs/archive',
+    organType: 'archive',
+    version: '1.0.0',
+    displayName: 'Archive (Interaction Audit Ledger)',
+    description: 'Cold append-only interaction audit trail and FTS5 full-text search (RFC VX-26-13)',
     entrypoint: './dist/index.js',
-    factory: 'SqliteMemoryStore',
-    configKey: 'memory',
+    factory: 'SqliteArchiveLedger',
+    configKey: 'archive',
     configSchema: {
       type: 'object',
       required: ['provider'],

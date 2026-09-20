@@ -14,7 +14,7 @@ describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
   const ALL_CANONICAL_PACKAGES = [
     { filter: '@sidurijs/core', dir: 'packages/core', tarName: `sidurijs-core-${getPkgVer('packages/core')}.tgz`, isOrgan: false },
     { filter: '@sidurijs/brain', dir: 'packages/organs/brain', tarName: `sidurijs-brain-${getPkgVer('packages/organs/brain')}.tgz`, isOrgan: true },
-    { filter: '@sidurijs/memory', dir: 'packages/memory', tarName: `sidurijs-memory-${getPkgVer('packages/memory')}.tgz`, isOrgan: true },
+    { filter: '@sidurijs/archive', dir: 'packages/archive', tarName: `sidurijs-archive-${getPkgVer('packages/archive')}.tgz`, isOrgan: true },
     { filter: '@sidurijs/knowledge', dir: 'packages/knowledge', tarName: `sidurijs-knowledge-${getPkgVer('packages/knowledge')}.tgz`, isOrgan: true },
     { filter: '@sidurijs/self', dir: 'packages/self', tarName: `sidurijs-self-${getPkgVer('packages/self')}.tgz`, isOrgan: true },
     { filter: '@sidurijs/ear', dir: 'packages/organs/ear', tarName: `sidurijs-ear-${getPkgVer('packages/organs/ear')}.tgz`, isOrgan: true },
@@ -24,7 +24,7 @@ describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
     { filter: '@sidurijs/voice', dir: 'packages/organs/voice', tarName: `sidurijs-voice-${getPkgVer('packages/organs/voice')}.tgz`, isOrgan: true },
     { filter: '@sidurijs/observation', dir: 'packages/organs/observation', tarName: `sidurijs-observation-${getPkgVer('packages/organs/observation')}.tgz`, isOrgan: true },
     { filter: '@sidurijs/mouth', dir: 'packages/organs/mouth', tarName: `sidurijs-mouth-${getPkgVer('packages/organs/mouth')}.tgz`, isOrgan: true },
-    { filter: '@vxnus/siduri', dir: 'cli', tarName: `vxnus-siduri-${getPkgVer('cli')}.tgz`, isOrgan: false },
+    { filter: 'siduri', dir: 'cli', tarName: `siduri-${getPkgVer('cli')}.tgz`, isOrgan: false },
   ];
 
   const getTarPath = (pkgName: string) => {
@@ -110,7 +110,7 @@ describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
         '@sidurijs/brain': `file:${getTarPath('@sidurijs/brain')}`,
       };
       pkgObj.devDependencies = {
-        '@vxnus/siduri': `file:${getTarPath('@vxnus/siduri')}`,
+        'siduri': `file:${getTarPath('siduri')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');
@@ -122,7 +122,7 @@ describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
 
       execSync('npm install --no-audit --no-fund', { cwd: instanceDir, stdio: 'pipe' });
 
-      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@sidurijs/memory'))).toBe(false);
+      expect(fs.existsSync(path.join(instanceDir, 'node_modules/@sidurijs/archive'))).toBe(false);
       expect(fs.existsSync(path.join(instanceDir, 'node_modules/@sidurijs/hands'))).toBe(false);
 
       const doctorPass = execSync(`node ${path.resolve(repoRoot, 'cli/dist/index.js')} doctor`, {
@@ -155,7 +155,7 @@ describe('Phase 5: Clean-Machine Distribution & Packaging Smoke Suite', () => {
         '@sidurijs/hands': `file:${getTarPath('@sidurijs/hands')}`,
       };
       pkgObj.devDependencies = {
-        '@vxnus/siduri': `file:${getTarPath('@vxnus/siduri')}`,
+        'siduri': `file:${getTarPath('siduri')}`,
       };
 
       fs.writeFileSync(path.join(instanceDir, 'package.json'), JSON.stringify(pkgObj, null, 2) + '\n');

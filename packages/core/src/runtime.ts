@@ -1,6 +1,5 @@
 import {
   BrainOrgan,
-  MemoryOrgan,
   ArchiveLedger,
   VoiceOrgan,
   KnowledgeOrgan,
@@ -64,7 +63,6 @@ export class SiduriRuntime {
   // Direct organ accessors through container
   get organs(): RuntimeOrgans { return this.container.organs; }
   get brain(): BrainOrgan | undefined { return this.container.brain; }
-  get memory(): MemoryOrgan | undefined { return this.container.memory; }
   get archive(): ArchiveLedger | undefined { return this.container.archive; }
   get voice(): VoiceOrgan | undefined { return this.container.voice as any; }
   get knowledge(): KnowledgeOrgan | undefined { return this.container.knowledge; }
@@ -94,46 +92,10 @@ export class SiduriRuntime {
 
   async initialize(): Promise<void> {
     await this.container.initialize();
-    if (this.memory && this.self && typeof this.memory.approveClaim === 'function') {
-      const originalApproveClaim = this.memory.approveClaim.bind(this.memory);
-      this.memory.approveClaim = async (id: string) => {
-        await originalApproveClaim(id);
-        const targetCompId = this.id;
-        const claims = typeof (this.memory as any).getAllClaims === 'function'
-          ? await (this.memory as any).getAllClaims(500)
-          : await this.memory!.getClaims(500);
-        let found = claims.find((c: any) => c.id === id);
-        if (!found && typeof (this.memory as any).getPendingClaims === 'function') {
-          const pending = await (this.memory as any).getPendingClaims(500);
-          found = pending.find((c: any) => c.id === id);
-        }
-        if (found && this.self) {
-          await promoteApprovedClaimToSelf(found, this.self, targetCompId);
-        }
-        if (found && this.container.knowledge) {
-          await promoteApprovedClaimToKnowledge(found, this.container.knowledge, targetCompId);
-        }
-      };
-    }
-
-    // Sync any pre-existing approved claims to Knowledge / Life DB
-    if (this.memory && this.container.knowledge) {
-      try {
-        const claims = typeof (this.memory as any).getAllClaims === 'function'
-          ? await (this.memory as any).getAllClaims(500)
-          : await this.memory.getClaims(500);
-        const approvedClaims = (claims || []).filter((c: any) => (c.status || '').toLowerCase() === 'approved');
-        for (const c of approvedClaims) {
-          await promoteApprovedClaimToKnowledge(c, this.container.knowledge, this.id);
-        }
-      } catch {
-        // non-blocking
-      }
-    }
   }
 
   get db(): SiduriDatabase | undefined {
-    return (this.container as any).db || (this.memory as any)?.db || (this.self as any)?.db;
+    return (this.container as any).db || (this.self as any)?.db || (this.archive as any)?.db;
   }
 
   log(
@@ -188,7 +150,6 @@ export class SiduriRuntime {
    * Approves a proposal using Direct Domain Routing (RFC VX-26-13):
    * - Behavioral & relational directives route directly to SelfRepository.
    * - Life state facts route directly to Knowledge / Life DB.
-   * - Legacy memory claims are promoted as a backwards-compatibility fallback.
    */
   async approveProposal(
     proposalId: string,
@@ -196,14 +157,11 @@ export class SiduriRuntime {
   ): Promise<{ success: boolean; target?: string; name?: string }> {
     const companionId = options?.companionId || this.id;
 
-    // 1. Direct Domain Routing (RFC VX-26-13): If proposalId is explicitly a directive ID, route directly to Self
+    // 1. Direct Domain Routing: If proposalId is a directive ID, route directly to Self
     if (proposalId.startsWith('dir-') && this.self && typeof (this.self as any).approveDirective === 'function') {
       try {
         const approved = await (this.self as any).approveDirective(proposalId, companionId);
         if (approved !== false) {
-          if (this.memory && typeof (this.memory as any).approveDirective === 'function') {
-            await (this.memory as any).approveDirective(proposalId, companionId).catch(() => {});
-          }
           const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
           this.log('info', 'truth_gate', `Approved behavioral directive proposal '${proposalId}' directly in Self`, {
             proposalId,
@@ -213,69 +171,66 @@ export class SiduriRuntime {
           return { success: true, target: 'self', name: identity?.name };
         }
       } catch {
-        // Fall through to claim check
+        // Fall through
       }
     }
 
-    // 2. Approve claim in memory if present (legacy fallback)
-    if (this.memory && typeof this.memory.approveClaim === 'function') {
-      await this.memory.approveClaim(proposalId);
-    }
-
-    // 3. Fetch claim
-    let claim: Claim | undefined;
-    if (this.memory) {
-      const claims = typeof (this.memory as any).getAllClaims === 'function'
-        ? await (this.memory as any).getAllClaims(500)
-        : await this.memory.getClaims(500);
-      claim = claims.find((c: any) => c.id === proposalId);
-      if (!claim && typeof (this.memory as any).getPendingClaims === 'function') {
-        const pending = await (this.memory as any).getPendingClaims(500);
+    // 2. If memory organ is present, support legacy claim approval
+    if (this.container.organs.memory) {
+      const memory = this.container.organs.memory as any;
+      if (typeof memory.approveClaim === 'function') {
+        await memory.approveClaim(proposalId);
+      }
+      let claim: any;
+      if (typeof memory.getAllClaims === 'function') {
+        const claims = await memory.getAllClaims(500);
+        claim = claims.find((c: any) => c.id === proposalId);
+      } else if (typeof memory.getClaims === 'function') {
+        const claims = await memory.getClaims(500);
+        claim = claims.find((c: any) => c.id === proposalId);
+      }
+      if (!claim && typeof memory.getPendingClaims === 'function') {
+        const pending = await memory.getPendingClaims(500);
         claim = pending.find((c: any) => c.id === proposalId);
       }
-    }
 
-    // 4. Promote to Knowledge / Life DB if claim is Knowledge-affecting
-    if (claim && this.container.knowledge) {
-      const promotedToKnowledge = await promoteApprovedClaimToKnowledge(
-        claim,
-        this.container.knowledge,
-        companionId
-      );
-      if (promotedToKnowledge) {
-        this.log('info', 'truth_gate', `Approved and promoted claim '${proposalId}' to Knowledge / Life DB`, {
+      if (claim && this.container.knowledge) {
+        const promotedToKnowledge = await promoteApprovedClaimToKnowledge(
+          claim,
+          this.container.knowledge,
+          companionId
+        );
+        if (promotedToKnowledge) {
+          this.log('info', 'truth_gate', `Approved and promoted claim '${proposalId}' to Knowledge / Life DB`, {
+            proposalId,
+            companionId,
+            target: 'knowledge',
+            subject: claim.subject,
+            predicate: claim.predicate,
+          });
+          return { success: true, target: 'knowledge' };
+        }
+      }
+
+      if (claim && this.self) {
+        await promoteApprovedClaimToSelf(claim, this.self, companionId);
+        const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
+        this.log('info', 'truth_gate', `Approved and promoted claim '${proposalId}' to Self`, {
           proposalId,
           companionId,
-          target: 'knowledge',
+          target: 'self',
           subject: claim.subject,
           predicate: claim.predicate,
         });
-        return { success: true, target: 'knowledge' };
+        return { success: true, target: 'self', name: identity?.name };
       }
     }
 
-    // 5. Promote to SelfRepository if claim is Self-affecting
-    if (claim && this.self) {
-      await promoteApprovedClaimToSelf(claim, this.self, companionId);
-      const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
-      this.log('info', 'truth_gate', `Approved and promoted claim '${proposalId}' to Self`, {
-        proposalId,
-        companionId,
-        target: 'self',
-        subject: claim.subject,
-        predicate: claim.predicate,
-      });
-      return { success: true, target: 'self', name: identity?.name };
-    }
-
-    // 6. If not a claim, check if this proposal ID is a behavioral directive in Self
+    // 3. Direct Self directive check
     if (this.self && typeof (this.self as any).approveDirective === 'function') {
       try {
         const approved = await (this.self as any).approveDirective(proposalId, companionId);
         if (approved !== false) {
-          if (this.memory && typeof (this.memory as any).approveDirective === 'function') {
-            await (this.memory as any).approveDirective(proposalId, companionId).catch(() => {});
-          }
           const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
           this.log('info', 'truth_gate', `Approved behavioral directive proposal '${proposalId}' directly in Self`, {
             proposalId,
@@ -285,36 +240,31 @@ export class SiduriRuntime {
           return { success: true, target: 'self', name: identity?.name };
         }
       } catch {
-        // Not a pending directive or already active
+        // Not a pending directive
       }
     }
 
     const identity = this.self && typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
-    this.log('info', 'truth_gate', `Approved memory proposal '${proposalId}'`, {
-      proposalId,
-      companionId,
-      target: 'memory',
-    });
-    return { success: true, target: 'memory', name: identity?.name };
+    return { success: true, target: 'self', name: identity?.name };
   }
 
   /**
-   * Rejects a memory or behavior proposal.
+   * Rejects a proposal.
    */
   async rejectProposal(
     proposalId: string,
     options?: { companionId?: string }
   ): Promise<{ success: boolean }> {
     const companionId = options?.companionId || this.id;
-    if (this.memory && typeof this.memory.rejectClaim === 'function') {
-      await this.memory.rejectClaim(proposalId);
-    }
     if (this.self && typeof (this.self as any).rejectDirective === 'function') {
       try {
         await (this.self as any).rejectDirective(proposalId, companionId);
       } catch {
         // ignore
       }
+    }
+    if (this.container.organs.memory && typeof (this.container.organs.memory as any).rejectClaim === 'function') {
+      await (this.container.organs.memory as any).rejectClaim(proposalId);
     }
     this.log('info', 'truth_gate', `Rejected proposal '${proposalId}'`, {
       proposalId,
@@ -324,7 +274,7 @@ export class SiduriRuntime {
   }
 
   /**
-   * Approves a behavioral directive in Self and Memory.
+   * Approves a behavioral directive directly in Self.
    */
   async approveDirective(
     directiveId: string,
@@ -333,9 +283,6 @@ export class SiduriRuntime {
     const companionId = options?.companionId || this.id;
     if (this.self && typeof (this.self as any).approveDirective === 'function') {
       await (this.self as any).approveDirective(directiveId, companionId);
-    }
-    if (this.memory && typeof (this.memory as any).approveDirective === 'function') {
-      await (this.memory as any).approveDirective(directiveId, companionId);
     }
 
     // If directive pertains to companion name, ensure self identity reflects it
@@ -376,7 +323,7 @@ export class SiduriRuntime {
   }
 
   /**
-   * Rejects a behavioral directive in Self and Memory.
+   * Rejects a behavioral directive in Self.
    */
   async rejectDirective(
     directiveId: string,
@@ -386,9 +333,6 @@ export class SiduriRuntime {
     if (this.self && typeof (this.self as any).rejectDirective === 'function') {
       await (this.self as any).rejectDirective(directiveId, companionId);
     }
-    if (this.memory && typeof (this.memory as any).rejectDirective === 'function') {
-      await (this.memory as any).rejectDirective(directiveId, companionId);
-    }
     this.log('info', 'truth_gate', `Rejected behavioral directive '${directiveId}'`, {
       directiveId,
       companionId,
@@ -397,7 +341,7 @@ export class SiduriRuntime {
   }
 
   /**
-   * Revokes a behavioral directive in Self and Memory.
+   * Revokes a behavioral directive in Self.
    */
   async revokeDirective(
     directiveId: string,
@@ -406,9 +350,6 @@ export class SiduriRuntime {
     const companionId = options?.companionId || this.id;
     if (this.self && typeof (this.self as any).revokeDirective === 'function') {
       await (this.self as any).revokeDirective(directiveId, companionId);
-    }
-    if (this.memory && typeof (this.memory as any).revokeDirective === 'function') {
-      await (this.memory as any).revokeDirective(directiveId, companionId);
     }
     return { success: true };
   }

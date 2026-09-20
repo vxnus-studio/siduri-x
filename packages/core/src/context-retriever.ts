@@ -1,6 +1,5 @@
 import {
   KnowledgeOrgan,
-  MemoryOrgan,
   KnowledgeItem,
   Claim,
   BehaviorDirective,
@@ -25,7 +24,7 @@ export interface ContextRetrievalParams {
   memoryQueries?: string[];
   isSelfIdentityRequest?: boolean;
   knowledge?: KnowledgeOrgan | LifeDatabase;
-  memory?: MemoryOrgan | EpisodicMemoryStore;
+  memory?: EpisodicMemoryStore;
   self?: SelfRepository;
   externalKnowledge?: EKnowledgeOrgan | KnowledgeOrgan;
 }

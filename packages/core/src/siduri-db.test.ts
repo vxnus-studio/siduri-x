@@ -12,7 +12,6 @@ import {
   LifeScheduleItem,
   LifePreference,
   EpisodicEvent,
-  MemoryClaim,
 } from './siduri-db';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -457,11 +456,11 @@ describe('SiduriDatabase', () => {
   });
 
   // ==========================================
-  // Memory Domain Tests
+  // Archive Domain Tests
   // ==========================================
 
-  describe('Memory Domain', () => {
-    it('records episodic events and retrieves in reverse chronological order', () => {
+  describe('Archive Domain', () => {
+    it('records archive events and retrieves in reverse chronological order', () => {
       db = new SiduriDatabase({ dbPath });
 
       const events: EpisodicEvent[] = [
@@ -489,10 +488,10 @@ describe('SiduriDatabase', () => {
       ];
 
       for (const e of events) {
-        db.recordEvent(e);
+        db.recordArchiveEvent(e);
       }
 
-      const result = db.getRecentEvents('siduri-test', 10);
+      const result = db.getRecentArchiveEvents('siduri-test', 10);
       expect(result).toHaveLength(3);
       // Reverse chronological order
       expect(result[0].occurredAt).toBe('2026-09-11T10:02:00Z');
@@ -500,242 +499,58 @@ describe('SiduriDatabase', () => {
       expect(result[2].occurredAt).toBe('2026-09-11T10:00:00Z');
     });
 
-    it('proposes a claim with PENDING status', () => {
+    it('searches archive events using FTS5 full-text search', () => {
       db = new SiduriDatabase({ dbPath });
 
-      const claim = db.proposeClaim({
-        id: crypto.randomUUID(),
+      db.recordArchiveEvent({
+        id: 'arch-1',
         companionId: 'siduri-test',
-        subject: 'Kur',
-        predicate: 'is',
-        value: 'a dark entity from the underworld',
-        confidence: 0.8,
-        evidence: ['lore book chapter 3'],
-        assertedAt: new Date().toISOString(),
+        sourceType: 'chat_turn',
+        occurredAt: '2026-09-11T10:00:00Z',
+        payload: { text: 'Kur rules the dark underworld realm' },
       });
 
-      expect(claim.status).toBe('pending');
-      expect(claim.subject).toBe('Kur');
-      expect(claim.predicate).toBe('is');
-      expect(claim.value).toBe('a dark entity from the underworld');
-      expect(claim.confidence).toBe(0.8);
-    });
-
-    it('approves and rejects claims', () => {
-      db = new SiduriDatabase({ dbPath });
-
-      const claim1 = db.proposeClaim({
-        id: crypto.randomUUID(),
+      db.recordArchiveEvent({
+        id: 'arch-2',
         companionId: 'siduri-test',
-        subject: 'Kur',
-        predicate: 'is',
-        value: 'a god of the underworld',
-        confidence: 0.9,
-        assertedAt: new Date().toISOString(),
+        sourceType: 'chat_turn',
+        occurredAt: '2026-09-11T10:01:00Z',
+        payload: { text: 'Gilgamesh is king of Uruk' },
       });
 
-      const claim2 = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'siduri-test',
-        subject: 'Kur',
-        predicate: 'likes',
-        value: 'apples',
-        confidence: 0.3,
-        assertedAt: new Date().toISOString(),
-      });
-
-      db.approveClaim(claim1.id);
-      db.rejectClaim(claim2.id);
-
-      const approved = db.getApprovedClaims('siduri-test');
-      expect(approved).toHaveLength(1);
-      expect(approved[0].id).toBe(claim1.id);
-      expect(approved[0].status).toBe('approved');
-    });
-
-    it('searches claims using FTS5 full-text search', () => {
-      db = new SiduriDatabase({ dbPath });
-
-      // Insert and approve several claims
-      const c1 = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'siduri-test',
-        subject: 'Kur',
-        predicate: 'rules',
-        value: 'the dark underworld realm',
-        confidence: 0.9,
-        assertedAt: new Date().toISOString(),
-      });
-
-      const c2 = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'siduri-test',
-        subject: 'Gilgamesh',
-        predicate: 'is',
-        value: 'king of Uruk',
-        confidence: 0.95,
-        assertedAt: new Date().toISOString(),
-      });
-
-      const c3 = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'siduri-test',
-        subject: 'Enkidu',
-        predicate: 'wanders',
-        value: 'the wild forest',
-        confidence: 0.85,
-        assertedAt: new Date().toISOString(),
-      });
-
-      db.approveClaim(c1.id);
-      db.approveClaim(c2.id);
-      db.approveClaim(c3.id);
-
-      // Search for "underworld" — should match c1 only
-      const results = db.searchClaims('siduri-test', 'underworld');
+      const results = db.searchArchiveEvents('siduri-test', 'underworld');
       expect(results.length).toBeGreaterThan(0);
-      expect(results.some((c) => c.id === c1.id)).toBe(true);
-      expect(results.some((c) => c.id === c2.id)).toBe(false);
+      expect(results.some((r) => r.id === 'arch-1')).toBe(true);
+      expect(results.some((r) => r.id === 'arch-2')).toBe(false);
 
-      // Search for "Gilgamesh" — should match c2 only
-      const results2 = db.searchClaims('siduri-test', 'Gilgamesh');
+      const results2 = db.searchArchiveEvents('siduri-test', 'Gilgamesh');
       expect(results2.length).toBeGreaterThan(0);
-      expect(results2.some((c) => c.id === c2.id)).toBe(true);
+      expect(results2.some((r) => r.id === 'arch-2')).toBe(true);
     });
 
-    it('FTS5 search returns results ranked by relevance', () => {
+    it('resets archive for the specified companion only', () => {
       db = new SiduriDatabase({ dbPath });
 
-      // c1 mentions "dark" twice → should rank higher
-      const c1 = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'siduri-test',
-        subject: 'dark forest',
-        predicate: 'has',
-        value: 'dark trees and dark monsters',
-        confidence: 0.8,
-        assertedAt: new Date().toISOString(),
-      });
-
-      // c2 mentions "dark" once → should rank lower
-      const c2 = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'siduri-test',
-        subject: 'cave',
-        predicate: 'has',
-        value: 'a dark entrance',
-        confidence: 0.8,
-        assertedAt: new Date().toISOString(),
-      });
-
-      db.approveClaim(c1.id);
-      db.approveClaim(c2.id);
-
-      const results = db.searchClaims('siduri-test', 'dark');
-      expect(results).toHaveLength(2);
-      // More occurrences of "dark" → better BM25 rank (lower rank value = better match)
-      expect(results[0].id).toBe(c1.id);
-    });
-
-    it('excludes pending and rejected claims from searchClaims in SiduriDatabase', () => {
-      db = new SiduriDatabase({ dbPath });
-
-      const pending = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'siduri-test',
-        subject: 'SecretProject',
-        predicate: 'status',
-        value: 'unapproved draft specification',
-        confidence: 0.9,
-        assertedAt: new Date().toISOString(),
-      });
-
-      // Must not match while pending
-      let results = db.searchClaims('siduri-test', 'unapproved');
-      expect(results.some((r) => r.id === pending.id)).toBe(false);
-
-      // Approve: now it matches
-      db.approveClaim(pending.id, 'siduri-test');
-      results = db.searchClaims('siduri-test', 'unapproved');
-      expect(results.some((r) => r.id === pending.id)).toBe(true);
-
-      // Revoke: must no longer match
-      db.revokeClaim(pending.id, 'siduri-test');
-      results = db.searchClaims('siduri-test', 'unapproved');
-      expect(results.some((r) => r.id === pending.id)).toBe(false);
-
-      // Explicitly rejected claims must also not match
-      const rejected = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'siduri-test',
-        subject: 'RejectedFact',
-        predicate: 'status',
-        value: 'unapproved rejection draft',
-        confidence: 0.1,
-      });
-      db.rejectClaim(rejected.id, 'siduri-test');
-      results = db.searchClaims('siduri-test', 'rejection');
-      expect(results.some((r) => r.id === rejected.id)).toBe(false);
-    });
-
-    it('bounds approveClaim to specific companionId when provided', () => {
-      db = new SiduriDatabase({ dbPath });
-
-      const claim = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'companion-target',
-        subject: 'ProtectedFact',
-        predicate: 'belongsTo',
-        value: 'Target',
-        confidence: 1.0,
-        assertedAt: new Date().toISOString(),
-      });
-
-      // Attempting to approve for a different companion must not affect it
-      db.approveClaim(claim.id, 'companion-intruder');
-      expect(db.getApprovedClaims('companion-target')).toHaveLength(0);
-
-      // Approving with the correct companionId succeeds
-      db.approveClaim(claim.id, 'companion-target');
-      expect(db.getApprovedClaims('companion-target')).toHaveLength(1);
-    });
-
-    it('resets memory for the specified companion only', () => {
-      db = new SiduriDatabase({ dbPath });
-
-      const c1 = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'comp-1',
-        subject: 'Fact1',
-        predicate: 'is',
-        value: 'One',
-        confidence: 1.0,
-      });
-      const c2 = db.proposeClaim({
-        id: crypto.randomUUID(),
-        companionId: 'comp-2',
-        subject: 'Fact2',
-        predicate: 'is',
-        value: 'Two',
-        confidence: 1.0,
-      });
-
-      db.approveClaim(c1.id, 'comp-1');
-      db.approveClaim(c2.id, 'comp-2');
-
-      db.recordEvent({
+      db.recordArchiveEvent({
         id: crypto.randomUUID(),
         companionId: 'comp-1',
         sourceType: 'chat_turn',
         occurredAt: new Date().toISOString(),
-        payload: { text: 'Hello' },
+        payload: { text: 'Hello 1' },
       });
 
-      db.resetMemory('comp-1');
+      db.recordArchiveEvent({
+        id: crypto.randomUUID(),
+        companionId: 'comp-2',
+        sourceType: 'chat_turn',
+        occurredAt: new Date().toISOString(),
+        payload: { text: 'Hello 2' },
+      });
 
-      expect(db.getApprovedClaims('comp-1')).toHaveLength(0);
-      expect(db.getRecentEvents('comp-1')).toHaveLength(0);
-      expect(db.getApprovedClaims('comp-2')).toHaveLength(1);
+      db.resetArchive('comp-1');
+
+      expect(db.getRecentArchiveEvents('comp-1')).toHaveLength(0);
+      expect(db.getRecentArchiveEvents('comp-2')).toHaveLength(1);
     });
   });
 
@@ -779,17 +594,14 @@ describe('SiduriDatabase', () => {
         updatedAt: new Date().toISOString(),
       });
 
-      // Write Memory data
-      const claim = db.proposeClaim({
-        id: crypto.randomUUID(),
+      // Write Archive data
+      db.recordArchiveEvent({
+        id: 'arch-cId',
         companionId: cId,
-        subject: 'wine',
-        predicate: 'is',
-        value: 'the finest in Mesopotamia',
-        confidence: 1.0,
-        assertedAt: new Date().toISOString(),
+        sourceType: 'chat_turn',
+        occurredAt: new Date().toISOString(),
+        payload: { text: 'wine is the finest in Mesopotamia' },
       });
-      db.approveClaim(claim.id);
 
       // Close and reopen
       db.close();
@@ -803,8 +615,8 @@ describe('SiduriDatabase', () => {
       expect(db2.getInventory(cId)).toHaveLength(1);
       expect(db2.getInventory(cId)[0].entityName).toBe('Aged Wine');
 
-      const claims = db2.searchClaims(cId, 'wine');
-      expect(claims.some((c) => c.id === claim.id && c.status === 'approved')).toBe(true);
+      const archiveEvents = db2.searchArchiveEvents(cId, 'wine');
+      expect(archiveEvents.some((e) => e.id === 'arch-cId')).toBe(true);
 
       db2.close();
       // Prevent afterEach from double-closing
@@ -817,7 +629,7 @@ describe('SiduriDatabase', () => {
 
       expect(() => {
         for (let i = 0; i < 100; i++) {
-          db.recordEvent({
+          db.recordArchiveEvent({
             id: crypto.randomUUID(),
             companionId: cId,
             sourceType: 'chat_turn',
@@ -834,19 +646,18 @@ describe('SiduriDatabase', () => {
             timestamp: new Date().toISOString(),
           });
 
-          db.proposeClaim({
+          db.commitDirective({
             id: crypto.randomUUID(),
             companionId: cId,
-            subject: `subject-${i}`,
-            predicate: 'is',
-            value: `value-${i}`,
-            confidence: 1.0,
-            assertedAt: new Date().toISOString(),
+            priority: 50,
+            directive: `directive-${i}`,
+            category: 'behavioral',
+            status: 'active',
           });
         }
       }).not.toThrow();
 
-      expect(db.getRecentEvents(cId, 200)).toHaveLength(100);
+      expect(db.getRecentArchiveEvents(cId, 200)).toHaveLength(100);
       expect(db.getFinanceEntries(cId, 200)).toHaveLength(100);
     });
 
@@ -862,9 +673,8 @@ describe('SiduriDatabase', () => {
       expect(db.getFinanceEntries(cId)).toHaveLength(0);
       expect(db.getSchedule(cId)).toHaveLength(0);
       expect(db.getPreferences(cId)).toHaveLength(0);
-      expect(db.getRecentEvents(cId)).toHaveLength(0);
-      expect(db.searchClaims(cId, 'anything')).toHaveLength(0);
-      expect(db.getApprovedClaims(cId)).toHaveLength(0);
+      expect(db.getRecentArchiveEvents(cId)).toHaveLength(0);
+      expect(db.searchArchiveEvents(cId, 'anything')).toHaveLength(0);
     });
 
     it('enforces directive state transitions (pending -> active -> disabled/rejected/revoked)', () => {
@@ -1037,89 +847,6 @@ describe('SiduriDatabase', () => {
       // Beta approves its own directive successfully
       db.approveDirective('dir-beta-1', cIdB);
       expect(db.getActiveDirectives(cIdB)).toHaveLength(1);
-    });
-
-    it('enforces claim state transitions (pending -> approved -> revoked/expired/session_only)', () => {
-      db = new SiduriDatabase({ dbPath });
-      const cId = 'claim-state-test';
-
-      const claim = db.proposeClaim({
-        id: 'claim-1',
-        companionId: cId,
-        subject: 'user',
-        predicate: 'likes',
-        value: 'matcha',
-      });
-      expect(claim.status).toBe('pending');
-      expect(db.getApprovedClaims(cId)).toHaveLength(0);
-
-      // Approve
-      db.approveClaim('claim-1');
-      expect(db.getApprovedClaims(cId)).toHaveLength(1);
-
-      // Revoke
-      db.revokeClaim('claim-1');
-      expect(db.getApprovedClaims(cId)).toHaveLength(0);
-
-      // Session only
-      const claim2 = db.proposeClaim({
-        id: 'claim-2',
-        companionId: cId,
-        subject: 'session',
-        predicate: 'topic',
-        value: 'investigation',
-      });
-      db.markClaimSessionOnly('claim-2');
-      expect(db.getApprovedClaims(cId)).toHaveLength(0);
-
-      // Expire
-      db.expireClaim('claim-2');
-      expect(db.getApprovedClaims(cId)).toHaveLength(0);
-    });
-
-    it('strictly rejects illegal claim state transitions in approveClaim', () => {
-      db = new SiduriDatabase({ dbPath });
-      const cId = 'claim-transition-test';
-
-      // 1. Propose and reject claim
-      const rejectedClaim = db.proposeClaim({
-        id: 'claim-rejected',
-        companionId: cId,
-        subject: 'fact',
-        predicate: 'is',
-        value: 'false',
-      });
-      db.rejectClaim(rejectedClaim.id);
-
-      // Attempting to approve a REJECTED claim must throw
-      expect(() => db.approveClaim(rejectedClaim.id)).toThrow(/invalid transition from status 'rejected' to 'approved'/i);
-
-      // 2. Propose and approve claim, then revoke
-      const revokedClaim = db.proposeClaim({
-        id: 'claim-revoked',
-        companionId: cId,
-        subject: 'fact',
-        predicate: 'is',
-        value: 'outdated',
-      });
-      db.approveClaim(revokedClaim.id);
-      db.revokeClaim(revokedClaim.id);
-
-      // Attempting to approve a REVOKED claim must throw
-      expect(() => db.approveClaim(revokedClaim.id)).toThrow(/invalid transition from status 'revoked' to 'approved'/i);
-
-      // 3. Propose and expire claim
-      const expiredClaim = db.proposeClaim({
-        id: 'claim-expired',
-        companionId: cId,
-        subject: 'fact',
-        predicate: 'is',
-        value: 'temporary',
-      });
-      db.expireClaim(expiredClaim.id);
-
-      // Attempting to approve an EXPIRED claim must throw
-      expect(() => db.approveClaim(expiredClaim.id)).toThrow(/invalid transition from status 'expired' to 'approved'/i);
     });
   });
 

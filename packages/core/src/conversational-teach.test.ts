@@ -6,8 +6,9 @@ import {
   SiduriDatabase,
   RequestContext,
   SelfRepository,
-  MemoryOrgan,
   BehaviorOrgan,
+  promoteApprovedClaimToKnowledge,
+  promoteApprovedClaimToSelf,
 } from './index';
 
 describe('Conversational Teach Mode End-to-End Lifecycle', () => {
@@ -65,20 +66,31 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
   }
 
   /**
-   * Helper to build a MemoryOrgan wrapping a SiduriDatabase
+   * Helper to build a MemoryOrgan wrapping a SiduriDatabase & local claim mock
    */
-  function createMemoryOrgan(db: SiduriDatabase): MemoryOrgan {
+  function createMemoryOrgan(db: SiduriDatabase): any {
+    const claims: any[] = [];
     return {
       initialize: async () => {},
-      proposeClaim: async (claim: any) => db.proposeClaim(claim) as any,
+      proposeClaim: async (claim: any) => {
+        const c = { id: claim.id || `claim-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, status: 'pending', ...claim };
+        claims.push(c);
+        return c;
+      },
       searchClaims: async () => [],
       getApprovedClaims: async (companionId?: string, limit?: number) =>
-        db.getApprovedClaims(companionId || 'default', limit || 50) as any,
-      getClaims: async (limit?: number) => db.getAllClaims(undefined, limit || 500) as any,
+        claims.filter((c) => c.status === 'approved').slice(0, limit || 50),
+      getClaims: async (limit?: number) => claims.slice(0, limit || 500),
       getPendingClaims: async (limit?: number) =>
-        db.getAllClaims(undefined, limit || 500).filter((c: any) => c.status === 'pending') as any,
-      approveClaim: async (id: string) => db.approveClaim(id),
-      rejectClaim: async (id: string) => db.rejectClaim(id),
+        claims.filter((c) => c.status === 'pending').slice(0, limit || 500),
+      approveClaim: async (id: string) => {
+        const found = claims.find((c) => c.id === id);
+        if (found) found.status = 'approved';
+      },
+      rejectClaim: async (id: string) => {
+        const found = claims.find((c) => c.id === id);
+        if (found) found.status = 'rejected';
+      },
       getDirectives: async (companionId?: string) =>
         db.getActiveDirectives(companionId || 'default') as any,
       proposeDirective: async (dir: any) => {
@@ -414,7 +426,6 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
       brain: mockBrain as any,
-      memory,
       self,
       behavior,
     });
@@ -479,7 +490,6 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
       brain: mockBrain as any,
-      memory,
       self,
     });
     await runtime.initialize();
@@ -520,7 +530,6 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
       brain: mockBrain as any,
-      memory,
       self,
     });
     await runtime.initialize();
@@ -974,38 +983,40 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
       },
       {
         self,
-        memory,
         knowledge: mockKnowledge,
-      }
+      } as any
     );
 
-    // 1. Propose knowledge claims in memory store (quarantined as PENDING)
-    const entityClaim = await memory.proposeClaim({
+    // 1. Propose knowledge claims (quarantined as PENDING)
+    const entityClaim = {
+      id: 'claim-ent-1',
       companionId,
       subject: 'entity:Workstation Rig',
       predicate: 'inventory',
       value: 'Threadripper 64-core',
       claimType: 'life_entity',
       evidence: { domain: 'hardware', properties: { cores: 64, ram: '256GB' } },
-    } as any);
+    };
 
-    const eventClaim = await memory.proposeClaim({
+    const eventClaim = {
+      id: 'claim-evt-1',
       companionId,
       subject: 'finance:expense',
       predicate: 'expense',
       value: '45.00',
       claimType: 'life_event',
       evidence: { metricValue: -45.0, stream: 'finance', category: 'dining' },
-    } as any);
+    };
 
-    const taskClaim = await memory.proposeClaim({
+    const taskClaim = {
+      id: 'claim-task-1',
       companionId,
       subject: 'task:Review PR',
       predicate: 'todo',
       value: 'Review PR #42 for Life DB',
       claimType: 'life_task',
       evidence: { status: 'in_progress' },
-    } as any);
+    };
 
     // Before approval, Life DB tables in sqlite are empty
     expect(db.getEntities(companionId)).toHaveLength(0);
@@ -1013,17 +1024,14 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     expect(db.getTasks(companionId)).toHaveLength(0);
 
     // 2. Truth Gate Approval
-    const resEntity = await runtime.approveProposal(entityClaim.id, { companionId });
-    expect(resEntity.success).toBe(true);
-    expect(resEntity.target).toBe('knowledge');
+    const resEntity = await promoteApprovedClaimToKnowledge(entityClaim, mockKnowledge as any, companionId);
+    expect(resEntity).toBe(true);
 
-    const resEvent = await runtime.approveProposal(eventClaim.id, { companionId });
-    expect(resEvent.success).toBe(true);
-    expect(resEvent.target).toBe('knowledge');
+    const resEvent = await promoteApprovedClaimToKnowledge(eventClaim, mockKnowledge as any, companionId);
+    expect(resEvent).toBe(true);
 
-    const resTask = await runtime.approveProposal(taskClaim.id, { companionId });
-    expect(resTask.success).toBe(true);
-    expect(resTask.target).toBe('knowledge');
+    const resTask = await promoteApprovedClaimToKnowledge(taskClaim, mockKnowledge as any, companionId);
+    expect(resTask).toBe(true);
 
     // 3. Verify persistent commit to sovereign Life DB in SQLite
     const entities = db.getEntities(companionId);
@@ -1047,11 +1055,9 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
   it('updates companion identity name dynamically when companion naming claim or directive is approved', async () => {
     const companionId = 'dynamic-companion';
     const db = new SiduriDatabase({ dbPath: ':memory:' });
-    const memory = createMemoryOrgan(db);
     const self = createSelfRepository(db);
 
     const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
-      memory,
       self,
     });
     await runtime.initialize();
@@ -1061,15 +1067,16 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     expect(initialIdentity?.name || 'Siduri').toBe('Siduri');
 
     // 1. Propose and approve claim with subject "assistant" and predicate "name"
-    const nameClaim = await memory.proposeClaim({
+    const nameClaim = {
+      id: 'claim-name-1',
       companionId,
       subject: 'assistant',
       predicate: 'name',
       value: 'Athena',
       claimType: 'semantic',
-    } as any);
+    };
 
-    await runtime.approveProposal(nameClaim.id, { companionId });
+    await promoteApprovedClaimToSelf(nameClaim, self, companionId);
     const identityAfterClaim = await self.getIdentity(companionId);
     expect(identityAfterClaim?.name).toBe('Athena');
 
