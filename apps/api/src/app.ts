@@ -531,7 +531,40 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     return res.json({ success: true, interrupted: true, reason });
   });
 
-  // PROPOSALS GETTERS (RFC VX-26-13: routed through self)
+  // SELF DIRECTIVES & PROPOSALS (RFC VX-26-13: Primitive 1)
+  app.get('/self/directives', requireAuth, async (req, res) => {
+    const id = req.query.id as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    try {
+      if (runtime.self && typeof (runtime.self as any).getActiveDirectives === 'function') {
+        const directives = typeof (runtime.self as any).getAllDirectives === 'function'
+          ? await (runtime.self as any).getAllDirectives(id)
+          : await (runtime.self as any).getActiveDirectives(id);
+        return res.json({ directives });
+      }
+      res.json({ directives: [] });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/self/proposals', requireAuth, async (req, res) => {
+    const id = req.query.id as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    try {
+      if (runtime.self && typeof (runtime.self as any).getPendingDirectives === 'function') {
+        const proposals = await (runtime.self as any).getPendingDirectives(id);
+        return res.json({ proposals });
+      }
+      res.json({ proposals: [] });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // PROPOSALS GETTERS (RFC VX-26-13: routed through self, legacy compatibility aliases)
   app.get('/memory/proposals', requireAuth, async (req, res) => {
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
@@ -930,7 +963,67 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  // BEHAVIORAL DIRECTIVE MUTATIONS (RFC VX-26-13: Sovereign Directives via Self)
+  // SELF DIRECTIVE MUTATIONS (RFC VX-26-13: Primitive 1)
+  app.post('/self/directives/approve', requireAuth, async (req, res) => {
+    const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.self) return res.status(400).json({ error: "Self organ not configured" });
+    try {
+      let name: string | undefined;
+      if (typeof (runtime as any).approveDirective === 'function') {
+        const bRes = await (runtime as any).approveDirective(req.body.id, { companionId: id });
+        name = bRes?.name;
+      } else if (runtime.self && typeof (runtime.self as any).approveDirective === 'function') {
+        await (runtime.self as any).approveDirective(req.body.id, id);
+      }
+      if (!name && runtime.self && typeof (runtime.self as any).getIdentity === 'function') {
+        try {
+          const ident = await (runtime.self as any).getIdentity(id);
+          name = ident?.name;
+        } catch {}
+      }
+      res.json({ approved: true, status: 'active', name });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/self/directives/reject', requireAuth, async (req, res) => {
+    const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.self) return res.status(400).json({ error: "Self organ not configured" });
+    try {
+      if (typeof (runtime as any).rejectDirective === 'function') {
+        await (runtime as any).rejectDirective(req.body.id, { companionId: id });
+      } else if (runtime.self && typeof (runtime.self as any).rejectDirective === 'function') {
+        await (runtime.self as any).rejectDirective(req.body.id, id);
+      }
+      res.json({ rejected: true, status: 'rejected' });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/self/directives/revoke', requireAuth, async (req, res) => {
+    const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.self) return res.status(400).json({ error: "Self organ not configured" });
+    try {
+      if (typeof (runtime as any).revokeDirective === 'function') {
+        await (runtime as any).revokeDirective(req.body.id, { companionId: id });
+      } else if (runtime.self && typeof (runtime.self as any).revokeDirective === 'function') {
+        await (runtime.self as any).revokeDirective(req.body.id, id);
+      }
+      res.json({ revoked: true, status: 'revoked' });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // BEHAVIORAL DIRECTIVE MUTATIONS (RFC VX-26-13: Sovereign Directives via Self, compatibility aliases)
   app.post('/memory/behavioral/approve', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);

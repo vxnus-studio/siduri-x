@@ -8,6 +8,7 @@ import {
   RequestContext,
   SelfRepository,
   LifeDatabase,
+  ArchiveLedger,
   EpisodicMemoryStore,
   EKnowledgeOrgan,
 } from './index';
@@ -24,6 +25,7 @@ export interface ContextRetrievalParams {
   memoryQueries?: string[];
   isSelfIdentityRequest?: boolean;
   knowledge?: KnowledgeOrgan | LifeDatabase;
+  archive?: ArchiveLedger;
   memory?: EpisodicMemoryStore;
   self?: SelfRepository;
   externalKnowledge?: EKnowledgeOrgan | KnowledgeOrgan;
@@ -60,6 +62,7 @@ export async function retrieveRuntimeContext(
     memoryQueries,
     isSelfIdentityRequest,
     knowledge,
+    archive,
     memory,
     self,
     externalKnowledge,
@@ -137,7 +140,7 @@ export async function retrieveRuntimeContext(
         })
       : Promise.resolve([]),
 
-    // Stream B: Episodic Memory / Verified Claims (SQLite FTS5 with Identity Fallback)
+    // Stream B: Interaction Archive / Verified Claims (FTS5 search with fallback)
     memory && typeof (memory as any).searchClaims === 'function'
       ? (async () => {
           try {
@@ -168,6 +171,26 @@ export async function retrieveRuntimeContext(
           } catch (e: any) {
             console.error('[SiduriRuntime] Memory search failed:', e.message);
             subsystemDiagnostics['memory_claims'] = `UNAVAILABLE: ${e.message}`;
+            return [];
+          }
+        })()
+      : archive && typeof archive.searchEvents === 'function'
+      ? (async () => {
+          try {
+            const events = await archive.searchEvents!(companionId, memoryQueryToRun, 5);
+            return (events || []).map((evt: any) => ({
+              id: evt.id,
+              companionId: evt.companionId,
+              subject: evt.sourceType,
+              predicate: 'event',
+              value: typeof evt.payload === 'string' ? evt.payload : JSON.stringify(evt.payload),
+              status: 'approved',
+              provenance: 'archive_ledger',
+              claimType: 'event',
+            })) as any[];
+          } catch (e: any) {
+            console.error('[SiduriRuntime] Archive search failed:', e.message);
+            subsystemDiagnostics['archive'] = `UNAVAILABLE: ${e.message}`;
             return [];
           }
         })()

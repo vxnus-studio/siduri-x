@@ -461,6 +461,7 @@ export async function runCliReset(targetDir?: string): Promise<void> {
     }
 
     const tables = [
+      'archive_events',
       'memory_claims',
       'memory_events',
       'self_directives',

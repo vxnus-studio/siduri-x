@@ -24,7 +24,9 @@ for (const rel of targetPaths) {
     try {
       const db = new DatabaseSync(fullPath);
       const tables = [
-        // Memory
+        // Archive
+        'archive_events',
+        // Memory (Legacy)
         'memory_claims',
         'memory_events',
         // Self

@@ -433,13 +433,18 @@ export class SiduriDatabase {
     }
 
     try {
-      // Reconcile creator claims that may have been recorded before origin dual-promotion
-      const creatorClaims = this.db.prepare(`
-        SELECT * FROM memory_claims
-        WHERE predicate = 'stated_relationship'
-          AND LOWER(value) LIKE '%creator%'
-          AND LOWER(status) = 'approved'
-      `).all() as any[];
+      // Reconcile legacy creator claims if memory_claims table still exists from earlier versions
+      const hasMemoryClaims = this.db.prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='memory_claims'"
+      ).get();
+
+      if (hasMemoryClaims) {
+        const creatorClaims = this.db.prepare(`
+          SELECT * FROM memory_claims
+          WHERE predicate = 'stated_relationship'
+            AND LOWER(value) LIKE '%creator%'
+            AND LOWER(status) = 'approved'
+        `).all() as any[];
 
       for (const claim of creatorClaims) {
         const identity = this.db.prepare(`SELECT * FROM self_identity WHERE companion_id = ?`).get(claim.companion_id) as any;
@@ -457,6 +462,7 @@ export class SiduriDatabase {
         if (rel && (rel.role !== 'creator' || rel.stance !== 'familiar_loyal')) {
           this.db.prepare(`UPDATE self_relationships SET role = 'creator', stance = 'familiar_loyal', trust_score = 1.0 WHERE companion_id = ? AND entity_id = ?`).run(claim.companion_id, claim.subject);
         }
+      }
       }
     } catch {
       // Best-effort auto-reconciliation

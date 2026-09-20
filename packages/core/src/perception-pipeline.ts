@@ -200,6 +200,7 @@ export const contextRetrievalStage: PerceptionPipelineStage = async (context) =>
     memoryQueries: context.intent.memoryQueries,
     isSelfIdentityRequest: context.intent.isSelfIdentityRequest,
     knowledge: context.organs.knowledge,
+    archive: context.organs.archive,
     memory: context.organs.memory,
     self: context.organs.self,
     externalKnowledge: context.organs.externalKnowledge,
