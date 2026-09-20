@@ -1,4 +1,4 @@
-import { Message } from './index';
+import { Message, DialogueHistory } from './index';
 
 export interface SessionHistoryOptions {
   maxSessions?: number;
@@ -7,9 +7,9 @@ export interface SessionHistoryOptions {
 
 /**
  * Manages conversation history scoped by session key to prevent cross-session
- * and cross-channel memory/conversation leakage.
+ * and cross-channel dialogue leakage. Implements the DialogueHistory primitive (RFC VX-26-13).
  */
-export class SessionHistoryManager {
+export class SessionHistoryManager implements DialogueHistory {
   private readonly sessions = new Map<string, Message[]>();
   private readonly maxSessions: number;
   private readonly maxMessagesPerSession: number;

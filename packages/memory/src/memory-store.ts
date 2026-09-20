@@ -217,11 +217,20 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return replacement;
   }
 
+  /**
+   * @deprecated RFC VX-26-13: Deconstructing Memory.
+   * Behavioral directives are owned sovereignly by `SelfRepository` in `@sidurijs/self`.
+   * Retained on SqliteMemoryStore for backwards compatibility.
+   */
   async getDirectives(companionId?: string): Promise<BehaviorDirective[]> {
     const targetCompanionId = companionId || this.activeCompanionId;
     return this.db.getActiveDirectives(targetCompanionId) as any;
   }
 
+  /**
+   * @deprecated RFC VX-26-13: Deconstructing Memory.
+   * Behavioral directives are owned sovereignly by `SelfRepository` in `@sidurijs/self`.
+   */
   async getAllDirectives(companionId?: string): Promise<BehaviorDirective[]> {
     const targetCompanionId = companionId || this.activeCompanionId;
     if (typeof (this.db as any).getAllDirectives === 'function') {
@@ -230,6 +239,10 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return this.db.getActiveDirectives(targetCompanionId) as any;
   }
 
+  /**
+   * @deprecated RFC VX-26-13: Deconstructing Memory.
+   * Directives should be committed directly to `SelfRepository.commitDirectives`.
+   */
   async proposeDirective(
     directiveData: Omit<BehaviorDirective, 'id' | 'status' | 'companionId'> & { companionId?: string }
   ): Promise<BehaviorDirective> {
@@ -248,6 +261,10 @@ export class SqliteMemoryStore implements EpisodicMemoryStore, MemoryOrgan {
     return directive;
   }
 
+  /**
+   * @deprecated RFC VX-26-13: Deconstructing Memory.
+   * Directives should be approved directly via `SelfRepository.approveDirective`.
+   */
   async approveDirective(id: string, companionId?: string): Promise<void> {
     const existing = (this.db as any).getDirective ? (this.db as any).getDirective(id) : undefined;
     const targetCompanionId = companionId || existing?.companionId || (this.activeCompanionId !== 'default' ? this.activeCompanionId : undefined);

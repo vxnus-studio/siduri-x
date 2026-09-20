@@ -1,6 +1,7 @@
 import {
   BrainOrgan,
   MemoryOrgan,
+  ArchiveLedger,
   VoiceOrgan,
   KnowledgeOrgan,
   VisionOrgan,
@@ -60,6 +61,7 @@ export interface PerceptionPipelineContext {
   organs: {
     brain?: BrainOrgan;
     memory?: MemoryOrgan;
+    archive?: ArchiveLedger;
     voice?: VoiceOrgan | ExperienceAdapter;
     knowledge?: KnowledgeOrgan;
     vision?: VisionOrgan;
@@ -289,6 +291,7 @@ export const memorySettlementStage: PerceptionPipelineStage = async (context) =>
     role: context.input.role,
     requestContext: context.input.requestContext,
     memory: context.organs.memory,
+    archive: context.organs.archive,
     self: context.organs.self,
     explicitTeaching: context.intent.explicitTeaching,
     plan: context.plan,

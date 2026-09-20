@@ -1,7 +1,7 @@
 {
-  "name": "@sidurijs/memory",
+  "name": "@sidurijs/archive",
   "version": "1.0.0",
-  "description": "Siduri Memory domain: Pure SQLite FTS5 Episodic Memory Store and Claim Verification",
+  "description": "Siduri Archive domain: Sovereign cold append-only interaction audit ledger and FTS5 search (RFC VX-26-13)",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,13 +12,16 @@
       "default": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
     "test": "jest --config jest.config.json"
   },
   "dependencies": {
-    "@sidurijs/archive": "workspace:*",
     "@sidurijs/core": "workspace:*"
   },
   "devDependencies": {
@@ -37,6 +40,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/vxnus-studio/siduri-x",
-    "directory": "packages/memory"
+    "directory": "packages/archive"
   }
 }

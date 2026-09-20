@@ -190,6 +190,57 @@ export interface MemoryQueryOptions {
   [key: string]: unknown;
 }
 
+// --- Sovereign Archive Domain (RFC VX-26-13: Deconstructing Memory) ---
+
+export interface ArchiveEvent {
+  id: string;
+  companionId: string;
+  sourceType: string;
+  occurredAt: string;
+  payload: Record<string, unknown>;
+}
+
+export interface ArchiveQueryOptions {
+  limit?: number;
+  sourceType?: string;
+  since?: string;
+  until?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Sovereign interaction archive: cold, append-only interaction audit ledger and full-text search.
+ * Replaces the overloaded 'Memory' metaphor for audit trails, past tool runs, and historical interaction logs.
+ */
+export interface ArchiveLedger {
+  recordEvent(event: ArchiveEvent | SourceEvent): Promise<ArchiveEvent | SourceEvent>;
+  getRecentEvents(companionId: string, limit?: number): Promise<ArchiveEvent[]>;
+  getEvent?(id: string): Promise<ArchiveEvent | undefined>;
+  searchEvents?(companionId: string, query: string, limit?: number): Promise<ArchiveEvent[]>;
+  close?(): void;
+}
+
+export type ArchiveStore = ArchiveLedger;
+export type EpisodicLedger = ArchiveLedger;
+
+/**
+ * Active dialogue continuity interface for working conversational context.
+ */
+export interface DialogueHistory {
+  getHistory(sessionKey?: string): Message[];
+  setHistory(sessionKey: string, history: Message[]): void;
+  append(sessionKey: string, message: Message): void;
+  clear(sessionKey?: string): void;
+}
+
+/**
+ * @deprecated The 'Memory' metaphor has been deconstructed into sovereign primitives per RFC VX-26-13:
+ * - Companion identity, traits, & directives -> `SelfRepository` (@sidurijs/self)
+ * - User life state (hardware, schedules, finances) -> `LifeDatabase` (@sidurijs/knowledge)
+ * - Working dialogue continuity -> `DialogueHistory` / `SessionHistoryManager`
+ * - Audited cold history & search -> `ArchiveLedger` (@sidurijs/archive)
+ * Retained for backwards compatibility.
+ */
 export interface MemoryOrgan {
   initialize(companionId: string): Promise<void>;
   proposeClaim(claim: Omit<Claim, 'id' | 'status' | 'companionId'>): Promise<Claim>;

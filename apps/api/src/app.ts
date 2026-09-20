@@ -577,8 +577,14 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.query.id as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
-    if (!runtime.memory) return res.json({ directives: [] });
     try {
+      if (runtime.self && typeof (runtime.self as any).getActiveDirectives === 'function') {
+        const directives = typeof (runtime.self as any).getAllDirectives === 'function'
+          ? await (runtime.self as any).getAllDirectives(id)
+          : await (runtime.self as any).getActiveDirectives(id);
+        return res.json({ directives });
+      }
+      if (!runtime.memory) return res.json({ directives: [] });
       const directives = typeof (runtime.memory as any).getAllDirectives === 'function'
         ? await (runtime.memory as any).getAllDirectives()
         : await runtime.memory.getDirectives();
@@ -940,18 +946,20 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
-  // MEMORY MUTATIONS - BEHAVIORAL
+  // BEHAVIORAL DIRECTIVE MUTATIONS (RFC VX-26-13: Sovereign Directives via Self)
   app.post('/memory/behavioral/approve', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
-    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
+    if (!runtime.self && !runtime.memory) return res.status(400).json({ error: "Neither self nor memory organ configured" });
     try {
       let name: string | undefined;
       if (typeof (runtime as any).approveDirective === 'function') {
         const bRes = await (runtime as any).approveDirective(req.body.id, { companionId: id });
         name = bRes?.name;
-      } else {
+      } else if (runtime.self && typeof (runtime.self as any).approveDirective === 'function') {
+        await (runtime.self as any).approveDirective(req.body.id, id);
+      } else if (runtime.memory) {
         await runtime.memory.approveDirective(req.body.id);
       }
       if (!name && runtime.self && typeof (runtime.self as any).getIdentity === 'function') {
@@ -970,11 +978,13 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
-    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
+    if (!runtime.self && !runtime.memory) return res.status(400).json({ error: "Neither self nor memory organ configured" });
     try {
       if (typeof (runtime as any).rejectDirective === 'function') {
         await (runtime as any).rejectDirective(req.body.id, { companionId: id });
-      } else {
+      } else if (runtime.self && typeof (runtime.self as any).rejectDirective === 'function') {
+        await (runtime.self as any).rejectDirective(req.body.id, id);
+      } else if (runtime.memory) {
         await runtime.memory.rejectDirective(req.body.id);
       }
       res.json({ rejected: true, status: 'rejected' });
@@ -987,11 +997,13 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
-    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
+    if (!runtime.self && !runtime.memory) return res.status(400).json({ error: "Neither self nor memory organ configured" });
     try {
       if (typeof (runtime as any).revokeDirective === 'function') {
         await (runtime as any).revokeDirective(req.body.id, { companionId: id });
-      } else {
+      } else if (runtime.self && typeof (runtime.self as any).revokeDirective === 'function') {
+        await (runtime.self as any).revokeDirective(req.body.id, id);
+      } else if (runtime.memory) {
         await runtime.memory.revokeDirective(req.body.id);
       }
       res.json({ revoked: true, status: 'revoked' });
@@ -1004,10 +1016,60 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
     const runtime = runtimes.get(id);
     if (!runtime) return res.status(404).json({ error: "Companion not found" });
-    if (!runtime.memory) return res.status(400).json({ error: "Memory organ not configured" });
+    if (!runtime.self && !runtime.memory) return res.status(400).json({ error: "Neither self nor memory organ configured" });
     try {
-      await runtime.memory.disableDirective(req.body.id);
+      if (runtime.self && typeof (runtime.self as any).disableDirective === 'function') {
+        await (runtime.self as any).disableDirective(req.body.id, id);
+      } else if (runtime.memory) {
+        await runtime.memory.disableDirective(req.body.id);
+      }
       res.json({ disabled: true, status: 'disabled' });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // ARCHIVE AUDIT ENDPOINTS (RFC VX-26-13: Primitive 5)
+  app.get('/archive/events', requireAuth, async (req, res) => {
+    const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    const limit = parseInt(req.query.limit as string) || 50;
+    try {
+      if (runtime.archive && typeof runtime.archive.getRecentEvents === 'function') {
+        const events = await runtime.archive.getRecentEvents(id, limit);
+        return res.json({ events });
+      }
+      if (runtime.db && typeof (runtime.db as any).getRecentArchiveEvents === 'function') {
+        const events = (runtime.db as any).getRecentArchiveEvents(id, limit);
+        return res.json({ events });
+      }
+      if (runtime.memory && typeof (runtime.memory as any).getRecentEvents === 'function') {
+        const events = await (runtime.memory as any).getRecentEvents(id, limit);
+        return res.json({ events });
+      }
+      res.json({ events: [] });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/archive/search', requireAuth, async (req, res) => {
+    const id = (req.query.id as string) || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    const query = (req.query.q as string) || '';
+    const limit = parseInt(req.query.limit as string) || 50;
+    try {
+      if (runtime.archive && typeof runtime.archive.searchEvents === 'function') {
+        const results = await runtime.archive.searchEvents(id, query, limit);
+        return res.json({ results });
+      }
+      if (runtime.db && typeof (runtime.db as any).searchArchiveEvents === 'function') {
+        const results = (runtime.db as any).searchArchiveEvents(id, query, limit);
+        return res.json({ results });
+      }
+      res.json({ results: [] });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }

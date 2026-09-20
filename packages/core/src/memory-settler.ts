@@ -1,5 +1,6 @@
 import {
   MemoryOrgan,
+  ArchiveLedger,
   SelfRepository,
   Claim,
   BehaviorDirective,
@@ -16,6 +17,7 @@ export interface MemorySettlementParams {
   role: 'OWNER' | 'VIEWER' | 'OPERATOR';
   requestContext: RequestContext;
   memory?: MemoryOrgan;
+  archive?: ArchiveLedger;
   self?: SelfRepository;
   explicitTeaching: ReturnType<typeof extractDeterministicTeaching>;
   plan: ResponsePlan;
@@ -69,13 +71,14 @@ export async function settleMemoryProposals(
     role,
     requestContext,
     memory,
+    archive,
     self,
     explicitTeaching,
     plan,
     effectiveMode,
   } = params;
 
-  // Zero Memory Drift: Casual mode completely suppresses all proposal generation
+  // Zero Drift: Casual mode completely suppresses all proposal generation
   const mode = effectiveMode || requestContext.mode || 'hybrid';
   if (mode === 'casual') {
     return {
@@ -95,24 +98,30 @@ export async function settleMemoryProposals(
     Boolean(plan.behaviorProposals?.length);
 
   if (
-    memory &&
-    (hasTeaching || hasPlanProposals) &&
-    typeof memory.addSourceEvent === 'function'
+    (archive && typeof archive.recordEvent === 'function') ||
+    (memory && typeof memory.addSourceEvent === 'function')
   ) {
-    const sourceEvent: SourceEvent = {
-      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      sourceType: 'user_chat_explicit',
-      occurredAt: new Date().toISOString(),
-      payload: {
-        message: perceivedText,
-        role,
-        companionId,
-        actorId: requestContext.actor?.actorId || 'owner-user',
-        channel: requestContext.conversation?.channel || 'direct',
-      },
-    };
-    await memory.addSourceEvent(sourceEvent);
-    sourceEventId = sourceEvent.id;
+    if (hasTeaching || hasPlanProposals) {
+      const sourceEvent: SourceEvent = {
+        id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        sourceType: 'user_chat_explicit',
+        occurredAt: new Date().toISOString(),
+        payload: {
+          message: perceivedText,
+          role,
+          companionId,
+          actorId: requestContext.actor?.actorId || 'owner-user',
+          channel: requestContext.conversation?.channel || 'direct',
+        },
+      };
+      if (archive && typeof archive.recordEvent === 'function') {
+        await archive.recordEvent(sourceEvent);
+      }
+      if (memory && typeof memory.addSourceEvent === 'function') {
+        await memory.addSourceEvent(sourceEvent);
+      }
+      sourceEventId = sourceEvent.id;
+    }
   }
 
   // Persist deterministic memory proposals as PENDING if memory is available
@@ -246,3 +255,8 @@ export async function settleMemoryProposals(
     behavioralProposalReceipts,
   };
 }
+
+/**
+ * Canonical RFC VX-26-13 proposal settlement for interaction cycles.
+ */
+export const settleInteractionProposals = settleMemoryProposals;

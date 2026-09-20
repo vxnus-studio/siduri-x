@@ -28,6 +28,7 @@ export function runReleaseCheck(repoRoot: string = path.resolve(__dirname, '../.
     { name: '@sidurijs/core', dir: 'packages/core', isOrgan: false, tarName: `sidurijs-core-${getPkgVer('packages/core')}.tgz` },
     { name: '@sidurijs/self', dir: 'packages/self', isOrgan: false, tarName: `sidurijs-self-${getPkgVer('packages/self')}.tgz` },
     { name: '@sidurijs/knowledge', dir: 'packages/knowledge', isOrgan: false, tarName: `sidurijs-knowledge-${getPkgVer('packages/knowledge')}.tgz` },
+    { name: '@sidurijs/archive', dir: 'packages/archive', isOrgan: false, tarName: `sidurijs-archive-${getPkgVer('packages/archive')}.tgz` },
     { name: '@sidurijs/memory', dir: 'packages/memory', isOrgan: false, tarName: `sidurijs-memory-${getPkgVer('packages/memory')}.tgz` },
     { name: '@sidurijs/brain', dir: 'packages/organs/brain', isOrgan: true, tarName: `sidurijs-brain-${getPkgVer('packages/organs/brain')}.tgz` },
     { name: '@sidurijs/ear', dir: 'packages/organs/ear', isOrgan: true, tarName: `sidurijs-ear-${getPkgVer('packages/organs/ear')}.tgz` },

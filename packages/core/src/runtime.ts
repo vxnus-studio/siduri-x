@@ -1,6 +1,7 @@
 import {
   BrainOrgan,
   MemoryOrgan,
+  ArchiveLedger,
   VoiceOrgan,
   KnowledgeOrgan,
   VisionOrgan,
@@ -64,6 +65,7 @@ export class SiduriRuntime {
   get organs(): RuntimeOrgans { return this.container.organs; }
   get brain(): BrainOrgan | undefined { return this.container.brain; }
   get memory(): MemoryOrgan | undefined { return this.container.memory; }
+  get archive(): ArchiveLedger | undefined { return this.container.archive; }
   get voice(): VoiceOrgan | undefined { return this.container.voice as any; }
   get knowledge(): KnowledgeOrgan | undefined { return this.container.knowledge; }
   get vision(): VisionOrgan | undefined { return this.container.vision; }
@@ -183,8 +185,10 @@ export class SiduriRuntime {
   }
 
   /**
-   * Approves a memory proposal or behavior proposal and canonically promotes
-   * Self-affecting mutations to SelfRepository.
+   * Approves a proposal using Direct Domain Routing (RFC VX-26-13):
+   * - Behavioral & relational directives route directly to SelfRepository.
+   * - Life state facts route directly to Knowledge / Life DB.
+   * - Legacy memory claims are promoted as a backwards-compatibility fallback.
    */
   async approveProposal(
     proposalId: string,
@@ -192,12 +196,33 @@ export class SiduriRuntime {
   ): Promise<{ success: boolean; target?: string; name?: string }> {
     const companionId = options?.companionId || this.id;
 
-    // 1. Approve claim in memory if present
+    // 1. Direct Domain Routing (RFC VX-26-13): If proposalId is explicitly a directive ID, route directly to Self
+    if (proposalId.startsWith('dir-') && this.self && typeof (this.self as any).approveDirective === 'function') {
+      try {
+        const approved = await (this.self as any).approveDirective(proposalId, companionId);
+        if (approved !== false) {
+          if (this.memory && typeof (this.memory as any).approveDirective === 'function') {
+            await (this.memory as any).approveDirective(proposalId, companionId).catch(() => {});
+          }
+          const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
+          this.log('info', 'truth_gate', `Approved behavioral directive proposal '${proposalId}' directly in Self`, {
+            proposalId,
+            companionId,
+            target: 'self',
+          });
+          return { success: true, target: 'self', name: identity?.name };
+        }
+      } catch {
+        // Fall through to claim check
+      }
+    }
+
+    // 2. Approve claim in memory if present (legacy fallback)
     if (this.memory && typeof this.memory.approveClaim === 'function') {
       await this.memory.approveClaim(proposalId);
     }
 
-    // 2. Fetch claim
+    // 3. Fetch claim
     let claim: Claim | undefined;
     if (this.memory) {
       const claims = typeof (this.memory as any).getAllClaims === 'function'
@@ -210,7 +235,7 @@ export class SiduriRuntime {
       }
     }
 
-    // 3. Promote to Knowledge / Life DB if claim is Knowledge-affecting
+    // 4. Promote to Knowledge / Life DB if claim is Knowledge-affecting
     if (claim && this.container.knowledge) {
       const promotedToKnowledge = await promoteApprovedClaimToKnowledge(
         claim,
@@ -229,7 +254,7 @@ export class SiduriRuntime {
       }
     }
 
-    // 4. Promote to SelfRepository if claim is Self-affecting
+    // 5. Promote to SelfRepository if claim is Self-affecting
     if (claim && this.self) {
       await promoteApprovedClaimToSelf(claim, this.self, companionId);
       const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
@@ -243,17 +268,22 @@ export class SiduriRuntime {
       return { success: true, target: 'self', name: identity?.name };
     }
 
-    // 5. Also check if this proposal ID is a behavioral directive in Self
+    // 6. If not a claim, check if this proposal ID is a behavioral directive in Self
     if (this.self && typeof (this.self as any).approveDirective === 'function') {
       try {
-        await (this.self as any).approveDirective(proposalId, companionId);
-        const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
-        this.log('info', 'truth_gate', `Approved behavioral directive proposal '${proposalId}'`, {
-          proposalId,
-          companionId,
-          target: 'self',
-        });
-        return { success: true, target: 'self', name: identity?.name };
+        const approved = await (this.self as any).approveDirective(proposalId, companionId);
+        if (approved !== false) {
+          if (this.memory && typeof (this.memory as any).approveDirective === 'function') {
+            await (this.memory as any).approveDirective(proposalId, companionId).catch(() => {});
+          }
+          const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
+          this.log('info', 'truth_gate', `Approved behavioral directive proposal '${proposalId}' directly in Self`, {
+            proposalId,
+            companionId,
+            target: 'self',
+          });
+          return { success: true, target: 'self', name: identity?.name };
+        }
       } catch {
         // Not a pending directive or already active
       }
@@ -426,7 +456,10 @@ export class SiduriRuntime {
 }
 
 /**
- * Canonically promotes an approved Claim into SelfRepository state.
+ * @deprecated RFC VX-26-13: Deconstructing Memory.
+ * Prefer Direct Domain Routing: behavioral directives, identity mutations, and relational
+ * stances should route directly to SelfRepository (`commitDirectives`, `setIdentity`, `updateRelationship`)
+ * rather than being staged in memory_claims and promoted downstream.
  */
 export async function promoteApprovedClaimToSelf(
   claim: any,
@@ -664,7 +697,9 @@ export function isKnowledgeAffectingClaim(claim: any): boolean {
 }
 
 /**
- * Canonically promotes an approved Claim into Knowledge / LifeDatabase state.
+ * @deprecated RFC VX-26-13: Deconstructing Memory.
+ * Prefer Direct Domain Routing: user life facts (entities, inventory, finances, schedule, preferences)
+ * should route directly to Knowledge / LifeDatabase rather than being staged as generic memory claims.
  */
 export async function promoteApprovedClaimToKnowledge(
   claim: any,

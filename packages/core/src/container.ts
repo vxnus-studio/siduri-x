@@ -1,6 +1,7 @@
 import {
   BrainOrgan,
   MemoryOrgan,
+  ArchiveLedger,
   VoiceOrgan,
   KnowledgeOrgan,
   VisionOrgan,
@@ -48,6 +49,7 @@ export interface SiduriRuntimeConfig {
 export interface RuntimeOrgans {
   brain?: BrainOrgan;
   memory?: MemoryOrgan;
+  archive?: ArchiveLedger;
   voice?: VoiceOrgan | ExperienceAdapter;
   knowledge?: KnowledgeOrgan;
   vision?: VisionOrgan;
@@ -113,6 +115,7 @@ export class CompanionContainer {
   // Direct organ accessors
   get brain() { return this.organs.brain; }
   get memory() { return this.organs.memory; }
+  get archive() { return this.organs.archive; }
   get voice() { return this.organs.voice; }
   get knowledge() { return this.organs.knowledge; }
   get vision() { return this.organs.vision; }

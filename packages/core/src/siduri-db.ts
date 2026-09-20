@@ -133,14 +133,16 @@ export interface LifeTask {
   updatedAt?: string;
 }
 
-// --- Memory Domain Types ---
-export interface EpisodicEvent {
+// --- Archive & Episodic Event Types ---
+export interface ArchiveEvent {
   id: string;
   companionId: string;
-  sourceType: 'chat_turn' | 'tool_result' | 'sensory';
+  sourceType: string;
   occurredAt: string;
   payload: Record<string, unknown>;
 }
+
+export type EpisodicEvent = ArchiveEvent;
 
 export interface MemoryClaim {
   id: string;
@@ -336,7 +338,40 @@ export class SiduriDatabase {
       CREATE INDEX IF NOT EXISTS idx_life_events_comp ON life_events(companion_id, stream, timestamp);
       CREATE INDEX IF NOT EXISTS idx_life_tasks_comp ON life_tasks(companion_id, status);
 
-      -- Memory Tables
+      -- Archive Tables (RFC VX-26-13: Audited interaction ledger and cold search)
+      CREATE TABLE IF NOT EXISTS archive_events (
+        id TEXT PRIMARY KEY,
+        companion_id TEXT NOT NULL,
+        source_type TEXT NOT NULL,
+        occurred_at TEXT DEFAULT (datetime('now')),
+        payload TEXT NOT NULL
+      );
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS archive_search USING fts5(
+        source_type,
+        payload,
+        content='archive_events',
+        content_rowid='rowid'
+      );
+
+      CREATE TRIGGER IF NOT EXISTS archive_events_ai AFTER INSERT ON archive_events BEGIN
+        INSERT INTO archive_search(rowid, source_type, payload)
+        VALUES (new.rowid, new.source_type, new.payload);
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS archive_events_ad AFTER DELETE ON archive_events BEGIN
+        INSERT INTO archive_search(archive_search, rowid, source_type, payload)
+        VALUES('delete', old.rowid, old.source_type, old.payload);
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS archive_events_au AFTER UPDATE ON archive_events BEGIN
+        INSERT INTO archive_search(archive_search, rowid, source_type, payload)
+        VALUES('delete', old.rowid, old.source_type, old.payload);
+        INSERT INTO archive_search(rowid, source_type, payload)
+        VALUES (new.rowid, new.source_type, new.payload);
+      END;
+
+      -- Memory Tables (Retained for backwards compatibility)
       CREATE TABLE IF NOT EXISTS memory_events (
         id TEXT PRIMARY KEY,
         companion_id TEXT NOT NULL,
@@ -699,7 +734,7 @@ export class SiduriDatabase {
       }
     }
 
-    // Single-value directive canonical supersession (e.g. role, language, response style)
+    // Single-value directive canonical supersession and direct Self mutation (RFC VX-26-13)
     const roleMatch = (row.directive || '').match(/^acknowledge role as\s+([^"”'.]+)/i);
     if (roleMatch) {
       const existingDirectives = this.getAllDirectives(companionId || 'default');
@@ -713,6 +748,20 @@ export class SiduriDatabase {
           this.supersedeDirective(d.id, companionId);
         }
       }
+      const newRole = roleMatch[1].trim();
+      if (newRole) {
+        const targetId = companionId || row.companion_id || 'default';
+        const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
+          companionId: targetId,
+          name: '',
+          version: '1.0.0',
+          updatedAt: new Date().toISOString(),
+        };
+        currentIdentity.role = newRole;
+        currentIdentity.archetype = newRole;
+        currentIdentity.updatedAt = new Date().toISOString();
+        this.setIdentity(currentIdentity);
+      }
     }
 
     // Companion name directive detection: "Address companion as X", "Your name is X", "Call yourself X", "Acknowledge name as X"
@@ -723,7 +772,7 @@ export class SiduriDatabase {
       const newCompanionName = compNameMatch[1].trim();
       if (newCompanionName) {
         const targetId = companionId || row.companion_id || 'default';
-        const currentIdentity = this.getIdentity(targetId) || {
+        const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
           companionId: targetId,
           name: '',
           version: '1.0.0',
@@ -732,6 +781,91 @@ export class SiduriDatabase {
         currentIdentity.name = newCompanionName;
         currentIdentity.updatedAt = new Date().toISOString();
         this.setIdentity(currentIdentity);
+      }
+    }
+
+    // Relationship directive direct domain routing:
+    // "Recognize <actor> stated relationship as <role>", "Recognize <actor> relationship as <role>", "Recognize <actor> as <role>"
+    const relMatch = (row.directive || '').match(
+      /^(?:recognize\s+(\S+)\s+(?:stated\s+)?relationship\s+as|recognize\s+(\S+)\s+as)\s+([^"”'.]+)/i
+    );
+    if (relMatch) {
+      const rawActor = (relMatch[1] || relMatch[2] || '').trim();
+      const roleOrStance = (relMatch[3] || '').trim();
+      if (rawActor && roleOrStance) {
+        const targetId = companionId || row.companion_id || 'default';
+        const isCreator = roleOrStance.toLowerCase().includes('creator');
+        const existingRel = this.getRelationship(targetId, rawActor);
+        const stance = isCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
+        const trustScore = isCreator ? 1.0 : (existingRel?.trustScore ?? 0.8);
+        const familiarity = isCreator ? 0.9 : (existingRel?.familiarity ?? 0.5);
+        const interactionConventions = isCreator
+          ? Array.from(new Set([...(existingRel?.interactionConventions || []), 'Direct communication', 'Highest administrative trust']))
+          : (existingRel?.interactionConventions || []);
+
+        this.upsertRelationship({
+          companionId: targetId,
+          entityId: rawActor,
+          entityType: 'human',
+          name: existingRel?.name,
+          affiliation: existingRel?.affiliation,
+          role: roleOrStance,
+          stance,
+          trustScore,
+          familiarity,
+          interactionConventions,
+        });
+
+        if (isCreator) {
+          const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
+            companionId: targetId,
+            name: '',
+            version: '1.0.0',
+            updatedAt: new Date().toISOString(),
+          };
+          const creatorName = existingRel?.name || (rawActor.startsWith('actor:') ? rawActor.slice(6) : rawActor);
+          currentIdentity.origin = creatorName !== 'user' && creatorName !== 'primary' ? creatorName : roleOrStance;
+          currentIdentity.updatedAt = new Date().toISOString();
+          this.setIdentity(currentIdentity);
+        }
+      }
+    }
+
+    // User name address directive direct domain routing: "Address <actor> as <name>"
+    const userAddrMatch = (row.directive || '').match(
+      /^address\s+(actor:\S+|\S+)\s+as\s+([^"”'.]+)/i
+    );
+    if (userAddrMatch) {
+      const actorId = userAddrMatch[1].trim();
+      const userName = userAddrMatch[2].trim();
+      if (actorId && userName) {
+        const targetId = companionId || row.companion_id || 'default';
+        const existingRel = this.getRelationship(targetId, actorId);
+        const isCreator = existingRel?.role === 'creator' || (existingRel?.stance === 'familiar_loyal' && existingRel?.trustScore === 1.0);
+        this.upsertRelationship({
+          companionId: targetId,
+          entityId: actorId,
+          entityType: 'human',
+          name: userName,
+          affiliation: existingRel?.affiliation,
+          role: existingRel?.role || (isCreator ? 'creator' : 'user'),
+          stance: existingRel?.stance || (isCreator ? 'familiar_loyal' : 'neutral'),
+          trustScore: existingRel?.trustScore ?? (isCreator ? 1.0 : 0.8),
+          familiarity: existingRel?.familiarity ?? (isCreator ? 0.9 : 0.5),
+          interactionConventions: existingRel?.interactionConventions || [],
+        });
+
+        if (isCreator) {
+          const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
+            companionId: targetId,
+            name: '',
+            version: '1.0.0',
+            updatedAt: new Date().toISOString(),
+          };
+          currentIdentity.origin = userName;
+          currentIdentity.updatedAt = new Date().toISOString();
+          this.setIdentity(currentIdentity);
+        }
       }
     }
 
@@ -1226,7 +1360,96 @@ export class SiduriDatabase {
   }
 
   // ==========================================
-  // Memory Domain Methods
+  // Archive Domain Methods (RFC VX-26-13: Audited interaction ledger and cold search)
+  // ==========================================
+
+  public recordArchiveEvent(event: ArchiveEvent | EpisodicEvent): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO archive_events (id, companion_id, source_type, occurred_at, payload)
+      VALUES (?, ?, ?, coalesce(?, datetime('now')), ?)
+    `);
+    stmt.run(
+      event.id,
+      event.companionId,
+      event.sourceType,
+      event.occurredAt || null,
+      typeof event.payload === 'string' ? event.payload : JSON.stringify(event.payload)
+    );
+  }
+
+  public getRecentArchiveEvents(companionId: string, limit: number = 50): ArchiveEvent[] {
+    const stmt = this.db.prepare('SELECT * FROM archive_events WHERE companion_id = ? ORDER BY occurred_at DESC LIMIT ?');
+    return stmt.all(companionId, limit).map((row: any) => ({
+      id: row.id,
+      companionId: row.companion_id,
+      sourceType: row.source_type,
+      occurredAt: row.occurred_at,
+      payload: safeJsonParse(row.payload, {})
+    }));
+  }
+
+  public getArchiveEvent(id: string): ArchiveEvent | undefined {
+    const stmt = this.db.prepare('SELECT * FROM archive_events WHERE id = ?');
+    const row = stmt.get(id) as any;
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      companionId: row.companion_id,
+      sourceType: row.source_type,
+      occurredAt: row.occurred_at,
+      payload: safeJsonParse(row.payload, {})
+    };
+  }
+
+  public searchArchiveEvents(companionId: string, query: string, limit: number = 50): ArchiveEvent[] {
+    if (!query || !query.trim()) {
+      return this.getRecentArchiveEvents(companionId, limit);
+    }
+    const cleanTokens = query
+      .replace(/[^\p{L}\p{N}\s_]/gu, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter((t) => t.length > 0)
+      .map((t) => `"${t.replace(/"/g, '""')}"`);
+
+    if (cleanTokens.length === 0) return this.getRecentArchiveEvents(companionId, limit);
+    const ftsQuery = cleanTokens.join(' OR ');
+
+    try {
+      const stmt = this.db.prepare(`
+        SELECT e.* FROM archive_events e
+        JOIN archive_search s ON e.rowid = s.rowid
+        WHERE e.companion_id = ? AND archive_search MATCH ?
+        ORDER BY rank
+        LIMIT ?
+      `);
+      return stmt.all(companionId, ftsQuery, limit).map((row: any) => ({
+        id: row.id,
+        companionId: row.companion_id,
+        sourceType: row.source_type,
+        occurredAt: row.occurred_at,
+        payload: safeJsonParse(row.payload, {})
+      }));
+    } catch {
+      const stmt = this.db.prepare(`
+        SELECT * FROM archive_events
+        WHERE companion_id = ? AND (source_type LIKE ? OR payload LIKE ?)
+        ORDER BY occurred_at DESC
+        LIMIT ?
+      `);
+      const pattern = `%${query.trim()}%`;
+      return stmt.all(companionId, pattern, pattern, limit).map((row: any) => ({
+        id: row.id,
+        companionId: row.companion_id,
+        sourceType: row.source_type,
+        occurredAt: row.occurred_at,
+        payload: safeJsonParse(row.payload, {})
+      }));
+    }
+  }
+
+  // ==========================================
+  // Memory Domain Methods (Retained for backwards compatibility)
   // ==========================================
 
   public recordEvent(event: EpisodicEvent): void {
@@ -1241,6 +1464,11 @@ export class SiduriDatabase {
       event.occurredAt || null,
       JSON.stringify(event.payload)
     );
+    try {
+      this.recordArchiveEvent(event);
+    } catch {
+      // Non-blocking
+    }
   }
 
   public getRecentEvents(companionId: string, limit: number = 50): EpisodicEvent[] {
@@ -1412,7 +1640,10 @@ export class SiduriDatabase {
   }
 
   /**
-   * Canonically promotes a Claim into Self domain tables.
+   * @deprecated RFC VX-26-13: Deconstructing Memory.
+   * Prefer Direct Domain Routing: behavioral directives, companion identity, and relational
+   * stances should be committed directly to SelfRepository (`self_directives`, `self_identity`, `self_relationships`)
+   * rather than staged through the legacy memory_claims funnel.
    */
   public promoteClaimToSelf(claim: MemoryClaim | any): void {
     const companionId = claim.companionId || 'default';
@@ -1681,11 +1912,18 @@ export class SiduriDatabase {
     return this.rowToMemoryClaim(row);
   }
 
+  public resetArchive(companionId: string): void {
+    try {
+      this.db.prepare("DELETE FROM archive_events WHERE companion_id = ?").run(companionId);
+    } catch {}
+  }
+
   public resetMemory(companionId: string): void {
     const deleteClaims = this.db.prepare("DELETE FROM memory_claims WHERE companion_id = ?");
     deleteClaims.run(companionId);
     const deleteEvents = this.db.prepare("DELETE FROM memory_events WHERE companion_id = ?");
     deleteEvents.run(companionId);
+    this.resetArchive(companionId);
   }
 
   // --- System Logs ---

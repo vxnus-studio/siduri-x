@@ -1177,4 +1177,83 @@ describe('SiduriDatabase', () => {
       expect(db.queryLogs({ companionId: cId })).toHaveLength(0);
     });
   });
+
+  describe('RFC VX-26-13: Deconstructed Archive & Direct Domain Routing', () => {
+    it('records and searches cold audit events via archive_events and FTS5', () => {
+      db = new SiduriDatabase({ dbPath });
+      const cId = 'arch-comp-1';
+
+      db.recordArchiveEvent({
+        id: 'arch-evt-1',
+        companionId: cId,
+        sourceType: 'tool_execution',
+        occurredAt: new Date().toISOString(),
+        payload: { command: 'git checkout -b feature/archive', exitCode: 0 },
+      });
+
+      db.recordArchiveEvent({
+        id: 'arch-evt-2',
+        companionId: cId,
+        sourceType: 'chat_turn',
+        occurredAt: new Date().toISOString(),
+        payload: { text: 'How do we remove memory and switch to sovereign primitives?' },
+      });
+
+      const recent = db.getRecentArchiveEvents(cId);
+      expect(recent).toHaveLength(2);
+
+      const single = db.getArchiveEvent('arch-evt-1');
+      expect(single).toBeDefined();
+      expect(single?.sourceType).toBe('tool_execution');
+      expect((single?.payload as any)?.command).toBe('git checkout -b feature/archive');
+
+      const searchResults = db.searchArchiveEvents(cId, 'primitives');
+      expect(searchResults.length).toBeGreaterThan(0);
+      expect(searchResults[0].id).toBe('arch-evt-2');
+    });
+
+    it('directly mutates companion relationships and identity when approving relational directives', () => {
+      db = new SiduriDatabase({ dbPath });
+      const cId = 'direct-self-comp';
+
+      // 1. Relational directive: Recognize creator
+      db.commitDirective({
+        id: 'dir-creator-1',
+        companionId: cId,
+        directive: 'Recognize actor:kur-zagin stated relationship as creator',
+        category: 'relational',
+        status: 'pending',
+      });
+
+      // Before approval: relationship does not exist
+      expect(db.getRelationship(cId, 'actor:kur-zagin')).toBeUndefined();
+
+      // Approve directive directly in Self
+      db.approveDirective('dir-creator-1', cId);
+
+      // Verify relationship is directly updated in Self
+      const rel = db.getRelationship(cId, 'actor:kur-zagin');
+      expect(rel).toBeDefined();
+      expect(rel?.role).toBe('creator');
+      expect(rel?.stance).toBe('familiar_loyal');
+      expect(rel?.trustScore).toBe(1.0);
+
+      // Verify companion origin is also updated
+      const identity = db.getIdentity(cId);
+      expect(identity?.origin).toBe('kur-zagin');
+
+      // 2. Relational directive: User name address
+      db.commitDirective({
+        id: 'dir-name-1',
+        companionId: cId,
+        directive: 'Address actor:kur-zagin as Kur Zagin',
+        category: 'relational',
+        status: 'pending',
+      });
+
+      db.approveDirective('dir-name-1', cId);
+      const relAfterName = db.getRelationship(cId, 'actor:kur-zagin');
+      expect(relAfterName?.name).toBe('Kur Zagin');
+    });
+  });
 });
