@@ -1,7 +1,7 @@
 # RFC: Removing Memory — Deconstructing the Metaphor into Sovereign Primitives
 
 > **Title:** Removing Memory  
-> **Status:** Proposed / Draft  
+> **Status:** Implemented / Accepted  
 > **Target Subsystems:** `@sidurijs/core`, `@sidurijs/self`, `@sidurijs/knowledge`, `@sidurijs/memory` (superseded), `@sidurijs/organs/observation`  
 > **Canonical Reference:** [VX-26-13: *What are we calling memory?*](https://vxnus.xyz/article/what-are-we-calling-memory)  
 > **Authors:** Kur Zagin & Siduri Architecture Team  

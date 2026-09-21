@@ -18,6 +18,7 @@ export * from './intent-classifier';
 export * from './context-retriever';
 export * from './prompt-compiler';
 export * from './cognition-planner';
+export * from './interaction-settler';
 export * from './memory-settler';
 export * from './action-executor';
 export * from './experience-emitter';

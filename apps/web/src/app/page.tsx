@@ -35,11 +35,11 @@ export default function HomePage() {
             </div>
 
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-normal font-serif text-[var(--siduri-text-primary)] tracking-tight leading-[1.2] sm:leading-[1.15] mb-6 max-w-4xl px-2">
-              A companion grown from memory, powered by modular cognition.
+              A companion grown through interaction, powered by sovereign primitives.
             </h1>
 
             <p className="text-sm sm:text-lg text-[var(--siduri-text-secondary)] font-sans leading-relaxed mb-8 sm:mb-10 max-w-2xl font-light px-2">
-              Siduri-X is an intelligent companion designed with authoritative memory, atomic behavioral gating, and a strict 10-organ architecture. She starts as a blank slate and forms her identity entirely through your interactions.
+              Siduri-X is an intelligent companion designed with sovereign life state, self-governing directives, and a modular organ architecture. She starts as a blank slate and forms her identity entirely through your interactions.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4 w-full max-w-md sm:max-w-none px-4">
@@ -80,9 +80,9 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
               {[
                 { name: "Brain", desc: "Cognition, planning, and authoritative decision making." },
-                { name: "Memory", desc: "SQLite FTS5 authoritative storage of verified claims and episodic memory." },
-                { name: "Behavior", desc: "Atomic directive state machine and personality projection." },
-                { name: "Knowledge", desc: "External factual context and verifiable E-compatible packs." },
+                { name: "Self", desc: "Standing identity, demeanor, trust posture, and behavioral directives." },
+                { name: "Knowledge", desc: "Sovereign Life Database (inventory, finances, schedule) and external facts." },
+                { name: "Archive", desc: "SQLite FTS5 append-only audit ledger of past occurrences and interaction history." },
                 { name: "Hands", desc: "Tool execution and strict cryptographic action policy capabilities." },
                 { name: "Ear", desc: "Audio transcription, perception, and sensory input ingestion." },
                 { name: "Vision", desc: "Visual observation, cropping, and OCR interpretation." },
@@ -110,7 +110,7 @@ export default function HomePage() {
                 Blank Slate Identity
               </h2>
               <p className="text-sm text-[var(--siduri-text-secondary)] leading-relaxed mb-6">
-                Unlike standard conversational agents, Siduri starts with no pre-baked persona. She learns, remembers, and adapts over time. When you share preferences, they are staged as structured candidates. You decide what enters her long-term memory with explicit single-click approval.
+                Unlike standard conversational agents, Siduri starts with no pre-baked persona. She establishes directives and life state over time. When you share preferences, they are staged as structured candidates. You decide what shapes her standing disposition with explicit single-click approval.
               </p>
               <ul className="space-y-3 text-xs text-[var(--siduri-text-muted)] font-mono">
                 <li className="flex items-center gap-2.5">
@@ -119,7 +119,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <CheckIcon size={14} className="text-[var(--siduri-online)] shrink-0" />
-                  <span>Structured episodic and semantic memory</span>
+                  <span>Audited interaction history & sovereign Life DB</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <CheckIcon size={14} className="text-[var(--siduri-online)] shrink-0" />

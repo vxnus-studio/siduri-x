@@ -52,7 +52,7 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
     config.provider = config.provider || 'openrouter';
     config.model = config.model || 'anthropic/claude-3.5-sonnet';
     config.apiKeyEnv = 'OPENROUTER_API_KEY';
-  } else if (manifest.organType === 'memory') {
+  } else if (manifest.organType === 'archive' || manifest.organType === 'memory') {
     config.provider = config.provider || 'sqlite';
   } else if (manifest.organType === 'voice') {
     config.provider = config.provider || 'voicevox';
@@ -86,8 +86,8 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^1.0.0';
-  const cliVersion = options.cliVersion || '^1.0.0';
+  const coreVersion = options.coreVersion || '^1.0.1';
+  const cliVersion = options.cliVersion || '^1.0.1';
   const canonicalOrder = ['brain', 'archive', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
@@ -584,20 +584,20 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    return;`,
     `  }`,
     '',
-    `  // API: Memory Claims & Items`,
-    `  if ((pathname === '/memory' || pathname === '/memory/claims' || pathname === '/api/memory/claims') && req.method === 'GET') {`,
+    `  // API: Directives & Items`,
+    `  if ((pathname === '/self/directives/all' || pathname === '/memory' || pathname === '/memory/claims' || pathname === '/api/memory/claims') && req.method === 'GET') {`,
     `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
     `    try {`,
     `      const claims = typeof memory?.getAllClaims === 'function' ? await memory.getAllClaims() : (typeof memory?.getClaims === 'function' ? await memory.getClaims() : []);`,
-    `      res.end(JSON.stringify({ claims, items: claims }));`,
+    `      res.end(JSON.stringify({ claims, items: claims, directives: claims }));`,
     `    } catch (e) {`,
-    `      res.end(JSON.stringify({ claims: [], items: [] }));`,
+    `      res.end(JSON.stringify({ claims: [], items: [], directives: [] }));`,
     `    }`,
     `    return;`,
     `  }`,
     '',
-    `  // API: Memory Proposals`,
-    `  if (pathname === '/memory/proposals' && req.method === 'GET') {`,
+    `  // API: Self Directive Proposals`,
+    `  if ((pathname === '/self/proposals' || pathname === '/memory/proposals') && req.method === 'GET') {`,
     `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
     `    try {`,
     `      const proposals = typeof memory?.getPendingClaims === 'function' ? await memory.getPendingClaims() : [];`,
@@ -608,13 +608,13 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    return;`,
     `  }`,
     '',
-    `  // API: Memory Directives`,
-    `  if ((pathname === '/memory/behavioral' || pathname === '/api/memory/directives') && req.method === 'GET') {`,
+    `  // API: Active Self Directives`,
+    `  if ((pathname === '/self/directives' || pathname === '/self/directives/active' || pathname === '/memory/behavioral' || pathname === '/api/memory/directives') && req.method === 'GET') {`,
     `    res.writeHead(200, { 'Content-Type': 'application/json' });`,
     `    try {`,
     `      const directives = typeof memory?.getDirectives === 'function' ? await memory.getDirectives() : [`,
     `        { domain: 'personality', name: 'Active Self Tone', content: 'Warm, empathetic, and thoughtful conversational style.' },`,
-    `        { domain: 'cognition', name: 'Authoritative Memory', content: 'Ground responses in verified claims and personal history.' }`,
+    `        { domain: 'cognition', name: 'Self Governance', content: 'Ground responses in verified directives and sovereign life state.' }`,
     `      ];`,
     `      res.end(JSON.stringify({ directives }));`,
     `    } catch (e) {`,
@@ -623,8 +623,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    return;`,
     `  }`,
     '',
-    `  // API: Memory Proposal & Behavioral Approval / Rejection`,
-    `  if ((pathname === '/memory/proposals/approve' || pathname === '/memory/proposals/reject' || pathname === '/memory/behavioral/approve' || pathname === '/memory/behavioral/reject') && req.method === 'POST') {`,
+    `  // API: Directive & Proposal Approval / Rejection`,
+    `  if ((pathname === '/self/directives/approve' || pathname === '/self/directives/reject' || pathname === '/memory/proposals/approve' || pathname === '/memory/proposals/reject' || pathname === '/memory/behavioral/approve' || pathname === '/memory/behavioral/reject') && req.method === 'POST') {`,
     `    let body = '';`,
     `    req.on('data', (chunk) => { body += chunk; });`,
     `    req.on('end', async () => {`,
@@ -716,8 +716,8 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    return;`,
     `  }`,
     '',
-    `  // API: Memory & State Reset (Return to blank slate)`,
-    `  if ((pathname === '/api/reset' || pathname === '/memory/reset' || pathname === '/dev/memory/reset') && req.method === 'POST') {`,
+    `  // API: State Reset (Return to blank slate)`,
+    `  if ((pathname === '/api/reset' || pathname === '/dev/directives/reset' || pathname === '/dev/archive/reset' || pathname === '/memory/reset' || pathname === '/dev/memory/reset') && req.method === 'POST') {`,
     `    try {`,
     `      if (typeof memory?.resetMemory === 'function') {`,
     `        await memory.resetMemory(config.id);`,
@@ -751,7 +751,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `            actorId: 'owner-user',`,
     `            sessionId: \`sess-\${config.id}\`,`,
     `            authorizationRole: 'administrator',`,
-    `            capabilities: ['chat', 'memory:approve', 'action:execute'],`,
+    `            capabilities: ['chat', 'memory:approve', 'directive:approve', 'action:execute'],`,
     `            authenticated: true,`,
     `          },`,
     `          conversation: {`,
@@ -810,7 +810,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `            actorId: 'owner-user',`,
     `            sessionId: \`sess-\${config.id}\`,`,
     `            authorizationRole: 'administrator',`,
-    `            capabilities: ['chat', 'memory:approve', 'action:execute'],`,
+    `            capabilities: ['chat', 'memory:approve', 'directive:approve', 'action:execute'],`,
     `            authenticated: true,`,
     `          },`,
     `          conversation: {`,

@@ -7,7 +7,7 @@ import {
   ActionExecutionResult,
   InteractionMode,
 } from './index';
-import { MemoryProposalReceipt } from './memory-settler';
+import { ProposalReceipt, MemoryProposalReceipt } from './interaction-settler';
 import { FormattedMouthOutput } from './mouth-types';
 
 export interface AssembleResponseEnvelopeParams {
@@ -117,6 +117,7 @@ export function assembleResponseEnvelope(
       mode: effectiveMode ?? 'hybrid',
       language,
       proposals: createdMemoryProposals,
+      directive_proposals: behavioralProposalReceipts || [],
       memory_proposals: memoryProposalReceipts,
       behavioral_proposals: behavioralProposalReceipts || [],
       action_results: actionResults,

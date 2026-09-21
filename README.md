@@ -46,10 +46,10 @@ All canonical Siduri-X domain substrates and peripheral organs are independently
 
 ### Core Domain Substrates (Persistent Continuity)
 | Package | Version | Description | Status |
-| **`@sidurijs/core`** | `^1.0.0` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
+| **`@sidurijs/core`** | `^1.0.1` | Runtime protocol, Truth Gate, response gating engine, capability tokens, and `SiduriDatabase` | **Implemented** |
 | **`@sidurijs/self`** | `^1.0.0` | Identity, personality traits, directional relationships, directives, `ActiveSelfCompiler`, and `.self` parser | **Implemented** |
 | **`@sidurijs/knowledge`** | `^1.0.0` | Sovereign Life Database (Inventory, Finance, Schedule, Preferences) & optional E-Packs | **Implemented** |
-| **`@sidurijs/archive`** | `^1.0.0` | Append-only interaction ledger, source events, and SQLite FTS5 event search | **Implemented** |
+| **`@sidurijs/archive`** | `^1.0.1` | Append-only interaction ledger, source events, and SQLite FTS5 event search | **Implemented** |
 
 ### Pluggable Peripheral Organs
 | Package | Version | Description | Status |

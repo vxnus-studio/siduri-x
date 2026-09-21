@@ -323,17 +323,17 @@ export default function OperatorClient() {
     try {
       const [proposalsData, itemsData, claimsData, behavioralData] =
         await Promise.all([
-          getJson("/memory/proposals"),
-          getJson("/memory"),
-          getJson("/memory/claims"),
-          getJson("/memory/behavioral"),
+          getJson("/self/proposals").catch(() => getJson("/memory/proposals")),
+          getJson("/self/directives/all").catch(() => getJson("/memory")),
+          getJson("/memory/claims").catch(() => ({ claims: [] })),
+          getJson("/self/directives").catch(() => getJson("/memory/behavioral")),
         ]);
       setProposals(
         (proposalsData.proposals ?? []).filter(
           (item: Proposal) => (item.status || "").toLowerCase().replace(/_/g, "-") === "pending",
         ),
       );
-      setItems(itemsData.items ?? []);
+      setItems(itemsData.items ?? itemsData.directives ?? []);
       setClaims(claimsData.claims ?? []);
       setDirectives(behavioralData.directives ?? []);
     } catch {
@@ -534,11 +534,20 @@ export default function OperatorClient() {
     proposal: Proposal,
     content?: string,
   ): Promise<void> {
-    await postAction(path, {
-      id: proposal.id || proposal.proposal_id,
-      companionId: "default",
-      ...(content === undefined ? {} : { content }),
-    });
+    const canonicalPath = path.replace(/^\/memory\/proposals\//, '/self/directives/');
+    try {
+      await postAction(canonicalPath, {
+        id: proposal.id || proposal.proposal_id,
+        companionId: "default",
+        ...(content === undefined ? {} : { content }),
+      });
+    } catch {
+      await postAction(path, {
+        id: proposal.id || proposal.proposal_id,
+        companionId: "default",
+        ...(content === undefined ? {} : { content }),
+      });
+    }
     await loadMemory();
   }
   async function createObservation(): Promise<void> {
@@ -548,15 +557,15 @@ export default function OperatorClient() {
   async function resetMemory(): Promise<void> {
     if (
       !window.confirm(
-        "Are you sure you want to completely reset all memory? This action cannot be undone.",
+        "Are you sure you want to completely reset interaction archive and directives? This action cannot be undone.",
       )
     )
       return;
     setBusy(true);
     try {
-      await postJson("/dev/memory/reset");
+      await postJson("/dev/directives/reset").catch(() => postJson("/dev/memory/reset"));
       await loadMemory();
-      setMessage("Memory has been completely reset.");
+      setMessage("Interaction archive and directives have been reset.");
     } catch (error) {
       setMessage(String(error));
     } finally {
@@ -598,7 +607,7 @@ export default function OperatorClient() {
               onClick={() => setView(item)}
             >
               <span className={`nav-glyph nav-${item}`} />
-              {item === "lifedb" ? "Life DB" : item[0].toUpperCase() + item.slice(1)}
+              {item === "lifedb" ? "Life DB" : item === "memory" ? "Directives & Self" : item[0].toUpperCase() + item.slice(1)}
             </button>
           ))}
         </nav>
@@ -619,6 +628,8 @@ export default function OperatorClient() {
                 ? "Control room"
                 : view === "lifedb"
                 ? "Life Database (Sovereign Reality)"
+                : view === "memory"
+                ? "Self Directives & Demeanor"
                 : view === "logs"
                 ? "System Logs & Diagnostics"
                 : view[0].toUpperCase() + view.slice(1)}
@@ -789,22 +800,27 @@ function MemoryView({
   onRefresh: () => Promise<void>;
 }) {
   async function directiveAction(path: string, id: string) {
-    await postJson(path, { id, companionId: "default" });
+    const canonicalPath = path.replace(/^\/memory\/behavioral\//, '/self/directives/');
+    try {
+      await postJson(canonicalPath, { id, companionId: "default" });
+    } catch {
+      await postJson(path, { id, companionId: "default" });
+    }
     await onRefresh();
   }
   return (
     <div className="console-view">
       <div className="view-intro">
         <div>
-          <p className="console-eyebrow">COMPANION MEMORY</p>
-          <h2>Review candidates before they become facts.</h2>
-          <p>Every candidate stays isolated until you explicitly approve it.</p>
+          <p className="console-eyebrow">STANDING SELF DIRECTIVES & DISPOSITIONS</p>
+          <h2>Review candidate directives before they shape demeanor.</h2>
+          <p>Direct domain routing ensures behavioral constraints and standing rules are governed sovereignly.</p>
         </div>
         <span className="count-badge">{proposals.length} pending</span>
       </div>
       <section className="console-panel table-panel">
         <div className="table-toolbar">
-          <strong>Pending memory</strong>
+          <strong>Pending directive proposals</strong>
           <span>Local approval queue</span>
         </div>
         {proposals.length ? (

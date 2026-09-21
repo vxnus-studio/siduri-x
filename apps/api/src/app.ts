@@ -1023,6 +1023,21 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
     }
   });
 
+  app.post('/self/directives/disable', requireAuth, async (req, res) => {
+    const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
+    const runtime = runtimes.get(id);
+    if (!runtime) return res.status(404).json({ error: "Companion not found" });
+    if (!runtime.self) return res.status(400).json({ error: "Self organ not configured" });
+    try {
+      if (runtime.self && typeof (runtime.self as any).disableDirective === 'function') {
+        await (runtime.self as any).disableDirective(req.body.id, id);
+      }
+      res.json({ disabled: true, status: 'disabled' });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // BEHAVIORAL DIRECTIVE MUTATIONS (RFC VX-26-13: Sovereign Directives via Self, compatibility aliases)
   app.post('/memory/behavioral/approve', requireAuth, async (req, res) => {
     const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
@@ -1176,7 +1191,7 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
 
   const isDevMode = process.env.NODE_ENV !== 'production' || process.env.SIDURI_DEV_MODE === 'true';
   if (isDevMode) {
-    app.post('/dev/memory/reset', requireAuth, async (req, res) => {
+    app.post(['/dev/memory/reset', '/dev/directives/reset', '/dev/archive/reset'], requireAuth, async (req, res) => {
       const id = req.body.companionId as string || Array.from(runtimes.keys())[0];
       const runtime = runtimes.get(id);
       if (!runtime) return res.status(404).json({ error: "Companion not found" });

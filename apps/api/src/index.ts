@@ -24,6 +24,7 @@ const defaultCompanionConfig = {
   name: 'Siduri',
   brain: { provider: 'openrouter', model: 'gpt-4o-mini' },
   voice: { provider: 'voicevox', speakerId: 1 },
+  archive: { provider: 'sqlite' },
   memory: { provider: 'sqlite' },
   knowledge: {
     provider: (process.env.SIDURI_KNOWLEDGE_PROVIDER as any) || 'unified',
@@ -59,6 +60,7 @@ async function loadCompanionConfig() {
     id: fileConfig.id || defaultCompanionConfig.id,
     brain: { ...defaultCompanionConfig.brain, ...fileConfig.brain },
     voice: { ...defaultCompanionConfig.voice, ...fileConfig.voice },
+    archive: { ...(defaultCompanionConfig as any).archive, ...fileConfig.archive, ...fileConfig.memory },
     memory: { ...defaultCompanionConfig.memory, ...fileConfig.memory },
     knowledge: { ...defaultCompanionConfig.knowledge, ...fileConfig.knowledge },
     behavior: { ...defaultCompanionConfig.behavior, ...fileConfig.behavior },

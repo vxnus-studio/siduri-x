@@ -38,15 +38,15 @@ const ORGANS: Organ[] = [
 
   // REMEMBER & SOVEREIGN REALITY
   {
-    id: "memory",
-    name: "Memory",
+    id: "archive",
+    name: "Archive",
     category: "REMEMBER",
-    pkg: "@sidurijs/memory",
-    version: "^1.0.0",
-    tagline: "Pure SQLite FTS5 authoritative episodic storage",
+    pkg: "@sidurijs/archive",
+    version: "^1.0.1",
+    tagline: "Pure SQLite audit ledger & cold episodic interaction history",
     description:
-      "Enforces the Truth Gate lifecycle directly in siduri.sqlite. Tracks conversational episodes and verified claims using built-in SQLite FTS5 BM25 full-text ranking with zero external database dependencies.",
-    keyCapability: "Zero-config SQLite FTS5 BM25 search & immutable claims lifecycle",
+      "Maintains immutable episodic event logs and audit receipts in siduri.sqlite. Separates cold historical interaction records from active behavioral directives and objective knowledge.",
+    keyCapability: "Zero-config SQLite cold episodic audit ledger & event provenance",
   },
   {
     id: "knowledge",
@@ -77,7 +77,7 @@ const ORGANS: Organ[] = [
     name: "Core",
     category: "ACT",
     pkg: "@sidurijs/core",
-    version: "^1.0.0",
+    version: "^1.0.1",
     tagline: "Runtime protocol, 3 interaction modes & response gating engine",
     description:
       "Defines organ contracts, perception pipeline, 3 interaction modes (casual, teach, hybrid) with 4-tier hierarchy, and the ResponseGatingEngine that prevents unverified candidate speech from emitting across sensitive channels.",

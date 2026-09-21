@@ -31,7 +31,12 @@ import { classifyInputIntentAsync, IntentClassification } from './intent-classif
 import { retrieveRuntimeContext, RetrievedContext } from './context-retriever';
 import { compilePrompts, CompiledPrompts } from './prompt-compiler';
 import { generateCognitionPlan } from './cognition-planner';
-import { settleMemoryProposals, MemorySettlementResult } from './memory-settler';
+import {
+  settleInteractionProposals,
+  InteractionSettlementResult,
+  settleMemoryProposals,
+  MemorySettlementResult,
+} from './interaction-settler';
 import { executeActionIntents } from './action-executor';
 import { emitExperienceEvents, ExperienceEmissionResult } from './experience-emitter';
 import {
@@ -283,22 +288,24 @@ export const responseGatingStage: PerceptionPipelineStage = async (context) => {
   context.sessionHistory.append('default', { role: 'assistant', content: context.plan.speech });
 };
 
-export const memorySettlementStage: PerceptionPipelineStage = async (context) => {
+export const interactionSettlementStage: PerceptionPipelineStage = async (context) => {
   if (!context.input || !context.plan || !context.intent) return;
-  const memorySettlement = await settleMemoryProposals({
+  const settlement = await settleInteractionProposals({
     companionId: context.companionId,
     perceivedText: context.input.perceivedText,
     role: context.input.role,
     requestContext: context.input.requestContext,
-    memory: context.organs.memory,
     archive: context.organs.archive,
     self: context.organs.self,
     explicitTeaching: context.intent.explicitTeaching,
     plan: context.plan,
     effectiveMode: context.intent.effectiveMode,
+    memory: context.organs.memory,
   });
-  context.memorySettlement = memorySettlement;
+  context.memorySettlement = settlement;
 };
+
+export const memorySettlementStage: PerceptionPipelineStage = interactionSettlementStage;
 
 export const actionExecutionStage: PerceptionPipelineStage = async (context) => {
   if (!context.input || !context.plan) return;

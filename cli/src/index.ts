@@ -13,7 +13,7 @@ import { runDbPush } from './db';
 import { configureOrgan, OrganConfigurationResult } from './configurators';
 
 const execFile = promisify(execFileCallback);
-export const CLI_VERSION = '1.0.0';
+export const CLI_VERSION = '1.0.1';
 
 import { colors } from './colors';
 export { colors };
@@ -156,8 +156,8 @@ export async function runCreateWizard(targetDir?: string, options?: { localPath?
   printSection('Organ Configuration');
   console.log(`${colors.dim}Configuring capability organs for ${projectDirName} sequentially from cognition to physical embodiment.${colors.reset}\n`);
 
-  // Canonical organ presentation order: Cognition -> Memory/State -> Identity -> Embodiment & Peripheral
-  const canonicalOrder = ['brain', 'memory', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
+  // Canonical organ presentation order: Cognition -> Archive/State -> Knowledge -> Self/Identity -> Embodiment & Peripheral
+  const canonicalOrder = ['brain', 'archive', 'memory', 'knowledge', 'self', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const orderedManifests = [...availableManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
     const idxB = canonicalOrder.indexOf(b.organType);
@@ -449,7 +449,8 @@ export async function runCliReset(targetDir?: string): Promise<void> {
       try {
         const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         if (config.id) companionId = config.id;
-        if (config.organs?.memory?.dbPath) dbPath = config.organs.memory.dbPath;
+        if (config.organs?.archive?.dbPath) dbPath = config.organs.archive.dbPath;
+        else if (config.organs?.memory?.dbPath) dbPath = config.organs.memory.dbPath;
       } catch {}
     }
 
@@ -500,7 +501,7 @@ export async function runCliReset(targetDir?: string): Promise<void> {
     }
 
     printSuccess(`Companion state reset to blank slate:`);
-    console.log(`  ${colors.dim}• Memory claims and events cleared${colors.reset}`);
+    console.log(`  ${colors.dim}• Interaction archive events cleared${colors.reset}`);
     console.log(`  ${colors.dim}• Self directives, identity, and relationships cleared${colors.reset}`);
     console.log(`  ${colors.dim}• Life DB (entities, tasks, schedule, events) cleared${colors.reset}`);
     console.log(`  ${colors.dim}• System logs cleared${colors.reset}`);

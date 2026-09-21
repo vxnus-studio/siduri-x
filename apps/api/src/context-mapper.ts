@@ -99,7 +99,7 @@ export function mapRequestContext(
 
     const isViewer = !isAuthenticated || isViewerRequested;
 
-    const CANONICAL_CAPABILITIES = new Set(['chat', 'memory:approve', 'action:execute', 'system']);
+    const CANONICAL_CAPABILITIES = new Set(['chat', 'memory:approve', 'directive:approve', 'self:approve', 'action:execute', 'system']);
     const DEFAULT_OWNER_CAPABILITIES = ['chat', 'memory:approve', 'action:execute', 'system'];
 
     let safeCapabilities: string[];
@@ -214,7 +214,7 @@ export function mapRequestContext(
     diagnostics.push('anonymous_session_generated');
   }
 
-  const CANONICAL_CAPABILITIES = new Set(['chat', 'memory:approve', 'action:execute', 'system']);
+  const CANONICAL_CAPABILITIES = new Set(['chat', 'memory:approve', 'directive:approve', 'self:approve', 'action:execute', 'system']);
   const DEFAULT_OWNER_CAPABILITIES = ['chat', 'memory:approve', 'action:execute', 'system'];
 
   const rawCaps = Array.isArray(input.capabilities)

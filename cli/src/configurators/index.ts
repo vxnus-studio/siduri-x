@@ -2,7 +2,7 @@ import { OrganManifest } from '../manifest';
 import { OrganConfigurationResult, OrganConfiguratorContext } from './types';
 import { configureBrain, BrainConfiguratorOptions } from './brain';
 import { configureKnowledge, KnowledgeConfiguratorOptions } from './knowledge';
-import { configureMemory } from './memory';
+import { configureArchive, configureMemory } from './archive';
 import { configureVoice } from './voice';
 import { configureBody } from './body';
 import { configureHands } from './hands';
@@ -15,6 +15,7 @@ import { configureMouth } from './mouth';
 export * from './types';
 export * from './brain';
 export * from './knowledge';
+export * from './archive';
 export * from './memory';
 export * from './voice';
 export * from './body';
@@ -47,7 +48,8 @@ export async function configureOrgan(
     case 'knowledge':
       return configureKnowledge(ctx, options.knowledgeOptions);
     case 'archive':
-      return configureMemory(ctx);
+    case 'memory':
+      return configureArchive(ctx);
     case 'voice':
       return configureVoice(ctx);
     case 'body':

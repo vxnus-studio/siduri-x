@@ -775,9 +775,12 @@ export default function ChatClient() {
     if (!activeConversation) return;
     try {
       const res = await postJson<{ item?: any; proposal?: any; status?: string; name?: string }>(
+        `/self/directives/${action}`,
+        { id: proposalId, companionId: "default" },
+      ).catch(() => postJson<{ item?: any; proposal?: any; status?: string; name?: string }>(
         `/memory/proposals/${action}`,
         { id: proposalId, companionId: "default" },
-      );
+      ));
       const updatedStatus = res?.status || (action === "approve" ? "approved" : "rejected");
 
       // If approved, check if this proposal defined or updated companion identity/name
@@ -848,12 +851,18 @@ export default function ChatClient() {
     if (!activeConversation) return;
     try {
       const res = await postJson<{ approved?: boolean; rejected?: boolean; status?: string; name?: string }>(
+        `/self/directives/${action}`,
+        {
+          id: directiveId,
+          companionId: "default",
+        },
+      ).catch(() => postJson<{ approved?: boolean; rejected?: boolean; status?: string; name?: string }>(
         `/memory/behavioral/${action}`,
         {
           id: directiveId,
           companionId: "default",
         },
-      );
+      ));
       const updatedStatus = res?.status || (action === "approve" ? "active" : "rejected");
 
       if (action === "approve") {
