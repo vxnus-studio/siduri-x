@@ -19,7 +19,6 @@ export * from './context-retriever';
 export * from './prompt-compiler';
 export * from './cognition-planner';
 export * from './interaction-settler';
-export * from './memory-settler';
 export * from './action-executor';
 export * from './experience-emitter';
 export * from './response-envelope';
@@ -40,7 +39,7 @@ import {
   ClaimStatus,
   DirectiveStatus,
   SourceEvent,
-  MemoryProposal,
+  ClaimProposal,
   BehaviorProposal,
 } from './proposals';
 
@@ -73,7 +72,7 @@ export interface BrainContext {
   systemPrompt: string;
   contextPrompt: string;
   recentMessages: Message[];
-  recipient?: MemoryScope;
+  recipient?: ClaimScope;
 }
 
 export interface ResponsePlan {
@@ -81,7 +80,7 @@ export interface ResponsePlan {
   language: string;
   subtitle?: string;
   subtitles?: Record<string, string>;
-  memoryProposals?: MemoryProposal[];
+  claimProposals?: ClaimProposal[];
   behaviorProposals?: BehaviorProposal[];
   actionIntents?: ActionIntent[];
   internalMonologue?: string;
@@ -90,8 +89,8 @@ export interface ResponsePlan {
 export interface RetrievalPlan {
   shouldQueryKnowledge: boolean;
   knowledgeQueries: string[];
-  shouldQueryMemory?: boolean;
-  memoryQueries?: string[];
+  shouldQueryArchive?: boolean;
+  archiveQueries?: string[];
   reasoning?: string;
 }
 
@@ -140,8 +139,7 @@ export interface BrainOrgan {
 }
 
 
-// Single-owner local companion memory scope
-export type MemoryScope = 'companion' | 'user' | string;
+export type ClaimScope = 'companion' | 'user' | string;
 
 export interface Claim {
   id: string;
@@ -150,7 +148,7 @@ export interface Claim {
   value: string;
   status: ClaimStatus;
   evidence?: string[];
-  scope?: MemoryScope;
+  scope?: ClaimScope;
   companionId: string; // Strict isolation boundary
   provenance?: string;
   sourceEventId?: string;
@@ -174,20 +172,11 @@ export interface BehaviorDirective {
   priority: number;
   status: DirectiveStatus;
   supersedesId?: string;
-  memoryClass?: 'identity' | 'relationship' | 'behavioral';
   subject?: string;
   predicate?: string;
   value?: string;
   validFrom?: string;
   validUntil?: string;
-  [key: string]: unknown;
-}
-
-export interface MemoryQueryOptions {
-  sensitivity?: string;
-  limit?: number;
-  minConfidence?: number;
-  now?: string | Date;
   [key: string]: unknown;
 }
 
@@ -394,6 +383,7 @@ import type {
   LifeEntity,
   LifeEvent,
   LifeTask,
+  ClaimRecord,
   MemoryClaim,
   EpisodicEvent,
 } from './siduri-db';
@@ -410,6 +400,7 @@ export type {
   LifeEntity,
   LifeEvent,
   LifeTask,
+  ClaimRecord,
   MemoryClaim,
   EpisodicEvent,
 };
@@ -450,16 +441,6 @@ export interface LifeDatabase {
   getTasks?(companionId: string, status?: string): Promise<LifeTask[]>;
   queryContext(companionId: string, query: string): Promise<string[]>;
   searchLifeContext?(queryText: string): Promise<string[]>;
-}
-
-export interface EpisodicMemoryStore {
-  recordEvent(companionId: string, event: any): Promise<void>;
-  searchClaims(companionId: string, query: string, limit?: number): Promise<MemoryClaim[]>;
-  proposeClaim(claim: any): Promise<MemoryClaim>;
-  approveClaim(claimId: string): Promise<void>;
-  rejectClaim?(claimId: string): Promise<void>;
-  getApprovedClaims?(companionId: string, limit?: number): Promise<MemoryClaim[]>;
-  getRecentEvents?(companionId: string, limit?: number): Promise<EpisodicEvent[]>;
 }
 
 export interface EKnowledgeOrgan {

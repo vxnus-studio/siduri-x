@@ -70,8 +70,8 @@ Incoming Input / Sensory Perception
   - Extreme ($1,000,000$ claims)
 - **Hybrid Retrieval Performance**:
   - Full-Text Search (FTS) vs. Vector cosine similarity queries vs. relational scope filtering (`sensitivity`, `valid_until`).
-- **Memory Settlement Throughput**:
-  - Batch insertion and statement execution times for `settleMemoryProposals()`.
+- **Interaction Settlement Throughput**:
+  - Batch insertion and statement execution times for `settleInteractionProposals()`.
 
 ### 3.3. End-to-End Pipeline & Streaming Performance
 - **Time to First Chunk (TTFC)**:

@@ -144,7 +144,7 @@ export interface ArchiveEvent {
 
 export type EpisodicEvent = ArchiveEvent;
 
-export interface MemoryClaim {
+export interface ClaimRecord {
   id: string;
   companionId: string;
   subject: string;
@@ -159,6 +159,9 @@ export interface MemoryClaim {
   supersedes?: string;
   sourceEventId?: string;
 }
+
+export type Claim = ClaimRecord;
+export type MemoryClaim = ClaimRecord;
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -430,42 +433,6 @@ export class SiduriDatabase {
       this.db.exec("ALTER TABLE self_relationships ADD COLUMN affiliation TEXT");
     } catch {
       // Column already exists
-    }
-
-    try {
-      // Reconcile legacy creator claims if memory_claims table still exists from earlier versions
-      const hasMemoryClaims = this.db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='memory_claims'"
-      ).get();
-
-      if (hasMemoryClaims) {
-        const creatorClaims = this.db.prepare(`
-          SELECT * FROM memory_claims
-          WHERE predicate = 'stated_relationship'
-            AND LOWER(value) LIKE '%creator%'
-            AND LOWER(status) = 'approved'
-        `).all() as any[];
-
-      for (const claim of creatorClaims) {
-        const identity = this.db.prepare(`SELECT * FROM self_identity WHERE companion_id = ?`).get(claim.companion_id) as any;
-        if (identity && !identity.origin) {
-          const nameClaim = this.db.prepare(`
-            SELECT value FROM memory_claims
-            WHERE companion_id = ? AND subject = ? AND predicate = 'name' AND LOWER(status) = 'approved'
-            ORDER BY asserted_at DESC LIMIT 1
-          `).get(claim.companion_id, claim.subject) as any;
-          const originName = nameClaim?.value || (claim.subject.startsWith('actor:') ? claim.subject.slice(6) : claim.subject);
-          this.db.prepare(`UPDATE self_identity SET origin = ? WHERE companion_id = ?`).run(originName, claim.companion_id);
-        }
-
-        const rel = this.db.prepare(`SELECT * FROM self_relationships WHERE companion_id = ? AND entity_id = ?`).get(claim.companion_id, claim.subject) as any;
-        if (rel && (rel.role !== 'creator' || rel.stance !== 'familiar_loyal')) {
-          this.db.prepare(`UPDATE self_relationships SET role = 'creator', stance = 'familiar_loyal', trust_score = 1.0 WHERE companion_id = ? AND entity_id = ?`).run(claim.companion_id, claim.subject);
-        }
-      }
-      }
-    } catch {
-      // Best-effort auto-reconciliation
     }
   }
 

@@ -32,7 +32,7 @@ describe('PromptCompiler', () => {
       activeDirectives: [],
       subsystemDiagnostics: {},
       knowledgeData: [],
-      memoryData: [],
+      archiveData: [],
     });
 
     expect(result.systemPrompt).toContain('You are Siduri.');
@@ -50,14 +50,14 @@ describe('PromptCompiler', () => {
       activeDirectives: [],
       subsystemDiagnostics: {},
       knowledgeData: [],
-      memoryData: [],
+      archiveData: [],
     });
 
     expect(result.systemPrompt).toContain('You are a companion.');
     expect(result.systemPrompt).not.toContain('You are Siduri.');
   });
 
-  test('formats degraded diagnostics, knowledge, and memory in context prompt', async () => {
+  test('formats degraded diagnostics, knowledge, and archive in context prompt', async () => {
     const result = await compilePrompts({
       companionName: 'Siduri',
       companionId: 'test-comp',
@@ -75,7 +75,7 @@ describe('PromptCompiler', () => {
           citations: [],
         },
       ],
-      memoryData: [
+      archiveData: [
         {
           id: 'c1',
           subject: 'User',
@@ -91,7 +91,7 @@ describe('PromptCompiler', () => {
     expect(result.contextPrompt).toContain('- [knowledge] UNAVAILABLE: timeout');
     expect(result.contextPrompt).toContain('KNOWLEDGE:');
     expect(result.contextPrompt).toContain('- [revision:v1 source:e-knowledge] The moon is made of silver.');
-    expect(result.contextPrompt).toContain('MEMORY:');
+    expect(result.contextPrompt).toContain('ARCHIVE:');
     expect(result.contextPrompt).toContain('- User likes tea');
   });
 });

@@ -74,22 +74,28 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
         validUntil: futureTime,
       };
 
-      const mockMemory = {
+      const mockArchive = {
         initialize: jest.fn().mockResolvedValue(undefined),
-        searchClaims: jest.fn().mockResolvedValue([validClaim]),
-        getDirectives: jest.fn().mockResolvedValue([]),
+        searchEvents: jest.fn().mockResolvedValue([{
+          id: 'evt-valid',
+          companionId: 'companion-adv',
+          sourceType: 'User',
+          occurredAt: new Date().toISOString(),
+          payload: 'favoriteColor Azure',
+        }]),
       };
 
       const runtime = new SiduriRuntime('companion-adv', { name: 'AdvCompanion' } as any, {
         brain: mockBrain as any,
-        memory: mockMemory as any,
+        archive: mockArchive as any,
       } as any);
 
       await runtime.handleUserMessage('What is my favorite color?', baseOwnerContext);
 
-      expect(mockMemory.searchClaims).toHaveBeenCalled();
+      expect(mockArchive.searchEvents).toHaveBeenCalled();
       const brainCall = mockBrain.generatePlan.mock.calls[0][0];
-      expect(brainCall.contextPrompt).toContain('User favoriteColor Azure');
+      expect(brainCall.contextPrompt).toContain('ARCHIVE:');
+      expect(brainCall.contextPrompt).toContain('favoriteColor Azure');
     });
 
     test('companion isolation: runtime passes only companionId matching context', async () => {
@@ -97,15 +103,14 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
         generatePlan: jest.fn().mockResolvedValue({ speech: 'OK', language: 'en' }),
       };
 
-      const mockMemory = {
+      const mockArchive = {
         initialize: jest.fn().mockResolvedValue(undefined),
-        searchClaims: jest.fn().mockResolvedValue([]),
-        getDirectives: jest.fn().mockResolvedValue([]),
+        searchEvents: jest.fn().mockResolvedValue([]),
       };
 
       const runtime = new SiduriRuntime('companion-A', { name: 'AdvA' } as any, {
         brain: mockBrain as any,
-        memory: mockMemory as any,
+        archive: mockArchive as any,
       } as any);
 
       await runtime.handleUserMessage('Query', {
@@ -113,9 +118,9 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
         companionId: 'companion-A',
       });
 
-      expect(mockMemory.searchClaims).toHaveBeenCalledWith(
+      expect(mockArchive.searchEvents).toHaveBeenCalledWith(
+        'companion-A',
         'Query',
-        expect.objectContaining({ limit: 5 }),
         5
       );
     });
@@ -422,32 +427,35 @@ describe('Adversarial Hardening Verification Suite (Phase 3)', () => {
 
   // INVARIANT 6: Failure Semantics & Degradation
   describe('Invariant 6: Subsystem Failure Diagnostics & Non-Empty Propagation', () => {
-    test('database/memory query failure surfaces diagnostic in contextPrompt and metadata', async () => {
+    test('archive/self query failure surfaces diagnostic in contextPrompt and metadata', async () => {
       const mockBrain = {
         generatePlan: jest.fn().mockResolvedValue({ speech: 'Graceful fallback response', language: 'en' }),
       };
 
-      const failingMemory = {
+      const failingArchive = {
         initialize: jest.fn().mockResolvedValue(undefined),
-        searchClaims: jest.fn().mockRejectedValue(new Error('Connection terminated unexpectedly')),
-        getDirectives: jest.fn().mockRejectedValue(new Error('Database read timeout')),
+        searchEvents: jest.fn().mockRejectedValue(new Error('Connection terminated unexpectedly')),
+      };
+      const failingSelf = {
+        getActiveDirectives: jest.fn().mockRejectedValue(new Error('Database read timeout')),
       };
 
       const runtime = new SiduriRuntime('companion-adv', { name: 'AdvCompanion' } as any, {
         brain: mockBrain as any,
-        memory: failingMemory as any,
+        archive: failingArchive as any,
+        self: failingSelf as any,
       } as any);
 
       const response = await runtime.handleUserMessage('Hello companion', baseOwnerContext);
 
       expect(response.status).toBe('APPROVED');
       expect(response.metadata.subsystem_diagnostics).toBeDefined();
-      expect(response.metadata.subsystem_diagnostics.memory_claims).toContain('UNAVAILABLE');
-      expect(response.metadata.subsystem_diagnostics.memory_directives).toContain('UNAVAILABLE');
+      expect(response.metadata.subsystem_diagnostics.archive).toContain('UNAVAILABLE');
+      expect(response.metadata.subsystem_diagnostics.self_directives).toContain('UNAVAILABLE');
 
       const brainCall = mockBrain.generatePlan.mock.calls[0][0];
       expect(brainCall.contextPrompt).toContain('SUBSYSTEM STATUS (DEGRADED):');
-      expect(brainCall.contextPrompt).toContain('memory_claims');
+      expect(brainCall.contextPrompt).toContain('archive');
     });
   });
 

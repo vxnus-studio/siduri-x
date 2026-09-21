@@ -179,14 +179,14 @@ sequenceDiagram
     actor Owner as Owner (Teach Mode)
     participant Core as Runtime / Perception Pipeline
     participant Brain as Brain Organ (LLM / submitResponsePlan)
-    participant Settler as Memory Settler
-    participant Gate as Truth Gate (/memory/proposals/approve)
+    participant Settler as InteractionSettler
+    participant Gate as Truth Gate (/proposals/approve)
     participant SelfDB as SqliteSelfRepository (siduri.sqlite)
     participant Compiler as ActiveSelfCompiler
 
     Owner->>Core: "She was VXNUS Studio Staff" / "My name is Kur Zagin"
     Core->>Brain: Generate response plan with system context & teach cues
-    Brain-->>Core: Response plan containing memoryProposals & behaviorProposals
+    Brain-->>Core: Response plan containing claimProposals & behaviorProposals
     Core->>Settler: Stage candidates as PENDING (Zero active drift)
     Settler-->>Owner: Emit interactive proposal cards in chat stream
     Owner->>Gate: Approve proposal (explicit human confirmation)

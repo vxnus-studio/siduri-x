@@ -10,7 +10,7 @@ export interface IntentClassification {
   shouldQueryKnowledge: boolean;
   knowledgeQueries?: string[];
   primaryQuery?: string;
-  memoryQueries?: string[];
+  archiveQueries?: string[];
   effectiveMode: InteractionMode;
   confidence?: number;
   classifierOrigin?: 'heuristic' | 'cognitive' | 'ear' | 'brain';
@@ -136,14 +136,14 @@ export function classifyInputIntent(
       ? Array.from(new Set([...aiKnowledgeQueries, ...rawKeywords]))
       : (shouldQueryKnowledge ? rawKeywords : []);
   const primaryQuery = knowledgeQueries[0] || (shouldQueryKnowledge ? text.trim() : undefined);
-  const memoryQueries =
-    (overrides?.memoryQueries && overrides.memoryQueries.length > 0)
-      ? overrides.memoryQueries
+  const archiveQueries =
+    (overrides?.archiveQueries && overrides.archiveQueries.length > 0)
+      ? overrides.archiveQueries
       : rawKeywords;
 
   // Multi-tier Interaction Mode Resolution:
   // 1. Overrides / Cognitive Classifier
-  // 2. Security Boundary: public channel or external source forces 'casual' (Zero Memory Drift)
+  // 2. Security Boundary: public channel or external source forces 'casual' (Zero Drift)
   // 3. Explicit Request Mode (context.mode: 'casual' | 'teach' | 'hybrid')
   // 4. Default companion baseline: 'hybrid' (salience filtering)
   let effectiveMode: InteractionMode;
@@ -166,7 +166,7 @@ export function classifyInputIntent(
     shouldQueryKnowledge,
     knowledgeQueries,
     primaryQuery,
-    memoryQueries,
+    archiveQueries,
     effectiveMode,
     confidence: overrides?.confidence ?? 0.95,
     classifierOrigin: overrides?.classifierOrigin ?? 'heuristic',

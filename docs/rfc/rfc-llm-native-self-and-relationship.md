@@ -43,7 +43,7 @@ The underlying model has no calibrated floating-point sensor for what `0.35` war
 ### 2.2 The Absence of a Cognitive Feedback Loop
 While the database schema defined `self_personality` as mutable, **the AI/Brain was never equipped with a mechanism to adjust these sliders**. The Brain's plan output schema (`ResponsePlanSchema`) only produces:
 - `speech` (natural language text)
-- `memoryProposals` (`subject`, `predicate`, `value`)
+- `claimProposals` (`subject`, `predicate`, `value`)
 - `behaviorProposals` (`directive` natural language rules)
 
 There was never an `adjustPersonalitySlider(trait, delta)` tool because asking an LLM to accurately calculate its own numeric emotional state is hallucination-prone pseudo-psychology. The sliders remained static, dead weights in the database.

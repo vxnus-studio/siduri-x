@@ -2,7 +2,7 @@
 
 The official local-first web interface for **Siduri-X**, built with [Next.js](https://nextjs.org) (App Router, Turbopack, React 19, Tailwind CSS v4).
 
-The web client provides a sovereign, private interface for interacting with your local companion, auditing memories, and monitoring runtime health.
+The web client provides a sovereign, private interface for interacting with your local companion, auditing claims and directives, and monitoring runtime health.
 
 ---
 
@@ -15,7 +15,7 @@ The web client provides a sovereign, private interface for interacting with your
   * **Streamlined Mobile Topbar & Preferences Sheet**: Compact, uncluttered header on small viewports with dedicated sliding preferences sheet for interaction modes, subtitle languages, avatar presence, and connection status.
   * **Virtual Keyboard Adaptation**: Utilizes Next.js `interactiveWidget: "resizes-content"` and viewport safe-area insets (`env(safe-area-inset-*)`) for iOS Safari and Android Chrome.
   * **Interaction Mode Switcher**: Easily switch between **Auto** (inferred), **Casual** (zero drift), **Teach** (human-in-the-loop proposals), and **Hybrid** (default).
-  * **Inline Memory & Behavioral Receipts**: Staged claim receipts rendered inline with single-tap **Approve** and **Reject** controls.
+  * **Inline Claim & Behavioral Receipts**: Staged claim receipts rendered inline with single-tap **Approve** and **Reject** controls.
 
 ### 2. Live2D Avatar Presence
 * **Renderer-Agnostic Embodiment**: Live2D Cubism WebGL canvas (`AvatarCanvas`) rendering dynamic expressions, lip-sync, and idle motions.
@@ -23,7 +23,7 @@ The web client provides a sovereign, private interface for interacting with your
 
 ### 3. Operator Console (`/operator`)
 * **Control Room**: Real-time status cards for Orchestrator, Voice synthesis, OBS capture, and model provider latency.
-* **Memory Approval Queue**: Review and verify pending candidate claims before they become persistent facts in SQLite.
+* **Claim Approval Queue**: Review and verify pending candidate claims before they become persistent facts in SQLite.
 * **Behavioral Directives**: Inspect active personality directives, scope activations, and learned relational postures.
 * **Evidence & Grounding**: Review bounded observation frames and external citations without exposing raw captures.
 * **Mobile Operator Navigation**: Responsive tab bar with persistent back-to-chat links.

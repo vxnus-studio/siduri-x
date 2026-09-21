@@ -24,7 +24,7 @@ describe('validateCompanionConfig', () => {
               model: { type: 'string' },
             },
           },
-          memory: {
+          archive: {
             type: 'object',
             required: ['provider'],
             properties: {
@@ -111,7 +111,7 @@ describe('validateCompanionConfig', () => {
       id: 12345, // should be string
       name: 'Test',
       organs: {
-        memory: {
+        archive: {
           provider: 'sqlite',
           maxConnections: 'ten', // should be number
         },
@@ -123,7 +123,7 @@ describe('validateCompanionConfig', () => {
       validateCompanionConfig(invalidConfig, sampleSchema);
     } catch (err: any) {
       expect(err.errors).toContain('$.id: expected string, received number');
-      expect(err.errors).toContain('$.organs.memory.maxConnections: expected number, received string');
+      expect(err.errors).toContain('$.organs.archive.maxConnections: expected number, received string');
     }
   });
 });

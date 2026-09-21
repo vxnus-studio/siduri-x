@@ -7,7 +7,7 @@ import {
   ActionExecutionResult,
   InteractionMode,
 } from './index';
-import { ProposalReceipt, MemoryProposalReceipt } from './interaction-settler';
+import { ProposalReceipt, ClaimProposalReceipt } from './interaction-settler';
 import { FormattedMouthOutput } from './mouth-types';
 
 export interface AssembleResponseEnvelopeParams {
@@ -18,8 +18,8 @@ export interface AssembleResponseEnvelopeParams {
   subtitles?: Record<string, string>;
   subtitleLanguage?: string;
   speechId?: string;
-  createdMemoryProposals: Claim[];
-  memoryProposalReceipts: MemoryProposalReceipt[];
+  createdClaimProposals: Claim[];
+  claimProposalReceipts: ClaimProposalReceipt[];
   behavioralProposalReceipts?: any[];
   actionResults: ActionExecutionResult[];
   filteredEvidenceIds?: string[];
@@ -52,7 +52,7 @@ export function createGateRejectionEnvelope(
       confidence: stagedPlan.confidenceSummary,
       uncertainty: stagedPlan.uncertaintySummary,
       proposals: [],
-      memory_proposals: [],
+      claim_proposals: [],
     },
   };
 }
@@ -71,8 +71,8 @@ export function assembleResponseEnvelope(
     subtitles,
     subtitleLanguage,
     speechId,
-    createdMemoryProposals,
-    memoryProposalReceipts,
+    createdClaimProposals,
+    claimProposalReceipts,
     behavioralProposalReceipts,
     actionResults,
     filteredEvidenceIds,
@@ -116,9 +116,9 @@ export function assembleResponseEnvelope(
     metadata: {
       mode: effectiveMode ?? 'hybrid',
       language,
-      proposals: createdMemoryProposals,
+      proposals: createdClaimProposals,
       directive_proposals: behavioralProposalReceipts || [],
-      memory_proposals: memoryProposalReceipts,
+      claim_proposals: claimProposalReceipts,
       behavioral_proposals: behavioralProposalReceipts || [],
       action_results: actionResults,
       evidence_ids: filteredEvidenceIds,

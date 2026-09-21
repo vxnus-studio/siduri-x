@@ -26,7 +26,7 @@ describe('Localweb and CLI Standalone 1:1 Runtime & Chat Parity', () => {
         metadata: {
           language: 'ja',
           internal_monologue: 'Monologue test',
-          memory_proposals: [
+          claim_proposals: [
             {
               proposal_id: 'prop-1',
               subject: 'user',
@@ -75,8 +75,8 @@ describe('Localweb and CLI Standalone 1:1 Runtime & Chat Parity', () => {
     expect(result.response.evidence_ids).toEqual([]);
 
     // 3. Metadata proposals & events
-    expect(result.metadata?.memory_proposals).toHaveLength(1);
-    expect(result.metadata?.memory_proposals?.[0].proposal_id).toBe('prop-1');
+    expect(result.metadata?.claim_proposals).toHaveLength(1);
+    expect(result.metadata?.claim_proposals?.[0].proposal_id).toBe('prop-1');
     expect(result.metadata?.events).toHaveLength(1);
     expect(result.metadata?.events?.[0].expression).toBe('happy');
 

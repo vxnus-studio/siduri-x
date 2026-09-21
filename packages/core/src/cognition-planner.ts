@@ -1,4 +1,4 @@
-import { BrainOrgan, Message, ResponsePlan, MemoryScope } from './index';
+import { BrainOrgan, Message, ResponsePlan, ClaimScope } from './index';
 
 export interface CognitionPlanningParams {
   companionName: string;
@@ -6,7 +6,7 @@ export interface CognitionPlanningParams {
   systemPrompt: string;
   contextPrompt: string;
   recentMessages: Message[];
-  recipient?: MemoryScope;
+  recipient?: ClaimScope;
   perceivedText: string;
 }
 

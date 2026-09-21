@@ -133,6 +133,7 @@ type ChatResponse = {
     gate?: GateEvaluationData;
   };
   metadata?: {
+    claim_proposals?: MemoryProposalData[];
     memory_proposals?: MemoryProposalData[];
     behavioral_proposals?: BehavioralProposalData[];
     citations?: EvidenceCitation[];
@@ -664,7 +665,7 @@ export default function ChatClient() {
               setEffectiveMode(data.metadata.mode);
             }
             const plan = data.response || {};
-            const proposals = data.metadata?.memory_proposals;
+            const proposals = data.metadata?.claim_proposals || data.metadata?.memory_proposals;
             const behavioralProposals = data.metadata?.behavioral_proposals;
             const citations = plan.citations || data.metadata?.citations || [];
             const gate = plan.gate || data.metadata?.gate;

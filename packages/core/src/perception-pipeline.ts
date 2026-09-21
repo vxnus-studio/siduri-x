@@ -34,8 +34,6 @@ import { generateCognitionPlan } from './cognition-planner';
 import {
   settleInteractionProposals,
   InteractionSettlementResult,
-  settleMemoryProposals,
-  MemorySettlementResult,
 } from './interaction-settler';
 import { executeActionIntents } from './action-executor';
 import { emitExperienceEvents, ExperienceEmissionResult } from './experience-emitter';
@@ -65,7 +63,6 @@ export interface PerceptionPipelineContext {
   organs: {
     brain?: BrainOrgan;
     archive?: ArchiveLedger;
-    memory?: any;
     voice?: VoiceOrgan | ExperienceAdapter;
     knowledge?: KnowledgeOrgan;
     vision?: VisionOrgan;
@@ -76,6 +73,7 @@ export interface PerceptionPipelineContext {
     observation?: ObservationOrgan;
     mouth?: MouthOrgan;
     self?: SelfRepository;
+    memory?: any;
     externalKnowledge?: EKnowledgeOrgan;
   };
   gating: ResponseGatingEngine;
@@ -93,7 +91,7 @@ export interface PerceptionPipelineContext {
   plan?: ResponsePlan;
   stagedPlan?: StagedResponsePlan;
   gateEval?: ResponseGateEvaluation;
-  memorySettlement?: MemorySettlementResult;
+  interactionSettlement?: InteractionSettlementResult;
   actionResults?: ActionExecutionResult[];
   experienceEmission?: ExperienceEmissionResult;
   mouthDelivery?: FormattedMouthOutput;
@@ -202,7 +200,7 @@ export const contextRetrievalStage: PerceptionPipelineStage = async (context) =>
     isContextObject: context.input.isContextObject,
     shouldQueryKnowledge: context.intent.shouldQueryKnowledge,
     knowledgeQueries: context.intent.knowledgeQueries,
-    memoryQueries: context.intent.memoryQueries,
+    archiveQueries: context.intent.archiveQueries,
     isSelfIdentityRequest: context.intent.isSelfIdentityRequest,
     knowledge: context.organs.knowledge,
     archive: context.organs.archive,
@@ -229,7 +227,7 @@ export const promptCompilationStage: PerceptionPipelineStage = async (context) =
     personality: context.contextRetrieval.personality,
     subsystemDiagnostics: context.contextRetrieval.subsystemDiagnostics,
     knowledgeData: context.contextRetrieval.knowledgeData,
-    memoryData: context.contextRetrieval.memoryData,
+    archiveData: context.contextRetrieval.archiveData,
     lifeContext: context.contextRetrieval.lifeContext,
     effectiveMode: context.intent?.effectiveMode,
     subtitleLanguage: context.perception.subtitleLanguage,
@@ -260,9 +258,9 @@ export const responseGatingStage: PerceptionPipelineStage = async (context) => {
     candidateSpeech: context.plan.speech,
     candidateLanguage: context.plan.language || 'ja',
     internalMonologue: context.plan.internalMonologue,
-    memoryProposals: [
+    claimProposals: [
       ...(context.intent?.explicitTeaching?.claims || []),
-      ...(context.plan.memoryProposals || []),
+      ...(context.plan.claimProposals || []),
     ],
     behaviorProposals: [
       ...(context.intent?.explicitTeaching?.behaviorProposals || []),
@@ -296,16 +294,14 @@ export const interactionSettlementStage: PerceptionPipelineStage = async (contex
     role: context.input.role,
     requestContext: context.input.requestContext,
     archive: context.organs.archive,
+    memory: context.organs.memory,
     self: context.organs.self,
     explicitTeaching: context.intent.explicitTeaching,
     plan: context.plan,
     effectiveMode: context.intent.effectiveMode,
-    memory: context.organs.memory,
   });
-  context.memorySettlement = settlement;
+  context.interactionSettlement = settlement;
 };
-
-export const memorySettlementStage: PerceptionPipelineStage = interactionSettlementStage;
 
 export const actionExecutionStage: PerceptionPipelineStage = async (context) => {
   if (!context.input || !context.plan) return;
@@ -377,7 +373,7 @@ export const mouthDeliveryStage: PerceptionPipelineStage = async (context) => {
 };
 
 export const envelopeAssemblyStage: PerceptionPipelineStage = async (context) => {
-  if (!context.stagedPlan || !context.plan || !context.gateEval || !context.contextRetrieval || !context.memorySettlement) return;
+  if (!context.stagedPlan || !context.plan || !context.gateEval || !context.contextRetrieval || !context.interactionSettlement) return;
   const envelope = assembleResponseEnvelope({
     stagedPlan: context.stagedPlan,
     speech: context.plan.speech,
@@ -386,9 +382,9 @@ export const envelopeAssemblyStage: PerceptionPipelineStage = async (context) =>
     subtitles: context.plan.subtitles,
     subtitleLanguage: context.perception.subtitleLanguage,
     speechId: context.experienceEmission?.speechId,
-    createdMemoryProposals: context.memorySettlement.createdMemoryProposals,
-    memoryProposalReceipts: context.memorySettlement.memoryProposalReceipts,
-    behavioralProposalReceipts: context.memorySettlement.behavioralProposalReceipts,
+    createdClaimProposals: context.interactionSettlement.createdClaimProposals,
+    claimProposalReceipts: context.interactionSettlement.claimProposalReceipts,
+    behavioralProposalReceipts: context.interactionSettlement.behavioralProposalReceipts,
     actionResults: context.actionResults || [],
     filteredEvidenceIds: context.gateEval.filteredEvidenceIds,
     filteredCitations: context.gateEval.filteredCitations,
@@ -409,7 +405,7 @@ export function createDefaultPerceptionPipeline(): PerceptionPipeline {
     promptCompilationStage,
     cognitionPlanningStage,
     responseGatingStage,
-    memorySettlementStage,
+    interactionSettlementStage,
     actionExecutionStage,
     experienceEmissionStage,
     mouthDeliveryStage,

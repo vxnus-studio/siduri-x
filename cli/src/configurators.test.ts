@@ -15,7 +15,7 @@ import {
 } from './providers/knowledge-hub';
 import { configureBrain } from './configurators/brain';
 import { configureKnowledge } from './configurators/knowledge';
-import { configureMemory } from './configurators/memory';
+import { configureArchive } from './configurators/archive';
 import { configureVoice } from './configurators/voice';
 import { configureBody } from './configurators/body';
 import { configureHands } from './configurators/hands';
@@ -279,11 +279,11 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
   });
 
   describe('Other Organ Configurators & Generic Router', () => {
-    test('Memory configurator configures SQLite with WAL and FTS5', async () => {
+    test('Archive configurator configures SQLite with WAL and FTS5', async () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ provider: 'sqlite' });
 
-      const result = await configureMemory({ companionName: 'Sparkle', manifest: archiveManifest });
+      const result = await configureArchive({ companionName: 'Sparkle', manifest: archiveManifest });
       expect(result.config.provider).toBe('sqlite');
       expect(result.summary?.Database).toBe('SQLite (WAL + FTS5)');
       expect(result.summary?.Storage).toBe('siduri.sqlite');

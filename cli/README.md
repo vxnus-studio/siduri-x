@@ -23,7 +23,7 @@ npx siduri create my-companion
 - **Interactive Configuration Wizard**: Model catalog discovery for OpenRouter, manifest inspection for E Knowledge Hub, and guided organ parameters.
 - **Zero Monolithic Bundling**: Scaffolds standard Node.js ESM projects with explicit dependency trees.
 - **Diagnostics (`siduri doctor`)**: Runs environment variable validation, schema conformance checks, storage writeability verification, external service endpoint probing, and organ health probes.
-- **Zero-Config Database**: Powered by embedded SQLite (`siduri.sqlite`). Memory and persistent state are initialized automatically at startup without manual SQL migrations.
+- **Zero-Config Database**: Powered by embedded SQLite (`siduri.sqlite`). Directives, Life DB, and Archive are initialized automatically at startup without manual SQL migrations.
 
 ## CLI Usage
 

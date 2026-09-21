@@ -24,7 +24,3 @@ export async function configureArchive(
   };
 }
 
-/**
- * @deprecated Use configureArchive instead. RFC VX-26-13.
- */
-export const configureMemory = configureArchive;

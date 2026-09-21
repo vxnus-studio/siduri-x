@@ -16,12 +16,11 @@ export interface InteractionSettlementParams {
   role: 'OWNER' | 'VIEWER' | 'OPERATOR';
   requestContext: RequestContext;
   archive?: ArchiveLedger;
+  memory?: any;
   self?: SelfRepository;
   explicitTeaching: ReturnType<typeof extractDeterministicTeaching>;
   plan: ResponsePlan;
   effectiveMode?: InteractionMode;
-  /** @deprecated Legacy memory organ reference. Direct domain routing routes to self or archive directly. */
-  memory?: any;
 }
 
 export interface ProposalReceipt {
@@ -34,13 +33,12 @@ export interface ProposalReceipt {
   content?: string;
 }
 
-export type MemoryProposalReceipt = ProposalReceipt;
+export type ClaimProposalReceipt = ProposalReceipt;
 
 export interface BehavioralProposalReceipt {
   directive_id: string;
   domain?: string;
   knowledge_domain?: string;
-  memory_class?: string;
   runtime_effect?: string;
   subject?: string;
   predicate?: string;
@@ -54,14 +52,11 @@ export interface BehavioralProposalReceipt {
 }
 
 export interface InteractionSettlementResult {
-  createdMemoryProposals: Claim[];
-  memoryProposalReceipts: ProposalReceipt[];
+  createdClaimProposals: Claim[];
+  claimProposalReceipts: ProposalReceipt[];
   createdBehavioralProposals?: BehaviorDirective[];
   behavioralProposalReceipts?: BehavioralProposalReceipt[];
 }
-
-export type MemorySettlementParams = InteractionSettlementParams;
-export type MemorySettlementResult = InteractionSettlementResult;
 
 /**
  * Persists source events to ArchiveLedger and behavioral directive proposals directly to SelfRepository.
@@ -86,19 +81,19 @@ export async function settleInteractionProposals(
   const mode = effectiveMode || requestContext.mode || 'hybrid';
   if (mode === 'casual') {
     return {
-      createdMemoryProposals: [],
-      memoryProposalReceipts: [],
+      createdClaimProposals: [],
+      claimProposalReceipts: [],
     };
   }
 
-  const createdMemoryProposals: Claim[] = [];
+  const createdClaimProposals: Claim[] = [];
   let sourceEventId: string | undefined;
 
   const hasTeaching =
     explicitTeaching.claims.length > 0 ||
     explicitTeaching.behaviorProposals.length > 0;
   const hasPlanProposals =
-    Boolean(plan.memoryProposals?.length) ||
+    Boolean(plan.claimProposals?.length) ||
     Boolean(plan.behaviorProposals?.length);
 
   if (archive && typeof archive.recordEvent === 'function') {
@@ -134,6 +129,7 @@ export async function settleInteractionProposals(
         claimType: claim.claimType || 'preference',
         authority: 'user_explicit',
         userConfirmation: 'none',
+        status: 'pending',
         sensitivity:
           claim.sensitivity ||
           (requestContext.conversation?.channel === 'public' ? 'public' : 'private'),
@@ -159,12 +155,12 @@ export async function settleInteractionProposals(
       } as any;
     }
     if (proposal) {
-      createdMemoryProposals.push(proposal);
+      createdClaimProposals.push(proposal);
     }
   }
 
-  if (plan.memoryProposals && plan.memoryProposals.length > 0) {
-    for (const p of plan.memoryProposals) {
+  if (plan.claimProposals && plan.claimProposals.length > 0) {
+    for (const p of plan.claimProposals) {
       let proposal: Claim | undefined;
       if ((params as any).memory && typeof (params as any).memory.proposeClaim === 'function') {
         proposal = await (params as any).memory.proposeClaim({
@@ -176,6 +172,7 @@ export async function settleInteractionProposals(
           provenance: p.provenance || 'llm_proposal',
           sourceEventId: sourceEventId || p.sourceEventId,
           claimType: p.claimType || 'semantic',
+          status: 'pending',
           sensitivity: p.sensitivity || 'private',
         });
       }
@@ -195,7 +192,7 @@ export async function settleInteractionProposals(
         } as any;
       }
       if (proposal) {
-        createdMemoryProposals.push(proposal);
+        createdClaimProposals.push(proposal);
       }
     }
   }
@@ -230,8 +227,7 @@ export async function settleInteractionProposals(
       directive_id: directive.id,
       domain: 'behavioral',
       knowledge_domain: 'behavioral',
-      memory_class: bp.memoryClass || 'behavioral',
-      runtime_effect: bp.memoryClass || 'behavioral',
+      runtime_effect: 'behavioral',
       subject: bp.subject || `companion:${companionId}`,
       predicate: bp.predicate || 'rule',
       value: bp.value || bp.directive,
@@ -244,7 +240,7 @@ export async function settleInteractionProposals(
     });
   }
 
-  const memoryProposalReceipts: ProposalReceipt[] = createdMemoryProposals.map(
+  const claimProposalReceipts: ProposalReceipt[] = createdClaimProposals.map(
     (p) => ({
       proposal_id: p.id,
       subject: p.subject,
@@ -257,14 +253,9 @@ export async function settleInteractionProposals(
   );
 
   return {
-    createdMemoryProposals,
-    memoryProposalReceipts,
+    createdClaimProposals,
+    claimProposalReceipts,
     createdBehavioralProposals,
     behavioralProposalReceipts,
   };
 }
-
-/**
- * @deprecated Use `settleInteractionProposals` instead. RFC VX-26-13.
- */
-export const settleMemoryProposals = settleInteractionProposals;

@@ -41,7 +41,7 @@ export interface SourceEvent {
   schemaVersion?: number;
 }
 
-export interface MemoryProposal {
+export interface ClaimProposal {
   subject: string;
   predicate: string;
   value: string;
@@ -61,6 +61,5 @@ export interface BehaviorProposal {
   subject?: string;
   predicate?: string;
   value?: string;
-  memoryClass?: 'identity' | 'relationship' | 'behavioral' | 'semantic' | 'episodic';
   sourceEventId?: string;
 }

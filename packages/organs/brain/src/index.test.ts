@@ -61,7 +61,7 @@ describe('OpenRouterBrain', () => {
                 arguments: JSON.stringify({ 
                   speech: "Hi", 
                   language: "en",
-                  memoryProposals: [{ subject: "I", predicate: "am", value: "testing" }],
+                  claimProposals: [{ subject: "I", predicate: "am", value: "testing" }],
                   behaviorProposals: [{ directive: "Be nice", priority: 10 }]
                 })
               }
@@ -74,7 +74,7 @@ describe('OpenRouterBrain', () => {
     const plan = await brain.generatePlan(mockContext);
     expect(plan.speech).toBe("Hi");
     expect(plan.language).toBe("en");
-    expect(plan.memoryProposals?.[0].subject).toBe("I");
+    expect(plan.claimProposals?.[0].subject).toBe("I");
     expect(plan.behaviorProposals?.[0].priority).toBe(10);
   });
 

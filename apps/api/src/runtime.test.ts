@@ -20,7 +20,7 @@ describe('Siduri Runtime Orchestration', () => {
         return {
           speech: "Hello",
           language: "en",
-          memoryProposals: [
+          claimProposals: [
             { subject: "Test", predicate: "is", value: "working" }
           ]
         };
@@ -80,7 +80,7 @@ describe('Siduri Runtime Orchestration', () => {
     expect(proposedClaims.length).toBe(1);
     expect(proposedClaims[0].subject).toBe("Test");
     expect(proposedClaims[0].scope).toBe("user");
-    expect(response.metadata.memory_proposals[0].proposal_id).toBe("claim-1");
+    expect(response.metadata.claim_proposals[0].proposal_id).toBe("claim-1");
   });
 
   test('Primary Invariant: Brain proposes an action, ActionPolicyEngine authorizes, Hands executes', async () => {

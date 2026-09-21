@@ -50,6 +50,15 @@ export interface ChatResponsePlan {
 export interface ChatResponseMetadata {
   language?: string;
   proposals?: Claim[];
+  claim_proposals?: Array<{
+    proposal_id: string;
+    subject?: string;
+    predicate?: string;
+    value?: string;
+    status: string;
+    content?: string;
+    claim_type?: string;
+  }>;
   memory_proposals?: Array<{
     proposal_id: string;
     subject?: string;

@@ -88,7 +88,7 @@ describe('IntentClassifier', () => {
       expect(classifyInputIntent('Tell me a joke', casualContext).effectiveMode).toBe('casual');
     });
 
-    test('enforces casual mode (Zero Memory Drift) on public channel or external source boundary', () => {
+    test('enforces casual mode (Zero Drift) on public channel or external source boundary', () => {
       const publicContext: RequestContext = {
         ...dummyContext,
         conversation: { channel: 'public', correlationId: 'corr-pub' },

@@ -9,7 +9,6 @@ import {
   SelfRepository,
   LifeDatabase,
   ArchiveLedger,
-  EpisodicMemoryStore,
   EKnowledgeOrgan,
 } from './index';
 import { extractSearchKeywords } from './intent-classifier';
@@ -22,18 +21,18 @@ export interface ContextRetrievalParams {
   isContextObject: boolean;
   shouldQueryKnowledge: boolean;
   knowledgeQueries?: string[];
-  memoryQueries?: string[];
+  archiveQueries?: string[];
   isSelfIdentityRequest?: boolean;
   knowledge?: KnowledgeOrgan | LifeDatabase;
   archive?: ArchiveLedger;
-  memory?: EpisodicMemoryStore;
+  memory?: any;
   self?: SelfRepository;
   externalKnowledge?: EKnowledgeOrgan | KnowledgeOrgan;
 }
 
 export interface RetrievedContext {
   knowledgeData: KnowledgeItem[];
-  memoryData: Claim[];
+  archiveData: Claim[];
   activeDirectives: BehaviorDirective[];
   subsystemDiagnostics: Record<string, string>;
   collectedEvidence: EvidenceRecord[];
@@ -59,7 +58,7 @@ export async function retrieveRuntimeContext(
     isContextObject,
     shouldQueryKnowledge,
     knowledgeQueries,
-    memoryQueries,
+    archiveQueries,
     isSelfIdentityRequest,
     knowledge,
     archive,
@@ -99,15 +98,15 @@ export async function retrieveRuntimeContext(
   }
   const finalKnowledgeQueries = Array.from(queryCandidateSet);
 
-  const memoryQueryToRun = (memoryQueries && memoryQueries.length > 0 && memoryQueries[0])
-    ? memoryQueries[0]
+  const archiveQueryToRun = (archiveQueries && archiveQueries.length > 0 && archiveQueries[0])
+    ? archiveQueries[0]
     : extractSearchKeywords(perceivedText, companionId)[0] || perceivedText;
 
   // 2. Query streams in parallel
   const [
     knowledgeData,
-    memoryData,
-    selfOrMemoryDirectives,
+    archiveData,
+    selfDirectives,
     lifeContext,
     selfIdentity,
     selfRelationship,
@@ -127,9 +126,8 @@ export async function retrieveRuntimeContext(
           const merged: KnowledgeItem[] = [];
           const seen = new Set<string>();
           for (const list of resultsArray) {
-            if (!Array.isArray(list)) continue;
             for (const item of list) {
-              const key = item.id || item.content || (item as any).text || JSON.stringify(item.citations);
+              const key = item.content.slice(0, 100);
               if (!seen.has(key)) {
                 seen.add(key);
                 merged.push(item);
@@ -140,12 +138,11 @@ export async function retrieveRuntimeContext(
         })
       : Promise.resolve([]),
 
-    // Stream B: Interaction Archive / Verified Claims (FTS5 search with fallback)
+    // Stream B: Interaction Archive / Claims
     memory && typeof (memory as any).searchClaims === 'function'
       ? (async () => {
           try {
-            // Support both (companionId, query, limit) and (query, options, limit)
-            let result = await (memory as any).searchClaims(memoryQueryToRun, queryOptions, 5);
+            let result = await (memory as any).searchClaims(archiveQueryToRun, queryOptions, 5);
             if ((!result || result.length === 0) && isSelfIdentityRequest) {
               if (typeof (memory as any).getApprovedClaims === 'function') {
                 const approved = await (memory as any).getApprovedClaims(companionId, 10);
@@ -177,7 +174,7 @@ export async function retrieveRuntimeContext(
       : archive && typeof archive.searchEvents === 'function'
       ? (async () => {
           try {
-            const events = await archive.searchEvents!(companionId, memoryQueryToRun, 5);
+            const events = await archive.searchEvents!(companionId, archiveQueryToRun, 5);
             return (events || []).map((evt: any) => ({
               id: evt.id,
               companionId: evt.companionId,
@@ -242,7 +239,7 @@ export async function retrieveRuntimeContext(
       : Promise.resolve(undefined),
   ]);
 
-  const activeDirectives: BehaviorDirective[] = (selfOrMemoryDirectives || []) as BehaviorDirective[];
+  const activeDirectives: BehaviorDirective[] = (selfDirectives || []) as BehaviorDirective[];
 
   // Build evidence records from retrieved context streams
   const collectedEvidence: EvidenceRecord[] = [];
@@ -296,19 +293,19 @@ export async function retrieveRuntimeContext(
     }
   }
 
-  // Stream B: Episodic Memory Claims
-  if (memoryData.length > 0) {
-    for (const m of memoryData) {
-      const claimId = (m as any).claim_id || (m as any).id || `claim-${Date.now()}`;
-      const sourceId = (m as any).provenance || 'sqlite-memory';
-      const evId = `ev-mem-${claimId}`;
-      const claimPreview = (m as any).content || `${(m as any).subject || 'user'} ${(m as any).predicate || 'claims'}: ${(m as any).value || ''}`;
+  // Stream B: Interaction Archive
+  if (archiveData.length > 0) {
+    for (const m of archiveData) {
+      const claimId = (m as any).claim_id || (m as any).id || `evt-${Date.now()}`;
+      const sourceId = (m as any).provenance || 'archive_ledger';
+      const evId = `ev-arc-${claimId}`;
+      const claimPreview = (m as any).content || `${(m as any).subject || 'event'} ${(m as any).predicate || 'event'}: ${(m as any).value || ''}`;
       collectedEvidence.push({
         evidenceId: evId,
         sourceId,
         documentId: claimId,
-        chunkId: `${(m as any).subject || 'user'}:${(m as any).predicate || 'claim'}`,
-        origin: 'memory',
+        chunkId: `${(m as any).subject || 'archive'}:${(m as any).predicate || 'event'}`,
+        origin: 'archive',
         trust: 'configured',
         sensitivity: 'private',
         companionId,
@@ -317,11 +314,11 @@ export async function retrieveRuntimeContext(
       });
       citations.push({
         evidenceId: evId,
-        provenance: 'memory',
+        provenance: 'archive',
         sourceId,
         documentId: claimId,
-        chunkId: `${(m as any).subject || 'user'}.${(m as any).predicate || 'claim'}`,
-        locator: `claim:${claimId}`,
+        chunkId: `${(m as any).subject || 'archive'}.${(m as any).predicate || 'event'}`,
+        locator: `archive:${claimId}`,
         preview: claimPreview.slice(0, 300),
       });
     }
@@ -358,7 +355,7 @@ export async function retrieveRuntimeContext(
 
   return {
     knowledgeData,
-    memoryData,
+    archiveData,
     activeDirectives,
     subsystemDiagnostics,
     collectedEvidence,

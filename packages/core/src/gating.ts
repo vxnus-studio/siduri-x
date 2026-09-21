@@ -1,5 +1,5 @@
 import { RequestContext } from './context';
-import { MemoryProposal, BehaviorProposal } from './proposals';
+import { ClaimProposal, BehaviorProposal } from './proposals';
 import {
   EvidenceRecord,
   StagedResponsePlan,
@@ -14,7 +14,7 @@ export interface StageResponseOptions {
   candidateSpeech: string;
   candidateLanguage: string;
   internalMonologue?: string;
-  memoryProposals?: MemoryProposal[];
+  claimProposals?: ClaimProposal[];
   behaviorProposals?: BehaviorProposal[];
   evidenceRecords?: EvidenceRecord[];
   citations?: ResponseCitation[];
@@ -91,7 +91,7 @@ export class ResponseGatingEngine {
       status: 'STAGED',
       createdAt: new Date(nowTime).toISOString(),
       expiresAt,
-      memoryProposals: options.memoryProposals,
+      claimProposals: options.claimProposals,
       behaviorProposals: options.behaviorProposals,
       internalMonologue: options.internalMonologue,
     };

@@ -173,11 +173,11 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     return {
       generatePlan: jest.fn().mockImplementation(async (brainCtx: any) => {
         const lastMsg = brainCtx.recentMessages?.[brainCtx.recentMessages.length - 1]?.content || '';
-        const memoryProposals: any[] = [];
+        const claimProposals: any[] = [];
         const behaviorProposals: any[] = [];
 
         if (/AI researcher at VXNUS Studio/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: `companion:${companionId}`,
             predicate: 'role',
             value: 'AI researcher at VXNUS Studio',
@@ -190,25 +190,25 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
             value: 'AI researcher at VXNUS Studio',
           });
         } else if (/Lead Architect at VXNUS Studio/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: `companion:${companionId}`,
             predicate: 'role',
             value: 'Lead Architect at VXNUS Studio',
           });
         } else if (/Research Specialist/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: `companion:${companionId}`,
             predicate: 'role',
             value: 'Research Specialist',
           });
         } else if (/Security Officer/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: `companion:${companionId}`,
             predicate: 'role',
             value: 'Security Officer',
           });
         } else if (/VXNUS Studio Staff/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: `companion:${companionId}`,
             predicate: 'role',
             value: 'VXNUS Studio Staff',
@@ -216,7 +216,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
         }
 
         if (/\bcreator\b/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: 'actor:kur-zagin',
             predicate: 'stated_relationship',
             value: 'creator',
@@ -232,7 +232,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
         }
 
         if (/Kur Zagin/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: 'actor:kur-zagin',
             predicate: 'name',
             value: 'Kur Zagin',
@@ -253,7 +253,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
             category: 'behavioral',
             priority: 60,
           });
-          memoryProposals.push({
+          claimProposals.push({
             subject: 'actor:kur-zagin',
             predicate: 'rule',
             value: 'Be concise when answering technical questions',
@@ -263,7 +263,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
         return {
           speech: 'Understood, I have acknowledged your input.',
           language: 'en',
-          memoryProposals: memoryProposals.length > 0 ? memoryProposals : undefined,
+          claimProposals: claimProposals.length > 0 ? claimProposals : undefined,
           behaviorProposals: behaviorProposals.length > 0 ? behaviorProposals : undefined,
           _receivedSystemPrompt: brainCtx.systemPrompt,
         };
@@ -438,17 +438,17 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
       context: createRequestContext(companionId, 'teach'),
     });
 
-    // Check behavioral proposals or memory proposals
+    // Check behavioral proposals or claim proposals
     const behavioralReceipts = perceptionResult.metadata?.behavioral_proposals || [];
-    const memoryProposals = perceptionResult.metadata?.proposals || [];
+    const claimProposals = perceptionResult.metadata?.proposals || [];
 
     const hasDirectiveProposal =
       behavioralReceipts.length > 0 ||
-      memoryProposals.some((p: any) => p.predicate === 'rule' || p.predicate === 'behavioral_rule');
+      claimProposals.some((p: any) => p.predicate === 'rule' || p.predicate === 'behavioral_rule');
     expect(hasDirectiveProposal).toBe(true);
 
     const directiveId = behavioralReceipts[0]?.directive_id;
-    const proposalId = memoryProposals[0]?.id;
+    const proposalId = claimProposals[0]?.id;
 
     // 2. Active directives before approval must not include the new rule
     const directivesBefore = await self.getActiveDirectives(companionId);
@@ -504,7 +504,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     expect(perceptionResult.status).toBe('APPROVED');
     // Zero proposals allowed in casual mode
     expect(perceptionResult.metadata?.proposals).toEqual([]);
-    expect(perceptionResult.metadata?.memory_proposals).toEqual([]);
+    expect(perceptionResult.metadata?.claim_proposals).toEqual([]);
 
     // Self must remain unchanged
     const identity = await self.getIdentity(companionId);
@@ -768,11 +768,11 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     const mockBrain = {
       generatePlan: jest.fn().mockImplementation(async (brainCtx: any) => {
         const lastMsg = brainCtx.recentMessages?.[brainCtx.recentMessages.length - 1]?.content || '';
-        const memoryProposals: any[] = [];
+        const claimProposals: any[] = [];
         const behaviorProposals: any[] = [];
 
         if (/your name is Siduri/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: 'companion:self',
             predicate: 'name',
             value: 'Siduri',
@@ -787,12 +787,12 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
         }
 
         if (/i am Kur Zagin, your creator/i.test(lastMsg)) {
-          memoryProposals.push({
+          claimProposals.push({
             subject: 'actor:kur_zagin',
             predicate: 'name',
             value: 'Kur Zagin',
           });
-          memoryProposals.push({
+          claimProposals.push({
             subject: 'actor:kur_zagin',
             predicate: 'stated_relationship',
             value: 'creator of companion Siduri',
@@ -816,7 +816,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
         return {
           speech: 'I understand and acknowledge.',
           language: 'en',
-          memoryProposals: memoryProposals.length > 0 ? memoryProposals : undefined,
+          claimProposals: claimProposals.length > 0 ? claimProposals : undefined,
           behaviorProposals: behaviorProposals.length > 0 ? behaviorProposals : undefined,
           _receivedSystemPrompt: brainCtx.systemPrompt,
         };
@@ -944,7 +944,7 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     });
 
     const whoAmICtx = calls[calls.length - 1][0];
-    expect(whoAmICtx.contextPrompt).toContain('MEMORY:');
+    expect(whoAmICtx.contextPrompt).toContain('ARCHIVE:');
     expect(whoAmICtx.contextPrompt).toContain('Kur Zagin');
 
     db.close();

@@ -21,9 +21,9 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     id: "faq-3",
-    question: "How does the Truth Gate prevent memory corruption and prompt injection?",
+    question: "How does the Truth Gate prevent persona drift and prompt injection?",
     answer:
-      "When interacting with you, Siduri stages extracted statements as PENDING candidates. These candidates are strictly quarantined from active cognition. Only when you—acting as the human Anchor—explicitly approve a claim does it enter permanent local memory in siduri.sqlite. Malicious prompt injections attempting to rewrite her beliefs are halted at the gate, unable to corrupt her worldview.",
+      "When interacting with you, Siduri stages extracted statements as PENDING candidates. These candidates are strictly quarantined from active cognition. Only when you—acting as the human Anchor—explicitly approve a claim does it enter permanent local state in siduri.sqlite (routed directly to Self directives or sovereign Knowledge). Malicious prompt injections attempting to rewrite her beliefs are halted at the gate, unable to corrupt her worldview.",
   },
   {
     id: "faq-4",

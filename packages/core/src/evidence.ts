@@ -1,6 +1,6 @@
-import { MemoryProposal, BehaviorProposal } from './proposals';
+import { ClaimProposal, BehaviorProposal } from './proposals';
 
-export type EvidenceOrigin = 'knowledge' | 'memory' | 'life' | 'observation' | 'ocr' | 'platform' | 'conversation';
+export type EvidenceOrigin = 'knowledge' | 'archive' | 'life' | 'observation' | 'ocr' | 'platform' | 'conversation';
 export type EvidenceTrust = 'configured' | 'provider' | 'untrusted';
 export type EvidenceSensitivity = 'public' | 'private' | 'restricted';
 
@@ -64,7 +64,7 @@ export interface StagedResponsePlan {
   status: ResponseApprovalStatus;
   createdAt: string;
   expiresAt?: string;
-  memoryProposals?: MemoryProposal[];
+  claimProposals?: ClaimProposal[];
   behaviorProposals?: BehaviorProposal[];
   internalMonologue?: string;
   [key: string]: unknown;

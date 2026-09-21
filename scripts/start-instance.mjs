@@ -581,7 +581,7 @@ const server = createServer(async (req, res) => {
 
         runtime.log('info', 'perception', `Response generated successfully`, {
           speech: response.delivery?.text || response.response?.subtitle_en || response.response?.spoken_ja,
-          proposalsCount: (response.metadata?.memory_proposals?.length || 0) + (response.metadata?.behavioral_proposals?.length || 0),
+          proposalsCount: (response.metadata?.claim_proposals?.length || response.metadata?.memory_proposals?.length || 0) + (response.metadata?.behavioral_proposals?.length || 0),
         });
 
         res.writeHead(200, { 'Content-Type': 'application/json' });

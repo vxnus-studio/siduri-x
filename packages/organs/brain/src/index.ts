@@ -23,11 +23,12 @@ export interface OpenRouterBrainConfig {
   maxBackoffMs?: number;
 }
 
-const MemoryProposalSchema = z.object({
+export const ClaimProposalSchema = z.object({
   subject: z.string(),
   predicate: z.string(),
   value: z.string(),
 });
+export type ClaimProposal = z.infer<typeof ClaimProposalSchema>;
 
 const BehaviorProposalSchema = z.object({
   directive: z.string(),
@@ -51,7 +52,7 @@ const ResponsePlanSchema = z.object({
   subtitle: z.string().optional(),
   subtitles: z.record(z.string(), z.string()).optional(),
   internalMonologue: z.string().optional(),
-  memoryProposals: z.array(MemoryProposalSchema).optional(),
+  claimProposals: z.array(ClaimProposalSchema).optional(),
   behaviorProposals: z.array(BehaviorProposalSchema).optional(),
   actionIntents: z.array(ActionIntentSchema).optional(),
 });
@@ -77,7 +78,7 @@ function parseContentFallback(content: string): any | null {
         language: typeof rawObj.language === 'string' && rawObj.language.trim().length > 0 ? rawObj.language.trim() : 'en',
         subtitle: typeof rawObj.subtitle === 'string' ? rawObj.subtitle : undefined,
         internalMonologue: typeof rawObj.internalMonologue === 'string' ? rawObj.internalMonologue : 'Parsed from pseudo tool call XML',
-        memoryProposals: Array.isArray(rawObj.memoryProposals) ? rawObj.memoryProposals : undefined,
+        claimProposals: Array.isArray(rawObj.claimProposals) ? rawObj.claimProposals : undefined,
         behaviorProposals: Array.isArray(rawObj.behaviorProposals) ? rawObj.behaviorProposals : undefined,
         actionIntents: Array.isArray(rawObj.actionIntents) ? rawObj.actionIntents : undefined,
       };
@@ -138,9 +139,9 @@ export class OpenAICompatibleBrain implements BrainOrgan {
               language: { type: "string", description: "The primary language of the speech (e.g., 'en', 'ja', 'id')." },
               subtitle: { type: "string", description: "Optional translation or subtitle of speech in the requested subtitle language." },
               internalMonologue: { type: "string", description: "Internal reasoning before responding." },
-              memoryProposals: {
+              claimProposals: {
                 type: "array",
-                description: "Candidate memory claims (e.g. user identity, name, creator status, affiliations, preferences) extracted from the user's declarations for staged review. In Teach Mode, you MUST extract every declared fact here.",
+                description: "Candidate factual claims (e.g. user identity, name, creator status, affiliations, preferences) extracted from the user's declarations for staged review. In Teach Mode, you MUST extract every declared fact here.",
                 items: {
                   type: "object",
                   properties: {
@@ -344,8 +345,8 @@ export class OpenAICompatibleBrain implements BrainOrgan {
     const defaultResponse: RetrievalPlan = {
       shouldQueryKnowledge: undefined as any,
       knowledgeQueries: [],
-      shouldQueryMemory: undefined as any,
-      memoryQueries: [],
+      shouldQueryArchive: undefined as any,
+      archiveQueries: [],
     };
 
     if (!text || !text.trim() || !this.resolvedApiKey) {
@@ -376,7 +377,7 @@ export class OpenAICompatibleBrain implements BrainOrgan {
           messages: [
             {
               role: "system",
-              content: `You are an agentic query planning module for a companion. Analyze the user message.\nDecide:\n1. shouldQueryKnowledge (boolean): does this message ask about external world facts, domain documentation, fictional/real universe entities, lore, timelines, or specifications? (False if greeting, self-identity of the companion, or personal small talk).\n2. knowledgeQueries (string[]): 1-2 focused keyword queries of the specific entity, topic, or subject name (e.g. 'Sandrone', or with topic qualifier like 'Sandrone banner'; strictly remove companion mentions, greetings, and conversational fluff like 'who is', 'tell me about', 'what is').\n3. shouldQueryMemory (boolean): does this message ask about user identity, past conversation history, or shared facts?\n4. memoryQueries (string[]): 1-2 focused query keywords for episodic memory.${historyContext}\nRespond strictly in JSON format: {"shouldQueryKnowledge": boolean, "knowledgeQueries": string[], "shouldQueryMemory": boolean, "memoryQueries": string[]}`,
+              content: `You are an agentic query planning module for a companion. Analyze the user message.\nDecide:\n1. shouldQueryKnowledge (boolean): does this message ask about external world facts, domain documentation, fictional/real universe entities, lore, timelines, or specifications? (False if greeting, self-identity of the companion, or personal small talk).\n2. knowledgeQueries (string[]): 1-2 focused keyword queries of the specific entity, topic, or subject name (e.g. 'Sandrone', or with topic qualifier like 'Sandrone banner'; strictly remove companion mentions, greetings, and conversational fluff like 'who is', 'tell me about', 'what is').\n3. shouldQueryArchive (boolean): does this message ask about past conversation history, prior interactions, or audited events?\n4. archiveQueries (string[]): 1-2 focused query keywords for interaction archive.${historyContext}\nRespond strictly in JSON format: {"shouldQueryKnowledge": boolean, "knowledgeQueries": string[], "shouldQueryArchive": boolean, "archiveQueries": string[]}`,
             },
             {
               role: "user",
@@ -401,8 +402,8 @@ export class OpenAICompatibleBrain implements BrainOrgan {
         return {
           shouldQueryKnowledge: typeof parsed.shouldQueryKnowledge === 'boolean' ? parsed.shouldQueryKnowledge : undefined,
           knowledgeQueries: Array.isArray(parsed.knowledgeQueries) ? parsed.knowledgeQueries.filter((q: any) => typeof q === 'string' && q.trim()) : [],
-          shouldQueryMemory: typeof parsed.shouldQueryMemory === 'boolean' ? parsed.shouldQueryMemory : undefined,
-          memoryQueries: Array.isArray(parsed.memoryQueries) ? parsed.memoryQueries.filter((q: any) => typeof q === 'string' && q.trim()) : [],
+          shouldQueryArchive: typeof parsed.shouldQueryArchive === 'boolean' ? parsed.shouldQueryArchive : undefined,
+          archiveQueries: Array.isArray(parsed.archiveQueries) ? parsed.archiveQueries.filter((q: any) => typeof q === 'string' && q.trim()) : [],
           reasoning: parsed.reasoning,
         };
       }

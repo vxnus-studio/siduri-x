@@ -175,25 +175,23 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
   });
 
   describe('Three Interaction Modes Execution (Casual, Teach, Hybrid)', () => {
-    test('Casual Mode enforces Zero Memory Drift: suppresses all memory/directive proposals', async () => {
-      const mockMemory = {
-        proposeClaim: jest.fn(),
-        proposeDirective: jest.fn(),
-        addSourceEvent: jest.fn(),
+    test('Casual Mode enforces Zero Drift: suppresses all claim/directive proposals', async () => {
+      const mockArchive = {
+        recordEvent: jest.fn(),
       };
 
       const mockBrain = {
         generatePlan: jest.fn().mockResolvedValue({
           speech: 'Got it, Alice.',
           language: 'en',
-          memoryProposals: [
+          claimProposals: [
             { subject: 'actor:alice', predicate: 'mood', value: 'happy' },
           ],
         }),
       };
 
       const runtime = new SiduriRuntime('comp-casual', { name: 'CasualBot' } as any, {
-        memory: mockMemory as any,
+        archive: mockArchive as any,
         brain: mockBrain as any,
       } as any);
 
@@ -220,30 +218,22 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
 
       expect(response.status).toBe('APPROVED');
       expect(response.metadata.mode).toBe('casual');
-      // ZERO writes to memory: no source events, no proposed claims
-      expect(mockMemory.addSourceEvent).not.toHaveBeenCalled();
-      expect(mockMemory.proposeClaim).not.toHaveBeenCalled();
-      expect(mockMemory.proposeDirective).not.toHaveBeenCalled();
+      // ZERO writes to archive: no source events, no proposed claims
+      expect(mockArchive.recordEvent).not.toHaveBeenCalled();
       expect(response.metadata.proposals).toHaveLength(0);
-      expect(response.metadata.memory_proposals).toHaveLength(0);
+      expect(response.metadata.claim_proposals).toHaveLength(0);
     });
 
     test('Teach Mode persists proposals and reflects mode in metadata', async () => {
-      const mockMemory = {
-        proposeClaim: jest.fn().mockImplementation(async (c) => ({
-          id: 'claim-prop-1',
-          ...c,
-          status: 'PENDING',
-        })),
-        proposeDirective: jest.fn().mockResolvedValue(undefined),
-        addSourceEvent: jest.fn().mockResolvedValue(undefined),
+      const mockArchive = {
+        recordEvent: jest.fn().mockResolvedValue(undefined),
       };
 
       const mockBrain = {
         generatePlan: jest.fn().mockResolvedValue({
           speech: 'I have recorded your preferred title as Chief Engineer.',
           language: 'en',
-          memoryProposals: [
+          claimProposals: [
             {
               subject: 'actor:alice',
               predicate: 'preferred_address',
@@ -254,7 +244,7 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
       };
 
       const runtime = new SiduriRuntime('comp-teach', { name: 'TeachBot' } as any, {
-        memory: mockMemory as any,
+        archive: mockArchive as any,
         brain: mockBrain as any,
       } as any);
 
@@ -280,26 +270,20 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
 
       expect(response.status).toBe('APPROVED');
       expect(response.metadata.mode).toBe('teach');
-      expect(mockMemory.proposeClaim).toHaveBeenCalled();
+      expect(mockArchive.recordEvent).toHaveBeenCalled();
       expect(response.metadata.proposals).toHaveLength(1);
     });
 
     test('Infers Teach Mode semantically when user uses in-dialogue teaching command', async () => {
-      const mockMemory = {
-        proposeClaim: jest.fn().mockImplementation(async (c) => ({
-          id: 'claim-prop-2',
-          ...c,
-          status: 'PENDING',
-        })),
-        proposeDirective: jest.fn().mockResolvedValue(undefined),
-        addSourceEvent: jest.fn().mockResolvedValue(undefined),
+      const mockArchive = {
+        recordEvent: jest.fn().mockResolvedValue(undefined),
       };
 
       const mockBrain = {
         generatePlan: jest.fn().mockResolvedValue({
           speech: 'Recorded the command.',
           language: 'en',
-          memoryProposals: [
+          claimProposals: [
             {
               subject: 'companion:comp-infer',
               predicate: 'name',
@@ -310,7 +294,7 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
       };
 
       const runtime = new SiduriRuntime('comp-infer', { name: 'InferBot' } as any, {
-        memory: mockMemory as any,
+        archive: mockArchive as any,
         brain: mockBrain as any,
       } as any);
 
@@ -336,7 +320,7 @@ describe('SiduriRuntime Unified Perception Cycle & Session History', () => {
 
       expect(response.status).toBe('APPROVED');
       expect(response.metadata.mode).toBe('teach');
-      expect(mockMemory.proposeClaim).toHaveBeenCalled();
+      expect(mockArchive.recordEvent).toHaveBeenCalled();
     });
   });
 });
