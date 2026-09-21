@@ -1,5 +1,6 @@
 import { Live2DStateController } from "../../components/live2d/controller";
 import { ActiveAvatarEvent } from "../../components/live2d/types";
+import { mapExpressionToVRMPreset } from "../../components/vrm/expressions";
 
 describe("Siduri Chat Presence and Preferences Mode Switch", () => {
   describe("State representation logic", () => {
@@ -258,8 +259,6 @@ describe("Siduri Chat Presence and Preferences Mode Switch", () => {
     });
 
     test("G. Maps Siduri canonical expressions to VRM 3D blendshape presets", () => {
-      const { mapExpressionToVRMPreset } = require("../../components/vrm/expressions");
-
       expect(mapExpressionToVRMPreset("happy")).toBe("happy");
       expect(mapExpressionToVRMPreset("joy")).toBe("happy");
       expect(mapExpressionToVRMPreset("concerned")).toBe("sad");
