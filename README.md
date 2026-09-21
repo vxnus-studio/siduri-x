@@ -1,8 +1,8 @@
 # Siduri (Siduri-X)
 
-Siduri is an **experimental, open-source AI companion framework** exploring single-owner persistent memory, modular capability organs, and local-first architecture.
+Siduri is an **experimental, open-source AI companion framework** exploring single-owner local-first cognition, modular capability organs, and sovereign cognitive primitives ([RFC VX-26-13](docs/rfc/rfc-removing-memory.md)).
 
-Instead of treating memory as an unverified vector dump that silently drifts over time, Siduri explores an architectural model where memories are staged as explicit proposals, verified against local truth, and retained across sessions in a sovereign local SQLite store.
+Instead of treating memory as an unverified vector dump that silently drifts over time, Siduri deconstructs 'memory' into explicit, decoupled primitives: identity directives (`@sidurijs/self`), deterministic user reality (`@sidurijs/knowledge`), and a cold append-only audit ledger (`@sidurijs/archive`), all stored locally in zero-config SQLite.
 
 > [!WARNING]
 > **Project Status: Experimental Prototype (Mock-Tested)**
@@ -34,9 +34,9 @@ Instead of treating memory as an unverified vector dump that silently drifts ove
 
 - **Single-Owner, Local-First Perimeter**: Siduri explores a personal, single-owner companion running on a local workstation. Rather than a multi-tenant cloud service with complex RBAC partitions, the local machine is the primary security boundary.
 - **Blank Slate Model**: Rather than arriving with a scripted backstory or pre-baked persona, an instance begins with an empty relational slate, investigating how personality and communication nuances might grow organically through interaction.
-- **Audited Memory Proposals (The Truth Gate)**: Staged candidate memories must be confirmed before becoming persistent local facts, aiming to prevent prompt injection and conversational hallucination from silently corrupting long-term beliefs.
+- **Audited Directives & Evidence (The Truth Gate)**: Staged behavioral directives and evidence must be confirmed before becoming persistent local facts, aiming to prevent prompt injection and conversational hallucination from silently corrupting identity and responses.
 - **Modular Capability Organs**: Capabilities (reasoning, voice, vision, embodiment, tool calling) are separated into pluggable `@sidurijs/*` packages with standard ESM resolution.
-- **Sovereign Data Storage**: Personal data (such as inventory, finance, and schedules) lives in structured SQLite tables, separating factual life data from subjective conversational memory.
+- **Sovereign Data Storage**: Personal data (such as inventory, finance, and schedules) lives in structured SQLite tables (`@sidurijs/knowledge`), decoupled from cold interaction logs (`@sidurijs/archive`) and qualitative self traits (`@sidurijs/self`).
 
 ---
 
@@ -119,7 +119,8 @@ Contributions, bug reports, and RFC discussions are warmly welcomed!
 Explore the architecture and specifications behind Siduri:
 - [Documentation Hub](docs/README.md)
 - [The Truth Gate & Anchor Architecture](docs/architecture/truth-gate.md)
-- [Persistent Memory Subsystem](docs/architecture/memory.md)
+- [RFC VX-26-13: Deconstructing Memory into Sovereign Primitives](docs/rfc/rfc-removing-memory.md)
+- [Cold Audit Ledger & Historical Memory](docs/architecture/memory.md)
 - [Siduri Organ Architecture](docs/architecture/siduri-organ-architecture.md)
 - [CLI Reference & Diagnostics](docs/architecture/cli.md)
 - [Canonical Release Status](docs/release-status.md)
