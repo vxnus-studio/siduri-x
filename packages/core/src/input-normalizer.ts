@@ -4,7 +4,10 @@ export interface NormalizedInput {
   perceivedText: string;
   sanitizedText: string;
   requestContext: RequestContext;
-  role: 'OWNER' | 'VIEWER' | 'OPERATOR';
+  /**
+   * @deprecated Legacy role compatibility string ('OWNER' | 'VIEWER'). Context is determined by requestContext.actor.
+   */
+  role?: string;
   isContextObject: boolean;
   boundedHistory: Message[];
 }
@@ -15,7 +18,7 @@ export interface NormalizedInput {
  */
 export async function normalizeUserInput(
   message: string,
-  roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string = 'OWNER',
+  roleOrContext: RequestContext | string = 'OWNER',
   history: Message[] = [],
   companionId: string,
   ear?: EarOrgan,
@@ -34,11 +37,10 @@ export async function normalizeUserInput(
   }
 
   const isContextObject = typeof roleOrContext === 'object' && roleOrContext !== null;
-  const role: 'OWNER' | 'VIEWER' | 'OPERATOR' = isContextObject
-    ? ((roleOrContext as any).actor?.authorizationRole === 'viewer' || (roleOrContext as any).actor?.authenticated === false
-        ? 'VIEWER'
-        : 'OWNER')
-    : (roleOrContext as any);
+  const isViewer = isContextObject
+    ? ((roleOrContext as any).actor?.authorizationRole === 'viewer' || (roleOrContext as any).actor?.authenticated === false)
+    : (typeof roleOrContext === 'string' && roleOrContext.toLowerCase() === 'viewer');
+  const role: string = isViewer ? 'VIEWER' : 'OWNER';
 
   const defaultActor = {
     actorId: role === 'VIEWER' ? 'anonymous-session' : 'owner-user',

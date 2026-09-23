@@ -9,7 +9,10 @@ export interface ChatRequest {
   id?: string;
   companionId?: string;
   message: string;
-  role?: 'OWNER' | 'VIEWER' | 'OPERATOR' | string;
+  /**
+   * @deprecated Prefer using `context: RequestContext`. Legacy role compatibility parameter.
+   */
+  role?: string;
   context?: RequestContext;
   history?: Message[];
   medium?: MouthMedium;
@@ -116,7 +119,7 @@ export async function dispatchCompanionChat(
   const userMessage = payload.message || payload.text || '';
   const history = Array.isArray(payload.history) ? payload.history : [];
 
-  let roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string;
+  let roleOrContext: RequestContext | string;
   if (payload.context) {
     roleOrContext = payload.context;
   } else if (payload.role) {

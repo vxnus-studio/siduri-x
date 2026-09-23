@@ -47,7 +47,10 @@ export interface CompanionPerception {
   source: string;
   text?: string;
   audioBuffer?: Uint8Array;
-  roleOrContext?: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string;
+  /**
+   * @deprecated Prefer passing `context: RequestContext`. Legacy role string or RequestContext envelope.
+   */
+  roleOrContext?: RequestContext | string;
   context?: RequestContext;
   history?: Message[];
   medium?: MouthMedium;

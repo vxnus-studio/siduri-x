@@ -378,7 +378,7 @@ export class SiduriRuntime {
    */
   async handleUserMessage(
     message: string,
-    roleOrContext: 'OWNER' | 'VIEWER' | 'OPERATOR' | RequestContext | string = 'OWNER',
+    roleOrContext: RequestContext | string = 'OWNER',
     history: Message[] = [],
     medium?: MouthMedium,
     signal?: AbortSignal,

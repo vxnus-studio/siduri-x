@@ -10,7 +10,10 @@ import {
 export interface PromptCompilationParams {
   companionName: string;
   companionId: string;
-  role: string;
+  /**
+   * @deprecated Legacy role compatibility string. Context is determined by requestContext.
+   */
+  role?: string;
   requestContext: RequestContext;
   behavior?: BehaviorOrgan;
   activeDirectives: BehaviorDirective[];

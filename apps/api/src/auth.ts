@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
+/**
+ * @deprecated In single-owner model, internal RBAC roles are obsolete; access is governed by machine boundary authentication (Identity.authenticated).
+ */
 export type Role = 'OWNER' | 'OPERATOR' | 'VIEWER' | 'user' | string;
 
 export interface Identity {

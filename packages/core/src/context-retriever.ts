@@ -17,7 +17,10 @@ export interface ContextRetrievalParams {
   companionId: string;
   perceivedText: string;
   requestContext: RequestContext;
-  role: 'OWNER' | 'VIEWER' | 'OPERATOR';
+  /**
+   * @deprecated Legacy role compatibility string. Context is determined by requestContext.
+   */
+  role?: string;
   isContextObject: boolean;
   shouldQueryKnowledge: boolean;
   knowledgeQueries?: string[];

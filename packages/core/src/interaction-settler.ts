@@ -13,7 +13,10 @@ import { extractDeterministicTeaching } from './teaching';
 export interface InteractionSettlementParams {
   companionId: string;
   perceivedText: string;
-  role: 'OWNER' | 'VIEWER' | 'OPERATOR';
+  /**
+   * @deprecated Legacy role compatibility string. Context is determined by requestContext.
+   */
+  role?: string;
   requestContext: RequestContext;
   archive?: ArchiveLedger;
   memory?: any;
