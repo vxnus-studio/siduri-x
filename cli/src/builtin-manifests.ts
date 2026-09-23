@@ -4,7 +4,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/self',
     organType: 'behavior',
-    version: '2.0.12',
+    version: '1.0.2',
     displayName: 'Self & Persona (Identity & Directives)',
     description: 'Autonomous persona compiler, relational stances, and .self asset loader',
     entrypoint: './dist/index.js',
@@ -44,7 +44,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/body',
     organType: 'body',
-    version: '2.1.0',
+    version: '1.0.1',
     displayName: 'Body (Live2D & VRM Avatar State)',
     description: 'Renderer-agnostic avatar expression and embodiment event adapter supporting Live2D (.model3.json) and VRM (.vrm)',
     entrypoint: './dist/index.js',
@@ -106,7 +106,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/brain',
     organType: 'brain',
-    version: '2.0.13',
+    version: '1.0.3',
     displayName: 'Brain (Cognition & Planning)',
     description: 'Provider-neutral LLM reasoning, response planning, and proposal generation',
     entrypoint: './dist/index.js',
@@ -162,7 +162,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/ear',
     organType: 'ear',
-    version: '2.0.3',
+    version: '1.0.1',
     displayName: 'Ear (Perception Ingress)',
     description: 'Multi-modal sensory input ingestion, transcription bounds, and mime validation',
     entrypoint: './dist/index.js',
@@ -193,7 +193,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/hands',
     organType: 'hands',
-    version: '2.0.2',
+    version: '1.0.1',
     displayName: 'Hands (MCP Tool Execution)',
     description: 'Model Context Protocol tool management and cryptographically authorized action execution',
     entrypoint: './dist/index.js',
@@ -247,7 +247,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/knowledge',
     organType: 'knowledge',
-    version: '2.0.6',
+    version: '1.0.2',
     displayName: 'Knowledge (Sovereign Life DB & Knowledge Packs)',
     description: 'Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs',
     entrypoint: './dist/index.js',
@@ -325,7 +325,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/archive',
     organType: 'archive',
-    version: '1.0.0',
+    version: '1.0.2',
     displayName: 'Archive (Interaction Audit Ledger)',
     description: 'Cold append-only interaction audit trail and FTS5 full-text search (RFC VX-26-13)',
     entrypoint: './dist/index.js',
@@ -355,7 +355,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/observation',
     organType: 'observation',
-    version: '2.0.1',
+    version: '1.0.1',
     displayName: 'Observation (Screen Perception & Frame Ingest)',
     description: 'Screen capture frame ingest, SHA-256 deduplication, and visual grounding for Eyes/Vision',
     entrypoint: './dist/index.js',
@@ -373,7 +373,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/vision',
     organType: 'vision',
-    version: '2.0.1',
+    version: '1.0.1',
     displayName: 'Vision (Visual Perception & OCR)',
     description: 'Image inspection, cropping, and multi-pass OCR perception adapter',
     entrypoint: './dist/index.js',
@@ -420,7 +420,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/voice',
     organType: 'voice',
-    version: '2.0.2',
+    version: '1.0.1',
     displayName: 'Voice (Speech Synthesis & Voice Conversion)',
     description: 'Queued speech synthesis and audio rendering lifecycle adapter (VOICEVOX, RVC)',
     entrypoint: './dist/index.js',
@@ -495,7 +495,7 @@ export const BUILTIN_ORGAN_MANIFESTS: OrganManifest[] = [
   {
     name: '@sidurijs/mouth',
     organType: 'mouth',
-    version: '2.0.2',
+    version: '1.0.1',
     displayName: 'Mouth (Communication & UI Delivery)',
     description: 'Decoupled output delivery organ formatting cognitive decisions for web interfaces',
     entrypoint: './dist/index.js',

@@ -454,6 +454,7 @@ export class OpenAICompatibleBrain implements BrainOrgan {
         "   - Relational Stances: relationships to interlocutors or the user (entityId: 'user', role: 'creator'|'user'|'partner', stance: string, conventions: string[]).",
         "   - Behavioral Directives: machine-readable rules with triggers and constraints. Category must be 'guardrail' | 'relational' | 'behavioral', priority 10-90. Ensure the directive text is declarative and actionable.",
         "   - Dialogue Examples: 1-3 user/assistant conversational turns illustrating the character's voice and mannerisms.",
+        "   - In-character Greeting: 'greeting' (a natural, expressive greeting spoken directly by the companion in their own persona voice and archetype, presenting themselves and these directives for operator review).",
         "",
         "Respond strictly in valid JSON matching this schema:",
         "{",
@@ -461,6 +462,7 @@ export class OpenAICompatibleBrain implements BrainOrgan {
         '    "id": "kebab-case-id",',
         '    "name": "Display Name",',
         '    "version": "1.0.0",',
+        '    "greeting": "In-character greeting spoken by the companion in their authentic voice",',
         '    "identity": {',
         '      "name": "Character Name",',
         '      "archetype": "Short Archetype",',
@@ -534,6 +536,7 @@ export class OpenAICompatibleBrain implements BrainOrgan {
         name: manifest.name || charName,
         version: manifest.version || '1.0.0',
         author: manifest.author || { name: 'Extracted via Cognitive Truth Gate' },
+        greeting: manifest.greeting || parsed.greeting || undefined,
         identity: {
           name: charName,
           archetype: manifest.identity?.archetype,
@@ -554,6 +557,7 @@ export class OpenAICompatibleBrain implements BrainOrgan {
 
       return {
         isValid: true,
+        greeting: manifest.greeting || parsed.greeting || undefined,
         manifest: normalizedManifest,
         errors: [],
       };

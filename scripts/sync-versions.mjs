@@ -118,6 +118,44 @@ updateFile('cli/src/generator.ts', (content) => {
     .replace(/cliVersion \|\| '\^[0-9]+\.[0-9]+\.[0-9]+'/g, `cliVersion || '^${cliVer}'`);
 });
 
+// 8. Sync builtin organ manifests in cli/src/builtin-manifests.ts
+updateFile('cli/src/builtin-manifests.ts', (content) => {
+  let res = content;
+  for (const [pkgName, version] of Object.entries(allPackageVersions)) {
+    const escapedPkg = pkgName.replace('/', '\\/');
+    const regex = new RegExp(`(name:\\s*'${escapedPkg}',\\s*\\n\\s*organType:\\s*'[a-z]+',\\s*\\n\\s*version:\\s*')[^']+(')`, 'g');
+    res = res.replace(regex, `$1${version}$2`);
+  }
+  return res;
+});
+
+// 9. Sync organ-manifest.json files
+const organManifestPaths = [
+  'packages/knowledge/organ-manifest.json',
+  'packages/organs/body/organ-manifest.json',
+  'packages/organs/brain/organ-manifest.json',
+  'packages/organs/ear/organ-manifest.json',
+  'packages/organs/hands/organ-manifest.json',
+  'packages/organs/mouth/organ-manifest.json',
+  'packages/organs/observation/organ-manifest.json',
+  'packages/organs/vision/organ-manifest.json',
+  'packages/organs/voice/organ-manifest.json'
+];
+
+for (const mPath of organManifestPaths) {
+  updateFile(mPath, (content) => {
+    try {
+      const parsed = JSON.parse(content);
+      const pkgName = parsed.name;
+      if (pkgName && allPackageVersions[pkgName]) {
+        parsed.version = allPackageVersions[pkgName];
+        return JSON.stringify(parsed, null, 2) + '\n';
+      }
+    } catch {}
+    return content;
+  });
+}
+
 if (isCheckMode && hasDiff) {
   console.error('\nDocumentation or metadata versions are out of sync with package.json.');
   console.error('Run "pnpm run sync:versions" to update them.');

@@ -74,6 +74,7 @@ export interface SelfPackageManifest {
   directives: SelfPackageDirective[];
   guardrails?: string[];
   dialogueExamples?: SelfDialogueExample[];
+  greeting?: string;
 }
 
 export interface ScanResult {
@@ -88,6 +89,7 @@ export interface ScannedDirective extends SelfPackageDirective {
 
 export interface SelfPackageParseResult {
   manifest?: SelfPackageManifest;
+  greeting?: string;
   scannedDirectives: ScannedDirective[];
   isValid: boolean;
   errors: string[];

@@ -1,7 +1,7 @@
 {
   "name": "@sidurijs/body",
   "organType": "body",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Body (Live2D & VRM Avatar State)",
   "description": "Renderer-agnostic avatar expression and embodiment event adapter supporting Live2D (.model3.json) and VRM (.vrm)",
   "entrypoint": "./dist/index.js",

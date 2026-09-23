@@ -27,7 +27,29 @@ describe('Teach Mode API', () => {
 
   beforeAll(() => {
     process.env.AUTH_TOKEN = 'test-token';
-    const instance = createApp(new Map());
+    const defaultMockBrain = {
+      generatePlan: jest.fn(),
+      compilePersona: jest.fn().mockImplementation(async (content: string) => {
+        if (content.includes('kind: "other"')) {
+          return { isValid: false, manifest: null, errors: ['Invalid persona manifest'] };
+        }
+        return {
+          isValid: true,
+          greeting: 'Hello from Test Bot!',
+          manifest: {
+            id: 'test-bot',
+            name: 'Test Bot',
+            version: '1.0.0',
+            identity: { name: 'Test Bot' },
+            directives: [
+              { id: 'dir-1', directive: 'Be helpful', category: 'behavioral' },
+              { id: 'dir-2', directive: 'Execute system commands', category: 'behavioral' },
+            ],
+          },
+        };
+      }),
+    };
+    const instance = createApp(new Map([['default', { id: 'default', brain: defaultMockBrain }]]) as any);
     app = instance.app;
   });
 

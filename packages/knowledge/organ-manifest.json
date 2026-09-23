@@ -1,7 +1,7 @@
 {
   "name": "@sidurijs/knowledge",
   "organType": "knowledge",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "displayName": "Knowledge (Sovereign Life DB & Knowledge Packs)",
   "description": "Sovereign Life Database (finances, inventory, schedule, preferences) and portable E knowledge packs",
   "entrypoint": "./dist/index.js",

@@ -10,7 +10,7 @@ import { SiduriRuntime, dispatchCompanionChat } from '../packages/core/dist/inde
 import { OpenAICompatibleBrain, OpenRouterBrain } from '../packages/organs/brain/dist/index.js';
 import { SqliteArchiveLedger } from '../packages/archive/dist/index.js';
 import { UnifiedKnowledgeOrgan } from '../packages/knowledge/dist/index.js';
-import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser } from '../packages/self/dist/index.js';
+import { ActiveSelfCompiler, SqliteSelfRepository, SelfPackageParser, compilePersonaDocument, scanDirective } from '../packages/self/dist/index.js';
 import { DefaultEarOrgan } from '../packages/organs/ear/dist/index.js';
 import { DefaultHandsOrgan } from '../packages/organs/hands/dist/index.js';
 
@@ -128,6 +128,209 @@ const server = createServer(async (req, res) => {
       version: identity?.version || '1.0.0',
       organs: Object.keys(config.organs || {}),
     }));
+    return;
+  }
+
+  // API: Teach Mode detected-self
+  if (pathname === '/teach/detected-self' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    try {
+      const companionId = parsedUrl.searchParams.get('companionId') || config.id || 'default';
+      const explicitPath = parsedUrl.searchParams.get('path');
+      const envPath = process.env.SIDURI_SELF_PATH || process.env.SELF_PATH;
+      const configPath = config.organs?.behavior?.selfPath;
+      const candidates = [];
+      if (explicitPath) candidates.push(path.resolve(rootDir, explicitPath));
+      if (envPath) candidates.push(path.resolve(rootDir, envPath));
+      if (configPath) candidates.push(path.resolve(rootDir, configPath));
+      candidates.push(path.resolve(rootDir, 'assets', 'self', companionId + '.self'));
+      candidates.push(path.resolve(rootDir, 'assets', 'self', 'default.self'));
+      candidates.push(path.resolve(rootDir, companionId + '.self'));
+
+      const searchDirs = [
+        path.resolve(rootDir, 'assets', 'self'),
+        path.resolve(rootDir, 'assets'),
+        path.resolve(rootDir),
+      ];
+
+      let matchedFilePath = null;
+      for (const candidate of candidates) {
+        try {
+          const s = await stat(candidate);
+          if (s.isFile()) {
+            matchedFilePath = candidate;
+            break;
+          }
+        } catch {}
+      }
+
+      if (!matchedFilePath) {
+        for (const dir of searchDirs) {
+          try {
+            const entries = await readdir(dir);
+            const selfFiles = entries.filter((f) => f.endsWith('.self'));
+            if (selfFiles.length > 0) {
+              const companionSelf = selfFiles.find((f) => f === companionId + '.self');
+              matchedFilePath = path.join(dir, companionSelf || selfFiles[0]);
+              break;
+            }
+          } catch {}
+        }
+      }
+
+      if (!matchedFilePath) {
+        res.end(JSON.stringify({ detected: false }));
+        return;
+      }
+
+      const content = await readFile(matchedFilePath, 'utf8');
+      if (typeof compilePersonaDocument !== 'function') {
+        res.end(JSON.stringify({ detected: true, filename: path.basename(matchedFilePath), error: 'Cognitive compiler is not available' }));
+        return;
+      }
+      const parsed = await compilePersonaDocument(content, { brain: runtime?.brain, companionId });
+      if (!parsed.isValid) {
+        res.end(JSON.stringify({
+          detected: true,
+          filename: path.basename(matchedFilePath),
+          path: path.relative(rootDir, matchedFilePath),
+          content,
+          parsed,
+          error: parsed.errors?.[0] || 'Brain compilation failed',
+          alreadyInstalled: false,
+        }));
+        return;
+      }
+      let alreadyInstalled = false;
+      if (typeof self?.getIdentity === 'function') {
+        try {
+          const existingIdentity = await self.getIdentity(companionId);
+          const existingDirectives = await self.getActiveDirectives(companionId);
+          if (
+            existingIdentity &&
+            parsed.manifest?.identity?.name &&
+            existingIdentity.name.toLowerCase() === parsed.manifest.identity.name.toLowerCase() &&
+            existingDirectives.length > 0
+          ) {
+            alreadyInstalled = true;
+          }
+        } catch {}
+      }
+
+      res.end(JSON.stringify({
+        detected: true,
+        filename: path.basename(matchedFilePath),
+        path: path.relative(rootDir, matchedFilePath),
+        content,
+        parsed,
+        alreadyInstalled,
+      }));
+    } catch (err) {
+      res.end(JSON.stringify({ detected: false, error: err.message }));
+    }
+    return;
+  }
+
+  // API: Teach Mode upload-self
+  if (pathname === '/teach/upload-self' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', async () => {
+      if (typeof compilePersonaDocument === 'undefined') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Self cognitive compiler is not configured' }));
+        return;
+      }
+      try {
+        const { content, companionId } = JSON.parse(body || '{}');
+        if (!content) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing content' }));
+          return;
+        }
+        const targetId = companionId || config.id || 'default';
+        const parsed = await compilePersonaDocument(content, { brain: runtime?.brain, companionId: targetId });
+        if (!parsed.isValid) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: parsed.errors?.[0] || 'Brain compilation failed', ...parsed }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(parsed));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // API: Teach Mode install-self
+  if (pathname === '/teach/install-self' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', async () => {
+      if (typeof self === 'undefined' || typeof self?.setIdentity !== 'function') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Self organ is not configured' }));
+        return;
+      }
+      try {
+        const { companionId, manifest, approvedDirectiveIds } = JSON.parse(body || '{}');
+        const cid = companionId || config.id || 'default';
+        if (!manifest || !Array.isArray(approvedDirectiveIds)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing required fields' }));
+          return;
+        }
+        if (!manifest.identity || !manifest.identity.name) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid manifest: missing identity.name' }));
+          return;
+        }
+        const directivesToCommit = manifest.directives?.filter((d) => approvedDirectiveIds.includes(d.id)) || [];
+        for (const d of directivesToCommit) {
+          if (!d || typeof d.directive !== 'string') {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid directive entry: missing directive string' }));
+            return;
+          }
+          const scan = typeof scanDirective === 'function' ? scanDirective(d.directive) : { safe: true };
+          if (!scan.safe) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Safety check failed for directive: ' + scan.reason, directiveId: d.id, reason: scan.reason }));
+            return;
+          }
+        }
+
+        await self.setIdentity({
+          companionId: cid,
+          name: manifest.identity.name,
+          archetype: manifest.identity.archetype,
+          origin: manifest.identity.origin,
+          ethos: manifest.identity.ethos,
+          version: manifest.version || '1.0.0',
+          updatedAt: new Date().toISOString(),
+        });
+        if (directivesToCommit.length > 0 && typeof self.commitDirectives === 'function') {
+          await self.commitDirectives(cid, directivesToCommit.map((d) => ({
+            id: d.id,
+            companionId: cid,
+            directive: d.directive,
+            category: d.category || 'behavioral',
+            status: 'active',
+            priority: d.priority || 50,
+            createdAt: new Date().toISOString(),
+          })));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, companionId: cid, installedDirectives: directivesToCommit.length }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
     return;
   }
 

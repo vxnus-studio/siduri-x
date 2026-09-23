@@ -173,8 +173,20 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       const parsed = await compilePersonaDocument(content, {
         brain: runtime?.brain,
         companionId,
-        fallbackToParser: true,
+        fallbackToParser: false,
       });
+
+      if (!parsed.isValid) {
+        return res.json({
+          detected: true,
+          filename: path.basename(matchedFilePath),
+          path: matchedFilePath,
+          content,
+          parsed,
+          error: parsed.errors?.[0] || 'Brain compilation failed',
+          alreadyInstalled: false,
+        });
+      }
 
       let alreadyInstalled = false;
       const repo = new SqliteSelfRepository({ dbPath: process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || 'siduri.sqlite' });
@@ -215,8 +227,14 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       const parsed = await compilePersonaDocument(content, {
         brain: runtime?.brain,
         companionId: targetId,
-        fallbackToParser: true,
+        fallbackToParser: false,
       });
+      if (!parsed.isValid) {
+        return res.status(200).json({
+          error: parsed.errors?.[0] || 'Brain compilation failed',
+          ...parsed,
+        });
+      }
       res.json(parsed);
     } catch (e: any) {
       res.status(500).json({ error: e.message });

@@ -66,6 +66,8 @@ export async function compilePersonaDocument(
           }
         );
 
+        const greeting = compilation.greeting || compilation.manifest.greeting;
+
         const manifest: SelfPackageManifest = {
           specVersion: compilation.manifest.specVersion || '2.0.0',
           kind: 'self',
@@ -73,6 +75,7 @@ export async function compilePersonaDocument(
           name: compilation.manifest.name || compilation.manifest.identity.name,
           version: compilation.manifest.version || '1.0.0',
           author: compilation.manifest.author || { name: 'Cognitive Compiler' },
+          greeting,
           identity: {
             name: compilation.manifest.identity.name,
             archetype: compilation.manifest.identity.archetype,
@@ -102,6 +105,7 @@ export async function compilePersonaDocument(
           isValid: true,
           compiledBy: 'brain',
           manifest,
+          greeting,
           scannedDirectives,
           errors: compilation.errors || [],
         };

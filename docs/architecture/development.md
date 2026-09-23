@@ -12,27 +12,31 @@ Before declaring a release ready, verify release invariants and test suites docu
 [`docs/release-status.md`](../release-status.md) and [`docs/architecture/testing.md`](./testing.md).
 
 
-## CLI release
+## CLI & Organ Releases
 
-The experimental CLI is published as `@vxnus/siduri`. Before publishing a
-new version, run the checks from the repository root:
+The CLI is published to npm as `siduri` (with `@vxnus/siduri` maintained as a compatibility alias). Peripheral organs and domain packages are published under the `@sidurijs/*` namespace.
+
+Before publishing a release, ensure all packages are built, typechecked, and verified against release invariants:
 
 ```bash
 pnpm build
 pnpm typecheck
 pnpm test
+pnpm run release:check
+pnpm run sync:check
 git diff --check
 ```
 
-Then inspect the package contents and publish from `cli/`:
+To publish the entire monorepo workspace to npm (resolving all internal `workspace:*` dependencies cleanly):
 
 ```bash
-cd cli
-npm pack --dry-run
-npm whoami
-npm publish --access public
+pnpm publish -r --access public --no-git-checks
 ```
 
-Scoped public releases require access to the `@vxnus` npm organization. A
-published name/version cannot be reused, so increment the CLI version before
-publishing a correction.
+Or to publish a specific package (e.g. `siduri` CLI):
+
+```bash
+pnpm --filter siduri publish --access public --no-git-checks
+```
+
+Published package versions cannot be overwritten on npm. Always run `node scripts/sync-versions.mjs` after bumping versions to guarantee that `README.md`, Astro components, `organ-manifest.json` files, and `builtin-manifests.ts` remain synchronized with package sources of truth.

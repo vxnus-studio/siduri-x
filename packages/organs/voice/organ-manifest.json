@@ -1,7 +1,7 @@
 {
   "name": "@sidurijs/voice",
   "organType": "voice",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Voice (Speech Synthesis & Voice Conversion)",
   "description": "Queued speech synthesis and audio rendering lifecycle adapter (VOICEVOX, RVC)",
   "entrypoint": "./dist/index.js",

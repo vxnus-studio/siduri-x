@@ -96,6 +96,7 @@ export interface RetrievalPlan {
 
 export interface PersonaCompilationResult {
   isValid: boolean;
+  greeting?: string;
   manifest: {
     specVersion?: string;
     kind?: 'self';
@@ -103,6 +104,7 @@ export interface PersonaCompilationResult {
     name?: string;
     version?: string;
     author?: { name: string; url?: string; signature?: string };
+    greeting?: string;
     identity: {
       name: string;
       archetype?: string;

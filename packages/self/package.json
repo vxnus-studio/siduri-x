@@ -1,6 +1,6 @@
 {
   "name": "@sidurijs/self",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Siduri Self domain: Identity, personality, directional relationships, directives, ActiveSelfCompiler, and .self asset parser",
   "license": "Apache-2.0",
   "main": "dist/index.js",

@@ -324,6 +324,7 @@ export default function ChatClient() {
     content?: string;
     parsed?: any;
     alreadyInstalled?: boolean;
+    error?: string;
   } | null>(null);
   const [detectedSelfDismissed, setDetectedSelfDismissed] = useState(false);
   const [selfInstallNotice, setSelfInstallNotice] = useState<string | null>(null);
@@ -933,30 +934,46 @@ export default function ChatClient() {
   }
 
   function handleImportDetectedSelf() {
-    if (!detectedSelf?.parsed) return;
+    if (!detectedSelf) return;
     if (selectedMode !== 'teach') {
       setSelectedMode('teach');
       setEffectiveMode('teach');
     }
-    // Build a synthetic chat exchange for the detected .self
     let conversation = activeConversation;
     if (!conversation) {
       conversation = createConversation();
       setConversations((current) => [conversation as Conversation, ...current]);
       setActiveId(conversation.id);
     }
+
+    const assistantMsgId = newId();
+
+    if (detectedSelf.error || !detectedSelf.parsed || !detectedSelf.parsed.isValid) {
+      const errText = detectedSelf.error || (detectedSelf.parsed as any)?.errors?.join('\n') || 'Brain failed to compile persona from detected .self file.';
+      updateConversation(conversation.id, (current) => ({
+        ...current,
+        messages: [
+          ...current.messages,
+          { id: assistantMsgId, role: 'assistant', content: '', error: errText, createdAt: Date.now() } as ChatMessage,
+        ],
+        updatedAt: Date.now(),
+      }));
+      setDetectedSelfDismissed(true);
+      setStatus('offline');
+      return;
+    }
+
     const proposal = buildSelfProposal(detectedSelf.parsed);
     if (!proposal) return;
-    const name = proposal.manifest?.identity?.name || proposal.manifest?.name || 'persona';
-    const userMsgId = newId();
-    const assistantMsgId = newId();
-    const summary = `I've reviewed **${detectedSelf.filename}** detected on your companion path and compiled the persona **"${name}"**.\n\nFound **${proposal.scannedDirectives.length} behavioral directive${proposal.scannedDirectives.length !== 1 ? 's' : ''}**. Review and approve below.`;
+
+    // Use dynamic LLM-generated in-character greeting from Brain cognitive compiler
+    const greeting = (detectedSelf.parsed as any)?.greeting || proposal.manifest?.greeting || '';
+
     updateConversation(conversation.id, (current) => ({
       ...current,
       messages: [
         ...current.messages,
-        { id: userMsgId, role: 'user', content: 'Import detected persona file.', selfAttachment: { filename: detectedSelf.filename || '.self' }, createdAt: Date.now() } as ChatMessage,
-        { id: assistantMsgId, role: 'assistant', content: summary, selfProposal: proposal, createdAt: Date.now() } as ChatMessage,
+        { id: assistantMsgId, role: 'assistant', content: greeting, selfProposal: proposal, createdAt: Date.now() } as ChatMessage,
       ],
       updatedAt: Date.now(),
     }));
@@ -983,7 +1000,7 @@ export default function ChatClient() {
     const userMsg: ChatMessage = {
       id: userMsgId,
       role: 'user',
-      content: 'Teach Siduri from this persona file.',
+      content: filename,
       selfAttachment: { filename },
       createdAt: Date.now(),
     };
@@ -1006,15 +1023,13 @@ export default function ChatClient() {
 
       if (res && res.isValid && res.manifest) {
         const proposal = buildSelfProposal(res);
-        const name = proposal?.manifest?.identity?.name || proposal?.manifest?.name || 'persona';
-        const directiveCount = proposal?.scannedDirectives?.length ?? 0;
-        const compiledBy = res.compiledBy === 'brain' ? 'AI Cognitive Compiler' : 'Manifest Parser';
-        const summary = `I've reviewed **${filename}** and compiled the persona **"${name}"** using the ${compiledBy}.\n\nFound **${directiveCount} behavioral directive${directiveCount !== 1 ? 's' : ''}**. Review and approve the directives below.`;
+        // Use dynamic LLM-generated in-character greeting from Brain cognitive compiler
+        const greeting = res.greeting || res.manifest?.greeting || '';
 
         updateConversation(conversation.id, (current) => ({
           ...current,
           messages: current.messages.map((m) =>
-            m.id === assistantMsgId ? { ...m, content: summary, selfProposal: proposal } : m
+            m.id === assistantMsgId ? { ...m, content: greeting, selfProposal: proposal } : m
           ),
           updatedAt: Date.now(),
         }));
@@ -1025,28 +1040,30 @@ export default function ChatClient() {
           setSelectedMode('teach');
           setEffectiveMode('teach');
         }
+        setStatus('online');
       } else {
-        const errText = res?.errors?.join('\n') || 'Invalid persona or .self package format';
+        const errText = res?.error || res?.errors?.join('\n') || 'Brain failed to compile persona from .self file';
         updateConversation(conversation.id, (current) => ({
           ...current,
           messages: current.messages.map((m) =>
-            m.id === assistantMsgId ? { ...m, error: errText, content: 'Could not compile this persona file.' } : m
+            m.id === assistantMsgId ? { ...m, error: errText, content: '' } : m
           ),
           updatedAt: Date.now(),
         }));
+        setStatus('offline');
       }
     } catch (err: any) {
       const errText = `Failed to parse persona file: ${err.message}`;
       updateConversation(conversation.id, (current) => ({
         ...current,
         messages: current.messages.map((m) =>
-          m.id === assistantMsgId ? { ...m, error: errText, content: 'Could not compile this persona file.' } : m
+          m.id === assistantMsgId ? { ...m, error: errText, content: '' } : m
         ),
         updatedAt: Date.now(),
       }));
+      setStatus('offline');
     } finally {
       setBusy(false);
-      setStatus('online');
     }
   }
 
@@ -1736,7 +1753,7 @@ export default function ChatClient() {
 
                             {isInstalled && (
                               <p className="self-proposal-installed-note">
-                                ✨ {proposal.manifest?.identity?.name || proposal.manifest?.name} adopted — behavioral predicates committed to explicit state.
+                                ✨ {proposal.manifest?.identity?.name || proposal.manifest?.name} persona active.
                               </p>
                             )}
                           </div>

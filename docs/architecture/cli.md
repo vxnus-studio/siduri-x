@@ -67,8 +67,9 @@ my-companion/
 ## 2. Instance Diagnostics (`siduri doctor`)
 
 ```bash
-npx @vxnus/siduri doctor [directory]
+npx siduri doctor [directory]
 ```
+*(Alternative scoped alias: `npx @vxnus/siduri doctor [directory]`)*
 
 Inspects the companion directory and runs:
 - **Environment Checks**: Validates required and optional environment variables per organ.

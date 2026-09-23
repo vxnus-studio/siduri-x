@@ -86,8 +86,8 @@ function getDefaultConfigForManifest(manifest: OrganManifest): Record<string, an
 export function generateInstanceFiles(options: InstanceGeneratorOptions): GeneratedInstanceFiles {
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
-  const coreVersion = options.coreVersion || '^1.0.2';
-  const cliVersion = options.cliVersion || '^1.0.2';
+  const coreVersion = options.coreVersion || '^1.0.4';
+  const cliVersion = options.cliVersion || '^1.0.4';
   const canonicalOrder = ['brain', 'archive', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);
@@ -417,9 +417,23 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `      }`,
     '',
     `      const content = await readFile(matchedFilePath, 'utf8');`,
-    `      const parsed = typeof compilePersonaDocument === 'function'`,
-    `        ? await compilePersonaDocument(content, { brain: runtime?.brain, companionId })`,
-    `        : SelfPackageParser.parse(content);`,
+    `      if (typeof compilePersonaDocument !== 'function') {`,
+    `        res.end(JSON.stringify({ detected: true, filename: path.basename(matchedFilePath), error: 'Cognitive compiler is not available' }));`,
+    `        return;`,
+    `      }`,
+    `      const parsed = await compilePersonaDocument(content, { brain: runtime?.brain, companionId });`,
+    `      if (!parsed.isValid) {`,
+    `        res.end(JSON.stringify({`,
+    `          detected: true,`,
+    `          filename: path.basename(matchedFilePath),`,
+    `          path: path.relative(rootDir, matchedFilePath),`,
+    `          content,`,
+    `          parsed,`,
+    `          error: parsed.errors?.[0] || 'Brain compilation failed',`,
+    `          alreadyInstalled: false,`,
+    `        }));`,
+    `        return;`,
+    `      }`,
     `      let alreadyInstalled = false;`,
     `      if (typeof self?.getIdentity === 'function') {`,
     `        try {`,
@@ -455,9 +469,9 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `    let body = '';`,
     `    req.on('data', (chunk) => { body += chunk; });`,
     `    req.on('end', async () => {`,
-    `      if (typeof compilePersonaDocument === 'undefined' && typeof SelfPackageParser === 'undefined') {`,
+    `      if (typeof compilePersonaDocument === 'undefined') {`,
     `        res.writeHead(400, { 'Content-Type': 'application/json' });`,
-    `        res.end(JSON.stringify({ error: 'Self organ is not configured' }));`,
+    `        res.end(JSON.stringify({ error: 'Self cognitive compiler is not configured' }));`,
     `        return;`,
     `      }`,
     `      try {`,
@@ -468,9 +482,12 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
     `          return;`,
     `        }`,
     `        const targetId = companionId || config.id || 'default';`,
-    `        const parsed = typeof compilePersonaDocument === 'function'`,
-    `          ? await compilePersonaDocument(content, { brain: runtime?.brain, companionId: targetId })`,
-    `          : SelfPackageParser.parse(content);`,
+    `        const parsed = await compilePersonaDocument(content, { brain: runtime?.brain, companionId: targetId });`,
+    `        if (!parsed.isValid) {`,
+    `          res.writeHead(400, { 'Content-Type': 'application/json' });`,
+    `          res.end(JSON.stringify({ error: parsed.errors?.[0] || 'Brain compilation failed', ...parsed }));`,
+    `          return;`,
+    `        }`,
     `        res.writeHead(200, { 'Content-Type': 'application/json' });`,
     `        res.end(JSON.stringify(parsed));`,
     `      } catch (err) {`,
