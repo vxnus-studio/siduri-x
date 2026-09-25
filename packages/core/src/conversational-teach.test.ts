@@ -31,8 +31,9 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
   /**
    * Helper to build a SelfRepository wrapping a SiduriDatabase
    */
-  function createSelfRepository(db: SiduriDatabase): SelfRepository {
+  function createSelfRepository(db: SiduriDatabase): SelfRepository & { db: SiduriDatabase } {
     return {
+      db,
       getIdentity: async (companionId: string) => db.getIdentity(companionId),
       setIdentity: async (identity: any) => db.setIdentity(identity),
       getPersonality: async (companionId: string) =>
@@ -1095,6 +1096,62 @@ describe('Conversational Teach Mode End-to-End Lifecycle', () => {
     await runtime.approveDirective(dir.id, { companionId });
     const identityAfterDirective = await self.getIdentity(companionId);
     expect(identityAfterDirective?.name).toBe('Athena Prime');
+
+    db.close();
+  });
+
+  it('promotes pending claims to Knowledge and Self through approveProposal without memory organ', async () => {
+    const companionId = 'no-memory-companion';
+    const db = new SiduriDatabase({ dbPath: ':memory:' });
+    const self = createSelfRepository(db);
+
+    const mockKnowledge = {
+      isLifeDbAvailable: () => true,
+      upsertEntity: jest.fn(async (ent) => db.upsertEntity(ent)),
+      addEvent: jest.fn(async (evt) => db.addEvent(evt)),
+      upsertTask: jest.fn(async (tsk) => db.upsertTask(tsk)),
+      upsertPreference: jest.fn(async (pref) => db.upsertPreference(pref)),
+    };
+
+    const runtime = new SiduriRuntime(companionId, { name: 'Siduri' } as any, {
+      self,
+      knowledge: mockKnowledge as any,
+    });
+    await runtime.initialize();
+
+    // 1. Pending claim for identity (companion name)
+    const nameClaim = {
+      id: 'claim-name-direct',
+      companionId,
+      subject: 'companion',
+      predicate: 'name',
+      value: 'Siduri Prime',
+      status: 'pending',
+    };
+    db.savePendingClaim(nameClaim);
+
+    const res1 = await runtime.approveProposal('claim-name-direct', { companionId });
+    expect(res1.success).toBe(true);
+    expect(res1.target).toBe('self');
+    const ident = await self.getIdentity(companionId);
+    expect(ident?.name).toBe('Siduri Prime');
+
+    // 2. Pending claim for life preference (coffee)
+    const prefClaim = {
+      id: 'claim-pref-direct',
+      companionId,
+      subject: 'preference:drink',
+      predicate: 'prefers',
+      value: 'Black coffee with zero sugar',
+      claimType: 'preference',
+      status: 'pending',
+    };
+    db.savePendingClaim(prefClaim);
+
+    const res2 = await runtime.approveProposal('claim-pref-direct', { companionId });
+    expect(res2.success).toBe(true);
+    expect(res2.target).toBe('knowledge');
+    expect(mockKnowledge.upsertPreference).toHaveBeenCalled();
 
     db.close();
   });

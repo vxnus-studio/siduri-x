@@ -206,6 +206,11 @@ export function normalizeStatus(status?: string, defaultStatus: string = 'pendin
   return status.toLowerCase().replace(/_/g, '-');
 }
 
+export function cleanQuotes(str?: string | null): string {
+  if (!str) return '';
+  return str.replace(/^[\s"“'”]+|[\s"“'”.]+$/g, '').trim();
+}
+
 
 // ==========================================
 // Database Class
@@ -427,6 +432,24 @@ export class SiduriDatabase {
       );
 
       CREATE INDEX IF NOT EXISTS idx_chat_messages_conv ON chat_messages(conversation_id, created_at ASC);
+
+      -- Proposals / Pending Claims Table (Direct Domain Routing)
+      CREATE TABLE IF NOT EXISTS pending_claims (
+        id TEXT PRIMARY KEY,
+        companion_id TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        predicate TEXT NOT NULL,
+        value TEXT NOT NULL,
+        scope TEXT DEFAULT 'user',
+        provenance TEXT DEFAULT 'llm_proposal',
+        source_event_id TEXT,
+        claim_type TEXT DEFAULT 'preference',
+        status TEXT DEFAULT 'pending',
+        sensitivity TEXT DEFAULT 'private',
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_pending_claims_comp ON pending_claims(companion_id, status);
     `;
     this.db.exec(schema);
 
@@ -674,20 +697,31 @@ export class SiduriDatabase {
       }
       const targetEntityId = targetActor === 'the user' || targetActor === 'user' ? 'actor:user' : targetActor;
       const existingRel = this.getRelationship(companionId || 'default', targetEntityId);
-      if (existingRel) {
-        const cleanedAddress = addressMatch[2].trim();
-        const convs = (existingRel.interactionConventions || []).filter((c) => !c.toLowerCase().startsWith('address as'));
+      const cleanedAddress = cleanQuotes(addressMatch[2]);
+      if (cleanedAddress) {
+        const convs = (existingRel?.interactionConventions || []).filter((c) => !c.toLowerCase().startsWith('address as'));
         convs.push(`Address as ${cleanedAddress}`);
+        const isHonorific = /^(?:master|sir|lord|lady|creator|owner|admin|sensei|boss)$/i.test(cleanedAddress);
+        const effectiveName = isHonorific ? existingRel?.name : cleanedAddress;
         this.upsertRelationship({
-          ...existingRel,
           companionId: companionId || 'default',
+          entityId: targetEntityId,
+          entityType: existingRel?.entityType || 'human',
+          name: effectiveName,
+          affiliation: existingRel?.affiliation,
+          role: existingRel?.role || 'user',
+          stance: existingRel?.stance || 'neutral',
+          trustScore: existingRel?.trustScore ?? 0.8,
+          familiarity: existingRel?.familiarity ?? 0.5,
           interactionConventions: convs,
         });
       }
     }
 
     // Single-value directive canonical supersession and direct Self mutation (RFC VX-26-13)
-    const roleMatch = (row.directive || '').match(/^acknowledge role as\s+([^"”'.]+)/i);
+    const roleMatch = (row.directive || '').match(
+      /^(?:acknowledge\s+role\s+as|present\s+(?:companion|\S+)\s+as\s+(?:a\s+)?|role\s+is\s+)["“']?([^"”'.;\n]+?)["”']?(?:\s+in\s+relevant\s+interactions|\.|$)/i
+    );
     if (roleMatch) {
       const existingDirectives = this.getAllDirectives(companionId || 'default');
       for (const d of existingDirectives) {
@@ -695,12 +729,13 @@ export class SiduriDatabase {
           (d.status === 'active' || d.status === 'pending') &&
           d.id !== id &&
           d.directive &&
-          d.directive.toLowerCase().startsWith('acknowledge role as')
+          (d.directive.toLowerCase().startsWith('acknowledge role as') ||
+           d.directive.toLowerCase().startsWith('present'))
         ) {
           this.supersedeDirective(d.id, companionId);
         }
       }
-      const newRole = roleMatch[1].trim();
+      const newRole = cleanQuotes(roleMatch[1]);
       if (newRole) {
         const targetId = companionId || row.companion_id || 'default';
         const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
@@ -718,10 +753,10 @@ export class SiduriDatabase {
 
     // Companion name directive detection: "Address companion as X", "Your name is X", "Call yourself X", "Acknowledge name as X"
     const compNameMatch = (row.directive || '').match(
-      /^(?:address\s+companion\s+as|your\s+name\s+is|call\s+yourself|acknowledge\s+name\s+as|companion\s+name\s+is)\s+["“']?([^"”'.]+)["”']?/i
+      /^(?:address\s+(?:companion|self)\s+as|your\s+name\s+is|call\s+yourself|acknowledge\s+name\s+as|companion\s+name\s+is)\s+["“']?([^"”'.]+)["”']?/i
     );
     if (compNameMatch) {
-      const newCompanionName = compNameMatch[1].trim();
+      const newCompanionName = cleanQuotes(compNameMatch[1]);
       if (newCompanionName) {
         const targetId = companionId || row.companion_id || 'default';
         const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
@@ -742,10 +777,45 @@ export class SiduriDatabase {
       /^(?:recognize\s+(\S+)\s+(?:stated\s+)?relationship\s+as|recognize\s+(\S+)\s+as)\s+([^"”'.]+)/i
     );
     if (relMatch) {
-      const rawActor = (relMatch[1] || relMatch[2] || '').trim();
-      const roleOrStance = (relMatch[3] || '').trim();
-      if (rawActor && roleOrStance) {
-        const targetId = companionId || row.companion_id || 'default';
+      const rawActor = cleanQuotes(relMatch[1] || relMatch[2] || '');
+      const roleOrStance = cleanQuotes(relMatch[3] || '');
+      const targetId = companionId || row.companion_id || 'default';
+      const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
+        companionId: targetId,
+        name: '',
+        version: '1.0.0',
+        updatedAt: new Date().toISOString(),
+      };
+
+      const isCompanionSelf =
+        rawActor.toLowerCase() === 'siduri' ||
+        rawActor.toLowerCase() === 'companion' ||
+        rawActor.toLowerCase() === 'self' ||
+        (currentIdentity.name && rawActor.toLowerCase() === currentIdentity.name.toLowerCase());
+
+      if (isCompanionSelf) {
+        if (rawActor.toLowerCase() === 'siduri' && !currentIdentity.name) {
+          currentIdentity.name = 'Siduri';
+          this.setIdentity(currentIdentity);
+        }
+        const userInRel = (row.directive || '').match(/(?:with|to|in)\s+([^"”'.,;]+?)(?:\s+in|\.|$)/i) ||
+                          (row.directive || '').match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)'s/);
+        const resolvedActor = row.scope_actor || (userInRel ? `actor:${userInRel[1].trim().toLowerCase().replace(/\s+/g, '_')}` : 'actor:owner-user');
+        const resolvedName = userInRel ? cleanQuotes(userInRel[1]) : undefined;
+        const existingRel = this.getRelationship(targetId, resolvedActor);
+        this.upsertRelationship({
+          companionId: targetId,
+          entityId: resolvedActor,
+          entityType: 'human',
+          name: existingRel?.name || resolvedName,
+          affiliation: existingRel?.affiliation,
+          role: existingRel?.role || 'co-researcher',
+          stance: existingRel?.stance || 'familiar_loyal',
+          trustScore: existingRel?.trustScore ?? 1.0,
+          familiarity: existingRel?.familiarity ?? 0.9,
+          interactionConventions: existingRel?.interactionConventions || ['Direct communication'],
+        });
+      } else if (rawActor && roleOrStance) {
         const isCreator = roleOrStance.toLowerCase().includes('creator');
         const existingRel = this.getRelationship(targetId, rawActor);
         const stance = isCreator ? 'familiar_loyal' : (existingRel?.stance || 'neutral');
@@ -769,36 +839,35 @@ export class SiduriDatabase {
         });
 
         if (isCreator) {
-          const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
-            companionId: targetId,
-            name: '',
-            version: '1.0.0',
-            updatedAt: new Date().toISOString(),
-          };
           const creatorName = existingRel?.name || (rawActor.startsWith('actor:') ? rawActor.slice(6) : rawActor);
-          currentIdentity.origin = creatorName !== 'user' && creatorName !== 'primary' ? creatorName : roleOrStance;
-          currentIdentity.updatedAt = new Date().toISOString();
-          this.setIdentity(currentIdentity);
+          if (creatorName !== 'user' && creatorName !== 'owner-user' && creatorName !== 'primary') {
+            currentIdentity.origin = creatorName;
+            currentIdentity.updatedAt = new Date().toISOString();
+            this.setIdentity(currentIdentity);
+          }
         }
       }
     }
 
     // User name address directive direct domain routing: "Address <actor> as <name>"
     const userAddrMatch = (row.directive || '').match(
-      /^address\s+(actor:\S+|\S+)\s+as\s+([^"”'.]+)/i
+      /^address\s+(actor:\S+|\S+)\s+as\s+["“']?([^"”'.]+)["”']?/i
     );
     if (userAddrMatch) {
       const actorId = userAddrMatch[1].trim();
-      const userName = userAddrMatch[2].trim();
-      if (actorId && userName) {
+      const rawUserName = cleanQuotes(userAddrMatch[2]);
+      if (actorId && rawUserName) {
+        const isHonorific = /^(?:master|sir|lord|lady|creator|owner|admin|sensei|boss)$/i.test(rawUserName);
         const targetId = companionId || row.companion_id || 'default';
         const existingRel = this.getRelationship(targetId, actorId);
         const isCreator = existingRel?.role === 'creator' || (existingRel?.stance === 'familiar_loyal' && existingRel?.trustScore === 1.0);
+        const effectiveName = isHonorific ? existingRel?.name : rawUserName;
+
         this.upsertRelationship({
           companionId: targetId,
           entityId: actorId,
           entityType: 'human',
-          name: userName,
+          name: effectiveName,
           affiliation: existingRel?.affiliation,
           role: existingRel?.role || (isCreator ? 'creator' : 'user'),
           stance: existingRel?.stance || (isCreator ? 'familiar_loyal' : 'neutral'),
@@ -807,14 +876,14 @@ export class SiduriDatabase {
           interactionConventions: existingRel?.interactionConventions || [],
         });
 
-        if (isCreator) {
+        if (isCreator && !isHonorific) {
           const currentIdentity: SelfIdentity = this.getIdentity(targetId) || {
             companionId: targetId,
             name: '',
             version: '1.0.0',
             updatedAt: new Date().toISOString(),
           };
-          currentIdentity.origin = userName;
+          currentIdentity.origin = effectiveName;
           currentIdentity.updatedAt = new Date().toISOString();
           this.setIdentity(currentIdentity);
         }
@@ -1626,5 +1695,101 @@ export class SiduriDatabase {
   public deleteConversation(id: string): void {
     this.db.prepare('DELETE FROM chat_messages WHERE conversation_id = ?').run(id);
     this.db.prepare('DELETE FROM chat_conversations WHERE id = ?').run(id);
+  }
+
+  // ==========================================
+  // Pending Claims / Proposals (Direct Domain Routing)
+  // ==========================================
+
+  public savePendingClaim(claim: any): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO pending_claims (id, companion_id, subject, predicate, value, scope, provenance, source_event_id, claim_type, status, sensitivity, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, coalesce(?, datetime('now')))
+      ON CONFLICT(id) DO UPDATE SET
+        subject = excluded.subject,
+        predicate = excluded.predicate,
+        value = excluded.value,
+        scope = excluded.scope,
+        provenance = excluded.provenance,
+        source_event_id = excluded.source_event_id,
+        claim_type = excluded.claim_type,
+        status = excluded.status,
+        sensitivity = excluded.sensitivity
+    `);
+    stmt.run(
+      claim.id,
+      claim.companionId || 'default',
+      claim.subject,
+      claim.predicate,
+      claim.value,
+      claim.scope || 'user',
+      claim.provenance || 'llm_proposal',
+      claim.sourceEventId || null,
+      claim.claimType || 'preference',
+      normalizeStatus(claim.status, 'pending'),
+      claim.sensitivity || 'private',
+      claim.createdAt || null
+    );
+  }
+
+  public getPendingClaims(companionId: string = 'default'): ClaimRecord[] {
+    const stmt = this.db.prepare(
+      "SELECT * FROM pending_claims WHERE companion_id = ? AND LOWER(status) = 'pending' ORDER BY created_at ASC"
+    );
+    return stmt.all(companionId).map((row: any) => ({
+      id: row.id,
+      companionId: row.companion_id,
+      subject: row.subject,
+      predicate: row.predicate,
+      value: row.value,
+      scope: row.scope,
+      provenance: row.provenance,
+      sourceEventId: row.source_event_id || undefined,
+      claimType: row.claim_type,
+      status: row.status,
+      sensitivity: row.sensitivity,
+      confidence: 1.0,
+      assertedAt: row.created_at,
+    }));
+  }
+
+  public getPendingClaim(id: string, companionId?: string): any | undefined {
+    const stmt = companionId
+      ? this.db.prepare('SELECT * FROM pending_claims WHERE id = ? AND companion_id = ?')
+      : this.db.prepare('SELECT * FROM pending_claims WHERE id = ?');
+    const row = (companionId ? stmt.get(id, companionId) : stmt.get(id)) as any;
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      companionId: row.companion_id,
+      subject: row.subject,
+      predicate: row.predicate,
+      value: row.value,
+      scope: row.scope,
+      provenance: row.provenance,
+      sourceEventId: row.source_event_id || undefined,
+      claimType: row.claim_type,
+      status: row.status,
+      sensitivity: row.sensitivity,
+      confidence: 1.0,
+      assertedAt: row.created_at,
+    };
+  }
+
+  public updatePendingClaimStatus(id: string, status: string, companionId?: string): void {
+    const norm = normalizeStatus(status, 'approved');
+    if (companionId) {
+      this.db.prepare('UPDATE pending_claims SET status = ? WHERE id = ? AND companion_id = ?').run(norm, id, companionId);
+    } else {
+      this.db.prepare('UPDATE pending_claims SET status = ? WHERE id = ?').run(norm, id);
+    }
+  }
+
+  public deletePendingClaim(id: string, companionId?: string): void {
+    if (companionId) {
+      this.db.prepare('DELETE FROM pending_claims WHERE id = ? AND companion_id = ?').run(id, companionId);
+    } else {
+      this.db.prepare('DELETE FROM pending_claims WHERE id = ?').run(id);
+    }
   }
 }

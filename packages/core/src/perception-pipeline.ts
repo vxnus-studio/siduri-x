@@ -299,6 +299,7 @@ export const interactionSettlementStage: PerceptionPipelineStage = async (contex
     archive: context.organs.archive,
     memory: context.organs.memory,
     self: context.organs.self,
+    db: (context.organs.self as any)?.db || (context.organs.archive as any)?.db || (context.organs as any)?.knowledge?.db,
     explicitTeaching: context.intent.explicitTeaching,
     plan: context.plan,
     effectiveMode: context.intent.effectiveMode,

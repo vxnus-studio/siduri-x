@@ -1065,5 +1065,122 @@ describe('SiduriDatabase', () => {
       expect(db.getConversation(convId)).toBeNull();
     });
   });
+
+  describe('Pending Claims & Robust Directive Parsing', () => {
+    it('saves, retrieves, updates status, and deletes pending claims in pending_claims table', () => {
+      const db = new SiduriDatabase({ dbPath: ':memory:' });
+      const cId = 'test-claims-comp';
+
+      db.savePendingClaim({
+        id: 'claim-1',
+        companionId: cId,
+        subject: 'companion',
+        predicate: 'name',
+        value: 'Siduri',
+        scope: 'companion',
+        provenance: 'llm_proposal',
+        claimType: 'identity',
+      });
+
+      db.savePendingClaim({
+        id: 'claim-2',
+        companionId: cId,
+        subject: 'actor:owner-user',
+        predicate: 'favorite_food',
+        value: 'coffee',
+        scope: 'user',
+        provenance: 'llm_proposal',
+        claimType: 'preference',
+      });
+
+      const pending = db.getPendingClaims(cId);
+      expect(pending).toHaveLength(2);
+      expect(pending[0].id).toBe('claim-1');
+      expect(pending[0].value).toBe('Siduri');
+
+      const single = db.getPendingClaim('claim-1', cId);
+      expect(single).toBeDefined();
+      expect(single?.subject).toBe('companion');
+
+      db.updatePendingClaimStatus('claim-1', 'approved', cId);
+      const remainingPending = db.getPendingClaims(cId);
+      expect(remainingPending).toHaveLength(1);
+      expect(remainingPending[0].id).toBe('claim-2');
+
+      db.deletePendingClaim('claim-2', cId);
+      expect(db.getPendingClaims(cId)).toHaveLength(0);
+    });
+
+    it('correctly extracts role from "Present Siduri as a Researcher / System Architect in relevant interactions."', () => {
+      const db = new SiduriDatabase({ dbPath: ':memory:' });
+      const cId = 'siduri-test';
+
+      db.commitDirective({
+        id: 'dir-role-test',
+        companionId: cId,
+        directive: 'Present Siduri as a Researcher / System Architect in relevant interactions.',
+        category: 'behavioral',
+        status: 'pending',
+      });
+
+      db.approveDirective('dir-role-test', cId);
+
+      const identity = db.getIdentity(cId);
+      expect(identity?.role).toBe('Researcher / System Architect');
+      expect(identity?.archetype).toBe('Researcher / System Architect');
+    });
+
+    it('cleans quotes from address directive and avoids polluting companion origin with title honorifics', () => {
+      const db = new SiduriDatabase({ dbPath: ':memory:' });
+      const cId = 'siduri-test';
+
+      db.commitDirective({
+        id: 'dir-addr-test',
+        companionId: cId,
+        directive: 'Address actor:owner-user as “Master”.',
+        category: 'relational',
+        status: 'pending',
+      });
+
+      db.approveDirective('dir-addr-test', cId);
+
+      const rel = db.getRelationship(cId, 'actor:owner-user');
+      expect(rel).toBeDefined();
+      expect(rel?.interactionConventions).toContain('Address as Master');
+
+      // Origin should NOT be set to honorific "Master"
+      const identity = db.getIdentity(cId);
+      expect(identity?.origin).toBeUndefined();
+    });
+
+    it('recognizes companion self when directive refers to companion name without creating separate human entity', () => {
+      const db = new SiduriDatabase({ dbPath: ':memory:' });
+      const cId = 'siduri-test';
+
+      db.commitDirective({
+        id: 'dir-rel-test',
+        companionId: cId,
+        directive: "Recognize Siduri as Kur Zagin's co-researcher and personal companion, and interact with Kur Zagin in that relational context.",
+        category: 'relational',
+        status: 'pending',
+        scopeActor: 'actor:owner-user',
+      });
+
+      db.approveDirective('dir-rel-test', cId);
+
+      // Identity name should become Siduri
+      const identity = db.getIdentity(cId);
+      expect(identity?.name).toBe('Siduri');
+
+      // Relationship should be with Kur Zagin / actor:owner-user, NOT with entity "Siduri"
+      const siduriRel = db.getRelationship(cId, 'Siduri');
+      expect(siduriRel).toBeUndefined();
+
+      const userRel = db.getRelationship(cId, 'actor:owner-user');
+      expect(userRel).toBeDefined();
+      expect(userRel?.name).toBe('Kur Zagin');
+      expect(userRel?.role).toBe('co-researcher');
+    });
+  });
 });
 

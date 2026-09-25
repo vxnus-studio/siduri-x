@@ -21,7 +21,7 @@ import {
   ActionPolicyEngine,
   ExperienceDispatcher,
 } from './index';
-import { SiduriDatabase, LogLevel, SystemLog } from './siduri-db';
+import { SiduriDatabase, LogLevel, SystemLog, cleanQuotes } from './siduri-db';
 import { SessionHistoryManager } from './session-history';
 import {
   CompanionPerception,
@@ -208,26 +208,50 @@ export class SiduriRuntime {
       }
     }
 
-    // 2. If memory organ is present, support legacy claim approval
-    if (this.container.organs.memory) {
+    // 2. Direct Domain Routing for Claims / Proposals
+    let claim: any;
+    if (this.db && typeof (this.db as any).getPendingClaim === 'function') {
+      claim = (this.db as any).getPendingClaim(proposalId, companionId);
+    }
+
+    // Legacy memory fallback if not found in db
+    if (!claim && this.container.organs.memory) {
       const memory = this.container.organs.memory as any;
-      if (typeof memory.approveClaim === 'function') {
-        await memory.approveClaim(proposalId);
-      }
-      let claim: any;
-      if (typeof memory.getAllClaims === 'function') {
-        const claims = await memory.getAllClaims(500);
-        claim = claims.find((c: any) => c.id === proposalId);
-      } else if (typeof memory.getClaims === 'function') {
-        const claims = await memory.getClaims(500);
-        claim = claims.find((c: any) => c.id === proposalId);
-      }
-      if (!claim && typeof memory.getPendingClaims === 'function') {
+      if (typeof memory.getPendingClaims === 'function') {
         const pending = await memory.getPendingClaims(500);
         claim = pending.find((c: any) => c.id === proposalId);
       }
+      if (!claim && typeof memory.getAllClaims === 'function') {
+        const claims = await memory.getAllClaims(500);
+        claim = claims.find((c: any) => c.id === proposalId);
+      } else if (!claim && typeof memory.getClaims === 'function') {
+        const claims = await memory.getClaims(500);
+        claim = claims.find((c: any) => c.id === proposalId);
+      }
+    }
 
-      if (claim && this.container.knowledge) {
+    if (claim) {
+      if (this.db && typeof (this.db as any).updatePendingClaimStatus === 'function') {
+        (this.db as any).updatePendingClaimStatus(proposalId, 'approved', companionId);
+      }
+      if (this.container.organs.memory && typeof (this.container.organs.memory as any).approveClaim === 'function') {
+        await (this.container.organs.memory as any).approveClaim(proposalId);
+      }
+
+      if (isSelfAffectingClaim(claim) && this.self) {
+        await promoteApprovedClaimToSelf(claim, this.self, companionId);
+        const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
+        this.log('info', 'truth_gate', `Approved and promoted claim '${proposalId}' to Self`, {
+          proposalId,
+          companionId,
+          target: 'self',
+          subject: claim.subject,
+          predicate: claim.predicate,
+        });
+        return { success: true, target: 'self', name: identity?.name };
+      }
+
+      if (this.container.knowledge) {
         const promotedToKnowledge = await promoteApprovedClaimToKnowledge(
           claim,
           this.container.knowledge,
@@ -245,7 +269,7 @@ export class SiduriRuntime {
         }
       }
 
-      if (claim && this.self) {
+      if (this.self) {
         await promoteApprovedClaimToSelf(claim, this.self, companionId);
         const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
         this.log('info', 'truth_gate', `Approved and promoted claim '${proposalId}' to Self`, {
@@ -259,11 +283,14 @@ export class SiduriRuntime {
       }
     }
 
-    // 3. Direct Self directive check
+    // 3. Direct Self directive check fallback
     if (this.self && typeof (this.self as any).approveDirective === 'function') {
       try {
-        const approved = await (this.self as any).approveDirective(proposalId, companionId);
-        if (approved !== false) {
+        const directive = typeof (this.self as any).getDirective === 'function'
+          ? await (this.self as any).getDirective(proposalId, companionId)
+          : null;
+        if (directive) {
+          await (this.self as any).approveDirective(proposalId, companionId);
           const identity = typeof this.self.getIdentity === 'function' ? await this.self.getIdentity(companionId) : null;
           this.log('info', 'truth_gate', `Approved behavioral directive proposal '${proposalId}' directly in Self`, {
             proposalId,
@@ -296,6 +323,9 @@ export class SiduriRuntime {
         // ignore
       }
     }
+    if (this.db && typeof (this.db as any).updatePendingClaimStatus === 'function') {
+      (this.db as any).updatePendingClaimStatus(proposalId, 'rejected', companionId);
+    }
     if (this.container.organs.memory && typeof (this.container.organs.memory as any).rejectClaim === 'function') {
       await (this.container.organs.memory as any).rejectClaim(proposalId);
     }
@@ -304,6 +334,22 @@ export class SiduriRuntime {
       companionId,
     });
     return { success: true };
+  }
+
+  /**
+   * Returns all pending proposals (directives and claims) for human review.
+   */
+  async getPendingProposals(companionId?: string): Promise<any[]> {
+    const cid = companionId || this.id;
+    const directives = this.self && typeof (this.self as any).getAllDirectives === 'function'
+      ? (await (this.self as any).getAllDirectives(cid)).filter((d: any) => d.status === 'pending')
+      : [];
+    const claims = this.db && typeof (this.db as any).getPendingClaims === 'function'
+      ? (this.db as any).getPendingClaims(cid)
+      : (this.container.organs.memory && typeof (this.container.organs.memory as any).getPendingClaims === 'function'
+          ? await (this.container.organs.memory as any).getPendingClaims(500)
+          : []);
+    return [...directives, ...claims];
   }
 
   /**
@@ -325,10 +371,10 @@ export class SiduriRuntime {
         const dir = activeDirs.find((d: any) => d.id === directiveId);
         if (dir?.directive) {
           const compNameMatch = dir.directive.match(
-            /^(?:address\s+companion\s+as|your\s+name\s+is|call\s+yourself|acknowledge\s+name\s+as|companion\s+name\s+is)\s+["“']?([^"”'.]+)["”']?/i
+            /^(?:address\s+(?:companion|self)\s+as|your\s+name\s+is|call\s+yourself|acknowledge\s+name\s+as|companion\s+name\s+is)\s+["“']?([^"”'.]+)["”']?/i
           );
           if (compNameMatch) {
-            const newName = compNameMatch[1].trim();
+            const newName = cleanQuotes(compNameMatch[1]);
             if (newName) {
               const currentIdentity = (await this.self.getIdentity(companionId)) || {
                 companionId,
@@ -760,20 +806,28 @@ export async function promoteApprovedClaimToKnowledge(
       ...(typeof claim.metadata === 'object' ? claim.metadata : {}),
     };
 
+    const entityPayload = {
+      id: claim.id || `ent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      companionId: targetCompanionId,
+      entityType: inferredEntityType,
+      domain: inferredDomain,
+      name: entityName,
+      properties,
+      updatedAt: new Date().toISOString(),
+    };
+
     if (knowledge.entities && typeof knowledge.entities.saveEntity === 'function') {
-      await knowledge.entities.saveEntity({
-        id: claim.id || `ent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        companionId: targetCompanionId,
-        entityType: inferredEntityType,
-        domain: inferredDomain,
-        name: entityName,
-        properties,
-        updatedAt: new Date().toISOString(),
-      });
+      await knowledge.entities.saveEntity(entityPayload);
+      return true;
+    } else if (typeof knowledge.upsertEntity === 'function') {
+      await knowledge.upsertEntity(entityPayload);
+      return true;
+    } else if (knowledge.db && typeof knowledge.db.upsertEntity === 'function') {
+      knowledge.db.upsertEntity(entityPayload);
       return true;
     } else if (knowledge.inventory && typeof knowledge.inventory.saveItem === 'function') {
       await knowledge.inventory.saveItem({
-        id: claim.id || `inv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: entityPayload.id,
         companionId: targetCompanionId,
         domain: inferredDomain,
         entityName,
@@ -806,20 +860,28 @@ export async function promoteApprovedClaimToKnowledge(
             ? evidenceObj.amount
             : parseFloat(value) || 0)));
 
+    const eventPayload = {
+      id: claim.id || `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      companionId: targetCompanionId,
+      stream,
+      timestamp: claim.timestamp || evidenceObj.timestamp || new Date().toISOString(),
+      metricValue: parsedAmount,
+      metadata: {
+        category: claim.category || evidenceObj.category || predicate,
+        value,
+        ...(typeof claim.metadata === 'object' ? claim.metadata : {}),
+        ...(typeof evidenceObj.metadata === 'object' ? evidenceObj.metadata : {}),
+      },
+    };
+
     if (knowledge.events && typeof knowledge.events.addEvent === 'function') {
-      await knowledge.events.addEvent({
-        id: claim.id || `evt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        companionId: targetCompanionId,
-        stream,
-        timestamp: claim.timestamp || evidenceObj.timestamp || new Date().toISOString(),
-        metricValue: parsedAmount,
-        metadata: {
-          category: claim.category || evidenceObj.category || predicate,
-          value,
-          ...(typeof claim.metadata === 'object' ? claim.metadata : {}),
-          ...(typeof evidenceObj.metadata === 'object' ? evidenceObj.metadata : {}),
-        },
-      });
+      await knowledge.events.addEvent(eventPayload);
+      return true;
+    } else if (typeof knowledge.addEvent === 'function') {
+      await knowledge.addEvent(eventPayload);
+      return true;
+    } else if (knowledge.db && typeof knowledge.db.addEvent === 'function') {
+      knowledge.db.addEvent(eventPayload);
       return true;
     } else if (knowledge.finance && typeof knowledge.finance.addEntry === 'function') {
       await knowledge.finance.addEntry({
@@ -850,17 +912,25 @@ export async function promoteApprovedClaimToKnowledge(
     predicate.includes('todo')
   ) {
     const title = value || (subject.startsWith('task:') ? claim.subject.slice(5) : claim.subject);
+    const taskPayload = {
+      id: claim.id || `tsk-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      companionId: targetCompanionId,
+      title,
+      status: claim.taskStatus || evidenceObj.status || claim.metadata?.status || (claim.status && claim.status !== 'pending' && claim.status !== 'approved' ? claim.status : 'backlog'),
+      priority: claim.priority || evidenceObj.priority || 0,
+      targetDate: claim.targetDate || evidenceObj.targetDate || claim.dueDate,
+      metadata: typeof claim.metadata === 'object' ? claim.metadata : (typeof evidenceObj.metadata === 'object' ? evidenceObj.metadata : undefined),
+      updatedAt: new Date().toISOString(),
+    };
+
     if (knowledge.tasks && typeof knowledge.tasks.saveTask === 'function') {
-      await knowledge.tasks.saveTask({
-        id: claim.id || `tsk-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        companionId: targetCompanionId,
-        title,
-        status: claim.taskStatus || evidenceObj.status || claim.metadata?.status || (claim.status && claim.status !== 'pending' && claim.status !== 'approved' ? claim.status : 'backlog'),
-        priority: claim.priority || evidenceObj.priority || 0,
-        targetDate: claim.targetDate || evidenceObj.targetDate || claim.dueDate,
-        metadata: typeof claim.metadata === 'object' ? claim.metadata : (typeof evidenceObj.metadata === 'object' ? evidenceObj.metadata : undefined),
-        updatedAt: new Date().toISOString(),
-      });
+      await knowledge.tasks.saveTask(taskPayload);
+      return true;
+    } else if (typeof knowledge.upsertTask === 'function') {
+      await knowledge.upsertTask(taskPayload);
+      return true;
+    } else if (knowledge.db && typeof knowledge.db.upsertTask === 'function') {
+      knowledge.db.upsertTask(taskPayload);
       return true;
     }
   }
@@ -877,16 +947,24 @@ export async function promoteApprovedClaimToKnowledge(
     predicate.includes('calendar')
   ) {
     const title = value || (subject.startsWith('schedule:') ? claim.subject.slice(9) : claim.subject);
+    const schedulePayload = {
+      id: claim.id || `sch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      companionId: targetCompanionId,
+      title,
+      startTime: claim.startTime || claim.start_time || new Date().toISOString(),
+      endTime: claim.endTime || claim.end_time,
+      isRecurring: Boolean(claim.isRecurring || claim.is_recurring),
+      status: claim.status || 'active',
+    };
+
     if (knowledge.schedule && typeof knowledge.schedule.saveItem === 'function') {
-      await knowledge.schedule.saveItem({
-        id: claim.id || `sch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        companionId: targetCompanionId,
-        title,
-        startTime: claim.startTime || claim.start_time || new Date().toISOString(),
-        endTime: claim.endTime || claim.end_time,
-        isRecurring: Boolean(claim.isRecurring || claim.is_recurring),
-        status: claim.status || 'active',
-      });
+      await knowledge.schedule.saveItem(schedulePayload);
+      return true;
+    } else if (typeof knowledge.upsertScheduleItem === 'function') {
+      await knowledge.upsertScheduleItem(schedulePayload);
+      return true;
+    } else if (knowledge.db && typeof knowledge.db.upsertScheduleItem === 'function') {
+      knowledge.db.upsertScheduleItem(schedulePayload);
       return true;
     }
   }
@@ -903,15 +981,23 @@ export async function promoteApprovedClaimToKnowledge(
     const prefKey = subject.startsWith('preference:')
       ? claim.subject.slice(11)
       : (predicate === 'favorite' || predicate === 'prefers' ? claim.subject : (claim.key || claim.preferenceKey || 'user_preference'));
+    const prefPayload = {
+      id: claim.id || `pref-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      companionId: targetCompanionId,
+      preferenceKey: prefKey,
+      preferenceValue: value,
+      category: claim.category || 'general',
+      updatedAt: new Date().toISOString(),
+    };
+
     if (knowledge.preferences && typeof knowledge.preferences.setPreference === 'function') {
-      await knowledge.preferences.setPreference({
-        id: claim.id || `pref-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        companionId: targetCompanionId,
-        preferenceKey: prefKey,
-        preferenceValue: value,
-        category: claim.category || 'general',
-        updatedAt: new Date().toISOString(),
-      });
+      await knowledge.preferences.setPreference(prefPayload);
+      return true;
+    } else if (typeof knowledge.upsertPreference === 'function') {
+      await knowledge.upsertPreference(prefPayload);
+      return true;
+    } else if (knowledge.db && typeof knowledge.db.upsertPreference === 'function') {
+      knowledge.db.upsertPreference(prefPayload);
       return true;
     }
   }

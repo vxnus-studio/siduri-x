@@ -21,6 +21,7 @@ export interface InteractionSettlementParams {
   archive?: ArchiveLedger;
   memory?: any;
   self?: SelfRepository;
+  db?: any;
   explicitTeaching: ReturnType<typeof extractDeterministicTeaching>;
   plan: ResponsePlan;
   effectiveMode?: InteractionMode;
@@ -159,6 +160,12 @@ export async function settleInteractionProposals(
     }
     if (proposal) {
       createdClaimProposals.push(proposal);
+      const effectiveDb = (params as any).db || (self as any)?.db || (archive as any)?.db;
+      if (effectiveDb && typeof effectiveDb.savePendingClaim === 'function') {
+        try {
+          effectiveDb.savePendingClaim(proposal);
+        } catch {}
+      }
     }
   }
 
@@ -196,6 +203,12 @@ export async function settleInteractionProposals(
       }
       if (proposal) {
         createdClaimProposals.push(proposal);
+        const effectiveDb = (params as any).db || (self as any)?.db || (archive as any)?.db;
+        if (effectiveDb && typeof effectiveDb.savePendingClaim === 'function') {
+          try {
+            effectiveDb.savePendingClaim(proposal);
+          } catch {}
+        }
       }
     }
   }
