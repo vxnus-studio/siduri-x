@@ -188,7 +188,8 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
 
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ useExternalPack: true }) // Attach external pack
-        .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' }); // Package ID
+        .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' }) // Package ID
+        .mockResolvedValueOnce({ confirmPack: true }); // Confirm pack metadata
 
       const result = await configureKnowledge(
         { companionName: 'Sparkle', manifest: knowledgeManifest },
@@ -225,6 +226,7 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       (inquirer.prompt as unknown as jest.Mock)
         .mockResolvedValueOnce({ useExternalPack: true })
         .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' })
+        .mockResolvedValueOnce({ confirmPack: true })
         .mockResolvedValueOnce({ selectedMode: 'local' });
 
       const result = await configureKnowledge(
@@ -235,6 +237,94 @@ describe('Guided Manifest-Driven Configuration UX Specification Tests', () => {
       expect(result.config.provider).toBe('e-knowledge');
       expect(result.config.packPath).toBe('./assets/knowledge/vxnus-e-teyvat');
       expect(result.summary?.['E-Pack']).toContain('Local @ ./assets/knowledge/vxnus-e-teyvat');
+    });
+
+    test('Declining pack after metadata inspection allows skipping to sovereign Life DB', async () => {
+      const mockClient = {
+        resolveProvider: jest.fn().mockResolvedValue({
+          name: 'e-teyvat',
+          displayName: 'E Teyvat',
+          package: '@vxnus/e-teyvat',
+          version: '1.2.0',
+        }),
+      } as unknown as KnowledgeHubClient;
+
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ useExternalPack: true })
+        .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' })
+        .mockResolvedValueOnce({ confirmPack: false })
+        .mockResolvedValueOnce({ rejectAction: 'skip' });
+
+      const result = await configureKnowledge(
+        { companionName: 'Sparkle', manifest: knowledgeManifest },
+        { client: mockClient }
+      );
+
+      expect(result.config.provider).toBe('unified');
+      expect(result.config.lifeDatabase).toBe(true);
+      expect(result.summary?.['E-Pack']).toBe('None');
+    });
+
+    test('Declining pack after metadata inspection allows retrying with another package ID', async () => {
+      const mockClient = {
+        resolveProvider: jest
+          .fn()
+          .mockResolvedValueOnce({
+            name: 'e-wrong',
+            displayName: 'Wrong Pack',
+            package: '@vxnus/e-wrong',
+            version: '1.0.0',
+            distributionType: 'remote',
+          })
+          .mockResolvedValueOnce({
+            name: 'e-teyvat',
+            displayName: 'E Teyvat',
+            package: '@vxnus/e-teyvat',
+            version: '1.2.0',
+            distributionType: 'remote',
+          }),
+      } as unknown as KnowledgeHubClient;
+
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ useExternalPack: true })
+        .mockResolvedValueOnce({ packId: '@vxnus/e-wrong' })
+        .mockResolvedValueOnce({ confirmPack: false })
+        .mockResolvedValueOnce({ rejectAction: 'retry' })
+        .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' })
+        .mockResolvedValueOnce({ confirmPack: true });
+
+      const result = await configureKnowledge(
+        { companionName: 'Sparkle', manifest: knowledgeManifest },
+        { client: mockClient }
+      );
+
+      expect(result.config.provider).toBe('e-hub');
+      expect(result.config.packId).toBe('@vxnus/e-teyvat');
+      expect(result.summary?.Package).toBe('@vxnus/e-teyvat');
+    });
+
+    test('Declining pack after metadata inspection and cancelling throws error', async () => {
+      const mockClient = {
+        resolveProvider: jest.fn().mockResolvedValue({
+          name: 'e-teyvat',
+          displayName: 'E Teyvat',
+          package: '@vxnus/e-teyvat',
+          version: '1.2.0',
+        }),
+      } as unknown as KnowledgeHubClient;
+
+      (inquirer.prompt as unknown as jest.Mock)
+        .mockResolvedValueOnce({ useExternalPack: true })
+        .mockResolvedValueOnce({ packId: '@vxnus/e-teyvat' })
+        .mockResolvedValueOnce({ confirmPack: false })
+        .mockResolvedValueOnce({ rejectAction: 'cancel' });
+
+      await expect(
+        configureKnowledge(
+          { companionName: 'Sparkle', manifest: knowledgeManifest },
+          { client: mockClient }
+        )
+      ).rejects.toThrow('Knowledge configuration cancelled.');
     });
 
     test('Knowledge manifest validation enforces name and version', () => {

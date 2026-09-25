@@ -87,7 +87,7 @@ export function generateInstanceFiles(options: InstanceGeneratorOptions): Genera
   const instanceName = options.name || 'my-siduri';
   const instanceId = options.id || 'default';
   const coreVersion = options.coreVersion || '^1.0.4';
-  const cliVersion = options.cliVersion || '^1.0.4';
+  const cliVersion = options.cliVersion || '^1.0.5';
   const canonicalOrder = ['brain', 'archive', 'knowledge', 'behavior', 'voice', 'body', 'mouth', 'hands', 'vision', 'ear', 'observation'];
   const manifests = [...options.selectedManifests].sort((a, b) => {
     const idxA = canonicalOrder.indexOf(a.organType);

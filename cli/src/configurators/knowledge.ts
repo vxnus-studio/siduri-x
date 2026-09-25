@@ -82,6 +82,33 @@ export async function configureKnowledge(
     // Display provider summary
     displayKnowledgeProviderSummary(manifest, target);
 
+    const { confirmPack } = await inquirer.prompt<{ confirmPack: boolean }>({
+      type: 'confirm',
+      name: 'confirmPack',
+      message: `Attach this knowledge pack (${manifest.displayName || manifest.name})?`,
+      default: true,
+    });
+
+    if (!confirmPack) {
+      const { rejectAction } = await inquirer.prompt<{ rejectAction: string }>({
+        type: 'list',
+        name: 'rejectAction',
+        message: 'What would you like to do?',
+        choices: [
+          { name: 'Try again / Enter another package ID', value: 'retry' },
+          { name: 'Continue without external pack (Life DB only)', value: 'skip' },
+          { name: 'Cancel', value: 'cancel' },
+        ],
+      });
+
+      if (rejectAction === 'retry') continue;
+      if (rejectAction === 'skip') {
+        summary['E-Pack'] = 'None';
+        return { config, summary };
+      }
+      throw new Error('Knowledge configuration cancelled.');
+    }
+
     // Determine connection type: User selects strictly 1 mode (Remote OR Local)
     let connectionType: 'remote' | 'local';
 
