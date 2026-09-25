@@ -13,7 +13,7 @@ import {
   type AvatarAction,
 } from "../../components/live2d";
 import { VRMCanvas } from "../../components/vrm";
-import { postJson, fetchApi, postStream, interruptChat } from "../../lib/api";
+import { postJson, fetchApi, postStream, interruptChat, getJson, deleteJson } from "../../lib/api";
 import {
   SearchIcon,
   SettingsIcon,
@@ -362,6 +362,34 @@ export default function ChatClient() {
     const stored = readConversations();
     setConversations(stored);
     setActiveId(stored[0]?.id ?? null);
+
+    // Hydrate conversations from server for cross-machine / multi-device synchronization
+    getJson<Conversation[]>('/conversations')
+      .then((serverConversations) => {
+        if (Array.isArray(serverConversations) && serverConversations.length > 0) {
+          setConversations((localConvs) => {
+            const localMap = new Map(localConvs.map((c) => [c.id, c]));
+            for (const sConv of serverConversations) {
+              const local = localMap.get(sConv.id);
+              if (!local || (sConv.updatedAt || 0) >= (local.updatedAt || 0)) {
+                localMap.set(sConv.id, {
+                  ...sConv,
+                  messages: (sConv.messages || []).map(sanitizeMessage),
+                });
+              }
+            }
+            const merged = Array.from(localMap.values()).sort(
+              (a, b) => (b.updatedAt || 0) - (a.updatedAt || 0),
+            );
+            return merged;
+          });
+          setActiveId((currentActiveId) => {
+            if (currentActiveId) return currentActiveId;
+            return serverConversations[0]?.id ?? null;
+          });
+        }
+      })
+      .catch(() => {});
     try {
       const savedLang = localStorage.getItem("siduri.chat.subtitleLanguage");
       if (savedLang) {
@@ -473,6 +501,17 @@ export default function ChatClient() {
   }, [conversations, ready]);
 
   useEffect(() => {
+    if (!ready || conversations.length === 0) return;
+    const timer = setTimeout(() => {
+      const active = conversations.find((c) => c.id === activeId);
+      if (active && active.messages.length > 0) {
+        postJson('/conversations', active).catch(() => {});
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [conversations, activeId, ready]);
+
+  useEffect(() => {
     messagesRef.current?.scrollTo({
       top: messagesRef.current.scrollHeight,
       behavior: "smooth",
@@ -508,6 +547,7 @@ export default function ChatClient() {
   }
 
   function removeConversation(id: string): void {
+    deleteJson(`/conversations/${id}`).catch(() => {});
     setConversations((current) =>
       current.filter((conversation) => conversation.id !== id),
     );
@@ -595,6 +635,7 @@ export default function ChatClient() {
         `/chat/stream`,
         {
           id: "default",
+          conversationId: conversation.id,
           message: content,
           medium: "web",
           mode: selectedMode,

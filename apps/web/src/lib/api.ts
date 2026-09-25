@@ -41,6 +41,17 @@ export async function putJson(path: string, body: string): Promise<void> {
   }
 }
 
+export async function deleteJson<T = any>(path: string): Promise<T> {
+  const response = await fetchApi(path, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => response.statusText);
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+  return response.json().catch(() => ({} as T));
+}
+
 export async function postAction(path: string, body?: any): Promise<void> {
   const response = await fetchApi(path, {
     method: "POST",

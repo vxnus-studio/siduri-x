@@ -146,6 +146,39 @@ export class SiduriRuntime {
     this.container.sessionHistory.clear(sessionKey);
   }
 
+  // Persistent conversation accessors (Multi-Machine Sync)
+  listConversations(companionId?: string): any[] {
+    if (this.db && typeof (this.db as any).getAllConversationsWithMessages === 'function') {
+      return (this.db as any).getAllConversationsWithMessages(companionId || this.id);
+    }
+    return [];
+  }
+
+  getConversation(id: string): any {
+    if (this.db && typeof (this.db as any).getConversation === 'function') {
+      return (this.db as any).getConversation(id);
+    }
+    return null;
+  }
+
+  upsertConversation(conversation: any): void {
+    if (this.db && typeof (this.db as any).upsertConversation === 'function') {
+      (this.db as any).upsertConversation(conversation);
+    }
+  }
+
+  saveMessages(conversationId: string, messages: any[], companionId?: string): void {
+    if (this.db && typeof (this.db as any).saveMessages === 'function') {
+      (this.db as any).saveMessages(conversationId, companionId || this.id, messages);
+    }
+  }
+
+  deleteConversation(id: string): void {
+    if (this.db && typeof (this.db as any).deleteConversation === 'function') {
+      (this.db as any).deleteConversation(id);
+    }
+  }
+
   /**
    * Approves a proposal using Direct Domain Routing (RFC VX-26-13):
    * - Behavioral & relational directives route directly to SelfRepository.

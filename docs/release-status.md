@@ -55,6 +55,8 @@ The following invariants have been verified in unit test suites and mock fixture
 
 19. **In-Chat Persona Proposal Card — No Modal (P1)**:
     `.self` file attachment is now fully surfaced in the chat timeline. Picking a persona file injects a visible user message (with a `📎 filename [persona]` chip) followed by an AI reply that compiles the document. The approval UI renders as an inline `self-proposal-card` directly in the assistant chat bubble — identical UX pattern to the Truth Gate card — with a directive checklist, Select All/None controls, and Install/Reject buttons. No overlay modal, no flow interruption. On install the card transitions to a "PERSONA INSTALLED" state in-place. `web` bumped to `0.2.15`.
+20. **Server-Persisted Conversations & Multi-Machine Synchronization (P0)**:
+    Persists conversation threads and dialogue turns in server SQLite (`chat_conversations`, `chat_messages`) via `SiduriDatabase` and REST endpoints (`/conversations`, `/conversations/:id`). Supports multi-machine hydration, timestamp conflict resolution, and durable retention across server restarts, while retaining fast optimistic `localStorage` caching in the browser.
 
 ---
 

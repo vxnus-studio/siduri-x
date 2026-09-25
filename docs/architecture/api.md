@@ -12,6 +12,10 @@ The API is a single deployable Express process (`apps/api`):
 - `POST /chat`: Sends a chat message to a specific companion.
 - `POST /chat/stream`: Real-time Server-Sent Events (SSE) streaming endpoint delivering staged response info, avatar events, timed token/viseme chunks via the Mouth organ, and completion envelopes. (Operates on an utterance-staging model to allow Truth Gate validation and synchronous avatar synthesis).
 - `POST /chat/interrupt`: Triggers barge-in cancellation on active streams.
+- `GET /conversations`: Returns persistent conversation threads with messages from SQLite.
+- `GET /conversations/:id`: Fetches a single conversation by ID with all dialogue turns and metadata.
+- `POST /conversations`: Upserts conversation metadata and message turns into SQLite.
+- `DELETE /conversations/:id`: Deletes a conversation thread and its associated message records.
 
 ## 2. Teach Mode & `.self` Ingestion Endpoints (Phase 5)
 - `GET /teach/detected-self`: Discovers candidate `.self` packages on local filesystem path (configured `selfPath`, `assets/self/*.self`, or project root), parses the manifest, checks whether already installed, and returns `{ detected, filename, path, content, parsed, alreadyInstalled }` for client prompt/review.

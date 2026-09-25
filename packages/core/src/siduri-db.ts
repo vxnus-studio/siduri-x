@@ -175,6 +175,23 @@ export interface SystemLog {
   createdAt: string;
 }
 
+export interface PersistedMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  createdAt: number;
+  [key: string]: any;
+}
+
+export interface PersistedConversation {
+  id: string;
+  companionId: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  messages?: PersistedMessage[];
+}
+
 export function safeJsonParse<T = any>(str?: string | null, fallback: T = undefined as any): T {
   if (!str) return fallback;
   try {
@@ -386,6 +403,30 @@ export class SiduriDatabase {
       );
 
       CREATE INDEX IF NOT EXISTS idx_system_logs_comp ON system_logs(companion_id, level, created_at DESC);
+
+      -- Chat Conversations & Messages (Multi-Machine Sync)
+      CREATE TABLE IF NOT EXISTS chat_conversations (
+        id TEXT PRIMARY KEY,
+        companion_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_chat_conversations_comp ON chat_conversations(companion_id, updated_at DESC);
+
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        companion_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        metadata TEXT,
+        FOREIGN KEY(conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_conv ON chat_messages(conversation_id, created_at ASC);
     `;
     this.db.exec(schema);
 
@@ -1473,5 +1514,117 @@ export class SiduriDatabase {
     } else {
       this.db.prepare('DELETE FROM system_logs').run();
     }
+  }
+
+  // ==========================================
+  // Chat Conversation Methods (Multi-Machine Sync)
+  // ==========================================
+
+  public listConversations(companionId: string = 'default'): PersistedConversation[] {
+    const stmt = this.db.prepare(
+      'SELECT id, companion_id, title, created_at, updated_at FROM chat_conversations WHERE companion_id = ? ORDER BY updated_at DESC'
+    );
+    const rows = stmt.all(companionId) as any[];
+    return rows.map((r) => ({
+      id: r.id,
+      companionId: r.companion_id,
+      title: r.title,
+      createdAt: Number(r.created_at),
+      updatedAt: Number(r.updated_at),
+    }));
+  }
+
+  public getConversation(id: string): PersistedConversation | null {
+    const convStmt = this.db.prepare(
+      'SELECT id, companion_id, title, created_at, updated_at FROM chat_conversations WHERE id = ?'
+    );
+    const conv = convStmt.get(id) as any;
+    if (!conv) return null;
+
+    const msgStmt = this.db.prepare(
+      'SELECT id, role, content, created_at, metadata FROM chat_messages WHERE conversation_id = ? ORDER BY created_at ASC'
+    );
+    const msgRows = msgStmt.all(id) as any[];
+    const messages = msgRows.map((m) => {
+      const meta = m.metadata ? safeJsonParse(m.metadata, {}) : {};
+      return {
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        createdAt: Number(m.created_at),
+        ...meta,
+      };
+    });
+
+    return {
+      id: conv.id,
+      companionId: conv.companion_id,
+      title: conv.title,
+      createdAt: Number(conv.created_at),
+      updatedAt: Number(conv.updated_at),
+      messages,
+    };
+  }
+
+  public getAllConversationsWithMessages(companionId: string = 'default', limit: number = 50): PersistedConversation[] {
+    const convs = this.listConversations(companionId).slice(0, limit);
+    return convs.map((conv) => {
+      const full = this.getConversation(conv.id);
+      return full || conv;
+    });
+  }
+
+  public upsertConversation(conversation: {
+    id: string;
+    companionId?: string;
+    title?: string;
+    createdAt?: number;
+    updatedAt?: number;
+  }): void {
+    const companionId = conversation.companionId || 'default';
+    const title = conversation.title || 'New conversation';
+    const createdAt = Number(conversation.createdAt) || Date.now();
+    const updatedAt = Number(conversation.updatedAt) || Date.now();
+
+    const stmt = this.db.prepare(`
+      INSERT INTO chat_conversations (id, companion_id, title, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        title = excluded.title,
+        updated_at = excluded.updated_at
+    `);
+    stmt.run(conversation.id, companionId, title, createdAt, updatedAt);
+  }
+
+  public saveMessages(conversationId: string, companionId: string, messages: any[]): void {
+    if (!Array.isArray(messages) || messages.length === 0) return;
+    const insertStmt = this.db.prepare(`
+      INSERT INTO chat_messages (id, conversation_id, companion_id, role, content, created_at, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        content = excluded.content,
+        metadata = excluded.metadata
+    `);
+
+    let maxCreatedAt = 0;
+    for (const msg of messages) {
+      if (!msg || !msg.id) continue;
+      const { id, role, content, createdAt, ...rest } = msg;
+      const ts = Number(createdAt) || Date.now();
+      if (ts > maxCreatedAt) maxCreatedAt = ts;
+      const metaStr = Object.keys(rest).length > 0 ? JSON.stringify(rest) : null;
+      insertStmt.run(id, conversationId, companionId, role || 'user', content || '', ts, metaStr);
+    }
+
+    if (maxCreatedAt > 0) {
+      this.db
+        .prepare('UPDATE chat_conversations SET updated_at = ? WHERE id = ?')
+        .run(maxCreatedAt, conversationId);
+    }
+  }
+
+  public deleteConversation(id: string): void {
+    this.db.prepare('DELETE FROM chat_messages WHERE conversation_id = ?').run(id);
+    this.db.prepare('DELETE FROM chat_conversations WHERE id = ?').run(id);
   }
 }

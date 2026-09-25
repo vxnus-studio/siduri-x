@@ -983,4 +983,87 @@ describe('SiduriDatabase', () => {
       expect(relAfterName?.name).toBe('Kur Zagin');
     });
   });
+
+  describe('Chat Conversation Persistence (Multi-Machine Sync)', () => {
+    it('persists, updates, retrieves, and deletes conversation threads with full message metadata', () => {
+      const db = new SiduriDatabase({ dbPath: ':memory:' });
+      const convId = 'conv-test-1';
+      const cId = 'default';
+
+      // 1. Initially empty
+      expect(db.listConversations(cId)).toEqual([]);
+      expect(db.getConversation(convId)).toBeNull();
+
+      // 2. Upsert conversation
+      const now = Date.now();
+      db.upsertConversation({
+        id: convId,
+        companionId: cId,
+        title: 'Exploring Babylon',
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      const listed = db.listConversations(cId);
+      expect(listed).toHaveLength(1);
+      expect(listed[0].id).toBe(convId);
+      expect(listed[0].title).toBe('Exploring Babylon');
+
+      // 3. Save messages
+      db.saveMessages(convId, cId, [
+        {
+          id: 'msg-1',
+          role: 'user',
+          content: 'Hello Siduri',
+          createdAt: now + 10,
+        },
+        {
+          id: 'msg-2',
+          role: 'assistant',
+          content: 'Greetings traveller',
+          createdAt: now + 20,
+          citations: [{ document_id: 'doc-1', preview: 'Babylon lore' }],
+          interrupted: false,
+        },
+      ]);
+
+      const convWithMsgs = db.getConversation(convId);
+      expect(convWithMsgs).toBeDefined();
+      expect(convWithMsgs?.messages).toHaveLength(2);
+      expect(convWithMsgs?.messages?.[0].content).toBe('Hello Siduri');
+      expect(convWithMsgs?.messages?.[1].content).toBe('Greetings traveller');
+      expect(convWithMsgs?.messages?.[1].citations).toEqual([{ document_id: 'doc-1', preview: 'Babylon lore' }]);
+      expect(convWithMsgs?.messages?.[1].interrupted).toBe(false);
+
+      // 4. Update message / conflict resolution
+      db.saveMessages(convId, cId, [
+        {
+          id: 'msg-2',
+          role: 'assistant',
+          content: 'Greetings traveller [updated]',
+          createdAt: now + 20,
+          citations: [{ document_id: 'doc-1', preview: 'Babylon lore' }],
+          interrupted: true,
+          interruptionReason: 'user_barge_in',
+        },
+      ]);
+
+      const updatedConv = db.getConversation(convId);
+      expect(updatedConv?.messages).toHaveLength(2);
+      expect(updatedConv?.messages?.[1].content).toBe('Greetings traveller [updated]');
+      expect(updatedConv?.messages?.[1].interrupted).toBe(true);
+      expect(updatedConv?.messages?.[1].interruptionReason).toBe('user_barge_in');
+
+      // 5. Test getAllConversationsWithMessages
+      const all = db.getAllConversationsWithMessages(cId);
+      expect(all).toHaveLength(1);
+      expect(all[0].messages).toHaveLength(2);
+
+      // 6. Delete conversation
+      db.deleteConversation(convId);
+      expect(db.listConversations(cId)).toEqual([]);
+      expect(db.getConversation(convId)).toBeNull();
+    });
+  });
 });
+

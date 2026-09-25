@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createCorsOptions } from './cors';
 import { SiduriRuntime, dispatchCompanionChat } from './runtime';
+import { SiduriDatabase } from '@sidurijs/core';
 import { SelfPackageParser, SqliteSelfRepository, scanDirective, compilePersonaDocument } from '@sidurijs/self';
 import { FixtureObservationOrgan } from '@sidurijs/observation';
 import { attachIdentity, requireAuth, Identity, isLocalRequest } from './auth';
@@ -547,6 +548,87 @@ export function createApp(runtimes: Map<string, SiduriRuntime> = new Map()): App
       }
     }
     return res.json({ success: true, interrupted: true, reason });
+  });
+
+  // CONVERSATIONS PERSISTENCE (Multi-Machine Sync)
+  let fallbackDb: SiduriDatabase | null = null;
+  function getDatabase(companionId: string = 'default'): SiduriDatabase | null {
+    const runtime = runtimes.get(companionId) || runtimes.get('default') || Array.from(runtimes.values())[0];
+    if (runtime?.db) return runtime.db;
+    if (!fallbackDb) {
+      try {
+        const dbPath = process.env.STORAGE_PATH || process.env.SQLITE_DB_PATH || (process.env.NODE_ENV === 'test' ? ':memory:' : 'siduri.sqlite');
+        fallbackDb = new SiduriDatabase({ dbPath });
+      } catch {
+        fallbackDb = null;
+      }
+    }
+    return fallbackDb;
+  }
+
+  app.get('/conversations', attachIdentity, async (req, res) => {
+    try {
+      const companionId = (req.query.companionId as string) || (req.query.id as string) || Array.from(runtimes.keys())[0] || 'default';
+      const db = getDatabase(companionId);
+      if (db && typeof (db as any).getAllConversationsWithMessages === 'function') {
+        const convs = (db as any).getAllConversationsWithMessages(companionId);
+        return res.json(convs);
+      }
+      res.json([]);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/conversations/:id', attachIdentity, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const companionId = (req.query.companionId as string) || Array.from(runtimes.keys())[0] || 'default';
+      const db = getDatabase(companionId);
+      if (db && typeof (db as any).getConversation === 'function') {
+        const conv = (db as any).getConversation(id);
+        if (!conv) {
+          return res.status(404).json({ error: 'Conversation not found' });
+        }
+        return res.json(conv);
+      }
+      res.status(404).json({ error: 'Conversation not found' });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/conversations', attachIdentity, async (req, res) => {
+    try {
+      const { id, title, messages, companionId = 'default', createdAt, updatedAt } = req.body;
+      if (!id) return res.status(400).json({ error: 'id is required' });
+      const targetCompanionId = companionId || Array.from(runtimes.keys())[0] || 'default';
+      const db = getDatabase(targetCompanionId);
+      if (db && typeof (db as any).upsertConversation === 'function') {
+        (db as any).upsertConversation({ id, companionId: targetCompanionId, title, createdAt, updatedAt });
+        if (Array.isArray(messages) && messages.length > 0) {
+          (db as any).saveMessages(id, targetCompanionId, messages);
+        }
+        return res.json({ success: true, id });
+      }
+      res.status(500).json({ error: 'Database unavailable' });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.delete('/conversations/:id', attachIdentity, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const companionId = (req.query.companionId as string) || Array.from(runtimes.keys())[0] || 'default';
+      const db = getDatabase(companionId);
+      if (db && typeof (db as any).deleteConversation === 'function') {
+        (db as any).deleteConversation(id);
+      }
+      res.json({ success: true, id });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
   });
 
   // SELF DIRECTIVES & PROPOSALS (RFC VX-26-13: Primitive 1)
